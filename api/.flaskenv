@@ -2,3 +2,4 @@ DATABASE_URI="postgresql+psycopg2://neondb_owner:npg_xChobcS5D2PE@ep-cold-union-
 PORT=5050
 FLASK_APP=inventory_api.py
 FLASK_ENV=development
+API_ROUTE="/afcApi_v1/"
