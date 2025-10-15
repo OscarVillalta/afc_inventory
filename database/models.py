@@ -1,6 +1,7 @@
 from typing import List
 from typing import Optional
-from sqlalchemy.orm import Mapped, mapped_column, ForeignKey, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import ForeignKey
 from database import Base
 
 class Supplier(Base):
@@ -18,8 +19,8 @@ class Filter(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     part_number: Mapped[str] = mapped_column(unique=True, nullable=False)
     supplier_id: Mapped[int] = mapped_column(
-        nullable=False,
-        foreign_key="suppliers.id"
+        ForeignKey("suppliers.id"),
+        nullable=False
     )
 
     # Merv 1-16, 17 will be hepa, and 18 indicates custom handled by frontend
