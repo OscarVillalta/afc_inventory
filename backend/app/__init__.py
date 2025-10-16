@@ -1,5 +1,5 @@
-import os
 from flask import Flask
+from database import SessionLocal
 
 def create_app():
     app = Flask(__name__)
@@ -8,6 +8,13 @@ def create_app():
     app.register_blueprint(api_bp, url_prefix='/api/v1')
 
     return app
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 from app import routes
 

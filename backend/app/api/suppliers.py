@@ -1,9 +1,17 @@
 from app.api import bp
-from app.api import base_route
+from json import jsonify
+from app import get_db
+from database.models import Supplier
 
 @bp.route('/suppliers', methods=['GET'])
 def get_suppliers():
-    pass
+    db = get_db()
+
+    try:
+        query = db.query(Supplier).all()
+        return jsonify([supplier.to_dict() for supplier in query]), 200
+    finally:
+        db.close()
 
 @bp.route('/suppliers/<int:id>', methods=['GET'])
 def get_supplier(id):
