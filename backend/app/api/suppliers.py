@@ -1,11 +1,10 @@
 from app.api import bp
-from json import jsonify
-from app import get_db
+from flask import g, jsonify, request
 from database.models import Supplier
 
 @bp.route('/suppliers', methods=['GET'])
 def get_suppliers():
-    db = get_db()
+    db = g.db
 
     try:
         query = db.query(Supplier).all()
