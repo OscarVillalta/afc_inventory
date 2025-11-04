@@ -1,11 +1,11 @@
 from flask import Flask, g
 from database import SessionLocal
+from app.api.suppliers import supplier_bp
 
 def create_app():
     app = Flask(__name__)
 
-    from app.api import bp as api_bp
-    app.register_blueprint(api_bp, url_prefix='/api/v1')
+    app.register_blueprint(supplier_bp, url_prefix='/api')
 
     @app.before_request
     def start_db_session():

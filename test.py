@@ -1,5 +1,4 @@
-from database import engine
-from sqlalchemy import text
+from database import Base
+from database.models import *
 
-with engine.connect() as conn:
-    print(conn.execute(text("SELECT 1")).scalar())
+print(Base.metadata.tables.keys())

@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from sqlalchemy.orm import DeclarativeBase,sessionmaker
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from sqlalchemy import create_engine
 
 load_dotenv()
