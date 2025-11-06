@@ -1,10 +1,10 @@
 from flask import g, jsonify, request, Blueprint
 from sqlalchemy import select
-from database.models import Quantity
+from database.models import Quantity, Filter
 from marshmallow import ValidationError
 from app.api.Schemas.quantity_schema import QuantitySchema
 
-quantity_bp = Blueprint("quantity", __name__)
+quantity_bp = Blueprint("quantities", __name__)
 quantity_schema = QuantitySchema()
 
 
@@ -18,7 +18,7 @@ def get_quantity():
 
 # --- GET single quantity ---
 @quantity_bp.route("/quantities/<int:id>", methods=["GET"])
-def get_quantity(id):
+def get_quantities(id):
     db = g.db
     qty = db.execute(select(Quantity).where(Quantity.id == id)).scalars().first()
     if not qty:
@@ -34,11 +34,22 @@ def create_quantity():
         data = quantity_schema.load(request.get_json())
     except ValidationError as err:
         return jsonify({"errors": err.messages}), 400
+    
+    #Check if filter already has qty
 
-    new_Quantity = Quantity.from_dict(data)
-    db.add(new_Quantity)
+    filter = db.execute(
+        select(Quantity).where(Quantity.filter_id == data["filter_id"])
+    ).first()
+
+    if filter:
+        return jsonify({
+            "error": "Cannot create quantity as filter_id is already used by another quantity"
+        }), 400
+
+    new_quantity = Quantity.from_dict(data)
+    db.add(new_quantity)
     db.commit()
-    return jsonify(quantity_schema.dump(new_Quantity)), 201
+    return jsonify(quantity_schema.dump(new_quantity)), 201
 
 
 # --- PATCH (partial update) ---
