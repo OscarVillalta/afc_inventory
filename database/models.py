@@ -1,4 +1,5 @@
 from typing import List, Optional
+from datetime import datetime, timezone
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.orm.properties import RelationshipProperty
 from sqlalchemy import ForeignKey
@@ -69,10 +70,54 @@ class Quantity(Base, SerializerMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     filter_id: Mapped[int] = mapped_column(
-        ForeignKey("filters.id"), unique=True, nullable=False
+        ForeignKey("filters.id"), nullable=False
     )
     on_hand: Mapped[int] = mapped_column(default=0, nullable=False)
     reserved: Mapped[int] = mapped_column(default=0, nullable=False)
     ordered: Mapped[int] = mapped_column(default=0, nullable=False)
+    location: Mapped[str] = mapped_column(nullable=False)
 
-    filter: Mapped["Filter"] = relationship(back_populates="quantity")  # ✅ Corrected
+    filter: Mapped["Filter"] = relationship(back_populates="quantity")
+
+class Order(Base, SerializerMixin):
+    __tablename__ = "orders"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    qb_id: Mapped[Optional[str]] = mapped_column(nullable=True)
+    order_number: Mapped[str] = mapped_column(nullable=False, unique=True)
+    customer: Mapped[Optional[str]] = mapped_column(nullable=True)
+    description: Mapped[Optional[str]] = mapped_column(nullable=True)
+
+    type: Mapped[str] = mapped_column(nullable=False)   # qb_packing_slip / internal / adjustment
+    status: Mapped[str] = mapped_column(nullable=False) # pending / completed / voided
+
+    created_at: Mapped[datetime] = mapped_column(default=datetime.now(timezone.utc))
+
+    # Relationships
+    transactions: Mapped[List["Transaction"]] = relationship(
+        back_populates="order", cascade="all, delete-orphan"
+    )
+
+class Transaction(Base, SerializerMixin):
+    __tablename__ = "transactions"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+
+    filter_id: Mapped[int] = mapped_column(
+        ForeignKey("filters.id"), nullable=False
+    )
+
+    order_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("orders.id"), nullable=True
+    )
+
+    # signed inventory movement: +10 incoming, -5 outgoing
+    quantity: Mapped[int] = mapped_column(nullable=False)
+
+    reason: Mapped[str] = mapped_column(nullable=False)
+    note: Mapped[Optional[str]] = mapped_column(nullable=True)
+    created_at: Mapped[datetime] = mapped_column(default=datetime.now(timezone.utc))
+
+    # Relationships
+    order: Mapped[Optional["Order"]] = relationship(back_populates="transactions")
+    filter: Mapped["Filter"] = relationship()

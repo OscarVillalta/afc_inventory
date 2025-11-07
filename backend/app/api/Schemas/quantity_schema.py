@@ -6,4 +6,5 @@ class QuantitySchema(Schema):
     on_hand = fields.Int(load_default=0)
     reserved = fields.Int(load_default=0)
     ordered = fields.Int(load_default=0)
+    location = fields.Str(load_default="Norwalk Warehouse")
     

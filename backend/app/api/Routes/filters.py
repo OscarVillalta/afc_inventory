@@ -122,16 +122,20 @@ def search():
             Filter.height,
             Filter.width,
             Filter.depth,
+            Quantity.location,
             Quantity.on_hand,
             Quantity.reserved,
             Quantity.ordered,
-        )
+        ).select_from(Filter)
         .join(Supplier, Filter.supplier_id == Supplier.id)
         .join(Quantity, Filter.id == Quantity.filter_id)
     )
 
+    
+
     # --- Dynamic filters ---
-    filters = [] # <- search filters
+    filters = [] # <- search filters  
+
     if part_number:
         filters.append(Filter.part_number.ilike(f"%{part_number}%"))
     if supplier_name:
@@ -149,7 +153,7 @@ def search():
 
     # Apply filters if any
     if filters:
-        query = query.where(and_(*filters))
+        query = query.where(*filters)
     else:
         # 🧩 Optional safeguard — if no filters, cap results to avoid heavy load
         query = query.limit(min(limit, 100))
@@ -159,6 +163,7 @@ def search():
 
     # --- Execute query ---
     results = db.execute(query).mappings().all()
+    results = [dict(row) for row in results] 
 
     # --- Return JSON response ---
     return jsonify({

@@ -3,6 +3,8 @@ from database import SessionLocal
 from backend.app.api.Routes.suppliers import supplier_bp
 from backend.app.api.Routes.filters import filter_bp
 from backend.app.api.Routes.quantity import quantity_bp
+from backend.app.api.Routes.transactions import transaction_bp
+
 
 def create_app():
     app = Flask(__name__)
@@ -10,6 +12,7 @@ def create_app():
     app.register_blueprint(supplier_bp, url_prefix='/api')
     app.register_blueprint(filter_bp, url_prefix='/api')
     app.register_blueprint(quantity_bp, url_prefix='/api')
+    app.register_blueprint(transaction_bp, url_prefix='/api')
 
     @app.before_request
     def start_db_session():
@@ -19,6 +22,7 @@ def create_app():
     def shutdown_session(exception=None):
         db = getattr(g, "db", None)
         if db is not None:
+            db.rollback() 
             db.close()
 
     return app
