@@ -85,7 +85,7 @@ class Order(Base, SerializerMixin):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     qb_id: Mapped[Optional[str]] = mapped_column(nullable=True)
     order_number: Mapped[str] = mapped_column(nullable=False, unique=True)
-    customer: Mapped[Optional[str]] = mapped_column(nullable=True)
+    customer_id: Mapped[Optional[int]] = mapped_column(ForeignKey("customers.id"), nullable=True)
     description: Mapped[Optional[str]] = mapped_column(nullable=True)
 
     type: Mapped[str] = mapped_column(nullable=False)   # qb_packing_slip / internal / adjustment
@@ -94,9 +94,19 @@ class Order(Base, SerializerMixin):
     created_at: Mapped[datetime] = mapped_column(default=datetime.now(timezone.utc))
 
     # Relationships
+    customer: Mapped["Customer"] = relationship(back_populates="orders")
+
     transactions: Mapped[List["Transaction"]] = relationship(
         back_populates="order", cascade="all, delete-orphan"
     )
+
+class Customer(Base, SerializerMixin):
+    __tablename__ = "customers"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(unique=True, nullable=False)
+
+    orders: Mapped[List["Order"]] = relationship(back_populates="customers")
 
 class Transaction(Base, SerializerMixin):
     __tablename__ = "transactions"
