@@ -1,56 +1,78 @@
 from flask import g, jsonify, request, Blueprint
 from sqlalchemy import select, and_
-from database.models import Filter, Supplier, Quantity
+from database.models import AirFilter, AirFilterCategory, Supplier, Product, ProductCategory, Quantity
 from marshmallow import ValidationError
-from app.api.Schemas.filters_schema import FilterSchema
+from app.api.Schemas.air_filters_schema import AirFilterSchema
 
-filter_bp = Blueprint("filters", __name__)
-filter_schema = FilterSchema()
+air_filter_bp = Blueprint("air_filters", __name__)
+air_filter_schema = AirFilterSchema()
 
+ProductCategory_id = 1
 
-# --- GET all filters ---
-@filter_bp.route("/filters", methods=["GET"])
-def get_filters():
+# --- GET all Air Filters ---
+@air_filter_bp.route("/air-filters", methods=["GET"])
+def get_air_filters():
     db = g.db
-    results = db.execute(select(Filter)).scalars().all()
-    return jsonify([flt.to_dict() for flt in results]), 200
+    results = db.execute(select(AirFilter)).scalars().all()
+    return jsonify([flt.to_dict(include_relationships=True) for flt in results]), 200
 
 
-# --- GET single filter ---
-@filter_bp.route("/filters/<int:id>", methods=["GET"])
-def get_filter(id):
+# --- GET single Air Filter ---
+@air_filter_bp.route("/air-filters/<int:id>", methods=["GET"])
+def get_air_filter(id):
     db = g.db
-    flt = db.execute(select(Filter).where(Filter.id == id)).scalars().first()
+    flt = db.get(AirFilter, id)
     if not flt:
-        return jsonify({"error": "Filter not found"}), 404
-    return jsonify(flt.to_dict()), 200
+        return jsonify({"error": "Air Filter not found"}), 404
+    return jsonify(flt.to_dict(include_relationships=True)), 200
 
 
-# --- POST new filter ---
-@filter_bp.route("/filters", methods=["POST"])
-def create_filter():
+# --- POST new Air Filter ---
+@air_filter_bp.route("/air-filters", methods=["POST"])
+def create_air_filter():
     db = g.db
     try:
-        data = filter_schema.load(request.get_json())
+        data = air_filter_schema.load(request.get_json())
     except ValidationError as err:
         return jsonify({"errors": err.messages}), 400
 
-    new_filter = Filter.from_dict(data)
+    supplier = db.get(Supplier, data["supplier_id"])
+    category = db.get(AirFilterCategory, data["category_id"])
+    if not supplier or not category:
+        return jsonify({"error": "Invalid supplier or category ID"}), 400
+
+    # 1️⃣ Create AirFilter record
+    new_filter = AirFilter.from_dict(data)
     db.add(new_filter)
+    db.flush()
+
+    product = Product(category_id=1, reference_id=new_filter.id)
+    db.add(product)
+    db.flush()
+
+    # 3️⃣ Create Quantity record
+    qty = Quantity(product_id=product.id, on_hand=0, reserved=0, ordered=0, location=0)
+    db.add(qty)
     db.commit()
-    return jsonify(filter_schema.dump(new_filter)), 201
+
+    return jsonify({
+        "message": "Air Filter created successfully",
+        "air_filter": new_filter.to_dict(include_relationships=True),
+        "product_id": product.id,
+        "quantity_id": qty.id
+    }), 201
 
 
 # --- PATCH (partial update) ---
-@filter_bp.route("/filters/<int:id>", methods=["PATCH"])
-def update_filter(id):
+@air_filter_bp.route("/air-filters/<int:id>", methods=["PATCH"])
+def update_air_filter(id):
     db = g.db
-    flt = db.execute(select(Filter).where(Filter.id == id)).scalars().first()
+    flt = db.get(AirFilter, id)
     if not flt:
-        return jsonify({"error": "Filter not found"}), 404
+        return jsonify({"error": "Air Filter not found"}), 404
 
     try:
-        data = filter_schema.load(request.get_json(), partial=True)
+        data = air_filter_schema.load(request.get_json(), partial=True)
     except ValidationError as err:
         return jsonify({"errors": err.messages}), 400
 
@@ -58,19 +80,19 @@ def update_filter(id):
         setattr(flt, key, value)
 
     db.commit()
-    return jsonify(filter_schema.dump(flt)), 200
+    return jsonify(air_filter_schema.dump(flt)), 200
 
 
 # --- PUT (full replacement) ---
-@filter_bp.route("/filters/<int:id>", methods=["PUT"])
-def replace_filter(id):
+@air_filter_bp.route("/air-filters/<int:id>", methods=["PUT"])
+def replace_air_filter(id):
     db = g.db
-    flt = db.execute(select(Filter).where(Filter.id == id)).scalars().first()
+    flt = db.get(AirFilter, id)
     if not flt:
-        return jsonify({"error": "Filter not found"}), 404
+        return jsonify({"error": "Air Filter not found"}), 404
 
     try:
-        data = filter_schema.load(request.get_json())
+        data = air_filter_schema.load(request.get_json())
     except ValidationError as err:
         return jsonify({"errors": err.messages}), 400
 
@@ -78,24 +100,28 @@ def replace_filter(id):
         setattr(flt, key, value)
 
     db.commit()
-    return jsonify(filter_schema.dump(flt)), 200
+    return jsonify(air_filter_schema.dump(flt)), 200
 
 
 # --- DELETE ---
-@filter_bp.route("/filters/<int:id>", methods=["DELETE"])
-def delete_filter(id):
+@air_filter_bp.route("/air-filters/<int:id>", methods=["DELETE"])
+def delete_air_filter(id):
     db = g.db
-    flt = db.execute(select(Filter).where(Filter.id == id)).scalars().first()
+    flt = db.get(AirFilter, id)
     if not flt:
-        return jsonify({"error": "Filter not found"}), 404
+        return jsonify({"error": "Air Filter not found"}), 404
 
+    # Cascade delete linked product + quantity
+    if flt.product:
+        db.delete(flt.product)
     db.delete(flt)
     db.commit()
-    return jsonify({"message": "Filter deleted successfully."}), 200
+    return jsonify({"message": "Air Filter deleted successfully."}), 200
+
 
 # --- SEARCH QUERY ---
 
-@filter_bp.route("/filters/search", methods=["GET"])
+@air_filter_bp.route("/filters/search", methods=["GET"])
 def search():
     db = g.db
 
@@ -172,3 +198,4 @@ def search():
         "results": results,
         "count": len(results)
     }), 200
+

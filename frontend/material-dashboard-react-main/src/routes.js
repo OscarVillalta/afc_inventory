@@ -114,7 +114,7 @@ const routes = [
     route: "/authentication/sign-up",
     component: <SignUp />,
   },
-    {
+  {
     type: "collapse",
     name: "Filters",
     key: "filters",

@@ -2,7 +2,7 @@ from marshmallow import Schema, fields, validate
 
 class TransactionSchema(Schema):
     id = fields.Int(dump_only=True)
-    filter_id = fields.Int(required=True)
+    product_id = fields.Int(required=True)
     order_id = fields.Int(allow_none=True)
 
     # MUST be positive or negative, not zero

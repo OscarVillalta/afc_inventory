@@ -34,7 +34,7 @@ if not DATABASE_URL:
 config.set_main_option("sqlalchemy.url", DATABASE_URL)
 
 # ✅ Import Base directly from database package
-from database.models import Supplier, Filter, Quantity
+from database.models import Supplier, Quantity, AirFilter, AirFilterCategory, Order, Transaction, Product, ProductCategory, Customer, MiscItem
 from database import Base
 target_metadata = Base.metadata
 

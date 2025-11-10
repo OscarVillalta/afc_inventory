@@ -1,44 +1,47 @@
 from typing import List, Optional
 from datetime import datetime, timezone
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.orm.properties import RelationshipProperty
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, String, Integer, Boolean
 from sqlalchemy.inspection import inspect
 from database import Base
 
-class SerializerMixin:
+# =====================================================
+# 🔹 Base Mixin for Serialization
+# =====================================================
 
+class SerializerMixin:
     def to_dict(self, include_relationships=False):
         data = {}
         mapper = inspect(self).mapper
 
-        # ✅ Handle RAW COLUMNS (simple fields)
         for column in mapper.column_attrs:
             attr = column.key
             data[attr] = getattr(self, attr)
 
-        # ✅ Handle RELATIONSHIPS separately
         if include_relationships:
             for relation in mapper.relationships:
                 attr = relation.key
                 value = getattr(self, attr)
                 if value is None:
                     data[attr] = None
-                elif relation.uselist:  # one-to-many (list)
+                elif relation.uselist:
                     data[attr] = [item.to_dict(include_relationships=False) for item in value]
-                else:  # one-to-one
+                else:
                     data[attr] = value.to_dict(include_relationships=False)
-
         return data
 
     @classmethod
     def from_dict(cls, data: dict):
-        """Create a new model instance from dictionary safely."""
         obj = cls()
         for key, value in data.items():
             if hasattr(cls, key):
                 setattr(obj, key, value)
         return obj
+
+
+# =====================================================
+# 🔹 Supplier
+# =====================================================
 
 class Supplier(Base, SerializerMixin):
     __tablename__ = "suppliers"
@@ -46,38 +49,125 @@ class Supplier(Base, SerializerMixin):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(unique=True, nullable=False)
 
-    filters: Mapped[List["Filter"]] = relationship(back_populates="supplier")
+    air_filters: Mapped[List["AirFilter"]] = relationship(back_populates="supplier")
+    fluid_filters: Mapped[List["FluidFilter"]] = relationship(back_populates="supplier")
+    misc_items: Mapped[List["MiscItem"]] = relationship(back_populates="supplier")
 
-class Filter(Base, SerializerMixin):
-    __tablename__ = "filters"
+
+# =====================================================
+# 🔹 Product Category / Air Filter Catory
+# =====================================================
+
+class ProductCategory(Base, SerializerMixin):
+    __tablename__ = "product_categories"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(unique=True, nullable=False)
+
+    products: Mapped[List["Product"]] = relationship("Product", back_populates="category")
+
+class AirFilterCategory(Base, SerializerMixin):
+    __tablename__ = "air_filter_categories"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(unique=True, nullable=False)
+
+    filters: Mapped[List["AirFilter"]] = relationship("AirFilter", back_populates="category")
+
+
+# =====================================================
+# 🔹 Air / Fluid / Misc Product Tables
+# =====================================================
+
+class AirFilter(Base, SerializerMixin):
+    __tablename__ = "air_filters"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     part_number: Mapped[str] = mapped_column(unique=True, nullable=False)
+    merv_rating: Mapped[int] = mapped_column(Integer, nullable=False)
+    height: Mapped[int] = mapped_column(Integer, default=0)
+    width: Mapped[int] = mapped_column(Integer, default=0)
+    depth: Mapped[int] = mapped_column(Integer, default=0)
+    category_id: Mapped[int] = mapped_column(ForeignKey("air_filter_categories.id"), nullable=False)
     supplier_id: Mapped[int] = mapped_column(ForeignKey("suppliers.id"), nullable=False)
 
-    rating: Mapped[int] = mapped_column(default=0, nullable=False)
-    height: Mapped[int] = mapped_column(default=0, nullable=False)
-    width: Mapped[int] = mapped_column(default=0, nullable=False)
-    depth: Mapped[int] = mapped_column(default=0, nullable=False)
+    supplier: Mapped["Supplier"] = relationship(back_populates="air_filters")
+    category: Mapped["AirFilterCategory"] = relationship(back_populates="air_filters")
+    product: Mapped[Optional["Product"]] = relationship(back_populates="air_filter", uselist=False)
 
-    supplier: Mapped["Supplier"] = relationship(back_populates="filters")
-    quantity: Mapped[Optional["Quantity"]] = relationship(
-        back_populates="filter", uselist=False, cascade="all, delete-orphan"
-    )
+
+class FluidFilter(Base, SerializerMixin):
+    __tablename__ = "fluid_filters"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    model_number: Mapped[str] = mapped_column(unique=True, nullable=False)
+    supplier_id: Mapped[int] = mapped_column(ForeignKey("suppliers.id"), nullable=False)
+
+    supplier: Mapped["Supplier"] = relationship(back_populates="fluid_filters")
+    product: Mapped[Optional["Product"]] = relationship(back_populates="fluid_filter", uselist=False)
+
+
+class MiscItem(Base, SerializerMixin):
+    __tablename__ = "misc_items"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(String(255))
+    supplier_id: Mapped[int] = mapped_column(ForeignKey("suppliers.id"), nullable=False)
+
+    supplier: Mapped["Supplier"] = relationship(back_populates="misc_items")
+    product: Mapped[Optional["Product"]] = relationship(back_populates="misc_item", uselist=False)
+
+
+# =====================================================
+# 🔹 Product (Universal Bridge)
+# =====================================================
+
+class Product(Base, SerializerMixin):
+    __tablename__ = "products"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    category_id: Mapped[int] = mapped_column(ForeignKey("product_categories.id"), nullable=False)
+    reference_id: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    category: Mapped["ProductCategory"] = relationship("ProductCategory", back_populates="products")
+    quantity: Mapped[Optional["Quantity"]] = relationship("Quantity", back_populates="product", uselist=False)
+    transactions: Mapped[List["Transaction"]] = relationship("Transaction", back_populates="product")
+
+    air_filter: Mapped[Optional["AirFilter"]] = relationship("AirFilter", back_populates="product", uselist=False)
+    fluid_filter: Mapped[Optional["FluidFilter"]] = relationship("FluidFilter", back_populates="product", uselist=False)
+    misc_item: Mapped[Optional["MiscItem"]] = relationship("MiscItem", back_populates="product", uselist=False)
+
+
+# =====================================================
+# 🔹 Quantity (Stock Tracking)
+# =====================================================
 
 class Quantity(Base, SerializerMixin):
     __tablename__ = "quantities"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    filter_id: Mapped[int] = mapped_column(
-        ForeignKey("filters.id"), nullable=False
-    )
-    on_hand: Mapped[int] = mapped_column(default=0, nullable=False)
-    reserved: Mapped[int] = mapped_column(default=0, nullable=False)
-    ordered: Mapped[int] = mapped_column(default=0, nullable=False)
-    location: Mapped[str] = mapped_column(nullable=False)
+    product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=False)
+    on_hand: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    reserved: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    ordered: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    location: Mapped[int] = mapped_column()
 
-    filter: Mapped["Filter"] = relationship(back_populates="quantity")
+    product: Mapped["Product"] = relationship(back_populates="quantity")
+
+
+# =====================================================
+# 🔹 Order / Customer / Transaction
+# =====================================================
+
+class Customer(Base, SerializerMixin):
+    __tablename__ = "customers"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(unique=True, nullable=False)
+
+    orders: Mapped[List["Order"]] = relationship(back_populates="customer")
+
 
 class Order(Base, SerializerMixin):
     __tablename__ = "orders"
@@ -87,47 +177,24 @@ class Order(Base, SerializerMixin):
     order_number: Mapped[str] = mapped_column(nullable=False, unique=True)
     customer_id: Mapped[Optional[int]] = mapped_column(ForeignKey("customers.id"), nullable=True)
     description: Mapped[Optional[str]] = mapped_column(nullable=True)
-
-    type: Mapped[str] = mapped_column(nullable=False)   # qb_packing_slip / internal / adjustment
-    status: Mapped[str] = mapped_column(nullable=False) # pending / completed / voided
-
+    type: Mapped[str] = mapped_column(nullable=False)
+    status: Mapped[str] = mapped_column(nullable=False)
     created_at: Mapped[datetime] = mapped_column(default=datetime.now(timezone.utc))
 
-    # Relationships
-    customer: Mapped["Customer"] = relationship(back_populates="orders")
+    customer: Mapped[Optional["Customer"]] = relationship(back_populates="orders")
+    transactions: Mapped[List["Transaction"]] = relationship(back_populates="order", cascade="all, delete-orphan")
 
-    transactions: Mapped[List["Transaction"]] = relationship(
-        back_populates="order", cascade="all, delete-orphan"
-    )
-
-class Customer(Base, SerializerMixin):
-    __tablename__ = "customers"
-
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    name: Mapped[str] = mapped_column(unique=True, nullable=False)
-
-    orders: Mapped[List["Order"]] = relationship(back_populates="customers")
 
 class Transaction(Base, SerializerMixin):
     __tablename__ = "transactions"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-
-    filter_id: Mapped[int] = mapped_column(
-        ForeignKey("filters.id"), nullable=False
-    )
-
-    order_id: Mapped[Optional[int]] = mapped_column(
-        ForeignKey("orders.id"), nullable=True
-    )
-
-    # signed inventory movement: +10 incoming, -5 outgoing
+    product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=False)
+    order_id: Mapped[Optional[int]] = mapped_column(ForeignKey("orders.id"), nullable=True)
     quantity: Mapped[int] = mapped_column(nullable=False)
-
     reason: Mapped[str] = mapped_column(nullable=False)
     note: Mapped[Optional[str]] = mapped_column(nullable=True)
     created_at: Mapped[datetime] = mapped_column(default=datetime.now(timezone.utc))
 
-    # Relationships
     order: Mapped[Optional["Order"]] = relationship(back_populates="transactions")
-    filter: Mapped["Filter"] = relationship()
+    product: Mapped["Product"] = relationship(back_populates="transactions")

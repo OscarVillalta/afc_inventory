@@ -1,16 +1,15 @@
 from flask import g, jsonify, request, Blueprint
 from sqlalchemy import select
-from database.models import Quantity, Filter
+from database.models import Quantity, Product
 from marshmallow import ValidationError
 from app.api.Schemas.quantity_schema import QuantitySchema
 
 quantity_bp = Blueprint("quantities", __name__)
 quantity_schema = QuantitySchema()
 
-
-# --- GET all quantity ---
+# --- GET all quantities ---
 @quantity_bp.route("/quantities", methods=["GET"])
-def get_quantity():
+def get_quantities():
     db = g.db
     results = db.execute(select(Quantity)).scalars().all()
     return jsonify([qty.to_dict() for qty in results]), 200
@@ -18,15 +17,15 @@ def get_quantity():
 
 # --- GET single quantity ---
 @quantity_bp.route("/quantities/<int:id>", methods=["GET"])
-def get_quantities(id):
+def get_quantity(id):
     db = g.db
-    qty = db.execute(select(Quantity).where(Quantity.id == id)).scalars().first()
+    qty = db.get(Quantity, id)
     if not qty:
         return jsonify({"error": "Quantity not found"}), 404
     return jsonify(qty.to_dict()), 200
 
 
-# --- POST new Quantity ---
+# --- POST new quantity ---
 @quantity_bp.route("/quantities", methods=["POST"])
 def create_quantity():
     db = g.db
@@ -34,29 +33,34 @@ def create_quantity():
         data = quantity_schema.load(request.get_json())
     except ValidationError as err:
         return jsonify({"errors": err.messages}), 400
-    
-    #Check if filter already has qty
 
-    filter = db.execute(
-        select(Quantity).where(Quantity.filter_id == data["filter_id"])
-    ).first()
+    # Check product exists
+    product_exists = db.execute(
+        select(Product.id).where(Product.id == data["product_id"])
+    ).scalar_one_or_none()
+    if not product_exists:
+        return jsonify({"error": "Product does not exist"}), 400
 
-    if filter:
+    # Ensure product doesn't already have a quantity
+    existing_qty = db.execute(
+        select(Quantity).where(Quantity.product_id == data["product_id"])
+    ).scalars().first()
+    if existing_qty:
         return jsonify({
-            "error": "Cannot create quantity as filter_id is already used by another quantity"
+            "error": f"Quantity already exists for product_id {data['product_id']}"
         }), 400
 
-    new_quantity = Quantity.from_dict(data)
-    db.add(new_quantity)
+    new_qty = Quantity.from_dict(data)
+    db.add(new_qty)
     db.commit()
-    return jsonify(quantity_schema.dump(new_quantity)), 201
+    return jsonify(quantity_schema.dump(new_qty)), 201
 
 
 # --- PATCH (partial update) ---
 @quantity_bp.route("/quantities/<int:id>", methods=["PATCH"])
 def update_quantity(id):
     db = g.db
-    qty = db.execute(select(Quantity).where(Quantity.id == id)).scalars().first()
+    qty = db.get(Quantity, id)
     if not qty:
         return jsonify({"error": "Quantity not found"}), 404
 
@@ -76,7 +80,7 @@ def update_quantity(id):
 @quantity_bp.route("/quantities/<int:id>", methods=["PUT"])
 def replace_quantity(id):
     db = g.db
-    qty = db.execute(select(Quantity).where(Quantity.id == id)).scalars().first()
+    qty = db.get(Quantity, id)
     if not qty:
         return jsonify({"error": "Quantity not found"}), 404
 
@@ -96,10 +100,10 @@ def replace_quantity(id):
 @quantity_bp.route("/quantities/<int:id>", methods=["DELETE"])
 def delete_quantity(id):
     db = g.db
-    qty = db.execute(select(Quantity).where(Quantity.id == id)).scalars().first()
+    qty = db.get(Quantity, id)
     if not qty:
         return jsonify({"error": "Quantity not found"}), 404
 
     db.delete(qty)
     db.commit()
-    return jsonify({"message": "Quantity deleted successfully."}), 200
+    return jsonify({"message": "Quantity deleted successfully"}), 200
