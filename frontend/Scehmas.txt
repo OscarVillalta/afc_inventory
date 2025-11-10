@@ -1,7 +1,0 @@
-Examples of schemas
-
-Supplier :
-
-{
-    name : "placeholder"
-}
