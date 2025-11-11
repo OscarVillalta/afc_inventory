@@ -51,6 +51,7 @@ class Supplier(Base, SerializerMixin):
 
     air_filters: Mapped[List["AirFilter"]] = relationship(back_populates="supplier")
     misc_items: Mapped[List["MiscItem"]] = relationship(back_populates="supplier")
+    orders: Mapped[List["Order"]] = relationship(back_populates="supplier")
 
 
 # =====================================================
@@ -144,12 +145,26 @@ class Product(Base, SerializerMixin):
         uselist=False,
         primaryjoin="Product.reference_id == foreign(AirFilter.id)"
     )
+
     misc_item: Mapped[Optional["MiscItem"]] = relationship(
         "MiscItem",
         back_populates="product",
         uselist=False,
         primaryjoin="Product.reference_id == foreign(MiscItem.id)"
     )
+
+    quantity: Mapped[Optional["Quantity"]] = relationship(
+        "Quantity", 
+        back_populates="product", 
+        uselist=False,
+        cascade="all, delete-orphan"
+    )
+
+    transactions: Mapped[List["Transaction"]] = relationship(
+        "Transaction", 
+        back_populates="product", 
+        cascade="all, delete-orphan"
+    )   
 
 
 # =====================================================
@@ -186,16 +201,19 @@ class Order(Base, SerializerMixin):
     __tablename__ = "orders"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    qb_id: Mapped[Optional[str]] = mapped_column(nullable=True)
-    order_number: Mapped[str] = mapped_column(nullable=False, unique=True)
-    customer_id: Mapped[Optional[int]] = mapped_column(ForeignKey("customers.id"), nullable=True)
-    description: Mapped[Optional[str]] = mapped_column(nullable=True)
-    type: Mapped[str] = mapped_column(nullable=False)
-    status: Mapped[str] = mapped_column(nullable=False)
+    order_number: Mapped[str] = mapped_column(unique=True, nullable=False)
+    type: Mapped[str] = mapped_column(nullable=False)  # "supplier" or "customer"
+    supplier_id: Mapped[Optional[int]] = mapped_column(ForeignKey("suppliers.id"))
+    customer_id: Mapped[Optional[int]] = mapped_column(ForeignKey("customers.id"))
+    status: Mapped[str] = mapped_column(default="Pending")
+    description: Mapped[Optional[str]] = mapped_column()
     created_at: Mapped[datetime] = mapped_column(default=datetime.now(timezone.utc))
 
-    customer: Mapped[Optional["Customer"]] = relationship(back_populates="orders")
-    transactions: Mapped[List["Transaction"]] = relationship(back_populates="order", cascade="all, delete-orphan")
+    supplier: Mapped[Optional["Supplier"]] = relationship("Supplier")
+    customer: Mapped[Optional["Customer"]] = relationship("Customer")
+    transactions: Mapped[List["Transaction"]] = relationship(
+        "Transaction", back_populates="order", cascade="all, delete-orphan"
+    )
 
 
 class Transaction(Base, SerializerMixin):

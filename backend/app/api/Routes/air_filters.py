@@ -10,7 +10,7 @@ air_filter_schema = AirFilterSchema()
 ProductCategory_id = 1
 
 # --- GET all Air Filters ---
-@air_filter_bp.route("/air-filters", methods=["GET"])
+@air_filter_bp.route("/air_filters", methods=["GET"])
 def get_air_filters():
     db = g.db
     results = db.execute(select(AirFilter)).scalars().all()
@@ -18,7 +18,7 @@ def get_air_filters():
 
 
 # --- GET single Air Filter ---
-@air_filter_bp.route("/air-filters/<int:id>", methods=["GET"])
+@air_filter_bp.route("/air_filters/<int:id>", methods=["GET"])
 def get_air_filter(id):
     db = g.db
     flt = db.get(AirFilter, id)
@@ -28,7 +28,7 @@ def get_air_filter(id):
 
 
 # --- POST new Air Filter ---
-@air_filter_bp.route("/air-filters", methods=["POST"])
+@air_filter_bp.route("/air_filters", methods=["POST"])
 def create_air_filter():
     db = g.db
     try:
@@ -67,7 +67,7 @@ def create_air_filter():
 
 
 # --- PATCH (partial update) ---
-@air_filter_bp.route("/air-filters/<int:id>", methods=["PATCH"])
+@air_filter_bp.route("/air_filters/<int:id>", methods=["PATCH"])
 def update_air_filter(id):
     db = g.db
     flt = db.get(AirFilter, id)
@@ -87,7 +87,7 @@ def update_air_filter(id):
 
 
 # --- PUT (full replacement) ---
-@air_filter_bp.route("/air-filters/<int:id>", methods=["PUT"])
+@air_filter_bp.route("/air_filters/<int:id>", methods=["PUT"])
 def replace_air_filter(id):
     db = g.db
     flt = db.get(AirFilter, id)
@@ -107,7 +107,7 @@ def replace_air_filter(id):
 
 
 # --- DELETE ---
-@air_filter_bp.route("/air-filters/<int:id>", methods=["DELETE"])
+@air_filter_bp.route("/air_filters/<int:id>", methods=["DELETE"])
 def delete_air_filter(id):
     db = g.db
     flt = db.get(AirFilter, id)
@@ -122,83 +122,97 @@ def delete_air_filter(id):
     return jsonify({"message": "Air Filter deleted successfully."}), 200
 
 
-# --- SEARCH QUERY ---
-
-@air_filter_bp.route("/filters/search", methods=["GET"])
-def search():
+# =====================================================
+# 🔎 Search Air Filters
+# =====================================================
+@air_filter_bp.route("/air_filters/search", methods=["GET"])
+def search_air_filters():
     db = g.db
 
     # --- Query parameters ---
     part_number = request.args.get("part_number")
     supplier_name = request.args.get("supplier")
-    rating = request.args.get("rating", type=int)
+    merv = request.args.get("merv", type=int)
     height = request.args.get("height", type=int)
     width = request.args.get("width", type=int)
     depth = request.args.get("depth", type=int)
-    location = request.args.get("location")
+    category = request.args.get("category")
+    location = request.args.get("location", type=int)
+    min_res = request.args.get("min_res", type=float)
+    max_res = request.args.get("max_res", type=float)
 
     # Pagination
     page = request.args.get("page", default=1, type=int)
     limit = request.args.get("limit", default=25, type=int)
     offset = (page - 1) * limit
 
-    # --- Base query ---
+    # --- Base Query ---
     query = (
         select(
-            Filter.part_number,
+            AirFilter.id,
+            AirFilter.part_number,
+            AirFilter.merv_rating,
+            AirFilter.height,
+            AirFilter.width,
+            AirFilter.depth,
+            AirFilter.initial_resistance,
+            AirFilter.final_resistance,
+            AirFilter.test_airflow_value,
+            AirFilter.test_airflow_unit,
             Supplier.name.label("supplier_name"),
-            Filter.rating,
-            Filter.height,
-            Filter.width,
-            Filter.depth,
-            Quantity.location,
+            AirFilterCategory.name.label("filter_category"),
             Quantity.on_hand,
             Quantity.reserved,
             Quantity.ordered,
-        ).select_from(Filter)
-        .join(Supplier, Filter.supplier_id == Supplier.id)
-        .join(Quantity, Filter.id == Quantity.filter_id)
+            Quantity.location
+        )
+        .join(Supplier, AirFilter.supplier_id == Supplier.id)
+        .join(AirFilterCategory, AirFilter.category_id == AirFilterCategory.id)
+        .join(Product, Product.reference_id == AirFilter.id)
+        .join(Quantity, Quantity.product_id == Product.id)
     )
 
-    
-
-    # --- Dynamic filters ---
-    filters = [] # <- search filters  
+    # --- Dynamic Filters ---
+    filters = []
 
     if part_number:
-        filters.append(Filter.part_number.ilike(f"%{part_number}%"))
+        filters.append(AirFilter.part_number.ilike(f"%{part_number}%"))
     if supplier_name:
         filters.append(Supplier.name.ilike(f"%{supplier_name}%"))
-    if rating is not None:
-        filters.append(Filter.rating == rating)
+    if merv is not None:
+        filters.append(AirFilter.merv_rating == merv)
     if height is not None:
-        filters.append(Filter.height == height)
+        filters.append(AirFilter.height <= height)
     if width is not None:
-        filters.append(Filter.width == width)
+        filters.append(AirFilter.width <= width)
     if depth is not None:
-        filters.append(Filter.depth == depth)
-    if location:
-        filters.append(Quantity.location.ilike(f"%{location}%"))
+        filters.append(AirFilter.depth <= depth)
+    if category:
+        filters.append(AirFilterCategory.name.ilike(f"%{category}%"))
+    if location is not None:
+        filters.append(Quantity.location == location)
+    if min_res is not None:
+        filters.append(AirFilter.initial_resistance >= min_res)
+    if max_res is not None:
+        filters.append(AirFilter.initial_resistance <= max_res)
 
-    # Apply filters if any
     if filters:
-        query = query.where(*filters)
+        query = query.where(and_(*filters))
     else:
-        # 🧩 Optional safeguard — if no filters, cap results to avoid heavy load
+        # 🧩 safeguard for no filters (limit output)
         query = query.limit(min(limit, 100))
 
-    # --- Apply pagination ---
+    # --- Pagination ---
     query = query.limit(limit).offset(offset)
 
-    # --- Execute query ---
+    # --- Execute ---
     results = db.execute(query).mappings().all()
-    results = [dict(row) for row in results] 
+    results = [dict(row) for row in results]
 
-    # --- Return JSON response ---
     return jsonify({
         "page": page,
         "limit": limit,
-        "results": results,
-        "count": len(results)
+        "count": len(results),
+        "results": results
     }), 200
 

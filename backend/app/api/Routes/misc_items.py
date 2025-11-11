@@ -1,7 +1,7 @@
 from flask import g, jsonify, request, Blueprint
 from sqlalchemy import select
 from marshmallow import ValidationError
-from database.models import MiscItem, Supplier, Product, ProductCategory
+from database.models import MiscItem, Supplier, Product, Quantity
 from app.api.Schemas.misc_item_schema import MiscItemSchema
 
 misc_bp = Blueprint("misc_items", __name__)
@@ -57,16 +57,21 @@ def create_misc_item():
     db.flush()
 
     new_product = Product(
-        category_id=product_category.id,
+        category_id=product_category,
         reference_id=misc_item.id
     )
     db.add(new_product)
+    db.flush()
+
+    qty = Quantity(product_id=new_product.id, on_hand=0, reserved=0, ordered=0, location=0)
+    db.add(qty)
     db.commit()
 
     return jsonify({
         "message": "Misc item created successfully.",
         "misc_item": misc_schema.dump(misc_item),
-        "product_id": new_product.id
+        "product_id": new_product.id,
+        "quantity_id": qty.id
     }), 201
 
 
