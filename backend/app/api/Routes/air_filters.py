@@ -37,16 +37,19 @@ def create_air_filter():
         return jsonify({"errors": err.messages}), 400
 
     supplier = db.get(Supplier, data["supplier_id"])
+    if not supplier:
+        return jsonify({"error": "Invalid supplier ID"}), 400
+    
     category = db.get(AirFilterCategory, data["category_id"])
-    if not supplier or not category:
-        return jsonify({"error": "Invalid supplier or category ID"}), 400
+    if not category:
+        return jsonify({"error": "Invalid category ID"}), 400
 
     # 1️⃣ Create AirFilter record
     new_filter = AirFilter.from_dict(data)
     db.add(new_filter)
     db.flush()
 
-    product = Product(category_id=1, reference_id=new_filter.id)
+    product = Product(category_id=ProductCategory_id, reference_id=new_filter.id)
     db.add(product)
     db.flush()
 

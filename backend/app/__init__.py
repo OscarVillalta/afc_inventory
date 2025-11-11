@@ -1,16 +1,16 @@
 from flask import Flask, g
 from database import SessionLocal
 from backend.app.api.Routes.suppliers import supplier_bp
-from backend.app.api.Routes.filters import filter_bp
 from backend.app.api.Routes.quantity import quantity_bp
 from backend.app.api.Routes.transactions import transaction_bp
+from backend.app.api.Routes.air_filters import air_filter_bp
 
 
 def create_app():
     app = Flask(__name__)
 
     app.register_blueprint(supplier_bp, url_prefix='/api')
-    app.register_blueprint(filter_bp, url_prefix='/api')
+    app.register_blueprint(air_filter_bp, url_prefix='/api')
     app.register_blueprint(quantity_bp, url_prefix='/api')
     app.register_blueprint(transaction_bp, url_prefix='/api')
 

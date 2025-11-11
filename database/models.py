@@ -1,7 +1,7 @@
 from typing import List, Optional
 from datetime import datetime, timezone
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, String, Integer, Boolean
+from sqlalchemy.orm import Mapped, mapped_column, relationship, foreign
+from sqlalchemy import ForeignKey, String, Integer, Float, Numeric
 from sqlalchemy.inspection import inspect
 from database import Base
 
@@ -50,7 +50,6 @@ class Supplier(Base, SerializerMixin):
     name: Mapped[str] = mapped_column(unique=True, nullable=False)
 
     air_filters: Mapped[List["AirFilter"]] = relationship(back_populates="supplier")
-    fluid_filters: Mapped[List["FluidFilter"]] = relationship(back_populates="supplier")
     misc_items: Mapped[List["MiscItem"]] = relationship(back_populates="supplier")
 
 
@@ -72,7 +71,7 @@ class AirFilterCategory(Base, SerializerMixin):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(unique=True, nullable=False)
 
-    filters: Mapped[List["AirFilter"]] = relationship("AirFilter", back_populates="category")
+    air_filters: Mapped[List["AirFilter"]] = relationship("AirFilter", back_populates="category")
 
 
 # =====================================================
@@ -88,24 +87,22 @@ class AirFilter(Base, SerializerMixin):
     height: Mapped[int] = mapped_column(Integer, default=0)
     width: Mapped[int] = mapped_column(Integer, default=0)
     depth: Mapped[int] = mapped_column(Integer, default=0)
+    initial_resistance: Mapped[Optional[float]] = mapped_column(Numeric(4, 3), nullable=True)
+    final_resistance: Mapped[Optional[float]] = mapped_column(Numeric(4, 3), nullable=True)
+    test_airflow_value: Mapped[Optional[float]] = mapped_column(Numeric(8, 2), nullable=True)
+    test_airflow_unit: Mapped[Optional[str]] = mapped_column(String(10), default="FPM")
     category_id: Mapped[int] = mapped_column(ForeignKey("air_filter_categories.id"), nullable=False)
     supplier_id: Mapped[int] = mapped_column(ForeignKey("suppliers.id"), nullable=False)
 
     supplier: Mapped["Supplier"] = relationship(back_populates="air_filters")
     category: Mapped["AirFilterCategory"] = relationship(back_populates="air_filters")
-    product: Mapped[Optional["Product"]] = relationship(back_populates="air_filter", uselist=False)
-
-
-class FluidFilter(Base, SerializerMixin):
-    __tablename__ = "fluid_filters"
-
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    model_number: Mapped[str] = mapped_column(unique=True, nullable=False)
-    supplier_id: Mapped[int] = mapped_column(ForeignKey("suppliers.id"), nullable=False)
-
-    supplier: Mapped["Supplier"] = relationship(back_populates="fluid_filters")
-    product: Mapped[Optional["Product"]] = relationship(back_populates="fluid_filter", uselist=False)
-
+    product: Mapped[Optional["Product"]] = relationship(
+        "Product",
+        back_populates="air_filter",
+        uselist=False,
+        primaryjoin=lambda: Product.reference_id == foreign(AirFilter.id),
+        viewonly=True, 
+    )
 
 class MiscItem(Base, SerializerMixin):
     __tablename__ = "misc_items"
@@ -116,7 +113,14 @@ class MiscItem(Base, SerializerMixin):
     supplier_id: Mapped[int] = mapped_column(ForeignKey("suppliers.id"), nullable=False)
 
     supplier: Mapped["Supplier"] = relationship(back_populates="misc_items")
-    product: Mapped[Optional["Product"]] = relationship(back_populates="misc_item", uselist=False)
+    product: Mapped[Optional["Product"]] = relationship(
+        "Product",
+        back_populates="misc_item",
+        uselist=False,
+        primaryjoin=lambda: Product.reference_id == foreign(MiscItem.id),
+        viewonly=True,
+    )
+        
 
 
 # =====================================================
@@ -134,9 +138,18 @@ class Product(Base, SerializerMixin):
     quantity: Mapped[Optional["Quantity"]] = relationship("Quantity", back_populates="product", uselist=False)
     transactions: Mapped[List["Transaction"]] = relationship("Transaction", back_populates="product")
 
-    air_filter: Mapped[Optional["AirFilter"]] = relationship("AirFilter", back_populates="product", uselist=False)
-    fluid_filter: Mapped[Optional["FluidFilter"]] = relationship("FluidFilter", back_populates="product", uselist=False)
-    misc_item: Mapped[Optional["MiscItem"]] = relationship("MiscItem", back_populates="product", uselist=False)
+    air_filter: Mapped[Optional["AirFilter"]] = relationship(
+        "AirFilter",
+        back_populates="product",
+        uselist=False,
+        primaryjoin="Product.reference_id == foreign(AirFilter.id)"
+    )
+    misc_item: Mapped[Optional["MiscItem"]] = relationship(
+        "MiscItem",
+        back_populates="product",
+        uselist=False,
+        primaryjoin="Product.reference_id == foreign(MiscItem.id)"
+    )
 
 
 # =====================================================

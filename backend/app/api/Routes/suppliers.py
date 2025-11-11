@@ -1,7 +1,7 @@
 from flask import g, jsonify, request
 from flask import Blueprint
 from sqlalchemy import select
-from database.models import Supplier, Filter
+from database.models import Supplier
 from marshmallow import ValidationError
 from app.api.Schemas.supplier_schema import SupplierSchema
 
