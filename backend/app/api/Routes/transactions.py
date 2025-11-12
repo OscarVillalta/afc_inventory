@@ -94,6 +94,8 @@ def create_transaction():
         data = txn_schema.load(request.get_json())
     except ValidationError as err:
         return jsonify({"errors": err.messages}), 400
+    
+    auto_commit = request.args.get("auto_commit", "false").lower() == "true"
 
     # Verify product exists
     product = db.get(Product, data["product_id"])
@@ -102,6 +104,15 @@ def create_transaction():
 
     txn = Transaction.from_dict(data)
     db.add(txn)
+    db.flush()
+
+    if auto_commit and not txn.order_item_id:
+        try:
+            txn.commit()
+        except Exception as e:
+            db.rollback()
+            return jsonify({"error": f"Commit failed: {str(e)}"}), 400
+
     db.commit()
 
     return jsonify({
