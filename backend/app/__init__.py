@@ -12,6 +12,7 @@ from backend.app.api.Routes.misc_items import misc_bp
 def create_app():
     app = Flask(__name__)
 
+    #BluePrints
     app.register_blueprint(supplier_bp, url_prefix='/api')
     app.register_blueprint(air_filter_bp, url_prefix='/api')
     app.register_blueprint(quantity_bp, url_prefix='/api')
@@ -20,6 +21,8 @@ def create_app():
     app.register_blueprint(product_bp, url_prefix="/api")
     app.register_blueprint(misc_bp, url_prefix="/api")
 
+
+    #Db_session wrappers
     @app.before_request
     def start_db_session():
         g.db = SessionLocal()
@@ -30,5 +33,6 @@ def create_app():
         if db is not None:
             db.rollback() 
             db.close()
+
 
     return app
