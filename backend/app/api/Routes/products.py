@@ -92,3 +92,21 @@ def get_product(id):
         "details": details,
         "quantity": quantity
     }), 200
+
+
+@product_bp.route("/products/<int:id>/archive", methods=["PATCH"])
+def archive_product(id):
+    db = g.db
+    product = db.get(Product, id)
+
+    if not product:
+        return jsonify({"error": "Product not found"}), 404
+
+    if not product.is_active:
+        return jsonify({"message": "Product already archived"}), 200
+
+    # Soft delete
+    product.is_active = False
+    db.commit()
+
+    return jsonify({"message": "Product archived successfully"}), 200

@@ -1,4 +1,5 @@
 from marshmallow import Schema, fields, validate
+from database.models import OrderStatus, OrderType
 
 class OrderSchema(Schema):
     id = fields.Int(dump_only=True)
@@ -9,12 +10,12 @@ class OrderSchema(Schema):
     
     type = fields.Str(
         required=True,
-        validate=validate.OneOf(["qb_packing_slip", "internal", "adjustment"])
+        validate=validate.OneOf([e.value for e in OrderType])
     )
 
     status = fields.Str(
-        required=True,
-        validate=validate.OneOf(["pending", "completed", "voided"])
+        dump_only=True,
+        validate=validate.OneOf([e.value for e in OrderStatus])
     )
 
     created_at = fields.DateTime(dump_only=True)
