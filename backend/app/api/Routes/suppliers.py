@@ -27,7 +27,7 @@ def get_supplier(id):
         if not supplier:
             return jsonify({"error": "Supplier not found"}), 404
         
-        return jsonify(supplier_schema.dump(supplier)), 2
+        return jsonify(supplier_schema.dump(supplier)), 200
     finally:
         db.close()
     
@@ -73,10 +73,38 @@ def update_supplier(id):
 @supplier_bp.route("/suppliers/<int:id>", methods=["DELETE"])
 def delete_supplier(id):
     db = g.db
-    supplier = db.execute(select(Supplier).where(Supplier.id == id)).scalars().first()
+    supplier = db.get(Supplier, id)
+
     if not supplier:
         return jsonify({"error": "Supplier not found"}), 404
 
+    # 1️⃣ Check for Air Filters tied to this supplier
+    if supplier.air_filters:
+        return jsonify({
+            "error": "Cannot delete supplier.",
+            "reason": "Supplier is linked to Air Filters.",
+            "linked_count": len(supplier.air_filters)
+        }), 400
+
+    # 2️⃣ Check for Misc Items tied to this supplier
+    if supplier.misc_items:
+        return jsonify({
+            "error": "Cannot delete supplier.",
+            "reason": "Supplier is linked to Misc Items.",
+            "linked_count": len(supplier.misc_items)
+        }), 400
+
+    # 3️⃣ Check for Orders tied to this supplier
+    if supplier.orders:
+        return jsonify({
+            "error": "Cannot delete supplier.",
+            "reason": "Supplier is linked to Orders.",
+            "linked_count": len(supplier.orders)
+        }), 400
+
     db.delete(supplier)
     db.commit()
-    return jsonify({"message": "Supplier deleted successfully"}), 200
+
+    return jsonify({
+        "message": "Supplier deleted successfully"
+    }), 200

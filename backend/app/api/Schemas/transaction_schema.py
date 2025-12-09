@@ -1,4 +1,5 @@
 from marshmallow import Schema, fields, validate
+from database.models import TransactionReason, TransactionState
 
 class TransactionSchema(Schema):
     id = fields.Int(dump_only=True)
@@ -16,7 +17,7 @@ class TransactionSchema(Schema):
         load_default=TransactionState.PENDING.value,
         validate=validate.OneOf([e.value for e in TransactionState])
     )
-    
+
     note = fields.Str(load_default=None)
     created_at = fields.DateTime(dump_only=True)
 

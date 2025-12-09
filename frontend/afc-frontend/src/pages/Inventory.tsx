@@ -1,8 +1,6 @@
 import { useState } from "react";
 import AirFiltersTable from "../components/inventory/AirFiltersTable";
 import MiscItemsTable from "../components/inventory/MiscItemsTable";
-import ProductsTable from "../components/inventory/ProductsTable";
-import QuantitiesTable from "../components/inventory/QuantitiesTable";
 import MainLayout from "../layouts/MainLayout";
 
 export default function Inventory() {

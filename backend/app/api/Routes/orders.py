@@ -89,3 +89,42 @@ def update_order_status(order_id):
         "message": "Order status updated.",
         "status": order.status
     }), 200
+
+@order_bp.route("/orders/<int:id>", methods=["DELETE"])
+def delete_order(id):
+    db = g.db
+    order = db.get(Order, id)
+
+    if not order:
+        return jsonify({"error": "Order not found"}), 404
+
+    # Check items for any allocation/transaction history
+    for item in order.items:
+        if item.transactions:  # ANY pending or committed
+            return jsonify({
+                "error": "Order has allocation or transaction history. Cannot delete; void instead."
+            }), 409
+
+        if item.quantity_fulfilled != 0:
+            return jsonify({
+                "error": "Order has fulfillment history. Cannot delete; void instead."
+            }), 409
+
+    # Safe delete – cascade removes order_items too
+    db.delete(order)
+    db.commit()
+
+    return jsonify({"message": "Order deleted successfully"}), 200
+
+@order_bp.route("/orders/<int:id>/void", methods=["PATCH"])
+def void_order(id):
+    db = g.db
+    order = db.get(Order, id)
+
+    if not order:
+        return jsonify({"error": "Order not found"}), 404
+
+    order.status = "Void"
+    db.commit()
+
+    return jsonify({"message": "Order voided successfully"}), 200

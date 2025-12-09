@@ -1,29 +1,35 @@
 from enum import Enum
 from typing import List, Optional
 from datetime import datetime, timezone
+
 from sqlalchemy.orm import Mapped, mapped_column, relationship, foreign
-from sqlalchemy import ForeignKey, String, Integer, Float, Numeric, Boolean
+from sqlalchemy import ForeignKey, String, Integer, Numeric, Boolean
 from sqlalchemy.inspection import inspect
+
 from database import Base
 
+
 # =====================================================
-# 🔹 Enums
+# 🔹 Enums (string value containers)
 # =====================================================
 
 class OrderType(str, Enum):
-    SUPPLIER = "supplier"
-    CUSTOMER = "customer"
+    OUTGOING = "incoming"
+    INCOMING = "outgoing"
+
 
 class OrderStatus(str, Enum):
     PENDING = "Pending"
     PARTIALLY_FULFILLED = "Partially Fulfilled"
     COMPLETED = "Completed"
 
+
 class TransactionState(str, Enum):
     PENDING = "pending"
     COMMITTED = "committed"
     CANCELLED = "cancelled"
     ROLLED_BACK = "rolled_back"
+
 
 class TransactionReason(str, Enum):
     SHIPMENT = "shipment"
@@ -37,24 +43,32 @@ class TransactionReason(str, Enum):
 # =====================================================
 
 class SerializerMixin:
-    def to_dict(self, include_relationships=False):
+    def to_dict(self, include_relationships: bool = False):
         data = {}
         mapper = inspect(self).mapper
 
         for column in mapper.column_attrs:
             attr = column.key
-            data[attr] = getattr(self, attr)
+            value = getattr(self, attr)
+
+            # Normalize Enum to its value for JSON friendliness
+            if isinstance(value, Enum):
+                value = value.value
+
+            data[attr] = value
 
         if include_relationships:
             for relation in mapper.relationships:
                 attr = relation.key
                 value = getattr(self, attr)
+
                 if value is None:
                     data[attr] = None
                 elif relation.uselist:
                     data[attr] = [item.to_dict(include_relationships=False) for item in value]
                 else:
                     data[attr] = value.to_dict(include_relationships=False)
+
         return data
 
     @classmethod
@@ -82,7 +96,7 @@ class Supplier(Base, SerializerMixin):
 
 
 # =====================================================
-# 🔹 Air Filter Category / Product Category
+# 🔹 Categories
 # =====================================================
 
 class ProductCategory(Base, SerializerMixin):
@@ -104,7 +118,7 @@ class AirFilterCategory(Base, SerializerMixin):
 
 
 # =====================================================
-# 🔹 Catalog Items: AirFilter / MiscItem
+# 🔹 Catalog Items
 # =====================================================
 
 class AirFilter(Base, SerializerMixin):
@@ -116,9 +130,9 @@ class AirFilter(Base, SerializerMixin):
     height: Mapped[int] = mapped_column(Integer, default=0)
     width: Mapped[int] = mapped_column(Integer, default=0)
     depth: Mapped[int] = mapped_column(Integer, default=0)
-    initial_resistance: Mapped[Optional[float]] = mapped_column(Numeric(4,3))
-    final_resistance: Mapped[Optional[float]] = mapped_column(Numeric(4,3))
-    test_airflow_value: Mapped[Optional[float]] = mapped_column(Numeric(8,2))
+    initial_resistance: Mapped[Optional[float]] = mapped_column(Numeric(4, 3))
+    final_resistance: Mapped[Optional[float]] = mapped_column(Numeric(4, 3))
+    test_airflow_value: Mapped[Optional[float]] = mapped_column(Numeric(8, 2))
     test_airflow_unit: Mapped[Optional[str]] = mapped_column(String(10), default="FPM")
 
     category_id: Mapped[int] = mapped_column(ForeignKey("air_filter_categories.id"), nullable=False)
@@ -129,9 +143,10 @@ class AirFilter(Base, SerializerMixin):
 
     product: Mapped[Optional["Product"]] = relationship(
         "Product",
+        primaryjoin=lambda: Product.reference_id == foreign(AirFilter.id),
+        foreign_keys=lambda: [Product.reference_id],
         back_populates="air_filter",
         uselist=False,
-        primaryjoin=lambda: Product.reference_id == foreign(AirFilter.id),
         viewonly=True,
     )
 
@@ -148,9 +163,10 @@ class MiscItem(Base, SerializerMixin):
 
     product: Mapped[Optional["Product"]] = relationship(
         "Product",
+        primaryjoin=lambda: Product.reference_id == foreign(MiscItem.id),
+        foreign_keys=lambda: [Product.reference_id],
         back_populates="misc_item",
         uselist=False,
-        primaryjoin=lambda: Product.reference_id == foreign(MiscItem.id),
         viewonly=True,
     )
 
@@ -166,45 +182,45 @@ class Product(Base, SerializerMixin):
     category_id: Mapped[int] = mapped_column(ForeignKey("product_categories.id"), nullable=False)
     reference_id: Mapped[int] = mapped_column(Integer, nullable=False)
 
-    # SOFT DELETE FLAG — Only here!
+    # Soft delete flag
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     category: Mapped["ProductCategory"] = relationship("ProductCategory", back_populates="products")
 
     air_filter: Mapped[Optional["AirFilter"]] = relationship(
         "AirFilter",
+        primaryjoin=lambda: Product.reference_id == foreign(AirFilter.id),
+        foreign_keys=lambda: [Product.reference_id],
         back_populates="product",
         uselist=False,
-        primaryjoin="Product.reference_id == foreign(AirFilter.id)"
     )
 
     misc_item: Mapped[Optional["MiscItem"]] = relationship(
         "MiscItem",
+        primaryjoin=lambda: Product.reference_id == foreign(MiscItem.id),
+        foreign_keys=lambda: [Product.reference_id],
         back_populates="product",
         uselist=False,
-        primaryjoin="Product.reference_id == foreign(MiscItem.id)"
     )
 
-    # SAFE CASCADE — Quantity can be deleted only with Product
     quantity: Mapped[Optional["Quantity"]] = relationship(
         "Quantity",
         back_populates="product",
         uselist=False,
         cascade="all, delete-orphan",
-        passive_deletes=True
+        passive_deletes=True,
     )
 
-    # REMOVE delete-orphan (unsafe!)
     transactions: Mapped[List["Transaction"]] = relationship(
         "Transaction",
         back_populates="product",
-        passive_deletes=True
+        passive_deletes=True,
     )
 
     order_items: Mapped[List["OrderItem"]] = relationship(
         "OrderItem",
         back_populates="product",
-        passive_deletes=True
+        passive_deletes=True,
     )
 
 
@@ -249,29 +265,29 @@ class Order(Base, SerializerMixin):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     order_number: Mapped[str] = mapped_column(unique=True, nullable=False)
 
-    type: Mapped[str] = mapped_column(String, nullable=False)  # OrderType enum externally validated
+    # Keep as string, but validate via Marshmallow / enums
+    type: Mapped[str] = mapped_column(String, nullable=False)  # should be one of OrderType values
 
     supplier_id: Mapped[Optional[int]] = mapped_column(ForeignKey("suppliers.id"))
     customer_id: Mapped[Optional[int]] = mapped_column(ForeignKey("customers.id"))
 
-    status: Mapped[str] = mapped_column(default=OrderStatus.PENDING.value)
+    status: Mapped[str] = mapped_column(String, default=OrderStatus.PENDING.value, nullable=False)
     description: Mapped[Optional[str]] = mapped_column()
     created_at: Mapped[datetime] = mapped_column(default=datetime.now(timezone.utc))
 
     supplier: Mapped[Optional["Supplier"]] = relationship("Supplier")
     customer: Mapped[Optional["Customer"]] = relationship("Customer")
 
-    # REMOVE delete-orphan (unsafe for transaction history)
     items: Mapped[List["OrderItem"]] = relationship(
         "OrderItem",
         back_populates="order",
-        passive_deletes=True
+        passive_deletes=True,
     )
 
     transactions: Mapped[List["Transaction"]] = relationship(
         "Transaction",
         back_populates="order",
-        passive_deletes=True
+        passive_deletes=True,
     )
 
     def update_status(self):
@@ -308,10 +324,11 @@ class OrderItem(Base, SerializerMixin):
 
     product: Mapped["Product"] = relationship("Product", back_populates="order_items")
     order: Mapped["Order"] = relationship("Order", back_populates="items")
+
     transactions: Mapped[List["Transaction"]] = relationship(
         "Transaction",
         back_populates="order_item",
-        passive_deletes=True
+        passive_deletes=True,
     )
 
     @property
@@ -333,8 +350,8 @@ class Transaction(Base, SerializerMixin):
     order_item_id: Mapped[Optional[int]] = mapped_column(ForeignKey("order_items.id", ondelete="SET NULL"))
 
     quantity_delta: Mapped[int] = mapped_column(nullable=False)
-    reason: Mapped[str] = mapped_column(nullable=False)
-    state: Mapped[str] = mapped_column(default=TransactionState.PENDING.value)
+    state: Mapped[str] = mapped_column(String, default=TransactionState.PENDING.value, nullable=False)
+    reason: Mapped[str] = mapped_column(String, nullable=False)
     note: Mapped[Optional[str]] = mapped_column()
     created_at: Mapped[datetime] = mapped_column(default=datetime.now(timezone.utc))
 

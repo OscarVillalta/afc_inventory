@@ -110,3 +110,7 @@ def archive_product(id):
     db.commit()
 
     return jsonify({"message": "Product archived successfully"}), 200
+
+@product_bp.route("/products/<int:id>", methods=["DELETE"])
+def delete_product(id):
+    return jsonify({"error": "Products cannot be deleted. Archive instead."}), 409

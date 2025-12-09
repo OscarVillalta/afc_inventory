@@ -6,7 +6,7 @@ export default function Sidebar() {
   const links = [
     { name: "Dashboard", to: "/dashboard", icon: "📊" },
     { name: "Inventory", to: "/inventory", icon: "📦" },
-    { name: "Orders", to: "/orders", icon: "🧾" },
+    { name: "order", to: "/order", icon: "🧾" },
     { name: "Transactions", to: "/transactions", icon: "💱" },
   ];
 

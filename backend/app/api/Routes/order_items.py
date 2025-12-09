@@ -232,18 +232,25 @@ def commit_all_order_item_txns(item_id):
         return jsonify({"error": f"Unexpected error: {str(e)}"}), 500
 
 
-
-# 🔹 DELETE: Remove item (only if unfulfilled)
-@order_item_bp.route("/order_items/<int:item_id>", methods=["DELETE"])
-def delete_order_item(item_id):
+@order_item_bp.route("/order_items/<int:id>", methods=["DELETE"])
+def delete_order_item(id):
     db = g.db
-    item = db.get(OrderItem, item_id)
+    item = db.get(OrderItem, id)
+
     if not item:
         return jsonify({"error": "Order item not found"}), 404
 
-    if item.quantity_fulfilled > 0:
-        return jsonify({"error": "Cannot delete fulfilled item"}), 400
+    if item.transactions:
+        return jsonify({
+            "error": "Order item has allocation or transaction history. Cannot delete."
+        }), 409
+
+    if item.quantity_fulfilled != 0:
+        return jsonify({
+            "error": "Order item has fulfillment history. Cannot delete."
+        }), 409
 
     db.delete(item)
     db.commit()
-    return jsonify({"message": "Order item deleted successfully."}), 200
+
+    return jsonify({"message": "Order item deleted successfully"}), 200
