@@ -4,32 +4,33 @@ export default function Sidebar() {
   const { pathname } = useLocation();
 
   const links = [
-    { name: "Dashboard", to: "/dashboard", icon: "📊" },
+    { name: "Dashboard", to: "/", icon: "📊" },
     { name: "Inventory", to: "/inventory", icon: "📦" },
-    { name: "order", to: "/order", icon: "🧾" },
+    { name: "Orders", to: "/order", icon: "🧾" },
     { name: "Transactions", to: "/transactions", icon: "💱" },
   ];
 
   return (
     <aside
-      className="w-64 flex flex-col"
-      style={{
-        background: "linear-gradient(180deg, #3A3F51 0%, #1A1D29 100%)",
-        borderRadius: "1rem",
-        margin: "1.5rem 1.5rem",
-      }}
+      className="
+        w-64 h-screen       /* full-height */
+        flex flex-col
+        bg-gradient-to-b from-[#3A3F51] to-[#1A1D29]
+        text-white
+        shadow-xl
+      "
     >
       {/* Logo */}
-      <div className="flex items-center gap-3 text-white text-lg font-bold px-2 py-4 mb-2">
-        <span className="text-2xl">Ⓐ</span>
+      <div className="flex items-center gap-3 text-lg font-bold px-4 py-6">
+        <span className="text-3xl">Ⓐ</span>
         <span>AFC Inventory System</span>
       </div>
 
       {/* Divider */}
       <div className="h-px bg-white/10 mb-4"></div>
 
-      {/* Navigation */}
-      <nav className="flex flex-col gap-2 mt-2">
+      {/* Links */}
+      <nav className="flex flex-col gap-1 px-2">
         {links.map((link) => {
           const isActive = pathname === link.to;
 
@@ -38,21 +39,29 @@ export default function Sidebar() {
               key={link.to}
               to={link.to}
               className={`
-                flex items-center gap-4 px-4 py-3 rounded-lg text-sm font-medium 
-                transition-all duration-200 select-none
+                flex items-center gap-3 px-4 py-3 rounded-lg
+                transition-all duration-200
                 ${
                   isActive
-                    ? "bg-[#3A7BD5] text-white shadow-lg"
+                    ? "bg-[#3A7BD5] text-white shadow-md"
                     : "text-gray-300 hover:bg-white/10 hover:text-white"
                 }
               `}
             >
-              <span className="text-[1.1rem] opacity-90">{link.icon}</span>
-              <span className="tracking-wide">{link.name}</span>
+              <span className="text-xl">{link.icon}</span>
+              <span>{link.name}</span>
             </Link>
           );
         })}
       </nav>
+
+      {/* Spacer to push footer down */}
+      <div className="flex-1"></div>
+
+      {/* Bottom section (optional) */}
+      <div className="px-4 py-4 text-gray-400 text-sm border-t border-white/10">
+        © 2025 AFC
+      </div>
     </aside>
   );
 }

@@ -29,7 +29,7 @@ export default function OrdersPage() {
       <EditOrderModal
         orderId={"NEW"}     // Since this is for creating a new order
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(isModalOpen)}
+        onClose={() => setIsModalOpen(false)}
       />
     </MainLayout>
   );

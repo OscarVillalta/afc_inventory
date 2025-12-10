@@ -7,7 +7,7 @@ interface Props {
 
 export default function MainLayout({ children }: Props) {
   return (
-    <div className="flex h-screen w-screen overflow-hidden">
+    <div data-theme="corporate" className="flex h-screen w-screen overflow-hidden">
       {/* Sidebar (full height) */}
       <Sidebar />
 

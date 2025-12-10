@@ -27,28 +27,59 @@ export default function EditOrderModal({
   const [creationDate, setCreationDate] = useState("2024-04-02");
   const [expectedDate, setExpectedDate] = useState("");
 
-  // MANY LINE ITEMS (pagination)
-  const allItems: LineItem[] = Array.from({ length: 27 }).map((_, i) => ({
-    id: i + 1,
-    name: `Filter Item ${i + 1}`,
-    orderedQty: 10,
-    fulfilledQty: 0,
-    unitPrice: 12.5,
-  }));
+  // 🔹 MINIMAL CHANGE: convert items to state
+  const [items, setItems] = useState<LineItem[]>([
+    {
+      id: 1,
+      name: "Filter Item 1",
+      orderedQty: 10,
+      fulfilledQty: 0,
+      unitPrice: 12.5,
+    },
+  ]);
 
   const [page, setPage] = useState(1);
   const pageSize = 5;
 
-  const pagedItems = allItems.slice((page - 1) * pageSize, page * pageSize);
-  const totalPages = Math.ceil(allItems.length / pageSize);
+  const pagedItems = items.slice((page - 1) * pageSize, page * pageSize);
+  const totalPages = Math.ceil(items.length / pageSize);
+
+  // 🔹 MINIMAL CHANGE: function to add a new blank item
+  const addItem = () => {
+    const newId = items.length + 1;
+    const newItem: LineItem = {
+      id: newId,
+      name: "",
+      orderedQty: 0,
+      fulfilledQty: 0,
+      unitPrice: 0,
+    };
+    setItems([...items, newItem]);
+  };
+
+  // 🔹 MINIMAL CHANGE: update item fields
+  const updateItem = (id: number, field: keyof LineItem, value: any) => {
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, [field]: value } : item
+      )
+    );
+  };
+
+  // 🔹 MINIMAL CHANGE: delete item
+  const deleteItem = (id: number) => {
+    setItems((prev) => prev.filter((i) => i.id !== id));
+  };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-1 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl shadow-xl w-[900px] max-h-[90vh] overflow-hidden flex flex-col">
         
         {/* HEADER */}
-        <div className="px-8 py-5 text-white text-xl font-semibold"
-          style={{ background: "linear-gradient(90deg,#3A7BD5,#2B60C8)" }}>
+        <div
+          className="px-8 py-5 text-white text-xl font-semibold"
+          style={{ background: "linear-gradient(90deg,#3A7BD5,#2B60C8)" }}
+        >
           Edit Order #{orderId}
         </div>
 
@@ -107,6 +138,14 @@ export default function EditOrderModal({
           <div>
             <label className="text-sm font-semibold">Items</label>
 
+            {/* 🔹 Add Item Button */}
+            <button
+              className="btn btn-sm btn-success ml-2 mb-3"
+              onClick={addItem}
+            >
+              + Add Item
+            </button>
+
             <table className="w-full mt-3 border-separate border-spacing-y-2">
               <thead>
                 <tr className="text-left text-gray-600 text-xs uppercase tracking-wide">
@@ -121,14 +160,25 @@ export default function EditOrderModal({
               <tbody>
                 {pagedItems.map((item) => (
                   <tr key={item.id} className="bg-gray-50 rounded-xl shadow-sm">
-                    <td className="py-3 px-3">{item.name}</td>
+                    <td className="py-3 px-3">
+                      <input
+                        type="text"
+                        className="input input-bordered input-sm w-full"
+                        value={item.name}
+                        onChange={(e) =>
+                          updateItem(item.id, "name", e.target.value)
+                        }
+                      />
+                    </td>
 
                     <td className="py-3 px-3">
                       <input
                         type="number"
                         className="input input-bordered input-sm w-20"
                         value={item.orderedQty}
-                        readOnly
+                        onChange={(e) =>
+                          updateItem(item.id, "orderedQty", Number(e.target.value))
+                        }
                       />
                     </td>
 
@@ -137,50 +187,36 @@ export default function EditOrderModal({
                         type="number"
                         className="input input-bordered input-sm w-20"
                         value={item.fulfilledQty}
-                        readOnly
+                        onChange={(e) =>
+                          updateItem(item.id, "fulfilledQty", Number(e.target.value))
+                        }
                       />
                     </td>
 
-                    <td className="py-3 px-3">${item.unitPrice.toFixed(2)}</td>
+                    <td className="py-3 px-3">
+                      <input
+                        type="number"
+                        className="input input-bordered input-sm w-24"
+                        value={item.unitPrice}
+                        onChange={(e) =>
+                          updateItem(item.id, "unitPrice", Number(e.target.value))
+                        }
+                      />
+                    </td>
 
                     <td className="py-3 px-3">
-                      <button className="btn btn-xs btn-error text-white">
-                        Delete
+                      <button
+                        className="btn btn-xs btn-error text-white"
+                        onClick={() => deleteItem(item.id)}
+                      >
+                        Delete 🗑️
                       </button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-
-            {/* PAGINATION */}
-            <div className="flex justify-center gap-2 mt-4">
-              <button
-                className="btn btn-sm"
-                disabled={page === 1}
-                onClick={() => setPage(page - 1)}
-              >
-                Prev
-              </button>
-
-              {[...Array(totalPages)].map((_, i) => (
-                <button
-                  key={i}
-                  className={`btn btn-sm ${page === i + 1 ? "btn-primary" : ""}`}
-                  onClick={() => setPage(i + 1)}
-                >
-                  {i + 1}
-                </button>
-              ))}
-
-              <button
-                className="btn btn-sm"
-                disabled={page === totalPages}
-                onClick={() => setPage(page + 1)}
-              >
-                Next
-              </button>
-            </div>
+            
           </div>
         </div>
 
