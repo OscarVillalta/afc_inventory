@@ -1,6 +1,9 @@
 import MainLayout from "../layouts/MainLayout";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   return (
     <MainLayout>
       <div className="p-6 space-y-10">
@@ -124,7 +127,7 @@ export default function Dashboard() {
           <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <button className="btn bg-blue-600 text-white hover:bg-blue-700 w-full">
+            <button onClick={()=>navigate("/order")} className="btn bg-blue-600 text-white hover:bg-blue-700 w-full">
               ➕ Create Order
             </button>
             <button className="btn bg-green-600 text-white hover:bg-green-700 w-full">

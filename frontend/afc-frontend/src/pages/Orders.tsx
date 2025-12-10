@@ -27,7 +27,7 @@ export default function OrdersPage() {
       <OrdersTable />
 
       <EditOrderModal
-        orderId={"NEW"}     // Since this is for creating a new order
+        orderId={"NEW"}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
       />
