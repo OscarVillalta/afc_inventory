@@ -138,8 +138,6 @@ def search_air_filters():
     depth = request.args.get("depth", type=int)
     category = request.args.get("category")
     location = request.args.get("location", type=int)
-    min_res = request.args.get("min_res", type=float)
-    max_res = request.args.get("max_res", type=float)
 
     # Pagination
     page = request.args.get("page", default=1, type=int)
@@ -155,10 +153,6 @@ def search_air_filters():
             AirFilter.height,
             AirFilter.width,
             AirFilter.depth,
-            AirFilter.initial_resistance,
-            AirFilter.final_resistance,
-            AirFilter.test_airflow_value,
-            AirFilter.test_airflow_unit,
             Supplier.name.label("supplier_name"),
             AirFilterCategory.name.label("filter_category"),
             Quantity.on_hand,
@@ -191,10 +185,6 @@ def search_air_filters():
         filters.append(AirFilterCategory.name.ilike(f"%{category}%"))
     if location is not None:
         filters.append(Quantity.location == location)
-    if min_res is not None:
-        filters.append(AirFilter.initial_resistance >= min_res)
-    if max_res is not None:
-        filters.append(AirFilter.initial_resistance <= max_res)
 
     if filters:
         query = query.where(and_(*filters))

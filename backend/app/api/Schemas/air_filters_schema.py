@@ -9,7 +9,4 @@ class AirFilterSchema(Schema):
     height = fields.Int(load_default=0)
     width = fields.Int(load_default=0)
     depth = fields.Int(load_default=0)
-    initial_resistance = fields.Float(load_default=None)
-    final_resistance = fields.Float(load_default=None)
-    test_airflow_value = fields.Float(load_default=None)
-    test_airflow_unit = fields.Str(load_default="FPM", validate=validate.OneOf(["FPM", "CFM"]))
+

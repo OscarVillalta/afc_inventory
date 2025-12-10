@@ -129,10 +129,6 @@ class AirFilter(Base, SerializerMixin):
     height: Mapped[int] = mapped_column(Integer, default=0)
     width: Mapped[int] = mapped_column(Integer, default=0)
     depth: Mapped[int] = mapped_column(Integer, default=0)
-    initial_resistance: Mapped[Optional[float]] = mapped_column(Numeric(4, 3))
-    final_resistance: Mapped[Optional[float]] = mapped_column(Numeric(4, 3))
-    test_airflow_value: Mapped[Optional[float]] = mapped_column(Numeric(8, 2))
-    test_airflow_unit: Mapped[Optional[str]] = mapped_column(String(10), default="FPM")
 
     category_id: Mapped[int] = mapped_column(ForeignKey("air_filter_categories.id"), nullable=False)
     supplier_id: Mapped[int] = mapped_column(ForeignKey("suppliers.id"), nullable=False)
