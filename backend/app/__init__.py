@@ -7,10 +7,12 @@ from backend.app.api.Routes.air_filters import air_filter_bp
 from backend.app.api.Routes.customers import customer_bp
 from backend.app.api.Routes.products import product_bp
 from backend.app.api.Routes.misc_items import misc_bp
+from flask_cors import CORS
 
 
 def create_app():
     app = Flask(__name__)
+    CORS(app, resources={r"/*": {"origins": "*"}})
 
     #BluePrints
     app.register_blueprint(supplier_bp, url_prefix='/api')

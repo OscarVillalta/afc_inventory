@@ -17,7 +17,6 @@ class OrderType(str, Enum):
     OUTGOING = "incoming"
     INCOMING = "outgoing"
 
-
 class OrderStatus(str, Enum):
     PENDING = "Pending"
     PARTIALLY_FULFILLED = "Partially Fulfilled"

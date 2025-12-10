@@ -1,37 +1,19 @@
 import MDTable from "../table/MDtable";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { fetchAirFilters } from "../../api/airfilters"
+import type { AirFilterPayload } from "../../api/airfilters";
 
 export default function AirFiltersTable() {
+  const [filters, setFilters] = useState<AirFilterPayload[]>([]);
   const [page, setPage] = useState(1);
-  const pageSize = 10;
-  const total = 52;
+ 
 
-  const rows = [
-    {
-      part: "FGP-12x24x2",
-      supplier: "Camfil",
-      dims: "12 × 24 × 2",
-      category: "Box Filter",
-      height: 12,
-      width: 24,
-      depth: 2,
-      merv: 13,
-      initRes: "0.25 in w.g.",
-      finalRes: "1.0 in w.g."
-    },
-        {
-      part: "FGP-12x24x2",
-      supplier: "Camfil",
-      dims: "12 × 24 × 2",
-      category: "Box Filter",
-      height: 12,
-      width: 24,
-      depth: 2,
-      merv: 13,
-      initRes: "0.25 in w.g.",
-      finalRes: "1.0 in w.g."
-    }
-  ];
+  useEffect(() => {
+    fetchAirFilters(page, 25).then((data) => {
+      setFilters(data.results); // assuming backend returns { items, total }
+      console.log(data)
+    });
+  }, [page]);
 
   return (
     <MDTable
@@ -39,23 +21,22 @@ export default function AirFiltersTable() {
       columns={[
         "Part Number",
         "Supplier",
-        "Dimensions",
         "Category",
         "Height",
         "Width",
         "Depth",
-        "MERV",
+        "merv",
         "Initial Resistance",
         "Final Resistance"
       ]}
       page={page}
-      pageSize={pageSize}
-      total={total}
+      pageSize={25}
+      total={100}
       onPageChange={setPage}
     >
-      {rows.map((r, i) => (
+      {filters.map((f) => (
         <tr
-          key={i}
+          key={f.id}
           className="
             bg-white 
             border border-gray-200 
@@ -65,25 +46,24 @@ export default function AirFiltersTable() {
             text-sm
           "
         >
-          <td className="py-3 px-3 font-medium">{r.part}</td>
-          <td className="py-3 px-3">{r.supplier}</td>
-          <td className="py-3 px-3 text-gray-700">{r.dims}</td>
+          <td className="py-3 px-3 font-medium">{f.part_number}</td>
+          <td className="py-3 px-3">{f.supplier}</td>
 
           {/* CATEGORY BADGE */}
           <td className="py-3 px-3">
             <span className="badge bg-blue-100 text-blue-700 border-blue-200">
-              {r.category}
+              {f.category}
             </span>
           </td>
 
-          <td className="py-3 px-3">{r.height}</td>
-          <td className="py-3 px-3">{r.width}</td>
-          <td className="py-3 px-3">{r.depth}</td>
+          <td className="py-3 px-3">{f.height}</td>
+          <td className="py-3 px-3">{f.width}</td>
+          <td className="py-3 px-3">{f.depth}</td>
 
-          <td className="py-3 px-3 font-semibold text-gray-800">{r.merv}</td>
+          <td className="py-3 px-3 font-semibold text-gray-800">{f.merv}</td>
 
-          <td className="py-3 px-3 text-gray-600">{r.initRes}</td>
-          <td className="py-3 px-3 text-gray-600">{r.finalRes}</td>
+          <td className="py-3 px-3 text-gray-600">{f.initial_resistance}</td>
+          <td className="py-3 px-3 text-gray-600">{f.final_resistance}</td>
         </tr>
       ))}
     </MDTable>
