@@ -38,5 +38,4 @@ def create_app():
             db.rollback() 
             db.close()
 
-
     return app
