@@ -1,20 +1,34 @@
 import { apiRequest } from "./apiClient";
 
 export interface AirFilterPayload {
+  total: number;
+
   id: number;
   part_number: string;
-  category: string;
-  supplier: string;
-  dimensions: string;
-  merv: number;
-  initial_resistance?: string;
-  final_resistance?: string;
-  height?: number;
-  width?: number;
-  depth?: number;
+  merv_rating: number;
+
+  height: number;
+  width: number;
+  depth: number;
+
+  filter_category: number;
+  supplier_name: string;
+
+  on_hand: number;
+  reserved: number;
+  ordered: number;
+
 }
 
-export function fetchAirFilters(page = 1, pageSize = 25) {
+export interface AirFilterResponse {
+  count: number;  
+  limit: number;
+  page: number;
+  results: AirFilterPayload[];
+  total: number;
+}
+
+export function fetchAirFilters(page = 1, pageSize = 25): Promise<AirFilterResponse> {
   return apiRequest(`/air_filters/search?page=${page}&pages ize=${pageSize}`,{
     method: "GET"
   });

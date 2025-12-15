@@ -2,7 +2,6 @@ import MDTable from "../table/MDtable";
 import { useEffect, useState } from "react";
 import { fetchAirFilters } from "../../api/airfilters";
 import type { AirFilterPayload, AirFilterResponse } from "../../api/airfilters";
-import type { TxnResponse } from "../../api/transactions";
 
 interface EditFormState {
   id: number;
