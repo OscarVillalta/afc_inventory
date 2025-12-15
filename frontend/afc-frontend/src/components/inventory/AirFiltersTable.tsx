@@ -2,6 +2,8 @@ import MDTable from "../table/MDtable";
 import { useEffect, useState } from "react";
 import { fetchAirFilters } from "../../api/airfilters";
 import type { AirFilterPayload, AirFilterResponse } from "../../api/airfilters";
+import { autocommitTxn } from "../../api/transactions";
+import type { createTxnRequest } from "../../api/transactions";
 
 interface EditFormState {
   id: number;
@@ -200,6 +202,7 @@ export default function AirFiltersTable() {
                 <label className="text-sm font-medium">On Hand</label>
                 <input
                   type="number"
+                  min="0"
                   className="input input-bordered w-full"
                   value={editRow.on_hand}
                   onChange={(e) =>
