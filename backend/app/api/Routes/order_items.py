@@ -1,7 +1,7 @@
 from flask import Blueprint, g, jsonify, request
 from sqlalchemy import select, func
 from app.api.Schemas.order_item_schema import OrderItemSchema
-from database.models import OrderItem, Order, Product, Transaction
+from database.models import OrderItem, Order, Product, Transaction, OrderSection
 from marshmallow import ValidationError
 
 order_item_bp = Blueprint("order_items", __name__)
@@ -27,9 +27,9 @@ def create_order_item():
     except ValidationError as err:
         return jsonify({"errors": err.messages}), 400
 
-    order = db.get(Order, data["order_id"])
-    if not order:
-        return jsonify({"error": "Invalid order_id "}), 400
+    order_section = db.get(OrderSection, data["order_section_id"])
+    if not order_section:
+        return jsonify({"error": "Invalid order_section_id "}), 400
     product = db.get(Product, data["product_id"])
     if not product:
         return jsonify({"error": "Invalid product_id"}), 400
