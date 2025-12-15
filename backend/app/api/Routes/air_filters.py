@@ -164,6 +164,7 @@ def search_air_filters():
         .join(AirFilterCategory, AirFilter.category_id == AirFilterCategory.id)
         .join(Product, Product.reference_id == AirFilter.id)
         .join(Quantity, Quantity.product_id == Product.id)
+        .distinct(AirFilter.id)
     )
 
     # --- Dynamic Filters ---
@@ -188,9 +189,10 @@ def search_air_filters():
 
     if filters:
         query = query.where(and_(*filters))
-    else:
-        # 🧩 safeguard for no filters (limit output)
-        query = query.limit(min(limit, 100))
+
+
+    # --- Total Count ----
+    total = len(db.execute(query).mappings().all())
 
     # --- Pagination ---
     query = query.limit(limit).offset(offset)
@@ -203,6 +205,7 @@ def search_air_filters():
         "page": page,
         "limit": limit,
         "count": len(results),
+        "total": total,
         "results": results
     }), 200
 
