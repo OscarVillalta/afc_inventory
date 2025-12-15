@@ -269,14 +269,15 @@ class Order(Base, SerializerMixin):
     status: Mapped[str] = mapped_column(String, default=OrderStatus.PENDING.value, nullable=False)
     description: Mapped[Optional[str]] = mapped_column()
     created_at: Mapped[datetime] = mapped_column(default=datetime.now(timezone.utc))
+    completed_at: Mapped[datetime] = mapped_column(nullable=True)
 
     supplier: Mapped[Optional["Supplier"]] = relationship("Supplier")
     customer: Mapped[Optional["Customer"]] = relationship("Customer")
 
-    items: Mapped[List["OrderItem"]] = relationship(
-        "OrderItem",
+    sections: Mapped[List["OrderSection"]] = relationship(
+        "OrderSection",
         back_populates="order",
-        passive_deletes=True,
+        cascade="all, delete-orphan"
     )
 
     transactions: Mapped[List["Transaction"]] = relationship(
@@ -318,7 +319,11 @@ class OrderItem(Base, SerializerMixin):
     note: Mapped[Optional[str]] = mapped_column(nullable=True)
 
     product: Mapped["Product"] = relationship("Product", back_populates="order_items")
-    order: Mapped["Order"] = relationship("Order", back_populates="items")
+
+    section_id = mapped_column(
+        ForeignKey("order_sections.id", ondelete="CASCADE"),
+        nullable=True
+    )
 
     transactions: Mapped[List["Transaction"]] = relationship(
         "Transaction",
@@ -326,9 +331,34 @@ class OrderItem(Base, SerializerMixin):
         passive_deletes=True,
     )
 
+    section = relationship("OrderSection", back_populates="items")
+
     @property
     def remaining(self) -> int:
         return max(self.quantity_ordered - self.quantity_fulfilled, 0)
+    
+# =====================================================
+# 🔹 Order Sections
+# =====================================================
+    
+class OrderSection(Base):
+    __tablename__ = "order_sections"
+
+    id:Mapped[int] = mapped_column(primary_key=True)
+    order_id:Mapped[int] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"))
+
+    title:Mapped[str] = mapped_column(String(100), nullable=False)
+    description:Mapped[str] = mapped_column(String(255))
+    sort_order:Mapped[int] = mapped_column(default=0)
+    status: Mapped[str] = mapped_column(nullable=False)
+
+    order = relationship("Order", back_populates="sections")
+
+    items = relationship(
+        "OrderItem",
+        back_populates="section",
+        cascade="all, delete-orphan"
+    )
 
 
 # =====================================================
