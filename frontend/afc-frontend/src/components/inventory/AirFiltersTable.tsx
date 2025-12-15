@@ -1,9 +1,11 @@
-import MDTable from "../table/MDtable";
 import { useEffect, useState } from "react";
+import MDTable from "../table/MDtable";
 import { fetchAirFilters } from "../../api/airfilters";
-import type { AirFilterPayload, AirFilterResponse } from "../../api/airfilters";
+import type { AirFilterResponse } from "../../api/airfilters";
 import { autocommitTxn } from "../../api/transactions";
 import type { createTxnRequest } from "../../api/transactions";
+
+/* ===================== TYPES ===================== */
 
 interface EditFormState {
   id: number;
@@ -19,32 +21,38 @@ interface EditFormState {
   reserved: number;
 }
 
+/* ===================== COMPONENT ===================== */
+
 export default function AirFiltersTable() {
   const [filters, setFilters] = useState<AirFilterResponse>();
   const [page, setPage] = useState(1);
 
-  // ✨ Modal State
+  /* Modal state */
   const [openEdit, setOpenEdit] = useState(false);
   const [editRow, setEditRow] = useState<EditFormState | null>(null);
+  const [originalOnHand, setOriginalOnHand] = useState<number>(0);
 
-  // Reason + Notes
+  /* Transaction fields */
   const [reason, setReason] = useState("");
   const [notes, setNotes] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  const REASONS = [
-    "shipment",
-    "receive",
-    "adjustment",
-    "rollback",
-  ];
+  const REASONS = ["shipment", "receive", "adjustment", "rollback"];
 
-  useEffect(() => {
+  /* ===================== DATA LOAD ===================== */
+
+  const loadData = () => {
     fetchAirFilters(page, 25).then((data) => {
       setFilters(data);
     });
+  };
+
+  useEffect(() => {
+    loadData();
   }, [page]);
 
-  // Open modal + load row
+  /* ===================== MODAL HANDLERS ===================== */
+
   const handleEdit = (row: any) => {
     setEditRow({
       id: row.id,
@@ -60,6 +68,7 @@ export default function AirFiltersTable() {
       reserved: row.reserved,
     });
 
+    setOriginalOnHand(row.on_hand);
     setReason("");
     setNotes("");
     setOpenEdit(true);
@@ -67,7 +76,47 @@ export default function AirFiltersTable() {
 
   const closeModal = () => {
     setOpenEdit(false);
+    setEditRow(null);
   };
+
+  /* ===================== SAVE TRANSACTION ===================== */
+
+  const handleSave = async () => {
+    if (!editRow) return;
+
+    const delta = editRow.on_hand - originalOnHand;
+
+    if (delta === 0) {
+      alert("No quantity change detected.");
+      return;
+    }
+
+    if (!reason) {
+      alert("Please select a reason.");
+      return;
+    }
+
+    const payload: createTxnRequest = {
+      product_id: editRow.id,
+      quantity_delta: delta,
+      reason,
+      note: notes,
+    };
+
+    try {
+      setSaving(true);
+      await autocommitTxn(payload);
+      closeModal();
+      loadData(); // refresh table
+    } catch (err) {
+      console.error(err);
+      alert("Failed to save transaction.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /* ===================== RENDER ===================== */
 
   return (
     <div>
@@ -86,141 +135,103 @@ export default function AirFiltersTable() {
         ]}
         page={page}
         pageSize={filters?.limit ?? 25}
-        total={filters?.total ?? 100}
+        total={filters?.total ?? 0}
         onPageChange={setPage}
       >
         {filters?.results.map((row) => (
           <tr key={row.id} className="bg-white shadow-sm rounded-xl">
             <td className="py-3 px-2 font-semibold">{row.part_number}</td>
-
             <td className="py-3 px-2">{row.supplier_name ?? "—"}</td>
-
             <td className="py-3 px-2">{row.filter_category ?? "—"}</td>
-
             <td className="py-3 px-2">
               {row.height} x {row.width} x {row.depth}
             </td>
-
             <td className="py-3 px-2">{row.merv_rating}</td>
-
             <td className="py-3 px-2">{row.on_hand}</td>
-
             <td className="py-3 px-2">{row.ordered}</td>
-
             <td className="py-3 px-2">{row.reserved}</td>
-
             <td
               className="py-3 px-2 cursor-pointer hover:scale-110 transition"
               onClick={() => handleEdit(row)}
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="25"
-                viewBox="0 0 48 48"
-                fill="none"
-              >
-                <rect width="48" height="48" fill="white" fillOpacity="0.01" />
-                <path
-                  d="M29 4H9C7.9 4 7 4.9 7 6V42C7 43.1 7.9 44 9 44H37C38.1 44 39 43.1 39 42V20"
-                  stroke="#000"
-                  strokeWidth="4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M13 18H21"
-                  stroke="#000"
-                  strokeWidth="4"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M13 28H25"
-                  stroke="#000"
-                  strokeWidth="4"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M41 6L29 18"
-                  stroke="#000"
-                  strokeWidth="4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              ✏️
             </td>
           </tr>
         ))}
       </MDTable>
 
-      {/* ✨ EDIT MODAL */}
+      {/* ===================== EDIT MODAL ===================== */}
       {openEdit && editRow && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-40">
-          <div className="bg-white w-[600px] rounded-xl shadow-xl p-6 animate-fadeIn">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-40">
+          <div className="bg-white w-[600px] rounded-xl shadow-xl p-6">
 
             {/* Header */}
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">
-                PRODUCT: {editRow.part_number}
+                {editRow.part_number}
               </h2>
-              <button
-                className="text-gray-500 hover:text-gray-700"
-                onClick={closeModal}
-              >
-                ✕
-              </button>
+              <button onClick={closeModal}>✕</button>
             </div>
 
-            {/* Core Info */}
-            <div className="grid grid-cols-2 gap-4 mb-6">
+            {/* Info */}
+            <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
               <div>
-                <label className="text-sm font-medium">Supplier</label>
-                <div className="p-2 bg-gray-100 rounded">{editRow.supplier_name}</div>
+                <label className="font-medium">Supplier</label>
+                <div className="p-2 bg-gray-100 rounded">
+                  {editRow.supplier_name}
+                </div>
               </div>
 
               <div>
-                <label className="text-sm font-medium">Category</label>
-                <div className="p-2 bg-gray-100 rounded">{editRow.filter_category}</div>
+                <label className="font-medium">Category</label>
+                <div className="p-2 bg-gray-100 rounded">
+                  {editRow.filter_category}
+                </div>
               </div>
 
               <div>
-                <label className="text-sm font-medium">Dimensions</label>
+                <label className="font-medium">Dimensions</label>
                 <div className="p-2 bg-gray-100 rounded">
                   {editRow.height} x {editRow.width} x {editRow.depth}
                 </div>
               </div>
 
               <div>
-                <label className="text-sm font-medium">MERV</label>
-                <div className="p-2 bg-gray-100 rounded">{editRow.merv_rating}</div>
+                <label className="font-medium">MERV</label>
+                <div className="p-2 bg-gray-100 rounded">
+                  {editRow.merv_rating}
+                </div>
               </div>
             </div>
 
-            {/* Editable Inventory Fields */}
-            <div className="grid grid-cols-3 gap-4 mb-6">
-              <div>
-                <label className="text-sm font-medium">On Hand</label>
-                <input
-                  type="number"
-                  min="0"
-                  className="input input-bordered w-full"
-                  value={editRow.on_hand}
-                  onChange={(e) =>
-                    setEditRow({ ...editRow, on_hand: Number(e.target.value) })
-                  }
-                />
-              </div>
+            {/* Editable On Hand */}
+            <div className="mb-6">
+              <label className="font-medium text-sm">On Hand</label>
+              <input
+                type="number"
+                className="input input-bordered w-full mt-1"
+                value={editRow.on_hand}
+                onChange={(e) =>
+                  setEditRow({
+                    ...editRow,
+                    on_hand: Number(e.target.value),
+                  })
+                }
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Change will create an inventory transaction.
+              </p>
             </div>
 
             {/* Reason + Notes */}
             <div className="mb-6">
-              <label className="text-sm font-medium">Reason</label>
+              <label className="font-medium text-sm">Reason</label>
               <select
                 className="select select-bordered w-full mt-1"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
               >
-                <option value="">Select a reason...</option>
+                <option value="">Select a reason…</option>
                 {REASONS.map((r) => (
                   <option key={r} value={r}>
                     {r}
@@ -228,7 +239,7 @@ export default function AirFiltersTable() {
                 ))}
               </select>
 
-              <label className="text-sm font-medium mt-4 block">Notes</label>
+              <label className="font-medium text-sm mt-4 block">Notes</label>
               <textarea
                 className="textarea textarea-bordered w-full mt-1"
                 rows={3}
@@ -237,13 +248,17 @@ export default function AirFiltersTable() {
               />
             </div>
 
-            {/* Footer Buttons */}
-            <div className="flex justify-end gap-3 mt-4">
+            {/* Actions */}
+            <div className="flex justify-end gap-3">
               <button className="btn" onClick={closeModal}>
                 Cancel
               </button>
-              <button className="btn btn-primary">
-                Save Changes
+              <button
+                className="btn btn-primary"
+                onClick={handleSave}
+                disabled={saving}
+              >
+                {saving ? "Saving…" : "Save Changes"}
               </button>
             </div>
           </div>
