@@ -1,10 +1,10 @@
 import { useState } from "react";
 import MainLayout from "../layouts/MainLayout";
 import OrdersTable from "../components/order/OrdersTable";
-import EditOrderModal from "../components/order/EditOrderModal";
+import { useNavigate } from 'react-router-dom'
 
 export default function OrdersPage() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const navigate = useNavigate()
 
   return (
     <MainLayout>
@@ -16,7 +16,7 @@ export default function OrdersPage() {
             hover:shadow-lg transition
             cursor-pointer
           "
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => navigate('/detail')}
           style={{
             background: "linear-gradient(90deg, #3A7BD5 0%, #2B60C8 100%)",
           }}
@@ -26,11 +26,6 @@ export default function OrdersPage() {
       </div>
       <OrdersTable />
 
-      <EditOrderModal
-        orderId={"NEW"}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      />
     </MainLayout>
   );
 }

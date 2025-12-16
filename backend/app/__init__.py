@@ -8,6 +8,9 @@ from backend.app.api.Routes.customers import customer_bp
 from backend.app.api.Routes.products import product_bp
 from backend.app.api.Routes.misc_items import misc_bp
 from backend.app.api.Routes.order_reorder import order_reorder_bp
+from backend.app.api.Routes.orders import order_bp
+from backend.app.api.Routes.order_items import order_item_bp
+from backend.app.api.Routes.order_sections import order_section_bp
 from flask_cors import CORS
 
 
@@ -24,6 +27,9 @@ def create_app():
     app.register_blueprint(product_bp, url_prefix="/api")
     app.register_blueprint(misc_bp, url_prefix="/api")
     app.register_blueprint(order_reorder_bp, url_prefix="/api")
+    app.register_blueprint(order_bp, url_prefix="/api")
+    app.register_blueprint(order_item_bp, url_prefix="/api")
+    app.register_blueprint(order_section_bp, url_prefix="/api")
 
 
     #Db_session wrappers

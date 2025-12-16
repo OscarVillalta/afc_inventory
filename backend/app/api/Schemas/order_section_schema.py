@@ -3,9 +3,10 @@ from database.models import OrderStatus
 
 class OrderSectionSchema(Schema):
     id = fields.Int(dump_only=True)
-    order_id = fields.Str(required=True, validate=validate.Length(min=1))
+    order_id = fields.Int(required=True)
     description = fields.Str(allow_none=True)
     title = fields.Str(allow_none=True)
+    sort_order = fields.Int(allow_none=True)
 
     status = fields.Str(
         dump_only=True,

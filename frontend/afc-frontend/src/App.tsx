@@ -13,7 +13,7 @@ function App() {
         <Route path="/inventory" element={<Inventory />} />
         <Route path="/order" element={<Order />} />
         <Route path="/transactions" element={<TransactionsPage/>}/>
-        <Route path="/detail" element={<OrderDetailPage/>}/>
+        <Route path="/orders/:orderId" element={<OrderDetailPage />} />
       </Routes>
     </BrowserRouter>
   );

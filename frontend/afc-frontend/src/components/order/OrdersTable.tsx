@@ -1,49 +1,44 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import MDTable from "../table/MDtable";
+import type {
+  OrderRowItemPayload,
+} from "../../api/orders";
+import { fetchOrders } from "../../api/orders"
+import { useNavigate } from 'react-router-dom'
 
 export default function OrdersTable() {
+  const navigate = useNavigate()
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  // === FILTER STATES (UI only — NOT used for filtering) ===
+  // === FILTER STATES (UI only — NOT used for filtering yet) ===
   const [searchOrder, setSearchOrder] = useState("");
   const [searchDescription, setSearchDescription] = useState("");
   const [filterType, setFilterType] = useState("All");
   const [filterStatus, setFilterStatus] = useState("All");
   const [filterCustomer, setFilterCustomer] = useState("All");
 
-  // TEMP FAKE DATA
-  const rows = [
-    {
-      order: "100028",
-      type: "Outgoing",
-      cs: "MediHealth",
-      description: "Filter replenishment order",
-      status: "Pending",
-    },
-    {
-      order: "100027",
-      type: "Outgoing",
-      cs: "ClearSky Industries",
-      description: "Quarterly filter shipment",
-      status: "Completed",
-    },
-    {
-      order: "100026",
-      type: "Incoming",
-      cs: "UrbanCare",
-      description: "Routine order",
-      status: "Partially Fulfilled",
-    },
-  ];
+  // === API STATE ===
+  const [rows, setRows] = useState<OrderRowItemPayload[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
 
-  // Options (static for now — API will replace them later)
+  // === FETCH ORDERS ===
+  useEffect(() => {
+    setLoading(true);
+
+    fetchOrders(page, pageSize)
+      .then((res) => {
+        setRows(res.results ?? []);
+        setTotal(res.total ?? 0);
+      })
+      .finally(() => setLoading(false));
+  }, [page]);
+
+  // Options (derived from API data — still UI-only)
   const uniqueTypes = ["All", ...new Set(rows.map((r) => r.type))];
   const uniqueStatuses = ["All", ...new Set(rows.map((r) => r.status))];
-  const uniqueCustomers = ["All", ...new Set(rows.map((r) => r.cs))];
-
-  // Total rows — no filtering applied
-  const total = rows.length;
+  const uniqueCustomers = ["All", ...new Set(rows.map((r) => r.cs_name))];
 
   return (
     <MDTable
@@ -63,13 +58,10 @@ export default function OrdersTable() {
       total={total}
       onPageChange={setPage}
     >
-
       {/* ================================================
           FILTER CONTROLS (UI only — not applied yet)
        ================================================= */}
       <tr className="border-b">
-
-        {/* ORDER SEARCH */}
         <th className="pr-4 pb-2 w-32">
           <input
             type="text"
@@ -80,7 +72,6 @@ export default function OrdersTable() {
           />
         </th>
 
-        {/* TYPE DROPDOWN */}
         <th className="px-2 pb-2">
           <select
             className="select select-bordered select-xs w-full"
@@ -93,7 +84,6 @@ export default function OrdersTable() {
           </select>
         </th>
 
-        {/* CUSTOMER DROPDOWN */}
         <th className="px-2 pb-2">
           <select
             className="select select-bordered select-xs w-full"
@@ -106,7 +96,6 @@ export default function OrdersTable() {
           </select>
         </th>
 
-        {/* DESCRIPTION SEARCH */}
         <th className="px-2 pb-2">
           <input
             type="text"
@@ -117,7 +106,6 @@ export default function OrdersTable() {
           />
         </th>
 
-        {/* STATUS DROPDOWN */}
         <th className="px-2 pb-2 w-40">
           <select
             className="select select-bordered select-xs w-full"
@@ -130,24 +118,25 @@ export default function OrdersTable() {
           </select>
         </th>
 
-        {/* DATES (EMPTY FOR NOW) */}
         <th></th>
         <th></th>
-
-        {/* EDIT COLUMN */}
         <th></th>
       </tr>
 
       {/* ================================================
-          TABLE ROWS (unfiltered — API will replace)
+          TABLE ROWS (API-backed)
        ================================================= */}
-      {rows.map((row, index) => (
-        <tr key={index} className="bg-white shadow-sm rounded-xl">
-          <td className="py-3 px-2 font-semibold">{row.order}</td>
+      {(rows ?? []).map((row) => (
+        <tr
+          key={row.id}
+          className="bg-white shadow-sm rounded-xl cursor-pointer hover:bg-slate-50"
+          onClick={() => navigate(`/orders/${row.id}`)}
+        >
+          <td className="py-3 px-2 font-semibold">{row.id}</td>
 
           {/* TYPE WITH ICON */}
           <td className="py-3 px-1 flex items-center gap-x-3">
-            {row.type === "Outgoing" ? (
+            {row.type === "outgoing" ? (
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="15"
@@ -182,7 +171,7 @@ export default function OrdersTable() {
             {row.type}
           </td>
 
-          <td className="py-3 px-2">{row.cs}</td>
+          <td className="py-3 px-2">{row.cs_name}</td>
           <td className="py-3 px-2">{row.description}</td>
 
           <td className="py-3 px-2">
@@ -199,10 +188,26 @@ export default function OrdersTable() {
             </span>
           </td>
 
-          <td className="py-3 px-2 text-gray-400 italic">—</td>
-          <td className="py-3 px-2 text-gray-400 italic">—</td>
+          <td className="py-3 px-2 text-gray-500">
+            {row.created_at
+              ? new Date(row.created_at).toLocaleDateString()
+              : "—"}
+          </td>
 
-          <td className="py-3 px-2 cursor-pointer hover:scale-110 transition">
+          <td className="py-3 px-2 text-gray-500">
+            {row.completed_at
+              ? new Date(row.completed_at).toLocaleDateString()
+              : "—"}
+          </td>
+
+          <td
+            className="py-3 px-2 cursor-pointer hover:scale-110 transition"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/orders/${row.id}`);
+            }}
+          >
+            {/* edit icon unchanged */}
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="20"
@@ -231,6 +236,14 @@ export default function OrdersTable() {
           </td>
         </tr>
       ))}
+
+      {loading && (
+        <tr>
+          <td colSpan={8} className="text-center py-6 text-gray-400">
+            Loading orders…
+          </td>
+        </tr>
+      )}
     </MDTable>
   );
 }

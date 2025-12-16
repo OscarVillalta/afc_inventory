@@ -3,10 +3,11 @@ from database.models import OrderStatus, OrderType
 
 class OrderSchema(Schema):
     id = fields.Int(dump_only=True)
-    qb_id = fields.Str(allow_none=True)
     order_number = fields.Str(required=True, validate=validate.Length(min=1))
-    customer = fields.Str(allow_none=True)
+    customer_id = fields.Int(allow_none=True)
+    supplier_id = fields.Int(allow_none=True)
     description = fields.Str(allow_none=True)
+
     
     type = fields.Str(
         required=True,
@@ -19,3 +20,4 @@ class OrderSchema(Schema):
     )
 
     created_at = fields.DateTime(dump_only=True)
+    completed_at = fields.DateTime(allow_none=True)

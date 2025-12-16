@@ -14,8 +14,8 @@ from database import Base
 # =====================================================
 
 class OrderType(str, Enum):
-    OUTGOING = "incoming"
-    INCOMING = "outgoing"
+    OUTGOING = "outgoing"
+    INCOMING = "incoming"
 
 class OrderStatus(str, Enum):
     PENDING = "Pending"
@@ -270,6 +270,7 @@ class Order(Base, SerializerMixin):
     description: Mapped[Optional[str]] = mapped_column()
     created_at: Mapped[datetime] = mapped_column(default=datetime.now(timezone.utc))
     completed_at: Mapped[datetime] = mapped_column(nullable=True)
+    eta: Mapped[datetime] = mapped_column(nullable=True)
 
     supplier: Mapped[Optional["Supplier"]] = relationship("Supplier")
     customer: Mapped[Optional["Customer"]] = relationship("Customer")
@@ -287,20 +288,35 @@ class Order(Base, SerializerMixin):
     )
 
     def update_status(self):
-        if not self.items:
+
+        if not self.sections:
             self.status = OrderStatus.PENDING.value
+            self.completed_at = None
             return
 
-        total_items = len(self.items)
-        complete = sum(1 for i in self.items if i.quantity_fulfilled >= i.quantity_ordered)
-        partial = sum(1 for i in self.items if 0 < i.quantity_fulfilled < i.quantity_ordered)
+        total_sections = len(self.sections)
 
-        if complete == total_items:
+        completed_sections = sum(
+            1 for s in self.sections
+            if s.status == OrderStatus.COMPLETED.value
+        )
+
+        partially_fulfilled_sections = sum(
+            1 for s in self.sections
+            if s.status == OrderStatus.PARTIALLY_FULFILLED.value
+        )
+
+        if completed_sections == total_sections:
             self.status = OrderStatus.COMPLETED.value
-        elif partial > 0:
+            self.completed_at = self.completed_at or datetime.now(timezone.utc)
+
+        elif completed_sections > 0 or partially_fulfilled_sections > 0:
             self.status = OrderStatus.PARTIALLY_FULFILLED.value
+            self.completed_at = None
+
         else:
             self.status = OrderStatus.PENDING.value
+            self.completed_at = None
 
 
 # =====================================================
@@ -350,7 +366,7 @@ class OrderSection(Base):
     title:Mapped[str] = mapped_column(String(100), nullable=False)
     description:Mapped[str] = mapped_column(String(255))
     sort_order:Mapped[int] = mapped_column(default=0)
-    status: Mapped[str] = mapped_column(nullable=False)
+    status: Mapped[str] = mapped_column(String, default=OrderStatus.PENDING.value, nullable=False)
 
     order = relationship("Order", back_populates="sections")
 
@@ -359,6 +375,30 @@ class OrderSection(Base):
         back_populates="section",
         cascade="all, delete-orphan"
     )
+
+    def update_status(self):
+        if not self.items:
+            self.status = OrderStatus.PENDING.value
+            return
+
+        total_items = len(self.items)
+
+        completed = sum(
+            1 for i in self.items
+            if i.quantity_fulfilled >= i.quantity_ordered
+        )
+
+        partial = sum(
+            1 for i in self.items
+            if 0 < i.quantity_fulfilled < i.quantity_ordered
+        )
+
+        if completed == total_items:
+            self.status = OrderStatus.COMPLETED.value
+        elif completed > 0 or partial > 0:
+            self.status = OrderStatus.PARTIALLY_FULFILLED.value
+        else:
+            self.status = OrderStatus.PENDING.value
 
 
 # =====================================================
@@ -403,8 +443,10 @@ class Transaction(Base, SerializerMixin):
             item = self.order_item
             item.quantity_fulfilled += self.quantity_delta
             item.quantity_fulfilled = max(0, min(item.quantity_fulfilled, item.quantity_ordered))
-            if item.order:
-                item.order.update_status()
+            if item.section:
+                item.section.update_status()
+                if item.section.order:
+                    item.section.order.update_status()
 
     def rollback(self, db, performed_by: Optional[str] = None):
         if self.state != TransactionState.COMMITTED.value:
@@ -427,8 +469,10 @@ class Transaction(Base, SerializerMixin):
             item = self.order_item
             item.quantity_fulfilled += reversed_txn.quantity_delta
             item.quantity_fulfilled = max(0, min(item.quantity_fulfilled, item.quantity_ordered))
-            if item.order:
-                item.order.update_status()
+            if item.section:
+                item.section.update_status()
+                if item.section.order:
+                    item.section.order.update_status()
 
         self.state = TransactionState.ROLLED_BACK.value
         db.add(reversed_txn)
