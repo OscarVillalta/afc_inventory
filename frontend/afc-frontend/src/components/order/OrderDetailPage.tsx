@@ -5,7 +5,7 @@ import MainLayout from "../../layouts/MainLayout";
 import OrderHeader from "./OrderHeader";
 import OrderMetaCard from "./OrderMetaCard";
 import OrderDescription from "./OrderDescription";
-import OrderSectionAccordion from "./OrderSectionAccordion";
+import OrderSectionAccordion from "./Sections/OrderSectionAccordion";
 
 import { fetchOrderById } from "../../api/ordersTable";
 import type { Customer } from "../../api/customers";
@@ -56,47 +56,60 @@ export default function OrderDetailPage() {
   const [sectionsLoading, setSectionsLoading] = useState(true);
 
   function handleTypeChange(newType: OrderType) {
-  setOrder((prev) =>
-    prev
-      ? {
-          ...prev,
-          type: newType,
-        }
-      : prev
-  );
+    setOrder((prev) =>
+      prev
+        ? {
+            ...prev,
+            type: newType,
+          }
+        : prev
+    );
 
   // 🔑 Clear entity selection when type flips
   setSelectedEntityId(null);
   }
 
-async function handleSave() {
-  if (!order || !orderId) return;
-  if (!selectedEntityId) {
-    setSaveError("Customer / Supplier is required.");
-    return;
+  async function handleSave() {
+    if (!order || !orderId) return;
+    if (!selectedEntityId) {
+      setSaveError("Customer / Supplier is required.");
+      return;
+    }
+
+
+    setSaving(true);
+    setSaveError(null);
+
+    try {
+      const updated = await patchOrder(orderId, {
+        type: order.type,
+        cs_id: selectedEntityId,
+        description: order.description,
+        created_at: order.created_at,
+        eta: order.eta ?? null,
+      });
+
+      // Update local state with server truth
+      setOrder(updated);
+      setSelectedEntityId(updated.cs_id ?? null);
+    } catch (err) {
+      setSaveError("Failed to save order changes.");
+    } finally {
+      setSaving(false);
+    }
   }
 
-  setSaving(true);
-  setSaveError(null);
+  /* ===================== Handle Loading ===================== */
 
-  try {
-    const updated = await patchOrder(orderId, {
-      type: order.type,
-      cs_id: selectedEntityId,
-      description: order.description,
-      created_at: order.created_at,
-      eta: order.eta ?? null,
-    });
-
-    // Update local state with server truth
-    setOrder(updated);
-    setSelectedEntityId(updated.cs_id ?? null);
-  } catch (err) {
-    setSaveError("Failed to save order changes.");
-  } finally {
-    setSaving(false);
+  async function loadSections() {
+    if (!orderId) return;
+    const data = await fetchOrderSections(orderId);
+    setSections(data);
   }
-}
+
+  useEffect(() => {
+    loadSections();
+  }, [orderId]);
 
   /* ===================== FETCH ORDER ===================== */
 
@@ -133,6 +146,7 @@ async function handleSave() {
       .then(setSuppliers)
       .catch(() => console.error("Failed to load suppliers"));
   }, []);
+
 
   /* ===================== FETCH Sections ===================== */
 
@@ -204,12 +218,13 @@ async function handleSave() {
 
           {sectionsLoading ? (
               <div className="p-4 text-gray-400">Loading sections…</div>
-            ) : sections.length === 0 ? (
-              <div className="p-4 text-gray-400 italic">
-                No sections yet
-              </div>
             ) : (
-              <OrderSectionAccordion sections={sections} type={order.type} />
+              <OrderSectionAccordion
+                orderId={order.id}
+                sections={sections}
+                onRefresh={loadSections}
+                orderType={order.type}
+              />
             )}
         </div>
 

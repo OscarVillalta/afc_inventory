@@ -18,31 +18,69 @@ def get_order_item(item_id):
 
     return jsonify(item_schema.dump(item)), 200
 
-# 🔹 POST: Create new order item
 @order_item_bp.route("/order_items", methods=["POST"])
 def create_order_item():
     db = g.db
-    try:
-        data = item_schema.load(request.get_json())
-    except ValidationError as err:
-        return jsonify({"errors": err.messages}), 400
+    json_data = request.get_json() or {}
 
-    order_section = db.get(OrderSection, data["order_section_id"])
-    if not order_section:
-        return jsonify({"error": "Invalid order_section_id "}), 400
+    # ----------------------------
+    # 1️⃣ Validate via Marshmallow
+    # ----------------------------
+    try:
+        data = item_schema.load(json_data)
+    except ValidationError as err:
+        return jsonify(err.messages), 400
+
+    # ----------------------------
+    # 2️⃣ Business integrity checks
+    # ----------------------------
+    order = db.get(Order, data["order_id"])
+    if not order:
+        return jsonify({"error": "Order not found"}), 404
+
+    section = db.get(OrderSection, data["section_id"])
+    if not section or section.order_id != order.id:
+        return jsonify({
+            "error": "Order section not found or does not belong to order"
+        }), 400
+
     product = db.get(Product, data["product_id"])
     if not product:
-        return jsonify({"error": "Invalid product_id"}), 400
+        return jsonify({"error": "Product not found"}), 404
 
-    # Create and link item
-    item = OrderItem.from_dict(data)
+    # ----------------------------
+    # 3️⃣ Create OrderItem
+    # ----------------------------
+    item = OrderItem(
+        order_id=order.id,
+        section_id=section.id,
+        product_id=product.id,
+        quantity_ordered=data["quantity_ordered"],
+        quantity_fulfilled=0,
+        note=data.get("note"),
+    )
+
+    existing = (
+        db.query(OrderItem)
+        .filter_by(
+            section_id=section.id,
+            product_id=product.id
+        )
+        .first()
+    )   
+
+    if existing:
+        return jsonify({
+            "error": "Product already exists in this section"
+        }), 400
+
     db.add(item)
     db.commit()
 
-    return jsonify({
-        "message": "Order item added successfully.",
-        "item": item_schema.dump(item)
-    }), 201
+    # ----------------------------
+    # 4️⃣ Return serialized result
+    # ----------------------------
+    return jsonify(item_schema.dump(item)), 201
 
 # 🔹 PATCH: Update general info (quantity/note)
 @order_item_bp.route("/order_items/<int:item_id>", methods=["PATCH"])

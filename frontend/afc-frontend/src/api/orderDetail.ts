@@ -64,3 +64,31 @@ export function commitTransaction(transactionId: number) {
   });
 }
 
+export function createOrderItem(payload: {
+  order_id: number;
+  section_id: number;
+  product_id: number;
+  quantity_ordered: number;
+  note?: string;
+
+  
+}) {
+  console.log(JSON.stringify(payload))
+  return apiRequest("/order_items", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function createOrderSection(payload: {
+  order_id: number;
+  title: string;
+  description?: string;
+}) {
+  console.log(JSON.stringify(payload))
+  return apiRequest("/order_sections", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+

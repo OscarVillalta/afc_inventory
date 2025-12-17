@@ -114,3 +114,42 @@ def archive_product(id):
 @product_bp.route("/products/<int:id>", methods=["DELETE"])
 def delete_product(id):
     return jsonify({"error": "Products cannot be deleted. Archive instead."}), 409
+
+# =====================================================
+# 🔹 GET all product names (for searches and such)
+# =====================================================
+@product_bp.route("/products/names", methods=["GET"])
+def get_products_names():
+    db = g.db
+
+    # Use selectinload to minimize round-trips
+    results = db.execute(
+        select(Product)
+        .options(
+            selectinload(Product.category),
+            selectinload(Product.quantity),
+            selectinload(Product.air_filter).selectinload(AirFilter.supplier),
+            selectinload(Product.misc_item).selectinload(MiscItem.supplier)
+        )
+    ).scalars().all()
+
+    response = []
+    for p in results:
+        category = p.category.name if p.category else "Unknown"
+        quantity = p.quantity.to_dict() if p.quantity else {}
+
+        # --- Determine which subtable applies ---
+        if p.air_filter:
+            details = p.air_filter.to_dict()["part_number"]
+        elif p.misc_item:
+            details = p.misc_item.to_dict()["name"]
+        else:
+            details = {}
+
+        response.append({
+            "id": p.id,
+            "category": category,
+            "part_number": details,
+        })
+
+    return jsonify(response), 200

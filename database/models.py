@@ -373,7 +373,7 @@ class OrderSection(Base):
     order_id:Mapped[int] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"))
 
     title:Mapped[str] = mapped_column(String(100), nullable=False)
-    description:Mapped[str] = mapped_column(String(255))
+    description:Mapped[str] = mapped_column(String(255), nullable=True)
     sort_order:Mapped[int] = mapped_column(default=0)
     status: Mapped[str] = mapped_column(String, default=OrderStatus.PENDING.value, nullable=False)
 

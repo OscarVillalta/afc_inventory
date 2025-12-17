@@ -2,19 +2,19 @@ import { useState } from "react";
 import type {
   OrderItemPayload,
   OrderItemTransaction,
-} from "../../api/orderDetail";
+} from "../../../api/orderDetail";
 import {
   fetchOrderItemTransactions,
   createOrderItemTransaction,
   commitTransaction,
-} from "../../api/orderDetail";
+} from "../../../api/orderDetail";
 
 interface Props {
   item: OrderItemPayload;
-  order_type: "incoming" | "outgoing";
+  orderType: "incoming" | "outgoing";
 }
 
-export default function OrderItemRow({ item, order_type }: Props) {
+export default function OrderItemRow({ item, orderType }: Props) {
   const [expanded, setExpanded] = useState(false);
 
   const remaining = item.quantity_ordered - item.quantity_fulfilled;
@@ -62,7 +62,7 @@ export default function OrderItemRow({ item, order_type }: Props) {
     setSubmitting(true);
     setError(null);
 
-    const isOutgoing = order_type === "outgoing";
+    const isOutgoing = orderType === "outgoing";
 
     try {
       await createOrderItemTransaction({
@@ -110,7 +110,7 @@ export default function OrderItemRow({ item, order_type }: Props) {
           if (next) await loadTransactions();
         }}
       >
-        <td className="px-3 py-3 font-semibold">
+        <td className="pl-7 px-3 py-3 font-semibold">
           {item.part_number}
         </td>
         <td className="px-3 py-3">{item.quantity_ordered}</td>
@@ -128,7 +128,7 @@ export default function OrderItemRow({ item, order_type }: Props) {
             {remaining > 0 && (
               <div className="flex items-center gap-3">
                 <span className="text-sm text-gray-500">
-                  {order_type === "outgoing"
+                  {orderType === "outgoing"
                     ? "Reserve Qty:"
                     : "Mark Ordered:"}
                 </span>

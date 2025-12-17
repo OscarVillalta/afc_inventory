@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import MDTable from "../table/MDtable";
+import MDTable from "../../table/MDtable";
 import type {
   OrderRowItemPayload,
-} from "../../api/ordersTable";
-import { fetchOrders } from "../../api/ordersTable"
+} from "../../../api/ordersTable";
+import { fetchOrders } from "../../../api/ordersTable"
 import { useNavigate } from 'react-router-dom'
 
 function formatUTCDate(iso: string) {

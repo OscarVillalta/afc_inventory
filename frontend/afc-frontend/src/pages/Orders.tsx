@@ -1,6 +1,6 @@
 import { useState } from "react";
 import MainLayout from "../layouts/MainLayout";
-import OrdersTable from "../components/order/OrdersTable";
+import OrdersTable from "../components/order/Table/OrdersTable";
 import { useNavigate } from 'react-router-dom'
 
 export default function OrdersPage() {
