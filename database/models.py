@@ -3,7 +3,7 @@ from typing import List, Optional
 from datetime import datetime, timezone
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship, foreign
-from sqlalchemy import ForeignKey, String, Integer, Numeric, Boolean
+from sqlalchemy import ForeignKey, String, Integer, Numeric, Boolean, Index
 from sqlalchemy.inspection import inspect
 
 from database import Base
@@ -32,6 +32,7 @@ class TransactionState(str, Enum):
 
 class TransactionReason(str, Enum):
     SHIPMENT = "shipment"
+    ORDER = "ordered"
     RECEIVE = "receive"
     ADJUSTMENT = "adjustment"
     ROLLBACK = "rollback"
@@ -353,6 +354,14 @@ class OrderItem(Base, SerializerMixin):
     def remaining(self) -> int:
         return max(self.quantity_ordered - self.quantity_fulfilled, 0)
     
+    @property
+    def status(self) -> str:
+        if self.quantity_fulfilled == 0:
+            return "Pending"
+        if self.quantity_fulfilled < self.quantity_ordered:
+            return "Partially Fulfilled"
+        return "Completed"
+    
 # =====================================================
 # 🔹 Order Sections
 # =====================================================
@@ -441,6 +450,8 @@ class Transaction(Base, SerializerMixin):
 
         if self.order_item:
             item = self.order_item
+            if abs(self.quantity_delta) > item.remaining:
+                raise ValueError("Cannot fulfill more than remaining quantity.")
             item.quantity_fulfilled += self.quantity_delta
             item.quantity_fulfilled = max(0, min(item.quantity_fulfilled, item.quantity_ordered))
             if item.section:
@@ -481,3 +492,13 @@ class Transaction(Base, SerializerMixin):
     def cancel(self):
         if self.state == TransactionState.PENDING.value:
             self.state = TransactionState.CANCELLED.value
+
+# =====================================================
+# 🔹 Indexes
+# =====================================================
+
+Index("ix_transactions_order_id", Transaction.order_id)
+Index("ix_transactions_order_item_id", Transaction.order_item_id)
+Index("ix_transactions_product_id", Transaction.product_id)
+Index("ix_transactions_state", Transaction.state)
+Index("ix_transactions_created_at", Transaction.created_at)

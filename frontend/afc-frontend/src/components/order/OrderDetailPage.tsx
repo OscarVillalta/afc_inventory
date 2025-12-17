@@ -5,14 +5,17 @@ import MainLayout from "../../layouts/MainLayout";
 import OrderHeader from "./OrderHeader";
 import OrderMetaCard from "./OrderMetaCard";
 import OrderDescription from "./OrderDescription";
+import OrderSectionAccordion from "./OrderSectionAccordion";
 
-import { fetchOrderById } from "../../api/orders";
+import { fetchOrderById } from "../../api/ordersTable";
 import type { Customer } from "../../api/customers";
 import { fetchCustomers } from "../../api/customers";
 import type { Supplier } from "../../api/suppliers";
 import { fetchSuppliers } from "../../api/suppliers";
 
-import { patchOrder } from "../../api/orders";
+import { patchOrder } from "../../api/ordersTable";
+import type { OrderSectionPayload } from "../../api/orderDetail";
+import { fetchOrderSections } from "../../api/orderDetail";
 
 
 /* ===================== TYPES ===================== */
@@ -49,6 +52,9 @@ export default function OrderDetailPage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  const [sections, setSections] = useState<OrderSectionPayload[]>([]);
+  const [sectionsLoading, setSectionsLoading] = useState(true);
+
   function handleTypeChange(newType: OrderType) {
   setOrder((prev) =>
     prev
@@ -61,7 +67,7 @@ export default function OrderDetailPage() {
 
   // 🔑 Clear entity selection when type flips
   setSelectedEntityId(null);
-}
+  }
 
 async function handleSave() {
   if (!order || !orderId) return;
@@ -128,6 +134,19 @@ async function handleSave() {
       .catch(() => console.error("Failed to load suppliers"));
   }, []);
 
+  /* ===================== FETCH Sections ===================== */
+
+  useEffect(() => {
+    if (!orderId) return;
+
+    setSectionsLoading(true);
+
+    fetchOrderSections(orderId)
+      .then(setSections)
+      .catch(() => console.error("Failed to load sections"))
+      .finally(() => setSectionsLoading(false));
+  }, [orderId]);
+
   /* ===================== STATES ===================== */
 
   if (loading) {
@@ -182,6 +201,16 @@ async function handleSave() {
               }
             />
           </div>
+
+          {sectionsLoading ? (
+              <div className="p-4 text-gray-400">Loading sections…</div>
+            ) : sections.length === 0 ? (
+              <div className="p-4 text-gray-400 italic">
+                No sections yet
+              </div>
+            ) : (
+              <OrderSectionAccordion sections={sections} type={order.type} />
+            )}
         </div>
 
         {/* RIGHT COLUMN */}

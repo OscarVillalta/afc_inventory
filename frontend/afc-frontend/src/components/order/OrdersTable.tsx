@@ -2,9 +2,14 @@ import React, { useEffect, useState } from "react";
 import MDTable from "../table/MDtable";
 import type {
   OrderRowItemPayload,
-} from "../../api/orders";
-import { fetchOrders } from "../../api/orders"
+} from "../../api/ordersTable";
+import { fetchOrders } from "../../api/ordersTable"
 import { useNavigate } from 'react-router-dom'
+
+function formatUTCDate(iso: string) {
+  const d = new Date(iso);
+  return d.toLocaleDateString("en-US", { timeZone: "UTC" });
+}
 
 export default function OrdersTable() {
   const navigate = useNavigate()
@@ -190,7 +195,7 @@ export default function OrdersTable() {
 
           <td className="py-3 px-2 text-gray-500">
             {row.created_at
-              ? new Date(row.created_at).toLocaleDateString()
+              ? formatUTCDate(row.created_at)
               : "—"}
           </td>
 

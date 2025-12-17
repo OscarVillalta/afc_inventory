@@ -1,7 +1,7 @@
 from flask import Blueprint, g, jsonify, request
 from sqlalchemy import select, func
 from app.api.Schemas.order_item_schema import OrderItemSchema
-from database.models import OrderItem, Order, Product, Transaction, OrderSection
+from database.models import OrderItem, Order, Product, Transaction, OrderSection, TransactionState, OrderType
 from marshmallow import ValidationError
 
 order_item_bp = Blueprint("order_items", __name__)
@@ -254,3 +254,120 @@ def delete_order_item(id):
     db.commit()
 
     return jsonify({"message": "Order item deleted successfully"}), 200
+
+@order_item_bp.route("/order_items/<int:item_id>/transactions", methods=["GET"])
+def get_order_item_transactions(item_id):
+    db = g.db
+    item = db.get(OrderItem, item_id)
+
+    if not item:
+        return jsonify({"error": "Order item not found"}), 404
+
+    txns = (
+        db.query(Transaction)
+        .filter(Transaction.order_item_id == item.id)
+        .order_by(Transaction.created_at.desc())
+        .all()
+    )
+
+    return jsonify([
+        {
+            "id": t.id,
+            "quantity_delta": t.quantity_delta,
+            "reason": t.reason,
+            "state": t.state,
+            "note": t.note,
+            "created_at": t.created_at.isoformat(),
+        }
+        for t in txns
+    ]), 200
+
+@order_item_bp.route(
+    "/order-items/<int:order_item_id>/transactions",
+    methods=["POST"]
+)
+def create_order_item_transaction(order_item_id):
+    db = g.db
+    data = request.get_json() or {}
+
+    # -------------------------
+    # Required fields
+    # -------------------------
+    quantity = data.get("quantity")
+    reason = data.get("reason")
+    note = data.get("note")
+
+    if not quantity or quantity <= 0:
+        return jsonify({
+            "error": "quantity must be a positive number"
+        }), 400
+
+    if not reason:
+        return jsonify({
+            "error": "reason is required"
+        }), 400
+
+    # -------------------------
+    # Load order item
+    # -------------------------
+    item = db.get(OrderItem, order_item_id)
+    if not item:
+        return jsonify({"error": "Order item not found"}), 404
+
+    order = item.order
+    product = item.product
+
+    if not product or not product.quantity:
+        return jsonify({
+            "error": "Product or quantity record missing"
+        }), 400
+
+    qty = product.quantity
+    remaining = item.quantity_ordered - item.quantity_fulfilled
+
+    if quantity > remaining:
+        return jsonify({
+            "error": "Quantity exceeds remaining order item amount"
+        }), 400
+
+    # -------------------------
+    # Create PENDING transaction
+    # -------------------------
+    txn = Transaction(
+        product_id=product.id,
+        order_id=order.id,
+        order_item_id=item.id,
+        quantity_delta=quantity,
+        reason=reason,
+        note=note,
+        state=TransactionState.PENDING.value,
+    )
+
+    # -------------------------
+    # Apply PENDING inventory effects
+    # -------------------------
+    if order.type == OrderType.OUTGOING.value:
+        # Reserve stock
+        if qty.on_hand < quantity:
+            return jsonify({
+                "error": "Insufficient on-hand stock to reserve"
+            }), 400
+
+        qty.reserved += quantity
+
+    elif order.type == OrderType.INCOMING.value:
+        # Mark as ordered
+        qty.ordered += quantity
+
+    db.add(txn)
+    db.commit()
+
+    return jsonify({
+        "id": txn.id,
+        "state": txn.state,
+        "quantity": quantity,
+        "reason": txn.reason,
+        "note": txn.note,
+        "created_at": txn.created_at.isoformat(),
+    }), 201
+

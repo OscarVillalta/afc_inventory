@@ -38,14 +38,39 @@ def create_order_section():
 @order_section_bp.route("/orders/<int:order_id>/sections", methods=["GET"])
 def get_order_sections(order_id):
     db = g.db
+    order = db.get(Order, order_id)
 
-    sections = db.execute(
-        select(OrderSection)
-        .where(OrderSection.order_id == order_id)
-        .order_by(OrderSection.sort_order)
-    ).scalars().all()
+    if not order:
+        return jsonify({"error": "Order not found"}), 404
 
-    return jsonify(section_schema_many.dump(sections)), 200
+    sections = []
+    for section in sorted(order.sections, key=lambda s: s.sort_order):
+        sections.append({
+            "id": section.id,
+            "title": section.title,
+            "description": section.description,
+            "sort_order": section.sort_order,
+            "status": section.status,
+            "items": [
+                {
+                    "id": item.id,
+                    "product_id": item.product.id,
+                    "status": item.status,
+                    "part_number": (
+                        item.product.air_filter.part_number
+                        if item.product.air_filter
+                        else item.product.misc_item.name
+                    ),
+                    "quantity_ordered": item.quantity_ordered,
+                    "quantity_fulfilled": item.quantity_fulfilled,
+                    "note": item.note,
+                }
+                for item in section.items
+            ],
+        })
+
+    return jsonify(sections), 200
+
 
 @order_section_bp.route("/order_sections/<int:section_id>", methods=["GET"])
 def get_order_section(section_id):

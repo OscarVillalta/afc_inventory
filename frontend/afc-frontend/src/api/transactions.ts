@@ -15,3 +15,19 @@ export function autocommitTxn(data: createTxnRequest): Promise<createTxnRequest>
     body: JSON.stringify(data),
   });
 }
+
+export function createItemFulfillmentTxn(payload: {
+  product_id: number;
+  order_id: number;
+  order_item_id: number;
+  quantity_delta: number;
+  note?: string;
+}) {
+  return apiRequest("/transactions?auto_commit=true", {
+    method: "POST",
+    body: JSON.stringify({
+      ...payload,
+      reason: "shipment",
+    }),
+  });
+}

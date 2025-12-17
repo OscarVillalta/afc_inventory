@@ -1,11 +1,12 @@
 import OrderItemRow from "./OrderItemRow";
-import type { OrderSection } from "../../mock/types"
+import type { OrderSectionPayload } from "../../api/orderDetail";
 
 interface Props {
-  sections: OrderSection[];
+  sections: OrderSectionPayload[];
+  type : "incoming" | "outgoing";
 }
 
-export default function OrderSectionAccordion({ sections }: Props) {
+export default function OrderSectionAccordion({ sections, type }: Props) {
   return (
     <div className="space-y-4">
       {sections.map((section) => (
@@ -34,7 +35,7 @@ export default function OrderSectionAccordion({ sections }: Props) {
 
               <tbody>
                 {section.items.map((item) => (
-                    <OrderItemRow key={item.id} item={item} />
+                    <OrderItemRow key={item.id} item={item} order_type={type}/>
                 ))}
               </tbody>
             </table>
