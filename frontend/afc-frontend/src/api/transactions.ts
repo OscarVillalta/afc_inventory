@@ -10,6 +10,9 @@ export interface createTxnRequest {
 }
 
 export function autocommitTxn(data: createTxnRequest): Promise<createTxnRequest> {
+  console.log(JSON.stringify({
+      ...data,
+    }))
   return apiRequest(`/transactions?auto_commit=true`,{
     method: "POST",
     body: JSON.stringify(data),
@@ -23,11 +26,13 @@ export function createItemFulfillmentTxn(payload: {
   quantity_delta: number;
   note?: string;
 }) {
+  console.log(JSON.stringify({
+      ...payload,
+    }))
   return apiRequest("/transactions?auto_commit=true", {
     method: "POST",
     body: JSON.stringify({
       ...payload,
-      reason: "shipment",
     }),
   });
 }

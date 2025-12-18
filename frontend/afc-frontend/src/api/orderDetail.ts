@@ -92,3 +92,15 @@ export function createOrderSection(payload: {
   });
 }
 
+export function deleteOrderSection(sectionId: number) {
+  return apiRequest(`/order_sections/${sectionId}`, {
+    method: "DELETE",
+  });
+}
+
+export function deleteOrderItem(itemId: number) {
+  return apiRequest(`/order_items/${itemId}`, {
+    method: "DELETE",
+  });
+}
+

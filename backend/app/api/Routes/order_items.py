@@ -270,29 +270,6 @@ def commit_all_order_item_txns(item_id):
         return jsonify({"error": f"Unexpected error: {str(e)}"}), 500
 
 
-@order_item_bp.route("/order_items/<int:id>", methods=["DELETE"])
-def delete_order_item(id):
-    db = g.db
-    item = db.get(OrderItem, id)
-
-    if not item:
-        return jsonify({"error": "Order item not found"}), 404
-
-    if item.transactions:
-        return jsonify({
-            "error": "Order item has allocation or transaction history. Cannot delete."
-        }), 409
-
-    if item.quantity_fulfilled != 0:
-        return jsonify({
-            "error": "Order item has fulfillment history. Cannot delete."
-        }), 409
-
-    db.delete(item)
-    db.commit()
-
-    return jsonify({"message": "Order item deleted successfully"}), 200
-
 @order_item_bp.route("/order_items/<int:item_id>/transactions", methods=["GET"])
 def get_order_item_transactions(item_id):
     db = g.db
@@ -408,4 +385,23 @@ def create_order_item_transaction(order_item_id):
         "note": txn.note,
         "created_at": txn.created_at.isoformat(),
     }), 201
+
+@order_item_bp.route("/order_items/<int:item_id>", methods=["DELETE"])
+def delete_order_item(item_id):
+    db = g.db
+    item = db.get(OrderItem, item_id)
+
+    if not item:
+        return jsonify({"error": "Item not found"}), 404
+
+    if item.transactions and len(item.transactions) > 0:
+        return jsonify({
+            "error": "Cannot delete item with transactions."
+        }), 400
+
+    db.delete(item)
+    db.commit()
+
+    return jsonify({"success": True}), 200
+
 

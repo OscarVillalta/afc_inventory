@@ -1,15 +1,18 @@
 import { useEffect, useState } from "react";
 import MDTable from "../table/MDtable";
 import { fetchAirFilters } from "../../api/airfilters";
-import type { AirFilterResponse } from "../../api/airfilters";
+import type { AirFilterResponse, AirFilterPayload } from "../../api/airfilters";
 import { autocommitTxn } from "../../api/transactions";
 import type { createTxnRequest } from "../../api/transactions";
 
-/* ===================== TYPES ===================== */
+/* ============================================================
+   TYPES
+============================================================ */
 
 interface EditFormState {
   id: number;
   part_number: string;
+  product_id: number;
   supplier_name: string;
   filter_category: string;
   height: number;
@@ -21,43 +24,70 @@ interface EditFormState {
   reserved: number;
 }
 
-/* ===================== COMPONENT ===================== */
+/* ============================================================
+   COMPONENT
+============================================================ */
 
 export default function AirFiltersTable() {
-  const [filters, setFilters] = useState<AirFilterResponse>();
   const [page, setPage] = useState(1);
+  const pageSize = 12;
 
-  /* Modal state */
+  const [data, setData] = useState<AirFilterResponse>();
+  const [loading, setLoading] = useState(false);
+
+  /* ===================== FILTER STATE ===================== */
+  const [searchPart, setSearchPart] = useState("");
+  const [filterSupplier, setFilterSupplier] = useState("");
+  const [filterCategory, setFilterCategory] = useState("");
+  const [filterMerv, setFilterMerv] = useState<number | "">("");
+  const [filterHeight, setFilterHeight] = useState<number | "">("");
+  const [filterWidth, setFilterWidth] = useState<number | "">("");
+  const [filterDepth, setFilterDepth] = useState<number | "">("");
+
+
+  /* ===================== EDIT MODAL ===================== */
   const [openEdit, setOpenEdit] = useState(false);
   const [editRow, setEditRow] = useState<EditFormState | null>(null);
-  const [originalOnHand, setOriginalOnHand] = useState<number>(0);
+  const [originalOnHand, setOriginalOnHand] = useState(0);
 
-  /* Transaction fields */
   const [reason, setReason] = useState("");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
 
   const REASONS = ["shipment", "receive", "adjustment", "rollback"];
 
-  /* ===================== DATA LOAD ===================== */
+  /* ===================== LOAD DATA (SERVER-SIDE FILTERING) ===================== */
 
   const loadData = () => {
-    fetchAirFilters(page, 25).then((data) => {
-      setFilters(data);
-    });
+    setLoading(true);
+
+    fetchAirFilters(page, pageSize, {
+        part_number: searchPart || undefined,
+        supplier: filterSupplier || undefined,
+        category: filterCategory || undefined,
+        merv: filterMerv || undefined,
+        height: filterHeight || undefined,
+        width: filterWidth || undefined,
+        depth: filterDepth || undefined,
+      })
+      .then((res) => setData(res))
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => {
     loadData();
-  }, [page]);
+  }, [page, searchPart, filterSupplier, filterCategory, filterMerv, filterHeight, filterWidth, filterDepth]);
 
-  /* ===================== MODAL HANDLERS ===================== */
+  const rows: AirFilterPayload[] = data?.results ?? [];
 
-  const handleEdit = (row: any) => {
+  /* ===================== EDIT HANDLERS ===================== */
+
+  const handleEdit = (row: AirFilterPayload) => {
     setEditRow({
       id: row.id,
+      product_id: row.product_id,
       part_number: row.part_number,
-      supplier_name: row.supplier_name,
+      supplier_name: row.supplier_name ?? "—",
       filter_category: row.filter_category,
       height: row.height,
       width: row.width,
@@ -79,25 +109,15 @@ export default function AirFiltersTable() {
     setEditRow(null);
   };
 
-  /* ===================== SAVE TRANSACTION ===================== */
-
   const handleSave = async () => {
     if (!editRow) return;
 
     const delta = editRow.on_hand - originalOnHand;
-
-    if (delta === 0) {
-      alert("No quantity change detected.");
-      return;
-    }
-
-    if (!reason) {
-      alert("Please select a reason.");
-      return;
-    }
+    if (delta === 0) return alert("No quantity change detected.");
+    if (!reason) return alert("Please select a reason.");
 
     const payload: createTxnRequest = {
-      product_id: editRow.id,
+      product_id: editRow.product_id,
       quantity_delta: delta,
       reason,
       note: notes,
@@ -107,9 +127,8 @@ export default function AirFiltersTable() {
       setSaving(true);
       await autocommitTxn(payload);
       closeModal();
-      loadData(); // refresh table
-    } catch (err) {
-      console.error(err);
+      loadData();
+    } catch {
       alert("Failed to save transaction.");
     } finally {
       setSaving(false);
@@ -120,6 +139,7 @@ export default function AirFiltersTable() {
 
   return (
     <div>
+
       <MDTable
         title="Air Filters"
         columns={[
@@ -131,38 +151,189 @@ export default function AirFiltersTable() {
           "On Hand",
           "Ordered",
           "Reserved",
-          "Edit",
+          "Available",
+          "Backordered",
+          "",
         ]}
         page={page}
-        pageSize={filters?.limit ?? 25}
-        total={filters?.total ?? 0}
+        pageSize={pageSize}
+        total={data?.total ?? 0}
         onPageChange={setPage}
       >
-        {filters?.results.map((row) => (
+        {/* ================= FILTER ROW (SERVER-DRIVEN) ================= */}
+        <tr className="border-b">
+          <th className="pr-3 pb-2">
+            <input
+              className="input input-bordered input-xs w-full"
+              placeholder="Search..."
+              value={searchPart}
+              onChange={(e) => {
+                setPage(1);
+                setSearchPart(e.target.value);
+              }}
+            />
+          </th>
+
+          <th className="pb-2 pr-3">
+            <input
+              className="input input-bordered input-xs w-full"
+              placeholder="Supplier..."
+              value={filterSupplier}
+              onChange={(e) => {
+                setPage(1);
+                setFilterSupplier(e.target.value);
+              }}
+            />
+          </th>
+
+          <th className="pb-2 pr-3 w-1/12">
+            <input
+              className="input input-bordered input-xs w-full"
+              placeholder="Category..."
+              value={filterCategory}
+              onChange={(e) => {
+                setPage(1);
+                setFilterCategory(e.target.value);
+              }}
+            />
+          </th>
+
+          <th className="pr-2 pb-2 w-1/8">
+            <div className="flex items-center gap-1">
+              <input
+                type="number"
+                placeholder="H"
+                className="input input-bordered input-xs w-14 text-center"
+                value={filterHeight}
+                onChange={(e) => {
+                  setPage(1);
+                  setFilterHeight(e.target.value ? Number(e.target.value) : "");
+                }}
+              />
+
+              <span className="text-gray-400 text-xs">×</span>
+
+              <input
+                type="number"
+                placeholder="W"
+                className="input input-bordered input-xs w-14 text-center"
+                value={filterWidth}
+                onChange={(e) => {
+                  setPage(1);
+                  setFilterWidth(e.target.value ? Number(e.target.value) : "");
+                }}
+              />
+
+              <span className="text-gray-400 text-xs">×</span>
+
+              <input
+                type="number"
+                placeholder="D"
+                className="input input-bordered input-xs w-14 text-center"
+                value={filterDepth}
+                onChange={(e) => {
+                  setPage(1);
+                  setFilterDepth(e.target.value ? Number(e.target.value) : "");
+                }}
+              />
+            </div>
+          </th>
+
+          <th className="pb-2 w-1/22">
+            <input
+              className="input input-bordered input-xs self-start"
+              placeholder="MERV..."
+              value={filterMerv}
+              onChange={(e) => {
+                setPage(1);
+                setFilterMerv(e.target.value ? Number(e.target.value) : "");
+              }}
+            />
+          </th>
+
+          <th colSpan={6}></th>
+        </tr>
+
+        {/* ================= DATA ROWS ================= */}
+        {rows.map((row) => (
           <tr key={row.id} className="bg-white shadow-sm rounded-xl">
             <td className="py-3 px-2 font-semibold">{row.part_number}</td>
             <td className="py-3 px-2">{row.supplier_name ?? "—"}</td>
-            <td className="py-3 px-2">{row.filter_category ?? "—"}</td>
-            <td className="py-3 px-2">
+            <td className="py-3 px-2">{row.filter_category}</td>
+            <td className="py-3 px-2 text-center">
               {row.height} x {row.width} x {row.depth}
             </td>
             <td className="py-3 px-2">{row.merv_rating}</td>
             <td className="py-3 px-2">{row.on_hand}</td>
             <td className="py-3 px-2">{row.ordered}</td>
             <td className="py-3 px-2">{row.reserved}</td>
+
+            <td
+              className={`py-3 px-2 font-medium ${
+                row.available > 0 ? "text-green-600" : "text-gray-400"
+              }`}
+            >
+              {row.available}
+            </td>
+
+            <td className="py-3 px-2">
+              {row.backordered > 0 ? (
+                <span className="px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-700 font-semibold">
+                  {row.backordered}
+                </span>
+              ) : (
+                <span className="text-gray-400">—</span>
+              )}
+            </td>
+
             <td
               className="py-3 px-2 cursor-pointer hover:scale-110 transition"
-              onClick={() => handleEdit(row)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEdit(row)
+              }}
             >
-              ✏️
+              {/* edit icon unchanged */}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="25"
+                viewBox="0 0 48 48"
+                fill="none"
+              >
+                <rect width="48" height="48" fill="white" fillOpacity="0.01" />
+                <path
+                  d="M29 4H9C7.9 4 7 4.9 7 6V42C7 43.1 7.9 44 9 44H37C38.1 44 39 43.1 39 42V20"
+                  stroke="#000"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path d="M13 18H21" stroke="#000" strokeWidth="4" strokeLinecap="round" />
+                <path d="M13 28H25" stroke="#000" strokeWidth="4" strokeLinecap="round" />
+                <path
+                  d="M41 6L29 18"
+                  stroke="#000"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </td>
           </tr>
         ))}
+
+        {loading && (
+          <tr>
+            <td colSpan={11} className="text-center py-6 text-gray-400">
+              Loading air filters…
+            </td>
+          </tr>
+        )}
       </MDTable>
 
-      {/* ===================== EDIT MODAL ===================== */}
       {openEdit && editRow && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-40">
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-40">
           <div className="bg-white w-[600px] rounded-xl shadow-xl p-6">
 
             {/* Header */}
@@ -211,6 +382,7 @@ export default function AirFiltersTable() {
                 type="number"
                 className="input input-bordered w-full mt-1"
                 value={editRow.on_hand}
+                min={0}
                 onChange={(e) =>
                   setEditRow({
                     ...editRow,
@@ -239,7 +411,9 @@ export default function AirFiltersTable() {
                 ))}
               </select>
 
-              <label className="font-medium text-sm mt-4 block">Notes</label>
+              <label className="font-medium text-sm mt-4 block">
+                Notes
+              </label>
               <textarea
                 className="textarea textarea-bordered w-full mt-1"
                 rows={3}
@@ -265,5 +439,7 @@ export default function AirFiltersTable() {
         </div>
       )}
     </div>
+
+    
   );
 }

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { OrderSectionPayload } from "../../../api/orderDetail";
+import { deleteOrderSection } from "../../../api/orderDetail";
 import type { Product } from "../../../api/products";
 import OrderItemRow from "./OrderItemRow";
 import AddOrderItemForm from "./AddOrderItem";
@@ -34,23 +35,53 @@ export default function OrderSectionCard({
         <div>
           <h3 className="font-bold text-white">
             {section.title}
-          </h3>
+            </h3>
           {section.description && (
             <p className="text-sm text-blue-100">
               {section.description}
             </p>
           )}
         </div>
+          
+          <div className="flex gap-x-2">
+            <div
+              className={`text-xs px-2 py-1 rounded-full ${
+                section.status === "Completed"
+                  ? "bg-green-100 text-green-700"
+                  : section.status === "Partially Fulfilled"
+                  ? "bg-blue-100 text-blue-700"
+                  : "bg-gray-200 text-gray-700"
+              }`}
+            >
+              {section.status}
+            </div>
 
-        <button
-          className="btn btn-xs btn-outline text-white border-white"
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowAddItem((s) => !s);
-          }}
-        >
-          + Add Item
-        </button>
+            <button
+              className="btn btn-xs btn-outline text-white border-white"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowAddItem((s) => !s);
+              }}
+            >
+              + Add Item
+            </button>
+
+            {section.items.length === 0 && (
+              <button
+                className="btn btn-xs btn-error"
+                onClick={async (e) => {
+                  e.stopPropagation();
+
+                  if (!confirm("Delete this empty section?")) return;
+
+                  await deleteOrderSection(section.id);
+                  onRefresh();
+                }}
+              >
+                Delete Section
+              </button>
+            )}
+          </div>
       </div>
 
       {open && (

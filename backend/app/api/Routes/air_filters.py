@@ -1,5 +1,5 @@
 from flask import g, jsonify, request, Blueprint
-from sqlalchemy import select, and_
+from sqlalchemy import func, select, and_
 from database.models import AirFilter, AirFilterCategory, Supplier, Product, ProductCategory, Quantity
 from marshmallow import ValidationError
 from app.api.Schemas.air_filters_schema import AirFilterSchema
@@ -153,12 +153,18 @@ def search_air_filters():
             AirFilter.height,
             AirFilter.width,
             AirFilter.depth,
+            Product.id.label("product_id"),
             Supplier.name.label("supplier_name"),
             AirFilterCategory.name.label("filter_category"),
+
             Quantity.on_hand,
             Quantity.reserved,
             Quantity.ordered,
-            Quantity.location
+            Quantity.location,
+            Quantity.available,
+            Quantity.backordered,
+
+            
         )
         .join(Supplier, AirFilter.supplier_id == Supplier.id)
         .join(AirFilterCategory, AirFilter.category_id == AirFilterCategory.id)
@@ -177,11 +183,11 @@ def search_air_filters():
     if merv is not None:
         filters.append(AirFilter.merv_rating == merv)
     if height is not None:
-        filters.append(AirFilter.height <= height)
+        filters.append(AirFilter.height == height)
     if width is not None:
-        filters.append(AirFilter.width <= width)
+        filters.append(AirFilter.width == width)
     if depth is not None:
-        filters.append(AirFilter.depth <= depth)
+        filters.append(AirFilter.depth == depth)
     if category:
         filters.append(AirFilterCategory.name.ilike(f"%{category}%"))
     if location is not None:
@@ -190,8 +196,7 @@ def search_air_filters():
     if filters:
         query = query.where(and_(*filters))
 
-
-    # --- Total Count ----
+    # --- Total Count ---
     total = len(db.execute(query).mappings().all())
 
     # --- Pagination ---
@@ -208,4 +213,3 @@ def search_air_filters():
         "total": total,
         "results": results
     }), 200
-

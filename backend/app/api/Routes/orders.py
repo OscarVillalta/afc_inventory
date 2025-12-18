@@ -70,6 +70,7 @@ def get_order(order_id):
     return jsonify({
         "id": order.id,
         "order_number": order.order_number,
+        "external_order_number": order.external_order_number,
         "type": order.type,
         "cs_id": cs_id,
         "cs_name": cs_name,
@@ -91,19 +92,43 @@ def get_order(order_id):
 @order_bp.route("/orders", methods=["POST"])
 def create_order():
     db = g.db
+
     try:
         data = order_schema.load(request.get_json())
     except ValidationError as err:
         return jsonify({"errors": err.messages}), 400
 
     order = Order.from_dict(data)
+
+    # ===============================
+    # Generate AFC order number
+    # ===============================
     db.add(order)
+    db.flush()  # ensures order.id is available
+
+    order.order_number = f"AFC-{order.id:06d}"
+
+    # ===============================
+    # Validate customer / supplier
+    # ===============================
+    if order.type == OrderType.OUTGOING.value:
+        if not order.customer_id:
+            return jsonify({
+                "error": "customer_id is required for outgoing orders"
+            }), 400
+        order.supplier_id = None
+
+    elif order.type == OrderType.INCOMING.value:
+        if not order.supplier_id:
+            return jsonify({
+                "error": "supplier_id is required for incoming orders"
+            }), 400
+        order.customer_id = None
+
     db.commit()
 
-    return jsonify({
-        "message": "Order created successfully.",
-        "order": order_schema.dump(order)
-    }), 201
+    return jsonify(order_schema.dump(order)), 201
+
 
 
 # PATCH: Force update status (recalculate)
@@ -217,6 +242,9 @@ def patch_order(order_id):
             
     if "supplier_id" in data:
         order.supplier_id = data["supplier_id"]
+    
+    if "external_order_number" in data:
+        order.external_order_number = data["external_order_number"]
 
     db.commit()
 
@@ -250,36 +278,32 @@ def patch_order(order_id):
 def parse_date(date_str: str):
     return datetime.strptime(date_str, "%Y-%m-%d")
 
+# ===============================
+# SEARCH
+# ===============================
+
 @order_bp.route("/orders/search", methods=["GET"])
 def search_orders():
     db = g.db
 
-    # ---------------- Query Params ----------------
-    order_id = request.args.get("id")
-    order_number = request.args.get("order_number")
-    order_type = request.args.get("type")  # customer | supplier
-    name = request.args.get("name")
+    search = request.args.get("search")
+    order_type = request.args.get("type")
     status = request.args.get("status")
-    created_from = request.args.get("reated_from")
-    created_to = request.args.get("created_to")
-    completed_from = request.args.get("completed_from")
-    completed_to = request.args.get("completed_to")
 
     page = request.args.get("page", default=1, type=int)
     limit = request.args.get("limit", default=25, type=int)
     offset = (page - 1) * limit
 
-    # ---------------- Base Query ----------------
     query = (
         select(
             Order.id,
             Order.order_number,
+            Order.external_order_number,
             Order.type,
             Order.status,
             Order.description,
             Order.created_at,
-
-            # Dynamic name resolution
+            Order.completed_at,
             Customer.name.label("customer_name"),
             Supplier.name.label("supplier_name"),
         )
@@ -287,74 +311,54 @@ def search_orders():
         .outerjoin(Supplier, Order.supplier_id == Supplier.id)
     )
 
-    # ---------------- Filters ----------------
     filters = []
-
-    if order_id:
-        filters.append(Order.id.ilike(f"%{order_id}%"))
-
-    if order_number:
-        filters.append(Order.order_number.ilike(f"%{order_number}%"))
 
     if order_type:
         filters.append(Order.type == order_type)
 
     if status:
         filters.append(Order.status == status)
-    
-    if created_from:
-        query = query.filter(
-            Order.created_at >= parse_date(created_from)
-        )
 
-    if created_to:
-        query = query.filter(
-            Order.created_at < parse_date(created_to) + timedelta(days=1)
-        )
-
-    if completed_from:
-        query = query.filter(
-            Order.completed_at >= parse_date(completed_from)
-        )
-
-    if completed_to:
-        query = query.filter(
-            Order.completed_at < parse_date(completed_to) + timedelta(days=1)
-    )
-
-    if name:
+    if search:
         filters.append(
             or_(
-                Customer.name.ilike(f"%{name}%"),
-                Supplier.name.ilike(f"%{name}%"),
+                Order.order_number.ilike(f"%{search}%"),
+                Order.external_order_number.ilike(f"%{search}%"),
+                Customer.name.ilike(f"%{search}%"),
+                Supplier.name.ilike(f"%{search}%"),
             )
         )
 
     if filters:
         query = query.where(and_(*filters))
 
-    # ---------------- Total Count ----------------
-    total = db.execute(query).mappings().all()
-    total_count = len(total)
+    # ---------------- Count ----------------
+    total = db.execute(
+        select(func.count()).select_from(query.subquery())
+    ).scalar()
 
-    # ---------------- Pagination ----------------
-    paginated = query.limit(limit).offset(offset)
-    results = db.execute(paginated).mappings().all()
+    # ---------------- Page ----------------
+    rows = db.execute(
+        query.order_by(Order.created_at.desc())
+        .limit(limit)
+        .offset(offset)
+    ).mappings().all()
 
-    # ---------------- Normalize Output ----------------
     output = []
-    for row in results:
+    for row in rows:
         row = dict(row)
-        row["cs_name"] = row["customer_name"] or row["supplier_name"]
-        row.pop("customer_name")
-        row.pop("supplier_name")
+        row["cs_name"] = (
+            row.pop("customer_name")
+            or row.pop("supplier_name")
+        )
         output.append(row)
 
     return jsonify({
         "page": page,
         "limit": limit,
         "count": len(output),
-        "total": total_count,
+        "total": total,
         "results": output,
     }), 200
+
 

@@ -1,10 +1,12 @@
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Text
 from datetime import datetime, timezone
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship, foreign
-from sqlalchemy import ForeignKey, String, Integer, Numeric, Boolean, Index
+from sqlalchemy import ForeignKey, String, Integer, Numeric, Boolean, Index, func, text
 from sqlalchemy.inspection import inspect
+from sqlalchemy.ext.hybrid import hybrid_property
+
 
 from database import Base
 
@@ -237,6 +239,22 @@ class Quantity(Base, SerializerMixin):
 
     product: Mapped["Product"] = relationship(back_populates="quantity", passive_deletes=True)
 
+    @hybrid_property
+    def available(self):
+        return self.on_hand - self.reserved
+    
+    @available.expression
+    def available(cls):
+        return func.greatest(cls.on_hand - cls.reserved, 0)
+
+    @hybrid_property
+    def backordered(self):
+        return max(0, -self.available)
+    
+    @backordered.expression
+    def backordered(cls):
+        return func.greatest(cls.reserved - cls.on_hand, 0)
+
 
 # =====================================================
 # 🔹 Customer
@@ -259,7 +277,8 @@ class Order(Base, SerializerMixin):
     __tablename__ = "orders"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    order_number: Mapped[str] = mapped_column(unique=True, nullable=False)
+    order_number: Mapped[str] = mapped_column(unique=True, nullable=True)
+    external_order_number: Mapped[str] = mapped_column(nullable=True)
 
     # Keep as string, but validate via Marshmallow / enums
     type: Mapped[str] = mapped_column(String, nullable=False)  # should be one of OrderType values
@@ -318,6 +337,13 @@ class Order(Base, SerializerMixin):
         else:
             self.status = OrderStatus.PENDING.value
             self.completed_at = None
+    
+    def generate_order_number(db):
+        last = db.execute(
+            text("SELECT MAX(id) FROM orders")
+        ).scalar() or 0
+
+        return f"AFC-{last + 1:06d}"
 
 
 # =====================================================
@@ -334,6 +360,8 @@ class OrderItem(Base, SerializerMixin):
     quantity_ordered: Mapped[int] = mapped_column(nullable=False)
     quantity_fulfilled: Mapped[int] = mapped_column(default=0)
     note: Mapped[Optional[str]] = mapped_column(nullable=True)
+
+    completion_date: Mapped[datetime] = mapped_column(nullable=True)
 
     product: Mapped["Product"] = relationship("Product", back_populates="order_items")
 
@@ -386,25 +414,23 @@ class OrderSection(Base):
     )
 
     def update_status(self):
-        if not self.items:
+        if not self.items or len(self.items) == 0:
             self.status = OrderStatus.PENDING.value
             return
 
-        total_items = len(self.items)
+        total = len(self.items)
+        complete = 0
+        partial = 0
 
-        completed = sum(
-            1 for i in self.items
-            if i.quantity_fulfilled >= i.quantity_ordered
-        )
+        for item in self.items:
+            if item.quantity_fulfilled >= item.quantity_ordered:
+                complete += 1
+            elif item.quantity_fulfilled > 0:
+                partial += 1
 
-        partial = sum(
-            1 for i in self.items
-            if 0 < i.quantity_fulfilled < i.quantity_ordered
-        )
-
-        if completed == total_items:
+        if complete == total:
             self.status = OrderStatus.COMPLETED.value
-        elif completed > 0 or partial > 0:
+        elif partial > 0 or complete > 0:
             self.status = OrderStatus.PARTIALLY_FULFILLED.value
         else:
             self.status = OrderStatus.PENDING.value
@@ -446,18 +472,38 @@ class Transaction(Base, SerializerMixin):
 
         qty_record = self.product.quantity
         qty_record.on_hand += self.quantity_delta
+
+        if self.quantity_delta > 0:
+            qty_record.ordered -= abs(self.quantity_delta)
+        else:
+            qty_record.reserved -= abs(self.quantity_delta)
+
         self.state = TransactionState.COMMITTED.value
 
         if self.order_item:
             item = self.order_item
-            if abs(self.quantity_delta) > item.remaining:
-                raise ValueError("Cannot fulfill more than remaining quantity.")
             item.quantity_fulfilled += self.quantity_delta
-            item.quantity_fulfilled = max(0, min(item.quantity_fulfilled, item.quantity_ordered))
+            item.quantity_fulfilled = max(
+                0,
+                min(item.quantity_fulfilled, item.quantity_ordered)
+            )
+
+            # 🔑 NEW: update section status
             if item.section:
                 item.section.update_status()
-                if item.section.order:
-                    item.section.order.update_status()
+
+            # existing order status update
+            if item.section.order:
+                item.section.order.update_status()
+        
+        if self.quantity_delta < 0:
+            if qty_record.on_hand < abs(self.quantity_delta):
+                raise ValueError(
+                    f"Insufficient on-hand inventory. "
+                    f"On hand: {qty_record.on_hand}, "
+                    f"Required: {abs(self.quantity_delta)}"
+                )
+
 
     def rollback(self, db, performed_by: Optional[str] = None):
         if self.state != TransactionState.COMMITTED.value:
@@ -486,6 +532,13 @@ class Transaction(Base, SerializerMixin):
                     item.section.order.update_status()
 
         self.state = TransactionState.ROLLED_BACK.value
+
+        if item.section:
+            item.section.update_status()
+
+        if item.section.order:
+            item.section.order.update_status()
+
         db.add(reversed_txn)
         return reversed_txn
 

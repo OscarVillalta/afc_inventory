@@ -33,6 +33,7 @@ export interface OrderSearchParams {
 export interface OrderDetailPayload {
   id: number;
   order_number: string;
+  external_order_number: string;
   type: "incoming" | "outgoing";
   cs_name: string;
   status: "Pending" | "Partially Fulfilled" | "Completed";
@@ -77,6 +78,20 @@ export function patchOrder(
 ) {
   return apiRequest(`/orders/${orderId}`, {
     method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function createOrder(payload: {
+  type: "incoming" | "outgoing";
+  customer_id?: number;
+  supplier_id?: number;
+  eta?: string | null;
+  description?: string | null;
+}) {
+  console.log(JSON.stringify(payload))
+  return apiRequest("/orders", {
+    method: "POST",
     body: JSON.stringify(payload),
   });
 }

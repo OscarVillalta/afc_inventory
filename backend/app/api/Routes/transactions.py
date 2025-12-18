@@ -1,4 +1,4 @@
-from flask import g, jsonify, request, Blueprint
+from flask import abort, g, jsonify, request, Blueprint
 from sqlalchemy import select, func
 from database.models import Quantity, Transaction, Product, TransactionState, OrderType, Order, OrderItem
 from datetime import datetime, timezone
@@ -145,19 +145,22 @@ def create_transaction():
     # ===============================
     # Apply PENDING inventory effect
     # ===============================
-    if order:
-        if order.type == OrderType.OUTGOING.value:
-            if qty.on_hand < abs_qty:
-                return jsonify({
-                    "error": "Insufficient stock to reserve"
-                }), 400
+    if qty_delta < 0 :
+        qty.reserved += abs_qty
+    else :
+       qty.ordered += abs_qty 
 
-            qty.reserved += abs_qty
-
-        elif order.type == OrderType.INCOMING.value:
-            qty.ordered += abs_qty
 
     db.add(txn)
+    db.flush()
+
+    #Auto_commit check
+
+    auto_commit_flag = request.args.get("auto_commit") == "true"
+
+    if auto_commit_flag:
+        txn.commit()
+
     db.commit()
 
     return jsonify({
@@ -174,16 +177,28 @@ def create_transaction():
 def commit_transaction(txn_id):
     db = g.db
     txn = db.get(Transaction, txn_id)
+
     if not txn:
         return jsonify({"error": "Transaction not found"}), 404
 
     try:
-        txn.commit()
-        db.commit()
-        return jsonify({
-            "message": "Transaction committed successfully.",
-            "transaction": txn_schema.dump(txn)
-        }), 200
+        if txn.state != "pending":
+            return jsonify({ "error": "Transaction is not pending"}), 400
+
+
+        if txn.quantity_delta < 0:  # outgoing
+            product = db.get(Product, txn.product_id)
+            qty = abs(txn.quantity_delta)
+
+            if qty > product.on_hand:
+                return jsonify({ "error": f"Not enough inventory. On hand: {product.on_hand}, required: {qty}"}), 409
+   
+            txn.commit()
+            db.commit()
+            return jsonify({
+                "message": "Transaction committed successfully.",
+                "transaction": txn_schema.dump(txn)
+            }), 200
     except Exception as e:
         db.rollback()
         return jsonify({"error": str(e)}), 400

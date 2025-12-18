@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type {
   OrderItemPayload,
   OrderItemTransaction,
@@ -7,6 +7,7 @@ import {
   fetchOrderItemTransactions,
   createOrderItemTransaction,
   commitTransaction,
+  deleteOrderItem,
 } from "../../../api/orderDetail";
 
 interface Props {
@@ -17,21 +18,17 @@ interface Props {
 export default function OrderItemRow({ item, orderType }: Props) {
   const [expanded, setExpanded] = useState(false);
 
-  const remaining = item.quantity_ordered - item.quantity_fulfilled;
-
-  /* ===== Create pending ===== */
-  const [pendingQty, setPendingQty] = useState<number>(
-    Math.max(remaining, 0)
-  );
-  const [note, setNote] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
   /* ===== Transactions ===== */
   const [transactions, setTransactions] =
     useState<OrderItemTransaction[]>([]);
   const [loadingTxns, setLoadingTxns] = useState(false);
   const [loaded, setLoaded] = useState(false);
+
+  /* ===== Create pending ===== */
+  const [pendingQty, setPendingQty] = useState(0);
+  const [note, setNote] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function loadTransactions(force = false) {
     if (loaded && !force) return;
@@ -50,11 +47,28 @@ export default function OrderItemRow({ item, orderType }: Props) {
     }
   }
 
+  /* ===== Pending total (IMPORTANT FIX) ===== */
+  const pendingTotal = transactions
+    .filter((tx) => tx.state === "pending")
+    .reduce((sum, tx) => sum + Math.abs(tx.quantity_delta), 0);
+
+  const remaining =
+    item.quantity_ordered -
+    item.quantity_fulfilled -
+    pendingTotal;
+
+  const remainingSafe = Math.max(remaining, 0);
+
+  /* ===== Sync pendingQty when remaining changes ===== */
+  useEffect(() => {
+    setPendingQty(remainingSafe);
+  }, [remainingSafe]);
+
   /* ===== Create pending transaction ===== */
   async function handleCreatePendingTxn(e: React.MouseEvent) {
     e.stopPropagation();
 
-    if (pendingQty <= 0 || pendingQty > remaining) {
+    if (pendingQty <= 0 || pendingQty > remainingSafe) {
       setError("Invalid quantity.");
       return;
     }
@@ -74,7 +88,6 @@ export default function OrderItemRow({ item, orderType }: Props) {
         note: note || undefined,
       });
 
-      setPendingQty(Math.max(remaining - pendingQty, 0));
       setNote("");
       await loadTransactions(true);
     } catch {
@@ -99,6 +112,24 @@ export default function OrderItemRow({ item, orderType }: Props) {
     }
   }
 
+  /* ===== Delete item (only if no transactions) ===== */
+  async function handleDeleteItem(e: React.MouseEvent) {
+    e.stopPropagation();
+
+    if (!loaded || transactions.length > 0) return;
+
+    if (!confirm("Delete this item? This cannot be undone.")) {
+      return;
+    }
+
+    try {
+      await deleteOrderItem(item.id);
+      window.location.reload();
+    } catch {
+      setError("Failed to delete item.");
+    }
+  }
+
   return (
     <>
       {/* ===================== ITEM ROW ===================== */}
@@ -113,11 +144,29 @@ export default function OrderItemRow({ item, orderType }: Props) {
         <td className="pl-7 px-3 py-3 font-semibold">
           {item.part_number}
         </td>
-        <td className="px-3 py-3">{item.quantity_ordered}</td>
-        <td className="px-3 py-3">{item.quantity_fulfilled}</td>
-        <td className="px-3 py-3">{item.note ?? "—"}</td>
-        <td className="px-3 py-3">{item.status ?? "—"}</td>
-        <td className="px-3 py-3">{"—"}</td>
+        <td className="px-3 py-3">
+          {item.quantity_ordered}
+        </td>
+        <td className="px-3 py-3">
+          {item.quantity_fulfilled}
+        </td>
+        <td className="px-3 py-3">
+          {item.note ?? "—"}
+        </td>
+        <td className="px-3 py-3">
+          {item.status ?? "—"}
+        </td>
+        <td className="px-3 py-3 text-right">
+          {loaded && transactions.length === 0 && (
+            <button
+              className="btn btn-xs btn-ghost text-red-500"
+              onClick={handleDeleteItem}
+              title="Delete item"
+            >
+              ✕
+            </button>
+          )}
+        </td>
       </tr>
 
       {/* ===================== EXPANDED ===================== */}
@@ -125,7 +174,7 @@ export default function OrderItemRow({ item, orderType }: Props) {
         <tr>
           <td colSpan={6} className="bg-gray-50 px-6 py-4 space-y-3">
             {/* ===== CREATE PENDING ===== */}
-            {remaining > 0 && (
+            {remainingSafe > 0 && (
               <div className="flex items-center gap-3">
                 <span className="text-sm text-gray-500">
                   {orderType === "outgoing"
@@ -136,7 +185,7 @@ export default function OrderItemRow({ item, orderType }: Props) {
                 <input
                   type="number"
                   min={1}
-                  max={remaining}
+                  max={remainingSafe}
                   className="input input-xs input-bordered w-24"
                   value={pendingQty}
                   onClick={(e) => e.stopPropagation()}

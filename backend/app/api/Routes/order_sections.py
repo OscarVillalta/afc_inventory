@@ -101,26 +101,23 @@ def update_order_section(section_id):
     db.commit()
     return jsonify(section_schema.dump(section)), 200
 
+
 @order_section_bp.route("/order_sections/<int:section_id>", methods=["DELETE"])
 def delete_order_section(section_id):
     db = g.db
-
     section = db.get(OrderSection, section_id)
+
     if not section:
-        return jsonify({"error": "Order section not found"}), 404
+        return jsonify({"error": "Section not found"}), 404
 
-    item_count = db.execute(
-        select(func.count(OrderItem.id))
-        .where(OrderItem.section_id == section_id)
-    ).scalar_one()
-
-    if item_count > 0:
+    if section.items and len(section.items) > 0:
         return jsonify({
-            "error": "Cannot delete section with order items"
+            "error": "Cannot delete section with order items."
         }), 400
 
     db.delete(section)
     db.commit()
 
-    return jsonify({"message": "Order section deleted"}), 200
+    return jsonify({"success": True}), 200
+
 
