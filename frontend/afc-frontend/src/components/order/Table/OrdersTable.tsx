@@ -11,7 +11,11 @@ function formatUTCDate(iso: string) {
   return d.toLocaleDateString("en-US", { timeZone: "UTC" });
 }
 
-export default function OrdersTable() {
+interface Props {
+  reloadKey: number;
+}
+
+export default function OrdersTable({ reloadKey }: Props) {
   const navigate = useNavigate()
   const [page, setPage] = useState(1);
   const pageSize = 10;
@@ -28,6 +32,8 @@ export default function OrdersTable() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
 
+  
+
   // === FETCH ORDERS ===
   useEffect(() => {
     setLoading(true);
@@ -38,7 +44,7 @@ export default function OrdersTable() {
         setTotal(res.total ?? 0);
       })
       .finally(() => setLoading(false));
-  }, [page]);
+  }, [page, reloadKey]);
 
   // Options (derived from API data — still UI-only)
   const uniqueTypes = ["All", ...new Set(rows.map((r) => r.type))];

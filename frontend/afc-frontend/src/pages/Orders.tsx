@@ -9,6 +9,7 @@ export default function OrdersPage() {
   const navigate = useNavigate();
 
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   return (
     <MainLayout>
@@ -34,7 +35,7 @@ export default function OrdersPage() {
       </div>
 
       {/* ===================== TABLE ===================== */}
-      <OrdersTable />
+      <OrdersTable reloadKey={reloadKey} />
 
       {/* ===================== CREATE MODAL ===================== */}
       <CreateOrderModal
@@ -42,7 +43,7 @@ export default function OrdersPage() {
         onClose={() => setShowCreateModal(false)}
         onCreated={(orderId?: number) => {
           setShowCreateModal(false);
-
+          setReloadKey((k) => k + 1);
           // If backend returns ID → go straight to detail
           if (orderId) {
             navigate(`/orders/${orderId}`);
