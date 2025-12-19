@@ -14,6 +14,7 @@ export default function OrderHeader({
   type,
   status,
 }: Props) {
+
   return (
     <div className="bg-[#3A3F51] text-white px-6 py-4 flex justify-between items-center rounded-xl shadow-sm">
       {/* LEFT: Order Number */}
@@ -48,6 +49,7 @@ export default function OrderHeader({
         >
           {status}
         </span>
+
       </div>
     </div>
   );

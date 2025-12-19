@@ -2,7 +2,7 @@ from flask import Blueprint, g, jsonify, request
 from sqlalchemy import select, func
 from sqlalchemy import and_, or_
 from app.api.Schemas.order_schema import OrderSchema
-from database.models import Customer, Supplier, OrderType, OrderStatus
+from database.models import Customer, Supplier, OrderType, OrderStatus, Transaction, TransactionState
 from database.models import Order
 from marshmallow import ValidationError
 from datetime import datetime, timedelta
@@ -360,5 +360,65 @@ def search_orders():
         "total": total,
         "results": output,
     }), 200
+
+@order_bp.route("/orders/<int:order_id>/allocate-all", methods=["POST"])
+def allocate_all(order_id):
+    db = g.db
+
+    order = db.get(Order, order_id)
+    if not order:
+        return jsonify({"error": "Order not found"}), 404
+
+    if order.status == OrderStatus.COMPLETED.value:
+        return jsonify({"error": "Cannot allocate a completed order"}), 400
+
+    created = []
+
+    for section in order.sections:
+        for item in section.items:
+            remaining = (
+                item.quantity_ordered
+                - item.quantity_fulfilled
+            )
+
+            if remaining <= 0:
+                continue
+
+            # Determine delta based on order type
+            if order.type == OrderType.OUTGOING.value:
+                qty_delta = -remaining
+            elif order.type == OrderType.INCOMING.value:
+                qty_delta = remaining
+            else:
+                continue
+
+            txn = Transaction(
+                product_id=item.product_id,
+                order_id=order.id,
+                order_item_id=item.id,
+                quantity_delta=qty_delta,
+                reason="allocation",
+                state=TransactionState.PENDING.value,
+            )
+
+            qty = item.product.quantity
+
+            # Apply PENDING effect
+            if qty_delta < 0:
+                qty.reserved += remaining
+            else:
+                qty.ordered += remaining
+
+            db.add(txn)
+            created.append(txn)
+
+    db.commit()
+
+    return jsonify({
+        "message": f"{len(created)} items allocated",
+        "transactions_created": len(created),
+    }), 201
+
+
 
 

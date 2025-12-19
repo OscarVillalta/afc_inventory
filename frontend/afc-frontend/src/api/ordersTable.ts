@@ -95,3 +95,10 @@ export function createOrder(payload: {
     body: JSON.stringify(payload),
   });
 }
+
+
+export function allocateAll(orderId: number) {
+  return apiRequest(`/orders/${orderId}/allocate-all`, {
+    method: "POST",
+  });
+}

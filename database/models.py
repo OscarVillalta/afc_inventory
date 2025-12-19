@@ -38,6 +38,7 @@ class TransactionReason(str, Enum):
     RECEIVE = "receive"
     ADJUSTMENT = "adjustment"
     ROLLBACK = "rollback"
+    ALLOCATION = "allocation"
 
 
 # =====================================================

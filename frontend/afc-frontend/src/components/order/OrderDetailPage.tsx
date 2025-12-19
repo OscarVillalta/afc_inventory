@@ -16,6 +16,7 @@ import { fetchSuppliers } from "../../api/suppliers";
 import { patchOrder } from "../../api/ordersTable";
 import type { OrderSectionPayload } from "../../api/orderDetail";
 import { fetchOrderSections } from "../../api/orderDetail";
+import { allocateAll } from "../../api/ordersTable";
 
 
 /* ===================== TYPES ===================== */
@@ -193,6 +194,22 @@ export default function OrderDetailPage() {
     );
   }
 
+  async function handleAllocateAll() {
+    if (!order) return;
+
+    try {
+      await allocateAll(order.id);
+      await refreshOrder();
+    } catch (err: any) {
+      alert(
+        err?.response?.data?.error ||
+        err?.message ||
+        "Failed to allocate all items"
+      );
+    }
+  }
+
+
   /* ===================== RENDER ===================== */
 
   return (
@@ -253,7 +270,19 @@ export default function OrderDetailPage() {
             {saveError && (
               <p className="text-sm text-red-500 mt-1">{saveError}</p>
             )}
-            <button
+            
+
+            {/* ===== ORDER ACTIONS ===== */}
+            <div className="flex justify-end pt-2 gap-x-2">
+              <button
+                  className="btn btn-sm btn-primary"
+                  onClick={handleAllocateAll}
+                  disabled={order.status === "Completed"}
+                >
+                  Allocate All
+              </button>
+              
+              <button
               className="btn btn-sm btn-outline"
               onClick={() => window.location.reload()}
               disabled={saving}
@@ -261,13 +290,14 @@ export default function OrderDetailPage() {
               Cancel
             </button>
 
-            <button
-              className="btn btn-sm btn-primary"
-              disabled={saving || selectedEntityId === null}
-              onClick={handleSave}
-            >
-              {saving ? "Saving..." : "Save"}
-            </button>
+              <button
+                className="btn btn-sm btn-primary"
+                disabled={saving || selectedEntityId === null}
+                onClick={handleSave}
+              >
+                {saving ? "Saving..." : "Save"}
+              </button>
+            </div>
           </div>
         </div>
       </div>
