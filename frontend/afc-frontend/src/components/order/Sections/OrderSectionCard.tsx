@@ -10,6 +10,7 @@ interface Props {
   orderId: number;
   orderType: "incoming" | "outgoing";
   products: Product[];
+  orderStatus: string;
   onRefresh: () => void;
 }
 
@@ -19,9 +20,12 @@ export default function OrderSectionCard({
   orderType,
   products,
   onRefresh,
+  orderStatus,
 }: Props) {
   const [open, setOpen] = useState(true);
   const [showAddItem, setShowAddItem] = useState(false);
+
+  const isCompleted = orderStatus === "Completed";
 
   return (
     <div className="rounded-xl bg-white shadow-sm border">
@@ -56,7 +60,8 @@ export default function OrderSectionCard({
               {section.status}
             </div>
 
-            <button
+            {!isCompleted && (
+              <button
               className="btn btn-xs btn-outline text-white border-white"
               onClick={(e) => {
                 e.stopPropagation();
@@ -65,6 +70,7 @@ export default function OrderSectionCard({
             >
               + Add Item
             </button>
+          )}
 
             {section.items.length === 0 && (
               <button
@@ -90,12 +96,11 @@ export default function OrderSectionCard({
             <table className="table table-sm w-full">
               <thead>
                 <tr className="text-xs uppercase text-gray-500">
-                  <th>Part Number</th>
+                  <th className="pl-7">Part Number</th>
                   <th>Qty Requested</th>
                   <th>Qty Fulfilled</th>
                   <th>Comment</th>
                   <th>Status</th>
-                  <th className="text-center">Completion</th>
                 </tr>
               </thead>
               <tbody>
@@ -104,6 +109,7 @@ export default function OrderSectionCard({
                     key={item.id}
                     item={item}
                     orderType={orderType}
+                    onRefresh={onRefresh}
                   />
                 ))}
               </tbody>
@@ -125,6 +131,7 @@ export default function OrderSectionCard({
                 setShowAddItem(false);
                 onRefresh();
               }}
+              onRefresh={onRefresh}
             />
           )}
         </div>

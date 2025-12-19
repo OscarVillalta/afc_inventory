@@ -7,6 +7,7 @@ import AddOrderSectionForm from "./AddOrderSectionForm";
 
 interface Props {
   orderId: number;
+  orderStatus: string;
   sections: OrderSectionPayload[];
   onRefresh: () => void;
   orderType: "incoming" | "outgoing";
@@ -17,8 +18,11 @@ export default function OrderSectionAccordion({
   sections,
   onRefresh,
   orderType,
+  orderStatus,
 }: Props) {
   const [products, setProducts] = useState<Product[]>([]);
+
+  const isCompleted = orderStatus === "Completed";
 
   useEffect(() => {
     fetchProducts()
@@ -28,10 +32,13 @@ export default function OrderSectionAccordion({
 
   return (
     <div className="space-y-4">
-      <AddOrderSectionForm
-        orderId={orderId}
-        onCreated={onRefresh}
-      />
+      {/* Add Section ONLY if order is NOT completed */}
+      {!isCompleted && (
+        <AddOrderSectionForm
+          orderId={orderId}
+          onCreated={onRefresh}
+        />
+      )}
 
       {sections.map((section) => (
         <OrderSectionCard
@@ -41,6 +48,7 @@ export default function OrderSectionAccordion({
           orderType={orderType}
           products={products}
           onRefresh={onRefresh}
+          orderStatus={orderStatus}
         />
       ))}
     </div>

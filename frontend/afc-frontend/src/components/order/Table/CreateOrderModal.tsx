@@ -8,7 +8,7 @@ import { createOrder } from "../../../api/ordersTable";
 interface Props {
   open: boolean;
   onClose: () => void;
-  onCreated: () => void;
+  onCreated: (orderId?: number) => void;
 }
 
 type OrderType = "incoming" | "outgoing";
@@ -71,7 +71,7 @@ export default function CreateOrderModal({
     setError(null);
 
     try {
-      await createOrder({
+      const response = await createOrder({
         type,
         customer_id: type === "outgoing" ? entityId : undefined,
         supplier_id: type === "incoming" ? entityId : undefined,
@@ -79,7 +79,9 @@ export default function CreateOrderModal({
         description: description || null,
       });
 
-      onCreated();
+      const order_id = response.id;
+
+      onCreated(order_id);
       onClose();
     } catch {
       setError("Failed to create order.");

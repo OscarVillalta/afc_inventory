@@ -482,7 +482,7 @@ class Transaction(Base, SerializerMixin):
 
         if self.order_item:
             item = self.order_item
-            item.quantity_fulfilled += self.quantity_delta
+            item.quantity_fulfilled += abs(self.quantity_delta)
             item.quantity_fulfilled = max(
                 0,
                 min(item.quantity_fulfilled, item.quantity_ordered)
@@ -496,13 +496,6 @@ class Transaction(Base, SerializerMixin):
             if item.section.order:
                 item.section.order.update_status()
         
-        if self.quantity_delta < 0:
-            if qty_record.on_hand < abs(self.quantity_delta):
-                raise ValueError(
-                    f"Insufficient on-hand inventory. "
-                    f"On hand: {qty_record.on_hand}, "
-                    f"Required: {abs(self.quantity_delta)}"
-                )
 
 
     def rollback(self, db, performed_by: Optional[str] = None):

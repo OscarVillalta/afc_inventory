@@ -24,7 +24,6 @@ interface Props {
   onEntityChange: (id: number) => void;
 
   /* Handlers */
-  onTypeChange: (v: OrderType) => void;
   onCreatedAtChange: (v: string) => void;
   onEtaChange: (v: string) => void;
 }
@@ -42,13 +41,13 @@ export default function OrderMetaCard({
   selectedEntityId,
   onEntityChange,
 
-  onTypeChange,
   onCreatedAtChange,
   onEtaChange,
 }: Props) {
   const [open, setOpen] = useState(true);
 
   const entityLabel = type === "outgoing" ? "Customer" : "Supplier";
+  const typeLabel = type === "outgoing" ? "Outgoing" : "Incoming";
 
   return (
     <div className="bg-white rounded-xl shadow-sm border">
@@ -65,17 +64,10 @@ export default function OrderMetaCard({
       {open && (
         <div className="px-6 pb-4 text-sm text-gray-600 grid grid-cols-2 gap-4">
 
-          {/* Type */}
+          {/* Type (READ-ONLY) */}
           <div>
             <p className="font-medium text-gray-700">Type</p>
-            <select
-              className="select select-bordered select-sm w-full"
-              value={type}
-              onChange={(e) => onTypeChange(e.target.value as OrderType)}
-            >
-              <option value="outgoing">Outgoing</option>
-              <option value="incoming">Incoming</option>
-            </select>
+            <p className="py-2">{typeLabel}</p>
           </div>
 
           {/* Created At */}
@@ -121,8 +113,7 @@ export default function OrderMetaCard({
             />
           </div>
 
-
-         {/* Status (read-only) */}
+          {/* Status (read-only) */}
           <div>
             <p className="font-medium text-gray-700">Status</p>
             <p className="py-2">{status}</p>
@@ -133,7 +124,6 @@ export default function OrderMetaCard({
             <p className="font-medium text-gray-700">Completed</p>
             <p className="py-2">{completedAt ?? "—"}</p>
           </div>
-
 
         </div>
       )}

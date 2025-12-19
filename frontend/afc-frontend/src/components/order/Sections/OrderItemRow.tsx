@@ -13,9 +13,10 @@ import {
 interface Props {
   item: OrderItemPayload;
   orderType: "incoming" | "outgoing";
+  onRefresh: () => void;
 }
 
-export default function OrderItemRow({ item, orderType }: Props) {
+export default function OrderItemRow({ item, orderType, onRefresh, }: Props) {
   const [expanded, setExpanded] = useState(false);
 
   /* ===== Transactions ===== */
@@ -104,12 +105,24 @@ export default function OrderItemRow({ item, orderType }: Props) {
   ) {
     e.stopPropagation();
 
+    setError(null);
+
     try {
       await commitTransaction(txnId);
+      await onRefresh();
       await loadTransactions(true);
-    } catch {
-      setError("Failed to commit transaction.");
+    } catch (err: any) {
+
+      const error = JSON.parse(err?.message)
+
+      const msg =
+        error["error"]||
+        "Unable to commit transaction.";
+
+      setError(msg);
     }
+
+    
   }
 
   /* ===== Delete item (only if no transactions) ===== */
@@ -213,15 +226,16 @@ export default function OrderItemRow({ item, orderType }: Props) {
                   {submitting ? "Saving…" : "Create Pending"}
                 </button>
 
-                {error && (
-                  <span className="text-xs text-red-500">
-                    {error}
-                  </span>
-                )}
+        
               </div>
             )}
 
             {/* ===== TRANSACTIONS TABLE ===== */}
+            {error && (
+                  <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+                    {error}
+                  </div>
+                )}
             <div className="rounded-lg bg-white shadow-sm">
               <table className="table table-sm w-full">
                 <thead>
@@ -284,6 +298,7 @@ export default function OrderItemRow({ item, orderType }: Props) {
                           {tx.state === "pending" && (
                             <button
                               className="btn btn-xs btn-success"
+                              disabled={!!error}
                               onClick={(e) =>
                                 handleCommit(e, tx.id)
                               }

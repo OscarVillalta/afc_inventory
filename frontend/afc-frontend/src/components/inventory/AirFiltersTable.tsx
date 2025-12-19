@@ -341,7 +341,7 @@ export default function AirFiltersTable() {
               <h2 className="text-xl font-semibold">
                 {editRow.part_number}
               </h2>
-              <button onClick={closeModal}>✕</button>
+              <button className="cursor-pointer hover:scale-110 transition" onClick={closeModal}>✕</button>
             </div>
 
             {/* Info */}

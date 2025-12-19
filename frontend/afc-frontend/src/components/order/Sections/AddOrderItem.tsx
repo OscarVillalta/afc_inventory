@@ -7,6 +7,7 @@ interface Props {
   sectionId: number;
   products: Product[];
   onCreated: () => void;
+  onRefresh: () => void;
 }
 
 export default function AddOrderItemForm({
@@ -14,6 +15,7 @@ export default function AddOrderItemForm({
   sectionId,
   products,
   onCreated,
+  onRefresh,
 }: Props) {
   const [search, setSearch] = useState("");
   const [selectedProductId, setSelectedProductId] =

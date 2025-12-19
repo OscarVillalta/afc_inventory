@@ -111,6 +111,18 @@ export default function OrderDetailPage() {
     loadSections();
   }, [orderId]);
 
+  async function refreshOrder() {
+  if (!orderId) return;
+
+  const [orderData, sectionsData] = await Promise.all([
+    fetchOrderById(orderId),
+    fetchOrderSections(orderId),
+  ]);
+
+  setOrder(orderData);
+  setSections(sectionsData);
+}
+
   /* ===================== FETCH ORDER ===================== */
 
   useEffect(() => {
@@ -206,7 +218,6 @@ export default function OrderDetailPage() {
               selectedEntityId={selectedEntityId}
               onEntityChange={setSelectedEntityId}
 
-              onTypeChange={handleTypeChange}
               onCreatedAtChange={(v) =>
                 setOrder({ ...order, created_at: v })
               }
@@ -222,8 +233,9 @@ export default function OrderDetailPage() {
               <OrderSectionAccordion
                 orderId={order.id}
                 sections={sections}
-                onRefresh={loadSections}
+                onRefresh={refreshOrder}
                 orderType={order.type}
+                orderStatus={order.status}
               />
             )}
         </div>

@@ -190,15 +190,15 @@ def commit_transaction(txn_id):
             product = db.get(Product, txn.product_id)
             qty = abs(txn.quantity_delta)
 
-            if qty > product.on_hand:
-                return jsonify({ "error": f"Not enough inventory. On hand: {product.on_hand}, required: {qty}"}), 409
+            if qty > product.quantity.on_hand:
+                return jsonify({ "error": f"Not enough inventory. On hand: {product.quantity.on_hand}, required: {qty}"}), 409
    
-            txn.commit()
-            db.commit()
-            return jsonify({
-                "message": "Transaction committed successfully.",
-                "transaction": txn_schema.dump(txn)
-            }), 200
+        txn.commit()
+        db.commit()
+        return jsonify({
+            "message": "Transaction committed successfully.",
+            "transaction": txn_schema.dump(txn)
+        }), 200
     except Exception as e:
         db.rollback()
         return jsonify({"error": str(e)}), 400
