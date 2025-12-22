@@ -12,6 +12,7 @@ interface Props {
   products: Product[];
   orderStatus: string;
   onRefresh: () => void;
+  txnRefreshKey: number;
 }
 
 export default function OrderSectionCard({
@@ -21,6 +22,7 @@ export default function OrderSectionCard({
   products,
   onRefresh,
   orderStatus,
+  txnRefreshKey,
 }: Props) {
   const [open, setOpen] = useState(true);
   const [showAddItem, setShowAddItem] = useState(false);
@@ -91,12 +93,12 @@ export default function OrderSectionCard({
       </div>
 
       {open && (
-        <div className=" pb-4 space-y-3">
+        <div className="space-y-3">
           {section.items.length > 0 && (
             <table className="table table-sm w-full">
               <thead>
                 <tr className="text-xs uppercase text-gray-500">
-                  <th className="pl-7">Part Number</th>
+                  <th className="pl -7">Part Number</th>
                   <th>Qty Requested</th>
                   <th>Qty Fulfilled</th>
                   <th>Comment</th>
@@ -110,6 +112,7 @@ export default function OrderSectionCard({
                     item={item}
                     orderType={orderType}
                     onRefresh={onRefresh}
+                    txnRefreshKey={txnRefreshKey}
                   />
                 ))}
               </tbody>
@@ -117,7 +120,7 @@ export default function OrderSectionCard({
           )}
 
           {section.items.length === 0 && (
-            <p className="text-sm text-gray-400 italic pl-7 pt-2">
+            <p className="pb-4 text-sm text-gray-400 italic pl-7 pt-2">
               No items in this section
             </p>
           )}

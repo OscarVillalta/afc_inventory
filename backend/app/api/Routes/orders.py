@@ -361,6 +361,10 @@ def search_orders():
         "results": output,
     }), 200
 
+# ===============================
+# ALLOCATE ALL
+# ===============================
+
 @order_bp.route("/orders/<int:order_id>/allocate-all", methods=["POST"])
 def allocate_all(order_id):
     db = g.db
@@ -376,21 +380,28 @@ def allocate_all(order_id):
 
     for section in order.sections:
         for item in section.items:
+
+            # Sum existing pending allocations
+            pending_qty = sum(
+                abs(tx.quantity_delta)
+                for tx in item.transactions
+                if tx.state == TransactionState.PENDING.value
+            )
+
             remaining = (
                 item.quantity_ordered
                 - item.quantity_fulfilled
+                - pending_qty
             )
 
             if remaining <= 0:
                 continue
 
-            # Determine delta based on order type
-            if order.type == OrderType.OUTGOING.value:
-                qty_delta = -remaining
-            elif order.type == OrderType.INCOMING.value:
-                qty_delta = remaining
-            else:
-                continue
+            qty_delta = (
+                -remaining
+                if order.type == OrderType.OUTGOING.value
+                else remaining
+            )
 
             txn = Transaction(
                 product_id=item.product_id,
@@ -403,7 +414,7 @@ def allocate_all(order_id):
 
             qty = item.product.quantity
 
-            # Apply PENDING effect
+            # Apply pending effect
             if qty_delta < 0:
                 qty.reserved += remaining
             else:
@@ -418,7 +429,3 @@ def allocate_all(order_id):
         "message": f"{len(created)} items allocated",
         "transactions_created": len(created),
     }), 201
-
-
-
-

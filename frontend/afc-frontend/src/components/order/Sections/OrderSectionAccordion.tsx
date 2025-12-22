@@ -11,6 +11,7 @@ interface Props {
   sections: OrderSectionPayload[];
   onRefresh: () => void;
   orderType: "incoming" | "outgoing";
+  txnRefreshKey: number;
 }
 
 export default function OrderSectionAccordion({
@@ -19,6 +20,7 @@ export default function OrderSectionAccordion({
   onRefresh,
   orderType,
   orderStatus,
+  txnRefreshKey,
 }: Props) {
   const [products, setProducts] = useState<Product[]>([]);
 
@@ -49,6 +51,7 @@ export default function OrderSectionAccordion({
           products={products}
           onRefresh={onRefresh}
           orderStatus={orderStatus}
+          txnRefreshKey={txnRefreshKey}
         />
       ))}
     </div>

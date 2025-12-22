@@ -56,6 +56,8 @@ export default function OrderDetailPage() {
   const [sections, setSections] = useState<OrderSectionPayload[]>([]);
   const [sectionsLoading, setSectionsLoading] = useState(true);
 
+  const [txnRefreshKey, setTxnRefreshKey] = useState(0);
+
   function handleTypeChange(newType: OrderType) {
     setOrder((prev) =>
       prev
@@ -122,6 +124,9 @@ export default function OrderDetailPage() {
 
   setOrder(orderData);
   setSections(sectionsData);
+
+  // 🔑 force ALL OrderItemRow txns to reload
+  setTxnRefreshKey((k) => k + 1);
 }
 
   /* ===================== FETCH ORDER ===================== */
@@ -253,6 +258,7 @@ export default function OrderDetailPage() {
                 onRefresh={refreshOrder}
                 orderType={order.type}
                 orderStatus={order.status}
+                txnRefreshKey={txnRefreshKey}
               />
             )}
         </div>

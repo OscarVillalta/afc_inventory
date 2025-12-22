@@ -14,9 +14,10 @@ interface Props {
   item: OrderItemPayload;
   orderType: "incoming" | "outgoing";
   onRefresh: () => void;
+  txnRefreshKey: number;
 }
 
-export default function OrderItemRow({ item, orderType, onRefresh, }: Props) {
+export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey, }: Props) {
   const [expanded, setExpanded] = useState(false);
 
   /* ===== Transactions ===== */
@@ -64,6 +65,12 @@ export default function OrderItemRow({ item, orderType, onRefresh, }: Props) {
   useEffect(() => {
     setPendingQty(remainingSafe);
   }, [remainingSafe]);
+
+
+/* ===== Sync after using quick acces buttons ===== */
+  useEffect(() => {
+    loadTransactions(true);
+  }, [txnRefreshKey]);
 
   /* ===== Create pending transaction ===== */
   async function handleCreatePendingTxn(e: React.MouseEvent) {
