@@ -98,7 +98,7 @@ export default function OrderSectionCard({
             <table className="table table-sm w-full">
               <thead>
                 <tr className="text-xs uppercase text-gray-500">
-                  <th className="pl -7">Part Number</th>
+                  <th className="pl-7">Part Number</th>
                   <th>Qty Requested</th>
                   <th>Qty Fulfilled</th>
                   <th>Comment</th>
