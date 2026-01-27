@@ -88,6 +88,40 @@ def get_order(order_id):
     }), 200
 
 
+# GET order items
+@order_bp.route("/orders/<int:order_id>/items", methods=["GET"])
+def get_order_items(order_id):
+    db = g.db
+    order = db.get(Order, order_id)
+
+    if not order:
+        return jsonify({"error": "Order not found"}), 404
+
+    items = []
+    for item in order.items:
+        product = item.product
+        if product and product.air_filter:
+            part_number = product.air_filter.part_number
+        elif product and product.misc_item:
+            part_number = product.misc_item.name
+        elif product:
+            part_number = f"Product #{product.id}"
+        else:
+            part_number = "Unknown product"
+        items.append({
+            "id": item.id,
+            "order_id": item.order_id,
+            "product_id": item.product_id,
+            "part_number": part_number,
+            "quantity_ordered": item.quantity_ordered,
+            "quantity_fulfilled": item.quantity_fulfilled,
+            "status": item.status,
+            "note": item.note,
+        })
+
+    return jsonify(items), 200
+
+
 # Create new order
 @order_bp.route("/orders", methods=["POST"])
 def create_order():
@@ -378,50 +412,49 @@ def allocate_all(order_id):
 
     created = []
 
-    for section in order.sections:
-        for item in section.items:
+    for item in order.items:
 
-            # Sum existing pending allocations
-            pending_qty = sum(
-                abs(tx.quantity_delta)
-                for tx in item.transactions
-                if tx.state == TransactionState.PENDING.value
-            )
+        # Sum existing pending allocations
+        pending_qty = sum(
+            abs(tx.quantity_delta)
+            for tx in item.transactions
+            if tx.state == TransactionState.PENDING.value
+        )
 
-            remaining = (
-                item.quantity_ordered
-                - item.quantity_fulfilled
-                - pending_qty
-            )
+        remaining = (
+            item.quantity_ordered
+            - item.quantity_fulfilled
+            - pending_qty
+        )
 
-            if remaining <= 0:
-                continue
+        if remaining <= 0:
+            continue
 
-            qty_delta = (
-                -remaining
-                if order.type == OrderType.OUTGOING.value
-                else remaining
-            )
+        qty_delta = (
+            -remaining
+            if order.type == OrderType.OUTGOING.value
+            else remaining
+        )
 
-            txn = Transaction(
-                product_id=item.product_id,
-                order_id=order.id,
-                order_item_id=item.id,
-                quantity_delta=qty_delta,
-                reason="allocation",
-                state=TransactionState.PENDING.value,
-            )
+        txn = Transaction(
+            product_id=item.product_id,
+            order_id=order.id,
+            order_item_id=item.id,
+            quantity_delta=qty_delta,
+            reason="allocation",
+            state=TransactionState.PENDING.value,
+        )
 
-            qty = item.product.quantity
+        qty = item.product.quantity
 
-            # Apply pending effect
-            if qty_delta < 0:
-                qty.reserved += remaining
-            else:
-                qty.ordered += remaining
+        # Apply pending effect
+        if qty_delta < 0:
+            qty.reserved += remaining
+        else:
+            qty.ordered += remaining
 
-            db.add(txn)
-            created.append(txn)
+        db.add(txn)
+        created.append(txn)
 
     db.commit()
 

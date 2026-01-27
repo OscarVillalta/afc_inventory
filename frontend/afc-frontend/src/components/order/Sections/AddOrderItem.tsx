@@ -4,18 +4,14 @@ import { createOrderItem } from "../../../api/orderDetail";
 
 interface Props {
   orderId: number;
-  sectionId: number;
   products: Product[];
   onCreated: () => void;
-  onRefresh: () => void;
 }
 
 export default function AddOrderItemForm({
   orderId,
-  sectionId,
   products,
   onCreated,
-  onRefresh,
 }: Props) {
   const [search, setSearch] = useState("");
   const [selectedProductId, setSelectedProductId] =
@@ -60,7 +56,6 @@ export default function AddOrderItemForm({
     try {
       await createOrderItem({
         order_id: orderId,
-        section_id: sectionId,
         product_id: selectedProductId,
         quantity_ordered: quantity,
         note: note || undefined,

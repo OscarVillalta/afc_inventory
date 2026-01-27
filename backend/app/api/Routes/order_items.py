@@ -1,7 +1,7 @@
 from flask import Blueprint, g, jsonify, request
 from sqlalchemy import select, func
 from app.api.Schemas.order_item_schema import OrderItemSchema
-from database.models import OrderItem, Order, Product, Transaction, OrderSection, TransactionState, OrderType
+from database.models import OrderItem, Order, Product, Transaction, TransactionState, OrderType
 from marshmallow import ValidationError
 
 order_item_bp = Blueprint("order_items", __name__)
@@ -38,12 +38,6 @@ def create_order_item():
     if not order:
         return jsonify({"error": "Order not found"}), 404
 
-    section = db.get(OrderSection, data["section_id"])
-    if not section or section.order_id != order.id:
-        return jsonify({
-            "error": "Order section not found or does not belong to order"
-        }), 400
-
     product = db.get(Product, data["product_id"])
     if not product:
         return jsonify({"error": "Product not found"}), 404
@@ -53,7 +47,6 @@ def create_order_item():
     # ----------------------------
     item = OrderItem(
         order_id=order.id,
-        section_id=section.id,
         product_id=product.id,
         quantity_ordered=data["quantity_ordered"],
         quantity_fulfilled=0,
@@ -63,7 +56,7 @@ def create_order_item():
     existing = (
         db.query(OrderItem)
         .filter_by(
-            section_id=section.id,
+            order_id=order.id,
             product_id=product.id
         )
         .first()
@@ -71,7 +64,7 @@ def create_order_item():
 
     if existing:
         return jsonify({
-            "error": "Product already exists in this section"
+            "error": "Product already exists in this order"
         }), 400
 
     db.add(item)
@@ -403,5 +396,4 @@ def delete_order_item(item_id):
     db.commit()
 
     return jsonify({"success": True}), 200
-
 

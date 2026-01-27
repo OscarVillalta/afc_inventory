@@ -5,7 +5,7 @@ import MainLayout from "../../layouts/MainLayout";
 import OrderHeader from "./OrderHeader";
 import OrderMetaCard from "./OrderMetaCard";
 import OrderDescription from "./OrderDescription";
-import OrderSectionAccordion from "./Sections/OrderSectionAccordion";
+import OrderItemsTable from "./Items/OrderItemsTable";
 
 import { fetchOrderById } from "../../api/ordersTable";
 import type { Customer } from "../../api/customers";
@@ -14,8 +14,8 @@ import type { Supplier } from "../../api/suppliers";
 import { fetchSuppliers } from "../../api/suppliers";
 
 import { patchOrder } from "../../api/ordersTable";
-import type { OrderSectionPayload } from "../../api/orderDetail";
-import { fetchOrderSections } from "../../api/orderDetail";
+import type { OrderItemPayload } from "../../api/orderDetail";
+import { fetchOrderItems } from "../../api/orderDetail";
 import { allocateAll } from "../../api/ordersTable";
 
 
@@ -53,8 +53,8 @@ export default function OrderDetailPage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  const [sections, setSections] = useState<OrderSectionPayload[]>([]);
-  const [sectionsLoading, setSectionsLoading] = useState(true);
+  const [items, setItems] = useState<OrderItemPayload[]>([]);
+  const [itemsLoading, setItemsLoading] = useState(true);
 
   const [txnRefreshKey, setTxnRefreshKey] = useState(0);
 
@@ -102,32 +102,20 @@ export default function OrderDetailPage() {
     }
   }
 
-  /* ===================== Handle Loading ===================== */
-
-  async function loadSections() {
-    if (!orderId) return;
-    const data = await fetchOrderSections(orderId);
-    setSections(data);
-  }
-
-  useEffect(() => {
-    loadSections();
-  }, [orderId]);
-
   async function refreshOrder() {
-  if (!orderId) return;
+    if (!orderId) return;
 
-  const [orderData, sectionsData] = await Promise.all([
-    fetchOrderById(orderId),
-    fetchOrderSections(orderId),
-  ]);
+    const [orderData, itemsData] = await Promise.all([
+      fetchOrderById(orderId),
+      fetchOrderItems(orderId),
+    ]);
 
-  setOrder(orderData);
-  setSections(sectionsData);
+    setOrder(orderData);
+    setItems(itemsData);
 
-  // 🔑 force ALL OrderItemRow txns to reload
-  setTxnRefreshKey((k) => k + 1);
-}
+    // 🔑 force ALL OrderItemRow txns to reload
+    setTxnRefreshKey((k) => k + 1);
+  }
 
   /* ===================== FETCH ORDER ===================== */
 
@@ -166,17 +154,17 @@ export default function OrderDetailPage() {
   }, []);
 
 
-  /* ===================== FETCH Sections ===================== */
+  /* ===================== FETCH Items ===================== */
 
   useEffect(() => {
     if (!orderId) return;
 
-    setSectionsLoading(true);
+    setItemsLoading(true);
 
-    fetchOrderSections(orderId)
-      .then(setSections)
-      .catch(() => console.error("Failed to load sections"))
-      .finally(() => setSectionsLoading(false));
+    fetchOrderItems(orderId)
+      .then(setItems)
+      .catch(() => console.error("Failed to load items"))
+      .finally(() => setItemsLoading(false));
   }, [orderId]);
 
   /* ===================== STATES ===================== */
@@ -249,18 +237,15 @@ export default function OrderDetailPage() {
             />
           </div>
 
-          {sectionsLoading ? (
-              <div className="p-4 text-gray-400">Loading sections…</div>
-            ) : (
-              <OrderSectionAccordion
-                orderId={order.id}
-                sections={sections}
-                onRefresh={refreshOrder}
-                orderType={order.type}
-                orderStatus={order.status}
-                txnRefreshKey={txnRefreshKey}
-              />
-            )}
+          <OrderItemsTable
+            orderId={order.id}
+            items={items}
+            loading={itemsLoading}
+            onRefresh={refreshOrder}
+            orderType={order.type}
+            orderStatus={order.status}
+            txnRefreshKey={txnRefreshKey}
+          />
         </div>
 
         {/* RIGHT COLUMN */}

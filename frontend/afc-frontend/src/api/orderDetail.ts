@@ -19,19 +19,10 @@ export interface OrderItemTransaction {
   created_at: string;
 }
 
-export interface OrderSectionPayload {
-  id: number;
-  title: string;
-  description?: string | null;
-  sort_order: number;
-  status: string;
-  items: OrderItemPayload[];
-}
-
-export function fetchOrderSections(orderId: string) {
+export function fetchOrderItems(orderId: string) {
   return apiRequest(
-    `/orders/${orderId}/sections`
-  ) as Promise <OrderSectionPayload[]>;
+    `/orders/${orderId}/items`
+  ) as Promise<OrderItemPayload[]>;
 }
 
 export function fetchOrderItemTransactions(itemId: number) {
@@ -66,7 +57,6 @@ export function commitTransaction(transactionId: number) {
 
 export function createOrderItem(payload: {
   order_id: number;
-  section_id: number;
   product_id: number;
   quantity_ordered: number;
   note?: string;
@@ -80,27 +70,8 @@ export function createOrderItem(payload: {
   });
 }
 
-export function createOrderSection(payload: {
-  order_id: number;
-  title: string;
-  description?: string;
-}) {
-  console.log(JSON.stringify(payload))
-  return apiRequest("/order_sections", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
-}
-
-export function deleteOrderSection(sectionId: number) {
-  return apiRequest(`/order_sections/${sectionId}`, {
-    method: "DELETE",
-  });
-}
-
 export function deleteOrderItem(itemId: number) {
   return apiRequest(`/order_items/${itemId}`, {
     method: "DELETE",
   });
 }
-
