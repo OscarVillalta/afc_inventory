@@ -158,7 +158,7 @@ export default function AddOrderItemForm({
 
         <button
           className="btn btn-sm btn-outline"
-          onClick={onCancel || onCreated}
+          onClick={onCancel ?? onCreated}
           disabled={saving}
         >
           Cancel
