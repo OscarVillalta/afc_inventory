@@ -50,9 +50,9 @@ export default function OrderItemsTable({
           <thead>
             <tr className="text-xs text-gray-500">
               <th className="pl-7">Part Number</th>
+              <th>Description</th>
               <th>Qty Ordered</th>
               <th>Qty Fulfilled</th>
-              <th>Note</th>
               <th>Status</th>
               <th></th>
             </tr>

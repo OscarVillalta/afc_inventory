@@ -165,13 +165,13 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
           {item.part_number}
         </td>
         <td className="px-3 py-3">
+          {item.note ?? "—"}
+        </td>
+        <td className="px-3 py-3">
           {item.quantity_ordered}
         </td>
         <td className="px-3 py-3">
           {item.quantity_fulfilled}
-        </td>
-        <td className="px-3 py-3">
-          {item.note ?? "—"}
         </td>
         <td className="px-3 py-3">
           {item.status ?? "—"}
