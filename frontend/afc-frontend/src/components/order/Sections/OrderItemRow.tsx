@@ -15,9 +15,11 @@ interface Props {
   orderType: "incoming" | "outgoing";
   onRefresh: () => void;
   txnRefreshKey: number;
+  isSelected: boolean;
+  onToggleSelect: () => void;
 }
 
-export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey, }: Props) {
+export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey, isSelected, onToggleSelect }: Props) {
   const [expanded, setExpanded] = useState(false);
 
   /* ===== Transactions ===== */
@@ -161,6 +163,18 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
           if (next) await loadTransactions();
         }}
       >
+        <td className="px-3 py-3">
+          <input
+            type="checkbox"
+            className="checkbox checkbox-sm"
+            checked={isSelected}
+            onChange={(e) => {
+              e.stopPropagation();
+              onToggleSelect();
+            }}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </td>
         <td className="pl-7 px-3 py-3 font-semibold">
           {item.part_number}
         </td>
@@ -192,7 +206,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
       {/* ===================== EXPANDED ===================== */}
       {expanded && (
         <tr>
-          <td colSpan={6} className="bg-gray-50 px-6 py-4 space-y-3">
+          <td colSpan={7} className="bg-gray-50 px-6 py-4 space-y-3">
             {/* ===== CREATE PENDING ===== */}
             {remainingSafe > 0 && (
               <div className="flex items-center gap-3">

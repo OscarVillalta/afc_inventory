@@ -26,6 +26,7 @@ export default function OrderItemsTable({
 }: Props) {
   const [products, setProducts] = useState<Product[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
 
   const isCompleted = orderStatus === "Completed";
 
@@ -40,6 +41,24 @@ export default function OrderItemsTable({
     onRefresh();
   };
 
+  const handleToggleItem = (itemId: number) => {
+    const newSelected = new Set(selectedItems);
+    if (newSelected.has(itemId)) {
+      newSelected.delete(itemId);
+    } else {
+      newSelected.add(itemId);
+    }
+    setSelectedItems(newSelected);
+  };
+
+  const handleToggleAll = () => {
+    if (selectedItems.size === items.length) {
+      setSelectedItems(new Set());
+    } else {
+      setSelectedItems(new Set(items.map(item => item.id)));
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="rounded-xl bg-white shadow-sm border overflow-hidden">
@@ -49,6 +68,14 @@ export default function OrderItemsTable({
         <table className="table w-full">
           <thead>
             <tr className="text-xs text-gray-500">
+              <th className="w-12">
+                <input
+                  type="checkbox"
+                  className="checkbox checkbox-sm"
+                  checked={items.length > 0 && selectedItems.size === items.length}
+                  onChange={handleToggleAll}
+                />
+              </th>
               <th className="pl-7">Part Number</th>
               <th>Description</th>
               <th>Qty Ordered</th>
@@ -60,13 +87,13 @@ export default function OrderItemsTable({
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} className="p-4 text-gray-400">
+                <td colSpan={7} className="p-4 text-gray-400">
                   Loading items…
                 </td>
               </tr>
             ) : items.length === 0 ? (
               <tr>
-                <td colSpan={6} className="p-4 text-gray-400 italic">
+                <td colSpan={7} className="p-4 text-gray-400 italic">
                   No line items yet
                 </td>
               </tr>
@@ -78,6 +105,8 @@ export default function OrderItemsTable({
                   orderType={orderType}
                   onRefresh={onRefresh}
                   txnRefreshKey={txnRefreshKey}
+                  isSelected={selectedItems.has(item.id)}
+                  onToggleSelect={() => handleToggleItem(item.id)}
                 />
               ))
             )}
