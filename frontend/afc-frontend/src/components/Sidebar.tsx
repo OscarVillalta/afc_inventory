@@ -8,6 +8,7 @@ export default function Sidebar() {
     { name: "Inventory", to: "/inventory", icon: "📦" },
     { name: "Orders", to: "/order", icon: "🧾" },
     { name: "Transactions", to: "/transactions", icon: "💱" },
+    { name: "Contracts", to: "/order", icon: "🧾" },
   ];
 
   return (

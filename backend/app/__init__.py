@@ -11,6 +11,7 @@ from backend.app.api.Routes.order_reorder import order_reorder_bp
 from backend.app.api.Routes.orders import order_bp
 from backend.app.api.Routes.order_items import order_item_bp
 from backend.app.api.Routes.order_sections import order_section_bp
+from backend.app.api.Routes.qb import qb_bp
 from flask_cors import CORS
 
 
@@ -30,6 +31,7 @@ def create_app():
     app.register_blueprint(order_bp, url_prefix="/api")
     app.register_blueprint(order_item_bp, url_prefix="/api")
     app.register_blueprint(order_section_bp, url_prefix="/api")
+    app.register_blueprint(qb_bp, url_prefix="/api")
 
 
     #Db_session wrappers

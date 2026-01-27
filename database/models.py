@@ -1,12 +1,11 @@
 from enum import Enum
-from typing import List, Optional, Text
+from typing import List, Optional
 from datetime import datetime, timezone
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship, foreign
-from sqlalchemy import ForeignKey, String, Integer, Numeric, Boolean, Index, func, text
+from sqlalchemy import ForeignKey, String, Integer, Boolean, Index, func, text
 from sqlalchemy.inspection import inspect
 from sqlalchemy.ext.hybrid import hybrid_property
-
 
 from database import Base
 
@@ -18,6 +17,7 @@ from database import Base
 class OrderType(str, Enum):
     OUTGOING = "outgoing"
     INCOMING = "incoming"
+
 
 class OrderStatus(str, Enum):
     PENDING = "Pending"
@@ -54,7 +54,6 @@ class SerializerMixin:
             attr = column.key
             value = getattr(self, attr)
 
-            # Normalize Enum to its value for JSON friendliness
             if isinstance(value, Enum):
                 value = value.value
 
@@ -181,7 +180,6 @@ class Product(Base, SerializerMixin):
     category_id: Mapped[int] = mapped_column(ForeignKey("product_categories.id"), nullable=False)
     reference_id: Mapped[int] = mapped_column(Integer, nullable=False)
 
-    # Soft delete flag
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     category: Mapped["ProductCategory"] = relationship("ProductCategory", back_populates="products")
@@ -243,7 +241,7 @@ class Quantity(Base, SerializerMixin):
     @hybrid_property
     def available(self):
         return self.on_hand - self.reserved
-    
+
     @available.expression
     def available(cls):
         return func.greatest(cls.on_hand - cls.reserved, 0)
@@ -251,7 +249,7 @@ class Quantity(Base, SerializerMixin):
     @hybrid_property
     def backordered(self):
         return max(0, -self.available)
-    
+
     @backordered.expression
     def backordered(cls):
         return func.greatest(cls.reserved - cls.on_hand, 0)
@@ -279,10 +277,9 @@ class Order(Base, SerializerMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     order_number: Mapped[str] = mapped_column(unique=True, nullable=True)
-    external_order_number: Mapped[str] = mapped_column(nullable=True)
+    external_order_number: Mapped[Optional[str]] = mapped_column(nullable=True)
 
-    # Keep as string, but validate via Marshmallow / enums
-    type: Mapped[str] = mapped_column(String, nullable=False)  # should be one of OrderType values
+    type: Mapped[str] = mapped_column(String, nullable=False)  # OrderType values
 
     supplier_id: Mapped[Optional[int]] = mapped_column(ForeignKey("suppliers.id"))
     customer_id: Mapped[Optional[int]] = mapped_column(ForeignKey("customers.id"))
@@ -290,14 +287,14 @@ class Order(Base, SerializerMixin):
     status: Mapped[str] = mapped_column(String, default=OrderStatus.PENDING.value, nullable=False)
     description: Mapped[Optional[str]] = mapped_column()
     created_at: Mapped[datetime] = mapped_column(default=datetime.now(timezone.utc))
-    completed_at: Mapped[datetime] = mapped_column(nullable=True)
-    eta: Mapped[datetime] = mapped_column(nullable=True)
+    completed_at: Mapped[Optional[datetime]] = mapped_column(nullable=True)
+    eta: Mapped[Optional[datetime]] = mapped_column(nullable=True)
 
-    supplier: Mapped[Optional["Supplier"]] = relationship("Supplier")
-    customer: Mapped[Optional["Customer"]] = relationship("Customer")
+    supplier: Mapped[Optional["Supplier"]] = relationship("Supplier", back_populates="orders")
+    customer: Mapped[Optional["Customer"]] = relationship("Customer", back_populates="orders")
 
-    sections: Mapped[List["OrderSection"]] = relationship(
-        "OrderSection",
+    items: Mapped[List["OrderItem"]] = relationship(
+        "OrderItem",
         back_populates="order",
         cascade="all, delete-orphan"
     )
@@ -309,41 +306,39 @@ class Order(Base, SerializerMixin):
     )
 
     def update_status(self):
-
-        if not self.sections:
+        """
+        Status is derived from items:
+        - No items OR all qty_fulfilled == 0 -> Pending
+        - All items fulfilled -> Completed
+        - Otherwise -> Partially Fulfilled
+        """
+        if not self.items:
             self.status = OrderStatus.PENDING.value
             self.completed_at = None
             return
 
-        total_sections = len(self.sections)
+        total = len(self.items)
+        fully_complete = 0
+        any_progress = False
 
-        completed_sections = sum(
-            1 for s in self.sections
-            if s.status == OrderStatus.COMPLETED.value
-        )
+        for item in self.items:
+            if item.quantity_fulfilled >= item.quantity_ordered and item.quantity_ordered > 0:
+                fully_complete += 1
+            if item.quantity_fulfilled > 0:
+                any_progress = True
 
-        partially_fulfilled_sections = sum(
-            1 for s in self.sections
-            if s.status == OrderStatus.PARTIALLY_FULFILLED.value
-        )
-
-        if completed_sections == total_sections:
+        if fully_complete == total:
             self.status = OrderStatus.COMPLETED.value
             self.completed_at = self.completed_at or datetime.now(timezone.utc)
-
-        elif completed_sections > 0 or partially_fulfilled_sections > 0:
+        elif any_progress:
             self.status = OrderStatus.PARTIALLY_FULFILLED.value
             self.completed_at = None
-
         else:
             self.status = OrderStatus.PENDING.value
             self.completed_at = None
-    
-    def generate_order_number(db):
-        last = db.execute(
-            text("SELECT MAX(id) FROM orders")
-        ).scalar() or 0
 
+    def generate_order_number(db):
+        last = db.execute(text("SELECT MAX(id) FROM orders")).scalar() or 0
         return f"AFC-{last + 1:06d}"
 
 
@@ -362,14 +357,10 @@ class OrderItem(Base, SerializerMixin):
     quantity_fulfilled: Mapped[int] = mapped_column(default=0)
     note: Mapped[Optional[str]] = mapped_column(nullable=True)
 
-    completion_date: Mapped[datetime] = mapped_column(nullable=True)
+    completion_date: Mapped[Optional[datetime]] = mapped_column(nullable=True)
 
+    order: Mapped["Order"] = relationship("Order", back_populates="items")
     product: Mapped["Product"] = relationship("Product", back_populates="order_items")
-
-    section_id = mapped_column(
-        ForeignKey("order_sections.id", ondelete="CASCADE"),
-        nullable=True
-    )
 
     transactions: Mapped[List["Transaction"]] = relationship(
         "Transaction",
@@ -377,12 +368,10 @@ class OrderItem(Base, SerializerMixin):
         passive_deletes=True,
     )
 
-    section = relationship("OrderSection", back_populates="items")
-
     @property
     def remaining(self) -> int:
         return max(self.quantity_ordered - self.quantity_fulfilled, 0)
-    
+
     @property
     def status(self) -> str:
         if self.quantity_fulfilled == 0:
@@ -390,51 +379,6 @@ class OrderItem(Base, SerializerMixin):
         if self.quantity_fulfilled < self.quantity_ordered:
             return "Partially Fulfilled"
         return "Completed"
-    
-# =====================================================
-# 🔹 Order Sections
-# =====================================================
-    
-class OrderSection(Base):
-    __tablename__ = "order_sections"
-
-    id:Mapped[int] = mapped_column(primary_key=True)
-    order_id:Mapped[int] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"))
-
-    title:Mapped[str] = mapped_column(String(100), nullable=False)
-    description:Mapped[str] = mapped_column(String(255), nullable=True)
-    sort_order:Mapped[int] = mapped_column(default=0)
-    status: Mapped[str] = mapped_column(String, default=OrderStatus.PENDING.value, nullable=False)
-
-    order = relationship("Order", back_populates="sections")
-
-    items = relationship(
-        "OrderItem",
-        back_populates="section",
-        cascade="all, delete-orphan"
-    )
-
-    def update_status(self):
-        if not self.items or len(self.items) == 0:
-            self.status = OrderStatus.PENDING.value
-            return
-
-        total = len(self.items)
-        complete = 0
-        partial = 0
-
-        for item in self.items:
-            if item.quantity_fulfilled >= item.quantity_ordered:
-                complete += 1
-            elif item.quantity_fulfilled > 0:
-                partial += 1
-
-        if complete == total:
-            self.status = OrderStatus.COMPLETED.value
-        elif partial > 0 or complete > 0:
-            self.status = OrderStatus.PARTIALLY_FULFILLED.value
-        else:
-            self.status = OrderStatus.PENDING.value
 
 
 # =====================================================
@@ -472,8 +416,11 @@ class Transaction(Base, SerializerMixin):
             raise ValueError("Product or quantity record missing.")
 
         qty_record = self.product.quantity
+
+        # Apply physical change
         qty_record.on_hand += self.quantity_delta
 
+        # Remove pending planning effect
         if self.quantity_delta > 0:
             qty_record.ordered -= abs(self.quantity_delta)
         else:
@@ -481,23 +428,15 @@ class Transaction(Base, SerializerMixin):
 
         self.state = TransactionState.COMMITTED.value
 
+        # Fulfillment progression
         if self.order_item:
             item = self.order_item
             item.quantity_fulfilled += abs(self.quantity_delta)
-            item.quantity_fulfilled = max(
-                0,
-                min(item.quantity_fulfilled, item.quantity_ordered)
-            )
+            item.quantity_fulfilled = max(0, min(item.quantity_fulfilled, item.quantity_ordered))
 
-            # 🔑 NEW: update section status
-            if item.section:
-                item.section.update_status()
-
-            # existing order status update
-            if item.section.order:
-                item.section.order.update_status()
-        
-
+            # Update order status directly (no sections now)
+            if item.order:
+                item.order.update_status()
 
     def rollback(self, db, performed_by: Optional[str] = None):
         if self.state != TransactionState.COMMITTED.value:
@@ -513,25 +452,22 @@ class Transaction(Base, SerializerMixin):
             note=f"Reversal of transaction #{self.id}",
         )
 
+        if not self.product or not self.product.quantity:
+            raise ValueError("Product or quantity record missing.")
+
         qty_record = self.product.quantity
         qty_record.on_hand += reversed_txn.quantity_delta
 
         if self.order_item:
             item = self.order_item
-            item.quantity_fulfilled += reversed_txn.quantity_delta
+            # reversed_txn.quantity_delta is opposite sign; fulfilled should subtract by abs(original delta)
+            item.quantity_fulfilled -= abs(self.quantity_delta)
             item.quantity_fulfilled = max(0, min(item.quantity_fulfilled, item.quantity_ordered))
-            if item.section:
-                item.section.update_status()
-                if item.section.order:
-                    item.section.order.update_status()
+
+            if item.order:
+                item.order.update_status()
 
         self.state = TransactionState.ROLLED_BACK.value
-
-        if item.section:
-            item.section.update_status()
-
-        if item.section.order:
-            item.section.order.update_status()
 
         db.add(reversed_txn)
         return reversed_txn
@@ -539,6 +475,7 @@ class Transaction(Base, SerializerMixin):
     def cancel(self):
         if self.state == TransactionState.PENDING.value:
             self.state = TransactionState.CANCELLED.value
+
 
 # =====================================================
 # 🔹 Indexes

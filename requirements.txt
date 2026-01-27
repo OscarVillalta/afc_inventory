@@ -8,5 +8,6 @@ alembic==1.11.1
 SQLAlchemy==2.0.44
 marshmallow
 flask-cors
+requests
 
 

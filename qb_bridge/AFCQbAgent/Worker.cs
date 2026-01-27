@@ -1,16 +1,63 @@
-namespace AFCQbAgent;
+﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Hosting;
 
-public class Worker(ILogger<Worker> logger) : BackgroundService
+namespace AfcQbAgent;
+
+public sealed class Worker : BackgroundService
 {
+    private readonly JobRouter _jobRouter;
+
+    public Worker(JobRouter jobRouter)
+    {
+        _jobRouter = jobRouter;
+    }
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        Console.WriteLine("[Worker] AFC QB Agent started.");
+
         while (!stoppingToken.IsCancellationRequested)
         {
-            if (logger.IsEnabled(LogLevel.Information))
+            // ---- Test job (standalone mode) ----
+            var job = new JobDto
             {
-                logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
+                JobId = Guid.NewGuid().ToString("N"),
+                Op = "query",
+                Entity = "sales_order",
+                // Optional params for queries
+                Params =
+                {
+                    // "active_status": "All" | "ActiveOnly" | "InactiveOnly"
+                    ["refnumber"] = "8800"
+                }
+            };
+
+            Console.WriteLine($"[Worker] Executing job {job.JobId} ({job.Op}/{job.Entity})...");
+
+            var result = await _jobRouter.ExecuteJobAsync(job, stoppingToken);
+
+            Console.WriteLine("--------------------------------------------------");
+            Console.WriteLine($"Success: {result.Success}");
+            if (!string.IsNullOrWhiteSpace(result.ErrorMessage))
+                Console.WriteLine($"Error: {result.ErrorMessage}");
+
+            if (!string.IsNullOrWhiteSpace(result.QbxmlRequest))
+            {
+                Console.WriteLine("\nQBXML Request:");
+                Console.WriteLine(result.QbxmlRequest);
             }
-            await Task.Delay(1000, stoppingToken);
+
+            if (!string.IsNullOrWhiteSpace(result.QbxmlResponse))
+            {
+                Console.WriteLine("\nQBXML Response:");
+                Console.WriteLine(result.QbxmlResponse);
+            }
+            Console.WriteLine("--------------------------------------------------");
+
+            // Wait before running again (standalone loop)
+            await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
         }
     }
 }

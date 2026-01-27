@@ -1,0 +1,38 @@
+import os, requests
+from flask import Blueprint, request, jsonify
+from marshmallow import ValidationError
+from app.api.Schemas.qb_schema import QBJobResultSchema, QBJobSchema
+
+QB_AGENT_URL = QB_AGENT_URL = os.getenv("QB_AGENT_URL", "http://127.0.0.1:5055")
+
+def qb_agent_post(job: dict, timeout=60) -> dict:
+    r = requests.post(f"{QB_AGENT_URL}/jobs", json=job, timeout=timeout)
+    r.raise_for_status()
+    return r.json()
+
+qb_bp = Blueprint("qb", __name__)
+
+job_schema = QBJobSchema()
+job_result_schema = QBJobResultSchema()
+
+
+@qb_bp.post("/qb/job")
+def run_qb_job():
+    try:
+        job = job_schema.load(request.get_json(force=True))
+    except ValidationError as err:
+        return jsonify({
+            "success": False,
+            "error": "Invalid job payload",
+            "details": err.messages
+        }), 400
+
+    r = requests.post(
+        f"{QB_AGENT_URL}/jobs",
+        json=job,
+        timeout=60
+    )
+    r.raise_for_status()
+
+    result = job_result_schema.load(r.json())
+    return jsonify(result)
