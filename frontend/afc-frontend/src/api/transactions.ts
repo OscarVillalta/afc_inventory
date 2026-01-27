@@ -9,6 +9,38 @@ export interface createTxnRequest {
   note: string;
 }
 
+export interface TransactionPayload {
+  id: number;
+  product_id: number;
+  order_id?: number | null;
+  order_item_id?: number | null;
+  quantity_delta: number;
+  reason: string;
+  state: "pending" | "committed" | "cancelled" | "rolled_back";
+  note?: string | null;
+  created_at: string;
+}
+
+export interface TransactionListResponse {
+  page: number;
+  limit: number;
+  total: number;
+  results: TransactionPayload[];
+}
+
+export function fetchTransactions(
+  page = 1,
+  limit = 10
+): Promise<TransactionListResponse> {
+  const params = new URLSearchParams();
+  params.set("page", String(page));
+  params.set("limit", String(limit));
+
+  return apiRequest(`/transactions?${params.toString()}`, {
+    method: "GET",
+  });
+}
+
 export function autocommitTxn(data: createTxnRequest): Promise<createTxnRequest> {
   console.log(JSON.stringify({
       ...data,

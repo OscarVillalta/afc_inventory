@@ -1,5 +1,9 @@
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import MDTable from "../table/MDtable";
+import { fetchTransactions } from "../../api/transactions";
+import type { TransactionPayload } from "../../api/transactions";
+import { fetchProducts } from "../../api/products";
+import type { Product } from "../../api/products";
 
 interface TransactionRow {
   id: string;
@@ -10,6 +14,21 @@ interface TransactionRow {
   date: string;        // formatted date
 }
 
+function formatDate(iso: string) {
+  if (!iso) return "";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toISOString().split("T")[0];
+}
+
+function getType(txn: TransactionPayload): TransactionRow["type"] {
+  const reason = txn.reason?.toLowerCase();
+  if (reason === "adjustment" || reason === "rollback") {
+    return "Adjustment";
+  }
+  return txn.quantity_delta >= 0 ? "Incoming" : "Outgoing";
+}
+
 export default function TransactionsTable() {
   const [page, setPage] = useState(1);
   const pageSize = 10;
@@ -18,16 +37,74 @@ export default function TransactionsTable() {
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("All");
 
-  // Fake data for now
-  const rows: TransactionRow[] = [
-    { id: "T1001", product: "FGP-12x24x2", type: "Incoming", qty: 120, source: "Camfil", date: "2024-04-02" },
-    { id: "T1002", product: "M13 V-Bank", type: "Outgoing", qty: 20, source: "MediHealth", date: "2024-04-01" },
-    { id: "T1003", product: "HEPA-24x24x12", type: "Adjustment", qty: -2, source: "Inventory Correction", date: "2024-03-29" },
-  ];
+  const [products, setProducts] = useState<Product[]>([]);
+  const [transactions, setTransactions] = useState<TransactionPayload[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const uniqueTypes = ["All", "Incoming", "Outgoing", "Adjustment"];
+  useEffect(() => {
+    fetchProducts()
+      .then((data) => setProducts(data ?? []))
+      .catch(() => setProducts([]));
+  }, []);
 
-  const total = rows.length;
+  const loadTransactions = useCallback(() => {
+    setLoading(true);
+    setError(null);
+
+    fetchTransactions(page, pageSize)
+      .then((data) => {
+        setTransactions(data.results ?? []);
+        setTotal(data.total ?? 0);
+        if ((data.results ?? []).length === 0 && page > 1) {
+          setPage(1);
+        }
+      })
+      .catch(() => {
+        setError("Failed to load transactions.");
+        setTransactions([]);
+        setTotal(0);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [page, pageSize]);
+
+  useEffect(() => {
+    loadTransactions();
+  }, [loadTransactions]);
+
+  const productLookup = useMemo(() => {
+    return new Map(products.map((product) => [product.id, product.part_number]));
+  }, [products]);
+
+  const rows = useMemo(() => {
+    return transactions.map((txn) => ({
+      id: String(txn.id),
+      product: productLookup.get(txn.product_id) ?? `#${txn.product_id}`,
+      type: getType(txn),
+      qty: txn.quantity_delta,
+      source: txn.note || txn.reason,
+      date: formatDate(txn.created_at),
+    }));
+  }, [productLookup, transactions]);
+
+  const filteredRows = useMemo(() => {
+    const searchValue = search.trim().toLowerCase();
+    return rows.filter((row) => {
+      if (filterType !== "All" && row.type !== filterType) return false;
+      if (!searchValue) return true;
+      return (
+        row.id.toLowerCase().includes(searchValue) ||
+        row.product.toLowerCase().includes(searchValue)
+      );
+    });
+  }, [filterType, rows, search]);
+
+  const uniqueTypes = useMemo(() => {
+    return ["All", ...new Set(rows.map((row) => row.type))];
+  }, [rows]);
 
   return (
     <MDTable
@@ -76,34 +153,60 @@ export default function TransactionsTable() {
       </tr>
 
       {/* TABLE ROWS */}
-      {rows.map((row) => (
-        <tr key={row.id} className="bg-white shadow-sm rounded-xl">
-          <td className="py-3 px-2 font-semibold">{row.id}</td>
-          <td className="py-3 px-2">{row.product}</td>
-
-          {/* Type badge */}
-          <td className="py-3 px-2">
-            <span
-              className={`
-                px-3 py-1 rounded-full text-xs font-medium
-                ${
-                  row.type === "Incoming"
-                    ? "bg-green-100 text-green-700"
-                    : row.type === "Outgoing"
-                    ? "bg-red-100 text-red-700"
-                    : "bg-blue-100 text-blue-700"
-                }
-              `}
-            >
-              {row.type}
-            </span>
+      {loading && (
+        <tr>
+          <td className="py-4 text-center text-gray-500" colSpan={6}>
+            Loading transactions...
           </td>
-
-          <td className="py-3 px-2">{row.qty}</td>
-          <td className="py-3 px-2">{row.source}</td>
-          <td className="py-3 px-2 text-gray-500">{row.date}</td>
         </tr>
-      ))}
+      )}
+
+      {!loading && error && (
+        <tr>
+          <td className="py-4 text-center text-red-600" colSpan={6}>
+            {error}
+          </td>
+        </tr>
+      )}
+
+      {!loading && !error && filteredRows.length === 0 && (
+        <tr>
+          <td className="py-4 text-center text-gray-500" colSpan={6}>
+            No transactions found.
+          </td>
+        </tr>
+      )}
+
+      {!loading &&
+        !error &&
+        filteredRows.map((row) => (
+          <tr key={row.id} className="bg-white shadow-sm rounded-xl">
+            <td className="py-3 px-2 font-semibold">{row.id}</td>
+            <td className="py-3 px-2">{row.product}</td>
+
+            {/* Type badge */}
+            <td className="py-3 px-2">
+              <span
+                className={`
+                  px-3 py-1 rounded-full text-xs font-medium
+                  ${
+                    row.type === "Incoming"
+                      ? "bg-green-100 text-green-700"
+                      : row.type === "Outgoing"
+                      ? "bg-red-100 text-red-700"
+                      : "bg-blue-100 text-blue-700"
+                  }
+                `}
+              >
+                {row.type}
+              </span>
+            </td>
+
+            <td className="py-3 px-2">{row.qty}</td>
+            <td className="py-3 px-2">{row.source}</td>
+            <td className="py-3 px-2 text-gray-500">{row.date}</td>
+          </tr>
+        ))}
     </MDTable>
   );
 }
