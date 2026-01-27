@@ -378,50 +378,49 @@ def allocate_all(order_id):
 
     created = []
 
-    for section in order.sections:
-        for item in section.items:
+    for item in order.items:
 
-            # Sum existing pending allocations
-            pending_qty = sum(
-                abs(tx.quantity_delta)
-                for tx in item.transactions
-                if tx.state == TransactionState.PENDING.value
-            )
+        # Sum existing pending allocations
+        pending_qty = sum(
+            abs(tx.quantity_delta)
+            for tx in item.transactions
+            if tx.state == TransactionState.PENDING.value
+        )
 
-            remaining = (
-                item.quantity_ordered
-                - item.quantity_fulfilled
-                - pending_qty
-            )
+        remaining = (
+            item.quantity_ordered
+            - item.quantity_fulfilled
+            - pending_qty
+        )
 
-            if remaining <= 0:
-                continue
+        if remaining <= 0:
+            continue
 
-            qty_delta = (
-                -remaining
-                if order.type == OrderType.OUTGOING.value
-                else remaining
-            )
+        qty_delta = (
+            -remaining
+            if order.type == OrderType.OUTGOING.value
+            else remaining
+        )
 
-            txn = Transaction(
-                product_id=item.product_id,
-                order_id=order.id,
-                order_item_id=item.id,
-                quantity_delta=qty_delta,
-                reason="allocation",
-                state=TransactionState.PENDING.value,
-            )
+        txn = Transaction(
+            product_id=item.product_id,
+            order_id=order.id,
+            order_item_id=item.id,
+            quantity_delta=qty_delta,
+            reason="allocation",
+            state=TransactionState.PENDING.value,
+        )
 
-            qty = item.product.quantity
+        qty = item.product.quantity
 
-            # Apply pending effect
-            if qty_delta < 0:
-                qty.reserved += remaining
-            else:
-                qty.ordered += remaining
+        # Apply pending effect
+        if qty_delta < 0:
+            qty.reserved += remaining
+        else:
+            qty.ordered += remaining
 
-            db.add(txn)
-            created.append(txn)
+        db.add(txn)
+        created.append(txn)
 
     db.commit()
 
