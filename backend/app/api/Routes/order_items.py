@@ -53,20 +53,6 @@ def create_order_item():
         note=data.get("note"),
     )
 
-    existing = (
-        db.query(OrderItem)
-        .filter_by(
-            order_id=order.id,
-            product_id=product.id
-        )
-        .first()
-    )   
-
-    if existing:
-        return jsonify({
-            "error": "Product already exists in this order"
-        }), 400
-
     db.add(item)
     db.commit()
 
