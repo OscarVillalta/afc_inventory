@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import type { OrderItemPayload } from "../../../api/orderDetail";
 import type { Product } from "../../../api/products";
 import { fetchProducts } from "../../../api/products";
@@ -26,8 +26,43 @@ export default function OrderItemsTable({
 }: Props) {
   const [products, setProducts] = useState<Product[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
+  const selectAllRef = useRef<HTMLInputElement>(null);
 
   const isCompleted = orderStatus === "Completed";
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedItems(new Set(items.map(item => item.id)));
+    } else {
+      setSelectedItems(new Set());
+    }
+  };
+
+  const handleSelectItem = (itemId: number, checked: boolean) => {
+    const newSelected = new Set(selectedItems);
+    if (checked) {
+      newSelected.add(itemId);
+    } else {
+      newSelected.delete(itemId);
+    }
+    setSelectedItems(newSelected);
+  };
+
+  const allSelected = items.length > 0 && selectedItems.size === items.length;
+  const someSelected = selectedItems.size > 0 && selectedItems.size < items.length;
+
+  // Reset selected items when items list changes
+  useEffect(() => {
+    setSelectedItems(new Set());
+  }, [items.length]);
+
+  // Update indeterminate state for select all checkbox
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = someSelected;
+    }
+  }, [someSelected]);
 
   useEffect(() => {
     fetchProducts()
@@ -49,6 +84,16 @@ export default function OrderItemsTable({
         <table className="table w-full">
           <thead>
             <tr className="text-xs text-gray-500">
+              <th className="w-12">
+                <input
+                  ref={selectAllRef}
+                  type="checkbox"
+                  className="checkbox checkbox-sm"
+                  checked={allSelected}
+                  onChange={(e) => handleSelectAll(e.target.checked)}
+                  aria-label="Select all items"
+                />
+              </th>
               <th className="pl-7">Part Number</th>
               <th>Description</th>
               <th>Qty Ordered</th>
@@ -60,13 +105,13 @@ export default function OrderItemsTable({
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} className="p-4 text-gray-400">
+                <td colSpan={7} className="p-4 text-gray-400">
                   Loading items…
                 </td>
               </tr>
             ) : items.length === 0 ? (
               <tr>
-                <td colSpan={6} className="p-4 text-gray-400 italic">
+                <td colSpan={7} className="p-4 text-gray-400 italic">
                   No line items yet
                 </td>
               </tr>
@@ -78,6 +123,8 @@ export default function OrderItemsTable({
                   orderType={orderType}
                   onRefresh={onRefresh}
                   txnRefreshKey={txnRefreshKey}
+                  isSelected={selectedItems.has(item.id)}
+                  onSelectChange={(checked) => handleSelectItem(item.id, checked)}
                 />
               ))
             )}
