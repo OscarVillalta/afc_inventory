@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Line Items with Checkboxes - Demo</title>
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@4.5.0/dist/full.min.css" rel="stylesheet" type="text/css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+  <div class="max-w-6xl mx-auto">
+    <h1 class="text-3xl font-bold mb-6">Line Items Table - Checkbox Selection Demo</h1>
+    
+    <div class="rounded-xl bg-white shadow-sm border overflow-hidden">
+      <div class="px-4 py-3 border-b text-sm font-semibold text-white bg-[#313545]">
+        Line Items
+      </div>
+      <table class="table w-full">
+        <thead>
+          <tr class="text-xs text-gray-500">
+            <th class="w-12">
+              <input type="checkbox" class="checkbox checkbox-sm" id="selectAll" onchange="toggleAll(this)">
+            </th>
+            <th class="pl-7">Part Number</th>
+            <th>Description</th>
+            <th>Qty Ordered</th>
+            <th>Qty Fulfilled</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="bg-white hover:bg-gray-50 cursor-pointer transition">
+            <td class="px-3 py-3">
+              <input type="checkbox" class="checkbox checkbox-sm item-checkbox" onclick="event.stopPropagation(); updateSelectAll()">
+            </td>
+            <td class="pl-7 px-3 py-3 font-semibold">FGP-12x24x2</td>
+            <td class="px-3 py-3">Standard air filter</td>
+            <td class="px-3 py-3">100</td>
+            <td class="px-3 py-3">75</td>
+            <td class="px-3 py-3">Pending</td>
+            <td class="px-3 py-3 text-right"></td>
+          </tr>
+          <tr class="bg-white hover:bg-gray-50 cursor-pointer transition">
+            <td class="px-3 py-3">
+              <input type="checkbox" class="checkbox checkbox-sm item-checkbox" onclick="event.stopPropagation(); updateSelectAll()">
+            </td>
+            <td class="pl-7 px-3 py-3 font-semibold">M13-16x25x2</td>
+            <td class="px-3 py-3">MERV 13 pleated filter</td>
+            <td class="px-3 py-3">50</td>
+            <td class="px-3 py-3">50</td>
+            <td class="px-3 py-3">Completed</td>
+            <td class="px-3 py-3 text-right"></td>
+          </tr>
+          <tr class="bg-white hover:bg-gray-50 cursor-pointer transition">
+            <td class="px-3 py-3">
+              <input type="checkbox" class="checkbox checkbox-sm item-checkbox" onclick="event.stopPropagation(); updateSelectAll()">
+            </td>
+            <td class="pl-7 px-3 py-3 font-semibold">V-BANK-24x24x12</td>
+            <td class="px-3 py-3">V-Bank HEPA filter</td>
+            <td class="px-3 py-3">25</td>
+            <td class="px-3 py-3">0</td>
+            <td class="px-3 py-3">Pending</td>
+            <td class="px-3 py-3 text-right"></td>
+          </tr>
+          <tr class="bg-white hover:bg-gray-50 cursor-pointer transition">
+            <td class="px-3 py-3">
+              <input type="checkbox" class="checkbox checkbox-sm item-checkbox" onclick="event.stopPropagation(); updateSelectAll()">
+            </td>
+            <td class="pl-7 px-3 py-3 font-semibold">CF-20x20x1</td>
+            <td class="px-3 py-3">Carbon filter</td>
+            <td class="px-3 py-3">200</td>
+            <td class="px-3 py-3">150</td>
+            <td class="px-3 py-3">Pending</td>
+            <td class="px-3 py-3 text-right"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+      <p class="text-sm"><strong>Feature:</strong> Checkboxes have been added to each line item row</p>
+      <ul class="list-disc list-inside text-sm mt-2 space-y-1">
+        <li>✅ Checkbox in header to select/deselect all items</li>
+        <li>✅ Individual checkbox for each line item</li>
+        <li>✅ Clicking checkbox doesn't expand the row (event propagation stopped)</li>
+        <li>✅ State management tracks selected items</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    function toggleAll(checkbox) {
+      const itemCheckboxes = document.querySelectorAll('.item-checkbox');
+      itemCheckboxes.forEach(cb => {
+        cb.checked = checkbox.checked;
+      });
+    }
+
+    function updateSelectAll() {
+      const selectAll = document.getElementById('selectAll');
+      const itemCheckboxes = document.querySelectorAll('.item-checkbox');
+      const checkedCount = document.querySelectorAll('.item-checkbox:checked').length;
+      selectAll.checked = checkedCount === itemCheckboxes.length;
+    }
+  </script>
+</body>
+</html>
