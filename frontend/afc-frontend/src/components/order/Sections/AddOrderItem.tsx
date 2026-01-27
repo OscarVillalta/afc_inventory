@@ -6,12 +6,14 @@ interface Props {
   orderId: number;
   products: Product[];
   onCreated: () => void;
+  onCancel?: () => void;
 }
 
 export default function AddOrderItemForm({
   orderId,
   products,
   onCreated,
+  onCancel,
 }: Props) {
   const [search, setSearch] = useState("");
   const [selectedProductId, setSelectedProductId] =
@@ -156,7 +158,7 @@ export default function AddOrderItemForm({
 
         <button
           className="btn btn-sm btn-outline"
-          onClick={onCreated}
+          onClick={onCancel || onCreated}
           disabled={saving}
         >
           Cancel
