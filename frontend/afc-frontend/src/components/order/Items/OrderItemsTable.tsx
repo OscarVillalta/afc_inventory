@@ -43,13 +43,13 @@ export default function OrderItemsTable({
   return (
     <div className="space-y-4">
       <div className="rounded-xl bg-white shadow-sm border overflow-hidden">
-        <div className="px-4 py-3 border-b text-sm font-semibold text-gray-700">
+        <div className="px-4 py-3 border-b text-sm font-semibold text-white bg-[#313545]">
           Line Items
         </div>
         <table className="table w-full">
           <thead>
             <tr className="text-xs text-gray-500">
-              <th className="pl-7">Part #</th>
+              <th className="pl-7">Part Number</th>
               <th>Qty Ordered</th>
               <th>Qty Fulfilled</th>
               <th>Note</th>
