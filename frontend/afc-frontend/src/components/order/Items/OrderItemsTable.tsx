@@ -25,6 +25,7 @@ export default function OrderItemsTable({
   txnRefreshKey,
 }: Props) {
   const [products, setProducts] = useState<Product[]>([]);
+  const [showAddForm, setShowAddForm] = useState(false);
 
   const isCompleted = orderStatus === "Completed";
 
@@ -34,16 +35,13 @@ export default function OrderItemsTable({
       .catch(() => console.error("Failed to load products"));
   }, []);
 
+  const handleFormCreated = () => {
+    setShowAddForm(false);
+    onRefresh();
+  };
+
   return (
     <div className="space-y-4">
-      {!isCompleted && (
-        <AddOrderItemForm
-          orderId={orderId}
-          products={products}
-          onCreated={onRefresh}
-        />
-      )}
-
       <div className="rounded-xl bg-white shadow-sm border overflow-hidden">
         <div className="px-4 py-3 border-b text-sm font-semibold text-gray-700">
           Line Items
@@ -86,6 +84,24 @@ export default function OrderItemsTable({
           </tbody>
         </table>
       </div>
+
+      {!isCompleted && !showAddForm && (
+        <button
+          className="btn btn-sm btn-primary"
+          onClick={() => setShowAddForm(true)}
+        >
+          + Add Line Item
+        </button>
+      )}
+
+      {!isCompleted && showAddForm && (
+        <AddOrderItemForm
+          orderId={orderId}
+          products={products}
+          onCreated={handleFormCreated}
+          onCancel={() => setShowAddForm(false)}
+        />
+      )}
     </div>
   );
 }
