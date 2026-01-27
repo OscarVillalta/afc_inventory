@@ -88,6 +88,40 @@ def get_order(order_id):
     }), 200
 
 
+# GET order items
+@order_bp.route("/orders/<int:order_id>/items", methods=["GET"])
+def get_order_items(order_id):
+    db = g.db
+    order = db.get(Order, order_id)
+
+    if not order:
+        return jsonify({"error": "Order not found"}), 404
+
+    items = []
+    for item in order.items:
+        product = item.product
+        if product and product.air_filter:
+            part_number = product.air_filter.part_number
+        elif product and product.misc_item:
+            part_number = product.misc_item.name
+        elif product:
+            part_number = f"Product #{product.id}"
+        else:
+            part_number = "Unknown product"
+        items.append({
+            "id": item.id,
+            "order_id": item.order_id,
+            "product_id": item.product_id,
+            "part_number": part_number,
+            "quantity_ordered": item.quantity_ordered,
+            "quantity_fulfilled": item.quantity_fulfilled,
+            "status": item.status,
+            "note": item.note,
+        })
+
+    return jsonify(items), 200
+
+
 # Create new order
 @order_bp.route("/orders", methods=["POST"])
 def create_order():
