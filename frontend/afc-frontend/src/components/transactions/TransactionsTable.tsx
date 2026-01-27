@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import MDTable from "../table/MDtable";
 import { fetchTransactions } from "../../api/transactions";
 import type { TransactionPayload } from "../../api/transactions";
@@ -42,38 +42,42 @@ export default function TransactionsTable() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [productWarning, setProductWarning] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchProducts()
-      .then((data) => setProducts(data ?? []))
-      .catch(() => setProducts([]));
-  }, []);
-
-  const loadTransactions = useCallback(() => {
+  const loadTransactions = () => {
     setLoading(true);
     setError(null);
 
-    fetchTransactions(page, pageSize)
-      .then((data) => {
-        setTransactions(data.results ?? []);
-        setTotal(data.total ?? 0);
-        if ((data.results ?? []).length === 0 && page > 1) {
-          setPage(1);
+    Promise.allSettled([
+      fetchTransactions(page, pageSize),
+      fetchProducts(),
+    ])
+      .then(([transactionsResult, productsResult]) => {
+        if (transactionsResult.status === "fulfilled") {
+          setTransactions(transactionsResult.value.results ?? []);
+          setTotal(transactionsResult.value.total ?? 0);
+        } else {
+          setError("Failed to load transactions.");
+          setTransactions([]);
+          setTotal(0);
         }
-      })
-      .catch(() => {
-        setError("Failed to load transactions.");
-        setTransactions([]);
-        setTotal(0);
+
+        if (productsResult.status === "fulfilled") {
+          setProducts(productsResult.value ?? []);
+          setProductWarning(null);
+        } else {
+          setProducts([]);
+          setProductWarning("Product names unavailable.");
+        }
       })
       .finally(() => {
         setLoading(false);
       });
-  }, [page, pageSize]);
+  };
 
   useEffect(() => {
     loadTransactions();
-  }, [loadTransactions]);
+  }, [page, pageSize]);
 
   const productLookup = useMemo(() => {
     return new Map(products.map((product) => [product.id, product.part_number]));
@@ -85,26 +89,12 @@ export default function TransactionsTable() {
       product: productLookup.get(txn.product_id) ?? `#${txn.product_id}`,
       type: getType(txn),
       qty: txn.quantity_delta,
-      source: txn.note || txn.reason,
+      source: txn.note ?? txn.reason ?? "",
       date: formatDate(txn.created_at),
     }));
   }, [productLookup, transactions]);
 
-  const filteredRows = useMemo(() => {
-    const searchValue = search.trim().toLowerCase();
-    return rows.filter((row) => {
-      if (filterType !== "All" && row.type !== filterType) return false;
-      if (!searchValue) return true;
-      return (
-        row.id.toLowerCase().includes(searchValue) ||
-        row.product.toLowerCase().includes(searchValue)
-      );
-    });
-  }, [filterType, rows, search]);
-
-  const uniqueTypes = useMemo(() => {
-    return ["All", ...new Set(rows.map((row) => row.type))];
-  }, [rows]);
+  const uniqueTypes = ["All", "Incoming", "Outgoing", "Adjustment"];
 
   return (
     <MDTable
@@ -169,7 +159,15 @@ export default function TransactionsTable() {
         </tr>
       )}
 
-      {!loading && !error && filteredRows.length === 0 && (
+      {!loading && !error && productWarning && (
+        <tr>
+          <td className="py-2 text-center text-amber-600 text-sm" colSpan={6}>
+            {productWarning}
+          </td>
+        </tr>
+      )}
+
+      {!loading && !error && rows.length === 0 && (
         <tr>
           <td className="py-4 text-center text-gray-500" colSpan={6}>
             No transactions found.
@@ -179,7 +177,7 @@ export default function TransactionsTable() {
 
       {!loading &&
         !error &&
-        filteredRows.map((row) => (
+        rows.map((row) => (
           <tr key={row.id} className="bg-white shadow-sm rounded-xl">
             <td className="py-3 px-2 font-semibold">{row.id}</td>
             <td className="py-3 px-2">{row.product}</td>

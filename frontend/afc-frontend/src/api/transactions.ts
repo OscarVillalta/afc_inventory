@@ -15,7 +15,7 @@ export interface TransactionPayload {
   order_id?: number | null;
   order_item_id?: number | null;
   quantity_delta: number;
-  reason: string;
+  reason?: string | null;
   state: "pending" | "committed" | "cancelled" | "rolled_back";
   note?: string | null;
   created_at: string;
