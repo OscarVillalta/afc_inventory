@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import type { OrderItemPayload } from "../../../api/orderDetail";
 import type { Product } from "../../../api/products";
 import { fetchProducts } from "../../../api/products";
@@ -27,6 +27,7 @@ export default function OrderItemsTable({
   const [products, setProducts] = useState<Product[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
+  const selectAllRef = useRef<HTMLInputElement>(null);
 
   const isCompleted = orderStatus === "Completed";
 
@@ -49,6 +50,19 @@ export default function OrderItemsTable({
   };
 
   const allSelected = items.length > 0 && selectedItems.size === items.length;
+  const someSelected = selectedItems.size > 0 && selectedItems.size < items.length;
+
+  // Reset selected items when items list changes
+  useEffect(() => {
+    setSelectedItems(new Set());
+  }, [items.length]);
+
+  // Update indeterminate state for select all checkbox
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = someSelected;
+    }
+  }, [someSelected]);
 
   useEffect(() => {
     fetchProducts()
@@ -72,10 +86,12 @@ export default function OrderItemsTable({
             <tr className="text-xs text-gray-500">
               <th className="w-12">
                 <input
+                  ref={selectAllRef}
                   type="checkbox"
                   className="checkbox checkbox-sm"
                   checked={allSelected}
                   onChange={(e) => handleSelectAll(e.target.checked)}
+                  aria-label="Select all items"
                 />
               </th>
               <th className="pl-7">Part Number</th>

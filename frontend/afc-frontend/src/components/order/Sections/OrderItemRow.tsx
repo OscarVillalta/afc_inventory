@@ -169,6 +169,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
             className="checkbox checkbox-sm"
             checked={isSelected}
             onChange={(e) => onSelectChange(e.target.checked)}
+            aria-label={`Select ${item.part_number}`}
           />
         </td>
         <td className="pl-7 px-3 py-3 font-semibold">
