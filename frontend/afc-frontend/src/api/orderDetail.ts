@@ -57,6 +57,31 @@ export function commitTransaction(transactionId: number) {
   });
 }
 
+export function cancelTransaction(transactionId: number) {
+  return apiRequest(`/transactions/${transactionId}/cancel`, {
+    method: "PATCH",
+  });
+}
+
+export function rollbackTransaction(transactionId: number) {
+  return apiRequest(`/transactions/${transactionId}/rollback`, {
+    method: "PATCH",
+  });
+}
+
+export function allocateOrderItem(itemId: number, quantity: number, note?: string) {
+  return apiRequest(`/order_items/${itemId}/allocate`, {
+    method: "POST",
+    body: JSON.stringify({ quantity, note }),
+  });
+}
+
+export function commitAllOrderItemTransactions(itemId: number) {
+  return apiRequest(`/order_items/${itemId}/commit_all`, {
+    method: "PATCH",
+  });
+}
+
 export function createOrderItem(payload: {
   order_id: number;
   product_id?: number | null;

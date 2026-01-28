@@ -15,7 +15,14 @@ import { fetchSuppliers } from "../../api/suppliers";
 
 import { patchOrder } from "../../api/ordersTable";
 import type { OrderItemPayload } from "../../api/orderDetail";
-import { fetchOrderItems } from "../../api/orderDetail";
+import { 
+  fetchOrderItems,
+  allocateOrderItem,
+  commitAllOrderItemTransactions,
+  cancelTransaction,
+  rollbackTransaction,
+  fetchOrderItemTransactions,
+} from "../../api/orderDetail";
 import { allocateAll } from "../../api/ordersTable";
 
 
@@ -57,6 +64,8 @@ export default function OrderDetailPage() {
   const [itemsLoading, setItemsLoading] = useState(true);
 
   const [txnRefreshKey, setTxnRefreshKey] = useState(0);
+
+  const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
 
   function handleTypeChange(newType: OrderType) {
     setOrder((prev) =>
@@ -202,6 +211,147 @@ export default function OrderDetailPage() {
     }
   }
 
+  async function handleAllocateSelected() {
+    if (selectedItems.size === 0) {
+      alert("No items selected");
+      return;
+    }
+
+    const nonSeparatorItems = items.filter(
+      item => selectedItems.has(item.id) && !item.is_separator
+    );
+
+    if (nonSeparatorItems.length === 0) {
+      alert("No valid items selected (separators cannot be allocated)");
+      return;
+    }
+
+    try {
+      for (const item of nonSeparatorItems) {
+        const remaining = item.quantity_ordered - item.quantity_fulfilled;
+        if (remaining > 0) {
+          await allocateOrderItem(item.id, remaining);
+        }
+      }
+      await refreshOrder();
+      setSelectedItems(new Set());
+    } catch (err: any) {
+      alert(
+        err?.response?.data?.error ||
+        err?.message ||
+        "Failed to allocate selected items"
+      );
+    }
+  }
+
+  async function handleCommitSelected() {
+    if (selectedItems.size === 0) {
+      alert("No items selected");
+      return;
+    }
+
+    const nonSeparatorItems = items.filter(
+      item => selectedItems.has(item.id) && !item.is_separator
+    );
+
+    if (nonSeparatorItems.length === 0) {
+      alert("No valid items selected");
+      return;
+    }
+
+    try {
+      for (const item of nonSeparatorItems) {
+        await commitAllOrderItemTransactions(item.id);
+      }
+      await refreshOrder();
+      setSelectedItems(new Set());
+    } catch (err: any) {
+      alert(
+        err?.response?.data?.error ||
+        err?.message ||
+        "Failed to commit selected items"
+      );
+    }
+  }
+
+  async function handleCancelSelected() {
+    if (selectedItems.size === 0) {
+      alert("No items selected");
+      return;
+    }
+
+    const nonSeparatorItems = items.filter(
+      item => selectedItems.has(item.id) && !item.is_separator
+    );
+
+    if (nonSeparatorItems.length === 0) {
+      alert("No valid items selected");
+      return;
+    }
+
+    if (!confirm("Cancel all pending transactions for selected items?")) {
+      return;
+    }
+
+    try {
+      for (const item of nonSeparatorItems) {
+        const transactions = await fetchOrderItemTransactions(item.id);
+        const pendingTxns = transactions.filter(tx => tx.state === "pending");
+        
+        for (const tx of pendingTxns) {
+          await cancelTransaction(tx.id);
+        }
+      }
+      await refreshOrder();
+      setSelectedItems(new Set());
+    } catch (err: any) {
+      alert(
+        err?.response?.data?.error ||
+        err?.message ||
+        "Failed to cancel selected items"
+      );
+    }
+  }
+
+  async function handleRollbackSelected() {
+    if (selectedItems.size === 0) {
+      alert("No items selected");
+      return;
+    }
+
+    const nonSeparatorItems = items.filter(
+      item => selectedItems.has(item.id) && !item.is_separator
+    );
+
+    if (nonSeparatorItems.length === 0) {
+      alert("No valid items selected");
+      return;
+    }
+
+    if (!confirm("Rollback all committed transactions for selected items? This will create reversal transactions.")) {
+      return;
+    }
+
+    try {
+      for (const item of nonSeparatorItems) {
+        const transactions = await fetchOrderItemTransactions(item.id);
+        const committedTxns = transactions.filter(tx => tx.state === "committed");
+        
+        for (const tx of committedTxns) {
+          await rollbackTransaction(tx.id);
+        }
+      }
+      await refreshOrder();
+      setSelectedItems(new Set());
+    } catch (err: any) {
+      alert(
+        err?.response?.data?.error ||
+        err?.message ||
+        "Failed to rollback selected items"
+      );
+    }
+  }
+
 
   /* ===================== RENDER ===================== */
 
@@ -245,6 +395,8 @@ export default function OrderDetailPage() {
             orderType={order.type}
             orderStatus={order.status}
             txnRefreshKey={txnRefreshKey}
+            selectedItems={selectedItems}
+            onSelectedItemsChange={setSelectedItems}
           />
         </div>
 
@@ -255,6 +407,12 @@ export default function OrderDetailPage() {
             onChange={(v) =>
               setOrder({ ...order, description: v })
             }
+            selectedItemsCount={selectedItems.size}
+            onAllocateSelected={handleAllocateSelected}
+            onCommitSelected={handleCommitSelected}
+            onCancelSelected={handleCancelSelected}
+            onRollbackSelected={handleRollbackSelected}
+            disabled={order.status === "Completed"}
           />
 
           <div className="flex justify-end gap-2 mb-3">
