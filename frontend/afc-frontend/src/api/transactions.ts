@@ -30,13 +30,17 @@ export interface TransactionListResponse {
 
 export function fetchTransactions(
   page = 1,
-  limit = 10
+  limit = 10,
+  product_name?: string,
 ): Promise<TransactionListResponse> {
   const params = new URLSearchParams();
   params.set("page", String(page));
   params.set("limit", String(limit));
-
-  return apiRequest(`/transactions?${params.toString()}`, {
+  if (product_name){
+    params.set("product_name", product_name);
+  }
+  
+  return apiRequest(`/transactions/search?${params.toString()}`, {
     method: "GET",
   });
 }

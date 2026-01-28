@@ -9,8 +9,10 @@ interface TransactionRow {
   id: string;
   product: string;
   type: "Incoming" | "Outgoing" | "Adjustment";
+  state: "pending" | "committed" | "cancelled" | "rolled_back";
   qty: number;
   source: string;      // vendor or customer
+  note: string;
   date: string;        // formatted date
 }
 
@@ -87,24 +89,25 @@ export default function TransactionsTable() {
     return transactions.map((txn) => ({
       id: String(txn.id),
       product: productLookup.get(txn.product_id) ?? `#${txn.product_id}`,
-      type: getType(txn),
+      state: txn.state,
       qty: txn.quantity_delta,
-      source: txn.note ?? txn.reason ?? "",
+      source: txn.reason ?? "",
+      note: txn.note ?? "---",
       date: formatDate(txn.created_at),
     }));
   }, [productLookup, transactions]);
 
-  const uniqueTypes = ["All", "Incoming", "Outgoing", "Adjustment"];
+  const uniqueTypes = ["All", "Committed", "Pending", "Rolled_Back", "Cancelled"];
 
   return (
     <MDTable
       title="Transactions Ledger"
       columns={[
-        "ID",
         "Product",
-        "Type",
+        "State",
         "Quantity",
-        "Source",
+        "Reason",
+        "Note",
         "Date",
       ]}
       page={page}
@@ -114,7 +117,8 @@ export default function TransactionsTable() {
     >
       {/* FILTER BAR */}
       <tr className="border-b">
-        <th className="p-2">
+
+        <th className="py-2 pr-2 w-1/4">
           <input
             className="input input-bordered input-xs w-full"
             placeholder="Search ID / Product"
@@ -123,9 +127,8 @@ export default function TransactionsTable() {
           />
         </th>
 
-        <th></th>
 
-        <th className="p-2">
+        <th className="py-2 pr-2 w-1/8">
           <select
             className="select select-bordered select-xs w-full"
             value={filterType}
@@ -137,9 +140,10 @@ export default function TransactionsTable() {
           </select>
         </th>
 
-        <th></th>
-        <th></th>
-        <th></th>
+        <th className="py-2 pr-2 w-1/8"></th>
+        <th className="py-2 pr-2 w-1/8"></th>
+        <th className="py-2 pr-2 w-1/4"></th>
+  
       </tr>
 
       {/* TABLE ROWS */}
@@ -179,7 +183,6 @@ export default function TransactionsTable() {
         !error &&
         rows.map((row) => (
           <tr key={row.id} className="bg-white shadow-sm rounded-xl">
-            <td className="py-3 px-2 font-semibold">{row.id}</td>
             <td className="py-3 px-2">{row.product}</td>
 
             {/* Type badge */}
@@ -188,20 +191,36 @@ export default function TransactionsTable() {
                 className={`
                   px-3 py-1 rounded-full text-xs font-medium
                   ${
-                    row.type === "Incoming"
+                    row.state === "committed"
                       ? "bg-green-100 text-green-700"
-                      : row.type === "Outgoing"
-                      ? "bg-red-100 text-red-700"
-                      : "bg-blue-100 text-blue-700"
+                      : row.state === "pending"
+                      ? "bg-[#feeab7] text-[#756334]"
+                      : "bg-red-100 text-red-700"
                   }
                 `}
               >
-                {row.type}
+                {row.state}
               </span>
             </td>
 
-            <td className="py-3 px-2">{row.qty}</td>
+            <td className="py-3 px-2">
+              <span
+                className={`
+                  px-3 py-1 rounded-full text-xs font-medium
+                  ${
+                    row.qty > 0
+                      ? "bg-green-100 text-green-700"
+                      : "bg-red-100 text-red-700"
+                  }
+                `}
+              >
+                {row.qty}
+              </span>
+            </td>
+
+
             <td className="py-3 px-2">{row.source}</td>
+            <td className="py-3 px-2">{row.note}</td>
             <td className="py-3 px-2 text-gray-500">{row.date}</td>
           </tr>
         ))}

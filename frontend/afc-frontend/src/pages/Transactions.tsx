@@ -6,7 +6,7 @@ export default function TransactionsPage() {
     <MainLayout>
       <div className="p-6 w-full">
         {/* Page Title */}
-        <h1 className="text-2xl font-bold mb-6 text-gray-800">
+        <h1 className="text-2xl font-bold mb-6 text-gray-800 pb-5">
           Transactions
         </h1>
 
