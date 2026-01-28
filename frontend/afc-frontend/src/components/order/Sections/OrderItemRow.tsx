@@ -285,9 +285,11 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
                 }}
                 title="View transactions"
               >
-                ☰
+                <img width="24" height="24" src="https://img.icons8.com/material-rounded/24/expand-arrow--v1.png" alt="expand-arrow--v1"/>
               </button>
-              {loaded && transactions.length === 0 && (
+              
+              {loaded && transactions.length === 0 
+              ? (
                 <button
                   className="btn btn-xs btn-ghost text-red-500"
                   onClick={handleDeleteItem}
@@ -295,7 +297,13 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
                 >
                 ✕
               </button>
-            )}
+            )
+            : (
+                <div className="btn btn-xs btn-ghost text-red-500 w-7">
+
+              </div>
+            )
+            }
             </div>
           </td>
         </tr>
