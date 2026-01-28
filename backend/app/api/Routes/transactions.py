@@ -43,8 +43,17 @@ def filter_transactions():
 
     # --- Filters
     product_id = request.args.get("product_id", type=int)
+    product_name = request.args.get("product_name", type=str)
     order_id = request.args.get("order_id", type=int)
     state = request.args.get("state")
+    reason = request.args.get("reason", type=str)
+    note = request.args.get("note", type=str)
+    
+    # Date filters
+    start_date = request.args.get("start_date", type=str)
+    end_date = request.args.get("end_date", type=str)
+    before_date = request.args.get("before_date", type=str)
+    after_date = request.args.get("after_date", type=str)
 
     # --- Pagination
     page = request.args.get("page", default=1, type=int)
@@ -57,10 +66,41 @@ def filter_transactions():
 
     if product_id:
         filters.append(Transaction.product_id == product_id)
+    
+    # Search by product name (partial match)
+    if product_name:
+        product_subquery = select(Product.id).where(
+            Product.part_number.ilike(f"%{product_name}%")
+        )
+        filters.append(Transaction.product_id.in_(product_subquery))
+    
     if order_id:
         filters.append(Transaction.order_id == order_id)
     if state:
         filters.append(Transaction.state == state)
+    
+    # Filter by reason (partial match, case insensitive)
+    if reason:
+        filters.append(Transaction.reason.ilike(f"%{reason}%"))
+    
+    # Filter by note (partial match, case insensitive)
+    if note:
+        filters.append(Transaction.note.ilike(f"%{note}%"))
+    
+    # Date filters
+    try:
+        if start_date and end_date:
+            # Between two dates (inclusive)
+            filters.append(Transaction.created_at >= datetime.fromisoformat(start_date))
+            filters.append(Transaction.created_at <= datetime.fromisoformat(end_date))
+        elif before_date:
+            # Before a specific date (inclusive)
+            filters.append(Transaction.created_at <= datetime.fromisoformat(before_date))
+        elif after_date:
+            # After a specific date (inclusive)
+            filters.append(Transaction.created_at >= datetime.fromisoformat(after_date))
+    except ValueError:
+        return jsonify({"error": "Invalid date format. Use ISO format (YYYY-MM-DD)."}), 400
 
     if filters:
         query = query.where(*filters)
