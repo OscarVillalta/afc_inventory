@@ -1,7 +1,23 @@
 import { useEffect, useState, useRef } from "react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import type { OrderItemPayload } from "../../../api/orderDetail";
 import type { Product } from "../../../api/products";
 import { fetchProducts } from "../../../api/products";
+import { reorderOrderItems } from "../../../api/orderDetail";
 import AddOrderItemForm from "../Sections/AddOrderItem";
 import OrderItemRow from "../Sections/OrderItemRow";
 
@@ -27,9 +43,27 @@ export default function OrderItemsTable({
   const [products, setProducts] = useState<Product[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
+  const [localItems, setLocalItems] = useState<OrderItemPayload[]>([]);
   const selectAllRef = useRef<HTMLInputElement>(null);
 
   const isCompleted = orderStatus === "Completed";
+
+  // Sensors for drag and drop
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Require 8px movement before drag starts
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Update local items when props change
+  useEffect(() => {
+    setLocalItems(items);
+  }, [items]);
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -80,6 +114,33 @@ export default function OrderItemsTable({
   const allSelected = items.length > 0 && selectedItems.size === items.length;
   const someSelected = selectedItems.size > 0 && selectedItems.size < items.length;
 
+  // Handle drag end
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    const oldIndex = localItems.findIndex((item) => item.id === active.id);
+    const newIndex = localItems.findIndex((item) => item.id === over.id);
+
+    // Optimistically update local state
+    const newItems = arrayMove(localItems, oldIndex, newIndex);
+    setLocalItems(newItems);
+
+    try {
+      // Call backend to persist the change
+      await reorderOrderItems(orderId, active.id as number, newIndex);
+      // Refresh to get the latest from server
+      onRefresh();
+    } catch (error) {
+      console.error("Failed to reorder items:", error);
+      // Revert on error
+      setLocalItems(items);
+    }
+  }
+
   // Reset selected items when items list changes
   useEffect(() => {
     setSelectedItems(new Set());
@@ -109,55 +170,67 @@ export default function OrderItemsTable({
         <div className="px-4 py-3 border-b text-sm font-semibold text-white bg-[#313545]">
           Line Items
         </div>
-        <table className="table w-full">
-          <thead>
-            <tr className="text-xs text-gray-500">
-              <th className="w-12">
-                <input
-                  ref={selectAllRef}
-                  type="checkbox"
-                  className="checkbox checkbox-s"
-                  checked={allSelected}
-                  onChange={(e) => handleSelectAll(e.target.checked)}
-                  aria-label="Select all items"
-                />
-              </th>
-              <th className="pl-7">Part Number</th>
-              <th>Description</th>
-              <th>Qty Ordered</th>
-              <th>Qty Fulfilled</th>
-              <th>Status</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={7} className="p-4 text-gray-400">
-                  Loading items…
-                </td>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <table className="table w-full">
+            <thead>
+              <tr className="text-xs text-gray-500">
+                <th className="w-8"></th>
+                <th className="w-12">
+                  <input
+                    ref={selectAllRef}
+                    type="checkbox"
+                    className="checkbox checkbox-s"
+                    checked={allSelected}
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                    aria-label="Select all items"
+                  />
+                </th>
+                <th className="pl-7">Part Number</th>
+                <th>Description</th>
+                <th>Qty Ordered</th>
+                <th>Qty Fulfilled</th>
+                <th>Status</th>
+                <th></th>
               </tr>
-            ) : items.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="p-4 text-gray-400 italic">
-                  No line items yet
-                </td>
-              </tr>
-            ) : (
-              items.map((item) => (
-                <OrderItemRow
-                  key={item.id}
-                  item={item}
-                  orderType={orderType}
-                  onRefresh={onRefresh}
-                  txnRefreshKey={txnRefreshKey}
-                  isSelected={selectedItems.has(item.id)}
-                  onSelectChange={(checked) => handleSelectItem(item.id, checked)}
-                />
-              ))
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <SortableContext
+              items={localItems.map(item => item.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan={8} className="p-4 text-gray-400">
+                      Loading items…
+                    </td>
+                  </tr>
+                ) : localItems.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="p-4 text-gray-400 italic">
+                      No line items yet
+                    </td>
+                  </tr>
+                ) : (
+                  localItems.map((item) => (
+                    <OrderItemRow
+                      key={item.id}
+                      item={item}
+                      orderType={orderType}
+                      onRefresh={onRefresh}
+                      txnRefreshKey={txnRefreshKey}
+                      isSelected={selectedItems.has(item.id)}
+                      onSelectChange={(checked) => handleSelectItem(item.id, checked)}
+                    />
+                  ))
+                )}
+              </tbody>
+            </SortableContext>
+          </table>
+        </DndContext>
       </div>
 
       {!isCompleted && !showAddForm && (
@@ -173,6 +246,7 @@ export default function OrderItemsTable({
         <AddOrderItemForm
           orderId={orderId}
           products={products}
+          items={localItems}
           onCreated={handleFormCreated}
           onCancel={() => setShowAddForm(false)}
         />

@@ -1,10 +1,12 @@
 import { useState } from "react";
 import type { Product } from "../../../api/products";
+import type { OrderItemPayload } from "../../../api/orderDetail";
 import { createOrderItem } from "../../../api/orderDetail";
 
 interface Props {
   orderId: number;
   products: Product[];
+  items?: OrderItemPayload[];
   onCreated: () => void;
   onCancel?: () => void;
 }
@@ -12,6 +14,7 @@ interface Props {
 export default function AddOrderItemForm({
   orderId,
   products,
+  items = [],
   onCreated,
   onCancel,
 }: Props) {
@@ -21,6 +24,7 @@ export default function AddOrderItemForm({
     useState<number | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [note, setNote] = useState("");
+  const [position, setPosition] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -58,11 +62,13 @@ export default function AddOrderItemForm({
           order_id: orderId,
           is_separator: true,
           note: note,
+          position: position ?? undefined,
         });
 
         // Reset state
         setNote("");
         setItemType("regular");
+        setPosition(null);
         onCreated();
       } catch {
         setError("Failed to add separator item.");
@@ -90,6 +96,7 @@ export default function AddOrderItemForm({
           product_id: selectedProductId,
           quantity_ordered: quantity,
           note: note || undefined,
+          position: position ?? undefined,
         });
 
         // Reset state
@@ -97,6 +104,7 @@ export default function AddOrderItemForm({
         setSelectedProductId(null);
         setQuantity(1);
         setNote("");
+        setPosition(null);
         setShowDropdown(false);
 
         onCreated();
@@ -211,6 +219,33 @@ export default function AddOrderItemForm({
           </p>
         </>
       )}
+
+      {/* ===================== POSITION SELECTOR ===================== */}
+      <div>
+        <label className="text-xs text-gray-600 mb-1 block">
+          Insert Position (optional)
+        </label>
+        <select
+          className="select select-sm select-bordered w-full"
+          value={position ?? ""}
+          onChange={(e) => setPosition(e.target.value ? Number(e.target.value) : null)}
+        >
+          <option value="">Add at end</option>
+          {items.map((item, index) => (
+            <option key={item.id} value={index}>
+              {index + 1}. {item.is_separator ? `[${item.note}]` : item.part_number}
+            </option>
+          ))}
+          {items.length > 0 && (
+            <option value={items.length}>
+              {items.length + 1}. (End of list)
+            </option>
+          )}
+        </select>
+        <p className="text-xs text-gray-500 mt-1">
+          Select a position to insert the new item before an existing item.
+        </p>
+      </div>
 
       {/* ===================== ACTIONS ===================== */}
       <div className="flex justify-end gap-2 items-center">

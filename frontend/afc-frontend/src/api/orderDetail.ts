@@ -10,6 +10,7 @@ export interface OrderItemPayload {
   quantity_fulfilled: number;
   status:string;
   note?: string;
+  position: number;
 }
 
 export interface OrderItemTransaction {
@@ -62,6 +63,7 @@ export function createOrderItem(payload: {
   is_separator?: boolean;
   quantity_ordered?: number;
   note?: string;
+  position?: number;
 }) {
   console.log(JSON.stringify(payload))
   return apiRequest("/order_items", {
@@ -73,5 +75,15 @@ export function createOrderItem(payload: {
 export function deleteOrderItem(itemId: number) {
   return apiRequest(`/order_items/${itemId}`, {
     method: "DELETE",
+  });
+}
+
+export function reorderOrderItems(orderId: number, itemId: number, newPosition: number) {
+  return apiRequest(`/orders/${orderId}/items/reorder`, {
+    method: "PATCH",
+    body: JSON.stringify({
+      item_id: itemId,
+      new_position: newPosition,
+    }),
   });
 }

@@ -8,3 +8,4 @@ class OrderItemSchema(Schema):
     quantity_ordered = fields.Int(load_default=0)
     quantity_fulfilled = fields.Int(dump_only=True)
     note = fields.Str(allow_none=True)
+    position = fields.Int(load_default=0)
