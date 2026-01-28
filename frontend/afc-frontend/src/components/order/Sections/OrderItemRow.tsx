@@ -10,6 +10,7 @@ import {
   createOrderItemTransaction,
   commitTransaction,
   deleteOrderItem,
+  updateOrderItem,
 } from "../../../api/orderDetail";
 
 interface Props {
@@ -31,6 +32,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
     transform,
     transition,
     isDragging,
+    setActivatorNodeRef,
   } = useSortable({ id: item.id });
 
   const style = {
@@ -38,6 +40,13 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
     transition,
     opacity: isDragging ? 0.5 : 1,
   };
+
+  // Editable fields state
+  const [isEditingNote, setIsEditingNote] = useState(false);
+  const [isEditingQty, setIsEditingQty] = useState(false);
+  const [editedNote, setEditedNote] = useState(item.note || "");
+  const [editedQty, setEditedQty] = useState(item.quantity_ordered);
+  const [saving, setSaving] = useState(false);
 
   /* ===== Transactions ===== */
   const [transactions, setTransactions] =
@@ -88,6 +97,62 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
   useEffect(() => {
     setPendingQty(remainingSafe);
   }, [remainingSafe]);
+
+  /* ===== Sync editable fields when item changes ===== */
+  useEffect(() => {
+    setEditedNote(item.note || "");
+    setEditedQty(item.quantity_ordered);
+  }, [item.id, item.note, item.quantity_ordered]);
+
+  /* ===== Save edited note ===== */
+  async function saveNote() {
+    const normalizedEditedNote = editedNote || "";
+    const normalizedItemNote = item.note || "";
+    
+    if (normalizedEditedNote === normalizedItemNote) {
+      setIsEditingNote(false);
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await updateOrderItem(item.id, { note: editedNote });
+      setIsEditingNote(false);
+      await onRefresh();
+    } catch {
+      setError("Failed to update description.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  /* ===== Save edited quantity ===== */
+  async function saveQty() {
+    if (editedQty === item.quantity_ordered) {
+      setIsEditingQty(false);
+      return;
+    }
+
+    if (editedQty <= 0) {
+      setError("Quantity must be greater than 0.");
+      setEditedQty(item.quantity_ordered);
+      setIsEditingQty(false);
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await updateOrderItem(item.id, { quantity_ordered: editedQty });
+      setIsEditingQty(false);
+      await onRefresh();
+    } catch {
+      setError("Failed to update quantity.");
+      setEditedQty(item.quantity_ordered);
+      setIsEditingQty(false);
+    } finally {
+      setSaving(false);
+    }
+  }
 
 
 /* ===== Sync after using quick acces buttons ===== */
@@ -191,8 +256,13 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
           style={style}
           className="bg-blue-50 border-t-2 border-b-2 border-blue-300"
         >
-          <td className="w-8 px-2" {...attributes} {...listeners}>
-            <div className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600">
+          <td className="w-8 px-2">
+            <div 
+              ref={setActivatorNodeRef}
+              {...attributes} 
+              {...listeners}
+              className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600"
+            >
               ⋮⋮
             </div>
           </td>
@@ -207,9 +277,38 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
           </td>
           <td colSpan={5} className="px-3 py-3">
             <div className="flex items-center gap-2">
-              <span className="font-bold text-blue-900 text-base">
-                {item.note || "Section Separator"}
-              </span>
+              {isEditingNote ? (
+                <div className="flex items-center gap-2 flex-1">
+                  <input
+                    type="text"
+                    className="input input-sm input-bordered flex-1"
+                    value={editedNote}
+                    onChange={(e) => setEditedNote(e.target.value)}
+                    onBlur={saveNote}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        saveNote();
+                      }
+                      if (e.key === "Escape") {
+                        e.preventDefault();
+                        setEditedNote(item.note || "");
+                        setIsEditingNote(false);
+                      }
+                    }}
+                    autoFocus
+                    disabled={saving}
+                  />
+                </div>
+              ) : (
+                <span 
+                  className="font-bold text-blue-900 text-base cursor-pointer hover:bg-blue-100 px-2 py-1 rounded flex-1"
+                  onClick={() => setIsEditingNote(true)}
+                  title="Click to edit"
+                >
+                  {item.note || "Section Separator"}
+                </span>
+              )}
             </div>
           </td>
           <td className="px-3 py-3 text-right">
@@ -229,8 +328,10 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
           style={style}
           className="bg-white hover:bg-gray-50 transition"
         >
-          <td className="w-8 px-2" {...attributes} {...listeners}>
-            <div className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600">
+          <td className="w-8 px-2">
+            <div 
+              className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600"
+            >
               ⋮⋮
             </div>
           </td>
@@ -243,22 +344,93 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
               aria-label={`Select ${item.part_number}`}
             />
           </td>
-          <td className="pl-7 px-3 py-3 font-semibold">
+          <td 
+            className="pl-7 px-3 py-3 font-semibold cursor-grab active:cursor-grabbing"
+            ref={setActivatorNodeRef}
+            {...attributes}
+            {...listeners}
+            title="Drag to reorder"
+          >
             {item.part_number}
           </td>
-          <td className="px-3 py-3">
-            {item.note ?? "—"}
+          <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
+            {isEditingNote ? (
+              <input
+                type="text"
+                className="input input-sm input-bordered w-full"
+                value={editedNote}
+                onChange={(e) => setEditedNote(e.target.value)}
+                onBlur={saveNote}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    saveNote();
+                  }
+                  if (e.key === "Escape") {
+                    e.preventDefault();
+                    setEditedNote(item.note || "");
+                    setIsEditingNote(false);
+                  }
+                }}
+                autoFocus
+                disabled={saving}
+              />
+            ) : (
+              <span
+                className="cursor-pointer hover:bg-gray-100 px-2 py-1 rounded inline-block w-full"
+                onClick={() => setIsEditingNote(true)}
+                title="Click to edit"
+              >
+                {item.note || "—"}
+              </span>
+            )}
           </td>
           <td 
-            className="px-3 py-3 cursor-pointer hover:bg-blue-50"
-            onClick={async () => {
-              const next = !expanded;
-              setExpanded(next);
-              if (next) await loadTransactions();
-            }}
-            title="Click to view transactions"
+            className="px-3 py-3"
+            onClick={(e) => e.stopPropagation()}
           >
-            {item.quantity_ordered}
+            {isEditingQty ? (
+              <input
+                type="number"
+                className="input input-sm input-bordered w-24"
+                value={editedQty}
+                onChange={(e) => {
+                  const value = Number(e.target.value);
+                  if (value >= 1) {
+                    setEditedQty(value);
+                  }
+                }}
+                onBlur={saveQty}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    saveQty();
+                  }
+                  if (e.key === "Escape") {
+                    e.preventDefault();
+                    setEditedQty(item.quantity_ordered);
+                    setIsEditingQty(false);
+                  }
+                }}
+                autoFocus
+                disabled={saving || item.quantity_fulfilled > 0}
+                min={1}
+              />
+            ) : (
+              <span
+                className={`cursor-pointer hover:bg-blue-50 px-2 py-1 rounded inline-block ${
+                  item.quantity_fulfilled > 0 ? 'cursor-not-allowed opacity-50' : ''
+                }`}
+                onClick={() => {
+                  if (item.quantity_fulfilled === 0) {
+                    setIsEditingQty(true);
+                  }
+                }}
+                title={item.quantity_fulfilled > 0 ? "Cannot edit fulfilled items" : "Click to edit"}
+              >
+                {item.quantity_ordered}
+              </span>
+            )}
           </td>
           <td 
             className="px-3 py-3 cursor-pointer hover:bg-blue-50"
