@@ -93,6 +93,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
 /* ===== Sync after using quick acces buttons ===== */
   useEffect(() => {
     loadTransactions(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [txnRefreshKey]);
 
   /* ===== Create pending transaction ===== */
@@ -141,9 +142,9 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
       await commitTransaction(txnId);
       await onRefresh();
       await loadTransactions(true);
-    } catch (err: any) {
+    } catch (err: unknown) {
 
-      const error = JSON.parse(err?.message)
+      const error = JSON.parse((err as Error)?.message || '{}')
 
       const msg =
         error["error"]||

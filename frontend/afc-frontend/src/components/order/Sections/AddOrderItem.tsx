@@ -248,9 +248,6 @@ export default function AddOrderItemForm({
       </div>
 
       {/* ===================== ACTIONS ===================== */}
-      )}
-
-      {/* ===================== ACTIONS ===================== */}
       <div className="flex justify-end gap-2 items-center">
         {error && (
           <span className="text-sm text-red-500 mr-auto">
