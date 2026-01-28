@@ -106,7 +106,10 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
 
   /* ===== Save edited note ===== */
   async function saveNote() {
-    if (editedNote === (item.note || "")) {
+    const normalizedEditedNote = editedNote || "";
+    const normalizedItemNote = item.note || "";
+    
+    if (normalizedEditedNote === normalizedItemNote) {
       setIsEditingNote(false);
       return;
     }
@@ -132,6 +135,8 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
 
     if (editedQty <= 0) {
       setError("Quantity must be greater than 0.");
+      setEditedQty(item.quantity_ordered);
+      setIsEditingQty(false);
       return;
     }
 
@@ -142,6 +147,8 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
       await onRefresh();
     } catch {
       setError("Failed to update quantity.");
+      setEditedQty(item.quantity_ordered);
+      setIsEditingQty(false);
     } finally {
       setSaving(false);
     }
@@ -279,8 +286,12 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
                     onChange={(e) => setEditedNote(e.target.value)}
                     onBlur={saveNote}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter") saveNote();
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        saveNote();
+                      }
                       if (e.key === "Escape") {
+                        e.preventDefault();
                         setEditedNote(item.note || "");
                         setIsEditingNote(false);
                       }
@@ -319,9 +330,6 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
         >
           <td className="w-8 px-2">
             <div 
-              ref={setActivatorNodeRef}
-              {...attributes} 
-              {...listeners}
               className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600"
             >
               ⋮⋮
@@ -354,8 +362,12 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
                 onChange={(e) => setEditedNote(e.target.value)}
                 onBlur={saveNote}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") saveNote();
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    saveNote();
+                  }
                   if (e.key === "Escape") {
+                    e.preventDefault();
                     setEditedNote(item.note || "");
                     setIsEditingNote(false);
                   }
@@ -382,11 +394,20 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
                 type="number"
                 className="input input-sm input-bordered w-24"
                 value={editedQty}
-                onChange={(e) => setEditedQty(Number(e.target.value))}
+                onChange={(e) => {
+                  const value = Number(e.target.value);
+                  if (value >= 1) {
+                    setEditedQty(value);
+                  }
+                }}
                 onBlur={saveQty}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") saveQty();
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    saveQty();
+                  }
                   if (e.key === "Escape") {
+                    e.preventDefault();
                     setEditedQty(item.quantity_ordered);
                     setIsEditingQty(false);
                   }
