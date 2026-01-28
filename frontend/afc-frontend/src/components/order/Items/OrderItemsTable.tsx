@@ -88,7 +88,7 @@ export default function OrderItemsTable({
                 <input
                   ref={selectAllRef}
                   type="checkbox"
-                  className="checkbox checkbox-sm"
+                  className="checkbox checkbox-s"
                   checked={allSelected}
                   onChange={(e) => handleSelectAll(e.target.checked)}
                   aria-label="Select all items"

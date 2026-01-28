@@ -1,6 +1,6 @@
 from flask import abort, g, jsonify, request, Blueprint
 from sqlalchemy import select, func
-from database.models import Quantity, Transaction, Product, TransactionState, OrderType, Order, OrderItem
+from database.models import Quantity, Transaction, Product, TransactionState, OrderType, Order, OrderItem, AirFilter
 from datetime import datetime, timezone
 from app.api.Schemas.transaction_schema import TransactionSchema
 
@@ -69,9 +69,14 @@ def filter_transactions():
     
     # Search by product name (partial match)
     if product_name:
-        product_subquery = select(Product.id).where(
-            Product.part_number.ilike(f"%{product_name}%")
+        AirFilter_subquery = select(AirFilter.id).where(
+            AirFilter.part_number.ilike(f"%{product_name}%")
         )
+
+        product_subquery = select(Product.id).where(
+            Product.reference_id.in_(AirFilter_subquery)
+        )
+
         filters.append(Transaction.product_id.in_(product_subquery))
     
     if order_id:

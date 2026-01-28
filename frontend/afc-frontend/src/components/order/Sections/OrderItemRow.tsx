@@ -166,7 +166,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
         <td className="w-12" onClick={(e) => e.stopPropagation()}>
           <input
             type="checkbox"
-            className="checkbox checkbox-sm"
+            className="checkbox checkbox-s"
             checked={isSelected}
             onChange={(e) => onSelectChange(e.target.checked)}
             aria-label={`Select ${item.part_number}`}
