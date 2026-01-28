@@ -227,12 +227,12 @@ export default function OrderDetailPage() {
     }
 
     try {
-      for (const item of nonSeparatorItems) {
-        const remaining = item.quantity_ordered - item.quantity_fulfilled;
-        if (remaining > 0) {
-          await allocateOrderItem(item.id, remaining);
-        }
-      }
+      await Promise.all(
+        nonSeparatorItems.map(item => {
+          const remaining = item.quantity_ordered - item.quantity_fulfilled;
+          return remaining > 0 ? allocateOrderItem(item.id, remaining) : Promise.resolve();
+        })
+      );
       await refreshOrder();
       setSelectedItems(new Set());
     } catch (err: unknown) {
@@ -257,9 +257,9 @@ export default function OrderDetailPage() {
     }
 
     try {
-      for (const item of nonSeparatorItems) {
-        await commitAllOrderItemTransactions(item.id);
-      }
+      await Promise.all(
+        nonSeparatorItems.map(item => commitAllOrderItemTransactions(item.id))
+      );
       await refreshOrder();
       setSelectedItems(new Set());
     } catch (err: unknown) {
@@ -288,14 +288,19 @@ export default function OrderDetailPage() {
     }
 
     try {
-      for (const item of nonSeparatorItems) {
-        const transactions = await fetchOrderItemTransactions(item.id);
-        const pendingTxns = transactions.filter(tx => tx.state === "pending");
-        
-        for (const tx of pendingTxns) {
-          await cancelTransaction(tx.id);
-        }
-      }
+      // Fetch all transactions in parallel
+      const transactionsData = await Promise.all(
+        nonSeparatorItems.map(item => fetchOrderItemTransactions(item.id))
+      );
+
+      // Cancel all pending transactions in parallel
+      const cancelPromises = transactionsData.flatMap((transactions) => 
+        transactions
+          .filter(tx => tx.state === "pending")
+          .map(tx => cancelTransaction(tx.id))
+      );
+
+      await Promise.all(cancelPromises);
       await refreshOrder();
       setSelectedItems(new Set());
     } catch (err: unknown) {
@@ -324,14 +329,19 @@ export default function OrderDetailPage() {
     }
 
     try {
-      for (const item of nonSeparatorItems) {
-        const transactions = await fetchOrderItemTransactions(item.id);
-        const committedTxns = transactions.filter(tx => tx.state === "committed");
-        
-        for (const tx of committedTxns) {
-          await rollbackTransaction(tx.id);
-        }
-      }
+      // Fetch all transactions in parallel
+      const transactionsData = await Promise.all(
+        nonSeparatorItems.map(item => fetchOrderItemTransactions(item.id))
+      );
+
+      // Rollback all committed transactions in parallel
+      const rollbackPromises = transactionsData.flatMap((transactions) => 
+        transactions
+          .filter(tx => tx.state === "committed")
+          .map(tx => rollbackTransaction(tx.id))
+      );
+
+      await Promise.all(rollbackPromises);
       await refreshOrder();
       setSelectedItems(new Set());
     } catch (err: unknown) {

@@ -395,8 +395,6 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
           </td>
           <td 
             className="pl-7 px-3 py-3 font-semibold cursor-grab active:cursor-grabbing"
-            ref={setActivatorNodeRef}
-            {...attributes}
             {...listeners}
             title="Drag to reorder"
           >
