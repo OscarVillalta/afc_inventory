@@ -28,16 +28,51 @@ export interface TransactionListResponse {
   results: TransactionPayload[];
 }
 
+export interface TransactionFilters {
+  product_name?: string;
+  state?: string;
+  reason?: string;
+  note?: string;
+  start_date?: string;
+  end_date?: string;
+  before_date?: string;
+  after_date?: string;
+}
+
 export function fetchTransactions(
   page = 1,
   limit = 10,
-  product_name?: string,
+  filters?: TransactionFilters,
 ): Promise<TransactionListResponse> {
   const params = new URLSearchParams();
   params.set("page", String(page));
   params.set("limit", String(limit));
-  if (product_name){
-    params.set("product_name", product_name);
+  
+  if (filters) {
+    if (filters.product_name) {
+      params.set("product_name", filters.product_name);
+    }
+    if (filters.state && filters.state !== "All") {
+      params.set("state", filters.state.toLowerCase());
+    }
+    if (filters.reason) {
+      params.set("reason", filters.reason);
+    }
+    if (filters.note) {
+      params.set("note", filters.note);
+    }
+    if (filters.start_date) {
+      params.set("start_date", filters.start_date);
+    }
+    if (filters.end_date) {
+      params.set("end_date", filters.end_date);
+    }
+    if (filters.before_date) {
+      params.set("before_date", filters.before_date);
+    }
+    if (filters.after_date) {
+      params.set("after_date", filters.after_date);
+    }
   }
   
   return apiRequest(`/transactions/search?${params.toString()}`, {

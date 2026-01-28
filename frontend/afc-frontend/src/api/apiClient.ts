@@ -1,4 +1,5 @@
-const BASE_URL = "http://192.168.1.177:5000/api"; // Home Url
+// TODO: Move to environment variable for production deployment
+const BASE_URL = "http://localhost:5000/api"; // Updated for local development
 
 export async function apiRequest(endpoint: string, options: RequestInit = {}) {
   const method = options.method || "GET";
