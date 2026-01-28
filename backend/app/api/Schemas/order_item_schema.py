@@ -3,7 +3,8 @@ from marshmallow import Schema, fields
 class OrderItemSchema(Schema):
     id = fields.Int(dump_only=True)
     order_id = fields.Int(required=True)
-    product_id = fields.Int(required=True)
-    quantity_ordered = fields.Int(required=True)
+    product_id = fields.Int(allow_none=True)
+    is_separator = fields.Bool(load_default=False)
+    quantity_ordered = fields.Int(load_default=0)
     quantity_fulfilled = fields.Int(dump_only=True)
     note = fields.Str(allow_none=True)

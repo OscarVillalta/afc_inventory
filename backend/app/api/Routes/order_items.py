@@ -38,17 +38,29 @@ def create_order_item():
     if not order:
         return jsonify({"error": "Order not found"}), 404
 
-    product = db.get(Product, data["product_id"])
-    if not product:
-        return jsonify({"error": "Product not found"}), 404
+    is_separator = data.get("is_separator", False)
+    
+    # Separator items don't need a product
+    if is_separator:
+        if not data.get("note"):
+            return jsonify({"error": "Separator items must have a note/description"}), 400
+        product_id = None
+        quantity_ordered = 0
+    else:
+        product = db.get(Product, data["product_id"])
+        if not product:
+            return jsonify({"error": "Product not found"}), 404
+        product_id = product.id
+        quantity_ordered = data["quantity_ordered"]
 
     # ----------------------------
     # 3️⃣ Create OrderItem
     # ----------------------------
     item = OrderItem(
         order_id=order.id,
-        product_id=product.id,
-        quantity_ordered=data["quantity_ordered"],
+        product_id=product_id,
+        is_separator=is_separator,
+        quantity_ordered=quantity_ordered,
         quantity_fulfilled=0,
         note=data.get("note"),
     )

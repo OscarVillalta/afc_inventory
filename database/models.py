@@ -311,17 +311,26 @@ class Order(Base, SerializerMixin):
         - No items OR all qty_fulfilled == 0 -> Pending
         - All items fulfilled -> Completed
         - Otherwise -> Partially Fulfilled
+        Note: Separator items are excluded from status calculation
         """
         if not self.items:
             self.status = OrderStatus.PENDING.value
             self.completed_at = None
             return
 
-        total = len(self.items)
+        # Filter out separator items for status calculation
+        non_separator_items = [item for item in self.items if not item.is_separator]
+        
+        if not non_separator_items:
+            self.status = OrderStatus.PENDING.value
+            self.completed_at = None
+            return
+
+        total = len(non_separator_items)
         fully_complete = 0
         any_progress = False
 
-        for item in self.items:
+        for item in non_separator_items:
             if item.quantity_fulfilled >= item.quantity_ordered and item.quantity_ordered > 0:
                 fully_complete += 1
             if item.quantity_fulfilled > 0:
@@ -351,16 +360,17 @@ class OrderItem(Base, SerializerMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     order_id: Mapped[int] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"), nullable=False)
-    product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=False)
+    product_id: Mapped[Optional[int]] = mapped_column(ForeignKey("products.id"), nullable=True)
 
-    quantity_ordered: Mapped[int] = mapped_column(nullable=False)
+    is_separator: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    quantity_ordered: Mapped[int] = mapped_column(default=0, nullable=False)
     quantity_fulfilled: Mapped[int] = mapped_column(default=0)
     note: Mapped[Optional[str]] = mapped_column(nullable=True)
 
     completion_date: Mapped[Optional[datetime]] = mapped_column(nullable=True)
 
     order: Mapped["Order"] = relationship("Order", back_populates="items")
-    product: Mapped["Product"] = relationship("Product", back_populates="order_items")
+    product: Mapped[Optional["Product"]] = relationship("Product", back_populates="order_items")
 
     transactions: Mapped[List["Transaction"]] = relationship(
         "Transaction",
