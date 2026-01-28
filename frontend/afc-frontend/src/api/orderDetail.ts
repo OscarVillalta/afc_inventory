@@ -87,3 +87,13 @@ export function reorderOrderItems(orderId: number, itemId: number, newPosition: 
     }),
   });
 }
+
+export function updateOrderItem(itemId: number, payload: {
+  quantity_ordered?: number;
+  note?: string;
+}) {
+  return apiRequest(`/order_items/${itemId}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
