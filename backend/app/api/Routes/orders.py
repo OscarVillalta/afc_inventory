@@ -99,19 +99,25 @@ def get_order_items(order_id):
 
     items = []
     for item in order.items:
-        product = item.product
-        if product and product.air_filter:
-            part_number = product.air_filter.part_number
-        elif product and product.misc_item:
-            part_number = product.misc_item.name
-        elif product:
-            part_number = f"Product #{product.id}"
+        if item.is_separator:
+            # Separator items don't have a product
+            part_number = ""
         else:
-            part_number = "Unknown product"
+            product = item.product
+            if product and product.air_filter:
+                part_number = product.air_filter.part_number
+            elif product and product.misc_item:
+                part_number = product.misc_item.name
+            elif product:
+                part_number = f"Product #{product.id}"
+            else:
+                part_number = "Unknown product"
+        
         items.append({
             "id": item.id,
             "order_id": item.order_id,
             "product_id": item.product_id,
+            "is_separator": item.is_separator,
             "part_number": part_number,
             "quantity_ordered": item.quantity_ordered,
             "quantity_fulfilled": item.quantity_fulfilled,
