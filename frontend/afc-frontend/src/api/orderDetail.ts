@@ -34,7 +34,7 @@ export function fetchOrderItemTransactions(itemId: number) {
 
 export function createOrderItemTransaction(
   payload: {
-    product_id: number;
+    product_id: number | null;
     order_id: number;
     order_item_id: number;
     quantity_delta: number;
