@@ -40,13 +40,41 @@ export default function OrderItemsTable({
   };
 
   const handleSelectItem = (itemId: number, checked: boolean) => {
-    const newSelected = new Set(selectedItems);
-    if (checked) {
-      newSelected.add(itemId);
+    const item = items.find(i => i.id === itemId);
+    
+    if (item && item.is_separator) {
+      // When selecting a separator, select all items in its section
+      const itemIndex = items.findIndex(i => i.id === itemId);
+      const sectionItems: number[] = [];
+      
+      // Add the separator itself
+      sectionItems.push(itemId);
+      
+      // Find all items until the next separator or end of list
+      for (let i = itemIndex + 1; i < items.length; i++) {
+        if (items[i].is_separator) {
+          break; // Stop at next separator
+        }
+        sectionItems.push(items[i].id);
+      }
+      
+      const newSelected = new Set(selectedItems);
+      if (checked) {
+        sectionItems.forEach(id => newSelected.add(id));
+      } else {
+        sectionItems.forEach(id => newSelected.delete(id));
+      }
+      setSelectedItems(newSelected);
     } else {
-      newSelected.delete(itemId);
+      // Regular item selection
+      const newSelected = new Set(selectedItems);
+      if (checked) {
+        newSelected.add(itemId);
+      } else {
+        newSelected.delete(itemId);
+      }
+      setSelectedItems(newSelected);
     }
-    setSelectedItems(newSelected);
   };
 
   const allSelected = items.length > 0 && selectedItems.size === items.length;

@@ -15,6 +15,7 @@ export default function AddOrderItemForm({
   onCreated,
   onCancel,
 }: Props) {
+  const [itemType, setItemType] = useState<"regular" | "separator">("regular");
   const [search, setSearch] = useState("");
   const [selectedProductId, setSelectedProductId] =
     useState<number | null>(null);
@@ -42,39 +43,68 @@ export default function AddOrderItemForm({
   /* ===================== Actions ===================== */
 
   async function handleAdd() {
-    if (!selectedProductId) {
-      setError("Product is required.");
-      return;
-    }
+    if (itemType === "separator") {
+      // Separator items only need a description
+      if (!note || note.trim() === "") {
+        setError("Description is required for separator items.");
+        return;
+      }
 
-    if (quantity <= 0) {
-      setError("Quantity must be greater than zero.");
-      return;
-    }
+      setSaving(true);
+      setError(null);
 
-    setSaving(true);
-    setError(null);
+      try {
+        await createOrderItem({
+          order_id: orderId,
+          is_separator: true,
+          note: note,
+        });
 
-    try {
-      await createOrderItem({
-        order_id: orderId,
-        product_id: selectedProductId,
-        quantity_ordered: quantity,
-        note: note || undefined,
-      });
+        // Reset state
+        setNote("");
+        setItemType("regular");
+        onCreated();
+      } catch {
+        setError("Failed to add separator item.");
+      } finally {
+        setSaving(false);
+      }
+    } else {
+      // Regular item validation
+      if (!selectedProductId) {
+        setError("Product is required.");
+        return;
+      }
 
-      // Reset state
-      setSearch("");
-      setSelectedProductId(null);
-      setQuantity(1);
-      setNote("");
-      setShowDropdown(false);
+      if (quantity <= 0) {
+        setError("Quantity must be greater than zero.");
+        return;
+      }
 
-      onCreated();
-    } catch {
-      setError("Failed to add item.");
-    } finally {
-      setSaving(false);
+      setSaving(true);
+      setError(null);
+
+      try {
+        await createOrderItem({
+          order_id: orderId,
+          product_id: selectedProductId,
+          quantity_ordered: quantity,
+          note: note || undefined,
+        });
+
+        // Reset state
+        setSearch("");
+        setSelectedProductId(null);
+        setQuantity(1);
+        setNote("");
+        setShowDropdown(false);
+
+        onCreated();
+      } catch {
+        setError("Failed to add item.");
+      } finally {
+        setSaving(false);
+      }
     }
   }
 
@@ -84,69 +114,103 @@ export default function AddOrderItemForm({
     <div className="mt-4 p-4 bg-gray-50 rounded-lg space-y-3 border">
       <h4 className="text-sm font-medium">Add Item</h4>
 
-      {/* ===================== PRODUCT DROPDOWN ===================== */}
-      <div className="relative">
-        <input
-          type="text"
-          placeholder="Select product…"
-          className="input input-sm input-bordered w-full"
-          value={
-            selectedProductId
-              ? getProductLabel(
-                  products.find((p) => p.id === selectedProductId)!
-                )
-              : search
-          }
-          onFocus={() => setShowDropdown(true)}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setSelectedProductId(null);
-            setShowDropdown(true);
-          }}
-        />
+      {/* ===================== ITEM TYPE SELECTOR ===================== */}
+      <div className="flex gap-2">
+        <button
+          className={`btn btn-sm ${itemType === "regular" ? "btn-primary" : "btn-outline"}`}
+          onClick={() => setItemType("regular")}
+        >
+          Regular Item
+        </button>
+        <button
+          className={`btn btn-sm ${itemType === "separator" ? "btn-primary" : "btn-outline"}`}
+          onClick={() => setItemType("separator")}
+        >
+          Separator / Section Header
+        </button>
+      </div>
 
-        {showDropdown && (
-          <div className="absolute z-20 mt-1 w-full max-h-48 overflow-y-auto rounded-md border bg-white shadow-lg">
-            {filteredProducts.length > 0 ? (
-              filteredProducts.map((p) => (
-                <div
-                  key={p.id}
-                  className="px-3 py-2 cursor-pointer hover:bg-blue-50"
-                  onClick={() => {
-                    setSelectedProductId(p.id);
-                    setSearch("");
-                    setShowDropdown(false);
-                  }}
-                >
-                  {getProductLabel(p)}
-                </div>
-              ))
-            ) : (
-              <div className="px-3 py-2 text-sm text-gray-400">
-                No matching products
+      {itemType === "regular" ? (
+        <>
+          {/* ===================== PRODUCT DROPDOWN ===================== */}
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Select product…"
+              className="input input-sm input-bordered w-full"
+              value={
+                selectedProductId
+                  ? getProductLabel(
+                      products.find((p) => p.id === selectedProductId)!
+                    )
+                  : search
+              }
+              onFocus={() => setShowDropdown(true)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setSelectedProductId(null);
+                setShowDropdown(true);
+              }}
+            />
+
+            {showDropdown && (
+              <div className="absolute z-20 mt-1 w-full max-h-48 overflow-y-auto rounded-md border bg-white shadow-lg">
+                {filteredProducts.length > 0 ? (
+                  filteredProducts.map((p) => (
+                    <div
+                      key={p.id}
+                      className="px-3 py-2 cursor-pointer hover:bg-blue-50"
+                      onClick={() => {
+                        setSelectedProductId(p.id);
+                        setSearch("");
+                        setShowDropdown(false);
+                      }}
+                    >
+                      {getProductLabel(p)}
+                    </div>
+                  ))
+                ) : (
+                  <div className="px-3 py-2 text-sm text-gray-400">
+                    No matching products
+                  </div>
+                )}
               </div>
             )}
           </div>
-        )}
-      </div>
 
-      {/* ===================== QUANTITY ===================== */}
-      <input
-        type="number"
-        min={1}
-        className="input input-sm input-bordered w-32"
-        value={quantity}
-        onChange={(e) => setQuantity(Number(e.target.value))}
-      />
+          {/* ===================== QUANTITY ===================== */}
+          <input
+            type="number"
+            min={1}
+            className="input input-sm input-bordered w-32"
+            value={quantity}
+            onChange={(e) => setQuantity(Number(e.target.value))}
+          />
 
-      {/* ===================== NOTE ===================== */}
-      <input
-        type="text"
-        placeholder="Note (optional)"
-        className="input input-sm input-bordered w-full"
-        value={note}
-        onChange={(e) => setNote(e.target.value)}
-      />
+          {/* ===================== NOTE ===================== */}
+          <input
+            type="text"
+            placeholder="Note (optional)"
+            className="input input-sm input-bordered w-full"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+          />
+        </>
+      ) : (
+        <>
+          {/* ===================== SEPARATOR DESCRIPTION ===================== */}
+          <input
+            type="text"
+            placeholder="Section description / label (required)"
+            className="input input-sm input-bordered w-full"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+          />
+          <p className="text-xs text-gray-500">
+            This will create a visual separator that acts as a section header.
+          </p>
+        </>
+      )}
 
       {/* ===================== ACTIONS ===================== */}
       <div className="flex justify-end gap-2 items-center">
@@ -167,7 +231,11 @@ export default function AddOrderItemForm({
         <button
           className="btn btn-sm btn-primary"
           onClick={handleAdd}
-          disabled={saving || !selectedProductId}
+          disabled={
+            saving || 
+            (itemType === "regular" && !selectedProductId) ||
+            (itemType === "separator" && !note)
+          }
         >
           {saving ? "Adding…" : "Add Item"}
         </button>

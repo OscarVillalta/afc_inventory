@@ -34,8 +34,12 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Separator items don't need transactions
+  const isSeparator = item.is_separator;
+
   async function loadTransactions(force = false) {
     if (loaded && !force) return;
+    if (isSeparator) return; // Separators don't have transactions
 
     setLoadingTxns(true);
     setError(null);
@@ -138,10 +142,17 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
   async function handleDeleteItem(e: React.MouseEvent) {
     e.stopPropagation();
 
-    if (!loaded || transactions.length > 0) return;
+    if (isSeparator) {
+      // Separator items can always be deleted
+      if (!confirm("Delete this separator? This cannot be undone.")) {
+        return;
+      }
+    } else {
+      if (!loaded || transactions.length > 0) return;
 
-    if (!confirm("Delete this item? This cannot be undone.")) {
-      return;
+      if (!confirm("Delete this item? This cannot be undone.")) {
+        return;
+      }
     }
 
     try {
@@ -155,53 +166,85 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
   return (
     <>
       {/* ===================== ITEM ROW ===================== */}
-      <tr
-        className="bg-white hover:bg-gray-50 cursor-pointer transition"
-        onClick={async () => {
-          const next = !expanded;
-          setExpanded(next);
-          if (next) await loadTransactions();
-        }}
-      >
-        <td className="w-12" onClick={(e) => e.stopPropagation()}>
-          <input
-            type="checkbox"
-            className="checkbox checkbox-s"
-            checked={isSelected}
-            onChange={(e) => onSelectChange(e.target.checked)}
-            aria-label={`Select ${item.part_number}`}
-          />
-        </td>
-        <td className="pl-7 px-3 py-3 font-semibold">
-          {item.part_number}
-        </td>
-        <td className="px-3 py-3">
-          {item.note ?? "—"}
-        </td>
-        <td className="px-3 py-3">
-          {item.quantity_ordered}
-        </td>
-        <td className="px-3 py-3">
-          {item.quantity_fulfilled}
-        </td>
-        <td className="px-3 py-3">
-          {item.status ?? "—"}
-        </td>
-        <td className="px-3 py-3 text-right">
-          {loaded && transactions.length === 0 && (
+      {isSeparator ? (
+        /* ===================== SEPARATOR ROW ===================== */
+        <tr className="bg-blue-50 border-t-2 border-b-2 border-blue-300">
+          <td className="w-12" onClick={(e) => e.stopPropagation()}>
+            <input
+              type="checkbox"
+              className="checkbox checkbox-s"
+              checked={isSelected}
+              onChange={(e) => onSelectChange(e.target.checked)}
+              aria-label={`Select section: ${item.note}`}
+            />
+          </td>
+          <td colSpan={5} className="px-3 py-3">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-blue-900 text-base">
+                {item.note || "Section Separator"}
+              </span>
+            </div>
+          </td>
+          <td className="px-3 py-3 text-right">
             <button
               className="btn btn-xs btn-ghost text-red-500"
               onClick={handleDeleteItem}
-              title="Delete item"
+              title="Delete separator"
             >
+              ✕
+            </button>
+          </td>
+        </tr>
+      ) : (
+        /* ===================== REGULAR ITEM ROW ===================== */
+        <tr
+          className="bg-white hover:bg-gray-50 cursor-pointer transition"
+          onClick={async () => {
+            const next = !expanded;
+            setExpanded(next);
+            if (next) await loadTransactions();
+          }}
+        >
+          <td className="w-12" onClick={(e) => e.stopPropagation()}>
+            <input
+              type="checkbox"
+              className="checkbox checkbox-s"
+              checked={isSelected}
+              onChange={(e) => onSelectChange(e.target.checked)}
+              aria-label={`Select ${item.part_number}`}
+            />
+          </td>
+          <td className="pl-7 px-3 py-3 font-semibold">
+            {item.part_number}
+          </td>
+          <td className="px-3 py-3">
+            {item.note ?? "—"}
+          </td>
+          <td className="px-3 py-3">
+            {item.quantity_ordered}
+          </td>
+          <td className="px-3 py-3">
+            {item.quantity_fulfilled}
+          </td>
+          <td className="px-3 py-3">
+            {item.status ?? "—"}
+          </td>
+          <td className="px-3 py-3 text-right">
+            {loaded && transactions.length === 0 && (
+              <button
+                className="btn btn-xs btn-ghost text-red-500"
+                onClick={handleDeleteItem}
+                title="Delete item"
+              >
               ✕
             </button>
           )}
         </td>
       </tr>
+      )}
 
       {/* ===================== EXPANDED ===================== */}
-      {expanded && (
+      {expanded && !isSeparator && (
         <tr>
           <td colSpan={7} className="bg-gray-50 px-6 py-4 space-y-3">
             {/* ===== CREATE PENDING ===== */}

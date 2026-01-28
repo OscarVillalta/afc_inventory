@@ -3,7 +3,8 @@ import { apiRequest } from "./apiClient";
 export interface OrderItemPayload {
   id: number;
   order_id: number;
-  product_id: number;
+  product_id: number | null;
+  is_separator: boolean;
   part_number: string;
   quantity_ordered: number;
   quantity_fulfilled: number;
@@ -57,11 +58,10 @@ export function commitTransaction(transactionId: number) {
 
 export function createOrderItem(payload: {
   order_id: number;
-  product_id: number;
-  quantity_ordered: number;
+  product_id?: number | null;
+  is_separator?: boolean;
+  quantity_ordered?: number;
   note?: string;
-
-  
 }) {
   console.log(JSON.stringify(payload))
   return apiRequest("/order_items", {
