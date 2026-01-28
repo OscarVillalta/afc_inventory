@@ -1,0 +1,109 @@
+import { apiRequest } from "./apiClient";
+
+
+export interface createTxnRequest {
+  product_id: number;
+  quantity_delta: number;
+
+  reason: string;
+  note: string;
+}
+
+export interface TransactionPayload {
+  id: number;
+  product_id: number;
+  order_id?: number | null;
+  order_item_id?: number | null;
+  quantity_delta: number;
+  reason?: string | null;
+  state: "pending" | "committed" | "cancelled" | "rolled_back";
+  note?: string | null;
+  created_at: string;
+}
+
+export interface TransactionListResponse {
+  page: number;
+  limit: number;
+  total: number;
+  results: TransactionPayload[];
+}
+
+export interface TransactionFilters {
+  product_name?: string;
+  state?: string;
+  reason?: string;
+  note?: string;
+  start_date?: string;
+  end_date?: string;
+  before_date?: string;
+  after_date?: string;
+}
+
+export function fetchTransactions(
+  page = 1,
+  limit = 10,
+  filters?: TransactionFilters,
+): Promise<TransactionListResponse> {
+  const params = new URLSearchParams();
+  params.set("page", String(page));
+  params.set("limit", String(limit));
+  
+  if (filters) {
+    if (filters.product_name) {
+      params.set("product_name", filters.product_name);
+    }
+    if (filters.state && filters.state !== "All") {
+      params.set("state", filters.state.toLowerCase());
+    }
+    if (filters.reason) {
+      params.set("reason", filters.reason);
+    }
+    if (filters.note) {
+      params.set("note", filters.note);
+    }
+    if (filters.start_date) {
+      params.set("start_date", filters.start_date);
+    }
+    if (filters.end_date) {
+      params.set("end_date", filters.end_date);
+    }
+    if (filters.before_date) {
+      params.set("before_date", filters.before_date);
+    }
+    if (filters.after_date) {
+      params.set("after_date", filters.after_date);
+    }
+  }
+  
+  return apiRequest(`/transactions/search?${params.toString()}`, {
+    method: "GET",
+  });
+}
+
+export function autocommitTxn(data: createTxnRequest): Promise<createTxnRequest> {
+  console.log(JSON.stringify({
+      ...data,
+    }))
+  return apiRequest(`/transactions?auto_commit=true`,{
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function createItemFulfillmentTxn(payload: {
+  product_id: number;
+  order_id: number;
+  order_item_id: number;
+  quantity_delta: number;
+  note?: string;
+}) {
+  console.log(JSON.stringify({
+      ...payload,
+    }))
+  return apiRequest("/transactions?auto_commit=true", {
+    method: "POST",
+    body: JSON.stringify({
+      ...payload,
+    }),
+  });
+}
