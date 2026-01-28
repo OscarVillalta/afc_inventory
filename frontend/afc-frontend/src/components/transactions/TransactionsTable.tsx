@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import MDTable from "../table/MDtable";
-import { fetchTransactions } from "../../api/transactions";
+import { fetchTransactions, type TransactionFilters } from "../../api/transactions";
 import type { TransactionPayload } from "../../api/transactions";
 import { fetchProducts } from "../../api/products";
 import type { Product } from "../../api/products";
@@ -35,9 +35,14 @@ export default function TransactionsTable() {
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  // === FILTER STATES (UI only for now) ===
-  const [search, setSearch] = useState("");
-  const [filterType, setFilterType] = useState("All");
+  // === FILTER STATES ===
+  const [searchProduct, setSearchProduct] = useState("");
+  const [filterState, setFilterState] = useState("All");
+  const [filterReason, setFilterReason] = useState("");
+  const [filterNote, setFilterNote] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [dateFilterMode, setDateFilterMode] = useState<"between" | "before" | "after" | "none">("none");
 
   const [products, setProducts] = useState<Product[]>([]);
   const [transactions, setTransactions] = useState<TransactionPayload[]>([]);
@@ -50,8 +55,25 @@ export default function TransactionsTable() {
     setLoading(true);
     setError(null);
 
+    // Build filters object
+    const filters: TransactionFilters = {};
+    if (searchProduct) filters.product_name = searchProduct;
+    if (filterState && filterState !== "All") filters.state = filterState;
+    if (filterReason) filters.reason = filterReason;
+    if (filterNote) filters.note = filterNote;
+    
+    // Date filters based on mode
+    if (dateFilterMode === "between" && startDate && endDate) {
+      filters.start_date = startDate;
+      filters.end_date = endDate;
+    } else if (dateFilterMode === "before" && startDate) {
+      filters.before_date = startDate;
+    } else if (dateFilterMode === "after" && startDate) {
+      filters.after_date = startDate;
+    }
+
     Promise.allSettled([
-      fetchTransactions(page, pageSize),
+      fetchTransactions(page, pageSize, filters),
       fetchProducts(),
     ])
       .then(([transactionsResult, productsResult]) => {
@@ -79,7 +101,7 @@ export default function TransactionsTable() {
 
   useEffect(() => {
     loadTransactions();
-  }, [page, pageSize]);
+  }, [page, pageSize, searchProduct, filterState, filterReason, filterNote, startDate, endDate, dateFilterMode]);
 
   const productLookup = useMemo(() => {
     return new Map(products.map((product) => [product.id, product.part_number]));
@@ -97,7 +119,7 @@ export default function TransactionsTable() {
     }));
   }, [productLookup, transactions]);
 
-  const uniqueTypes = ["All", "Committed", "Pending", "Rolled_Back", "Cancelled"];
+  const uniqueStates = ["All", "Committed", "Pending", "Rolled_Back", "Cancelled"];
 
   return (
     <MDTable
@@ -118,31 +140,100 @@ export default function TransactionsTable() {
       {/* FILTER BAR */}
       <tr className="border-b">
 
-        <th className="py-2 pr-2 w-1/4">
+        {/* Product Search */}
+        <th className="py-2 pr-2">
           <input
             className="input input-bordered input-xs w-full"
-            placeholder="Search ID / Product"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search Product"
+            value={searchProduct}
+            onChange={(e) => setSearchProduct(e.target.value)}
           />
         </th>
 
-
-        <th className="py-2 pr-2 w-1/8">
+        {/* State Filter */}
+        <th className="py-2 pr-2">
           <select
             className="select select-bordered select-xs w-full"
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
+            value={filterState}
+            onChange={(e) => setFilterState(e.target.value)}
           >
-            {uniqueTypes.map((t) => (
+            {uniqueStates.map((t) => (
               <option key={t}>{t}</option>
             ))}
           </select>
         </th>
 
-        <th className="py-2 pr-2 w-1/8"></th>
-        <th className="py-2 pr-2 w-1/8"></th>
-        <th className="py-2 pr-2 w-1/4"></th>
+        {/* Quantity - No filter (display only) */}
+        <th className="py-2 pr-2"></th>
+
+        {/* Reason Filter */}
+        <th className="py-2 pr-2">
+          <input
+            className="input input-bordered input-xs w-full"
+            placeholder="Search Reason"
+            value={filterReason}
+            onChange={(e) => setFilterReason(e.target.value)}
+          />
+        </th>
+
+        {/* Note Filter */}
+        <th className="py-2 pr-2">
+          <input
+            className="input input-bordered input-xs w-full"
+            placeholder="Search Note"
+            value={filterNote}
+            onChange={(e) => setFilterNote(e.target.value)}
+          />
+        </th>
+
+        {/* Date Filter */}
+        <th className="py-2 pr-2">
+          <div className="flex flex-col gap-1">
+            <select
+              className="select select-bordered select-xs w-full"
+              value={dateFilterMode}
+              onChange={(e) => {
+                setDateFilterMode(e.target.value as typeof dateFilterMode);
+                setStartDate("");
+                setEndDate("");
+              }}
+            >
+              <option value="none">All Dates</option>
+              <option value="between">Between</option>
+              <option value="before">Before</option>
+              <option value="after">After</option>
+            </select>
+            
+            {dateFilterMode === "between" && (
+              <>
+                <input
+                  type="date"
+                  className="input input-bordered input-xs w-full"
+                  placeholder="Start Date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+                <input
+                  type="date"
+                  className="input input-bordered input-xs w-full"
+                  placeholder="End Date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+              </>
+            )}
+            
+            {(dateFilterMode === "before" || dateFilterMode === "after") && (
+              <input
+                type="date"
+                className="input input-bordered input-xs w-full"
+                placeholder={dateFilterMode === "before" ? "Before Date" : "After Date"}
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
+            )}
+          </div>
+        </th>
   
       </tr>
 
