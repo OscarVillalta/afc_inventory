@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import type {
   OrderItemPayload,
   OrderItemTransaction,
@@ -21,6 +23,21 @@ interface Props {
 
 export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey, isSelected, onSelectChange }: Props) {
   const [expanded, setExpanded] = useState(false);
+  
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
 
   /* ===== Transactions ===== */
   const [transactions, setTransactions] =
@@ -168,7 +185,16 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
       {/* ===================== ITEM ROW ===================== */}
       {isSeparator ? (
         /* ===================== SEPARATOR ROW ===================== */
-        <tr className="bg-blue-50 border-t-2 border-b-2 border-blue-300">
+        <tr 
+          ref={setNodeRef} 
+          style={style}
+          className="bg-blue-50 border-t-2 border-b-2 border-blue-300"
+        >
+          <td className="w-8 px-2" {...attributes} {...listeners}>
+            <div className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600">
+              ⋮⋮
+            </div>
+          </td>
           <td className="w-12" onClick={(e) => e.stopPropagation()}>
             <input
               type="checkbox"
@@ -198,13 +224,15 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
       ) : (
         /* ===================== REGULAR ITEM ROW ===================== */
         <tr
-          className="bg-white hover:bg-gray-50 cursor-pointer transition"
-          onClick={async () => {
-            const next = !expanded;
-            setExpanded(next);
-            if (next) await loadTransactions();
-          }}
+          ref={setNodeRef}
+          style={style}
+          className="bg-white hover:bg-gray-50 transition"
         >
+          <td className="w-8 px-2" {...attributes} {...listeners}>
+            <div className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600">
+              ⋮⋮
+            </div>
+          </td>
           <td className="w-12" onClick={(e) => e.stopPropagation()}>
             <input
               type="checkbox"
@@ -220,33 +248,62 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
           <td className="px-3 py-3">
             {item.note ?? "—"}
           </td>
-          <td className="px-3 py-3">
+          <td 
+            className="px-3 py-3 cursor-pointer hover:bg-blue-50"
+            onClick={async () => {
+              const next = !expanded;
+              setExpanded(next);
+              if (next) await loadTransactions();
+            }}
+            title="Click to view transactions"
+          >
             {item.quantity_ordered}
           </td>
-          <td className="px-3 py-3">
+          <td 
+            className="px-3 py-3 cursor-pointer hover:bg-blue-50"
+            onClick={async () => {
+              const next = !expanded;
+              setExpanded(next);
+              if (next) await loadTransactions();
+            }}
+            title="Click to view transactions"
+          >
             {item.quantity_fulfilled}
           </td>
           <td className="px-3 py-3">
             {item.status ?? "—"}
           </td>
           <td className="px-3 py-3 text-right">
-            {loaded && transactions.length === 0 && (
+            <div className="flex items-center justify-end gap-2">
               <button
-                className="btn btn-xs btn-ghost text-red-500"
-                onClick={handleDeleteItem}
-                title="Delete item"
+                className="btn btn-xs btn-ghost"
+                onClick={async () => {
+                  const next = !expanded;
+                  setExpanded(next);
+                  if (next) await loadTransactions();
+                }}
+                title="View transactions"
               >
-              ✕
-            </button>
-          )}
-        </td>
-      </tr>
+                ☰
+              </button>
+              {loaded && transactions.length === 0 && (
+                <button
+                  className="btn btn-xs btn-ghost text-red-500"
+                  onClick={handleDeleteItem}
+                  title="Delete item"
+                >
+                ✕
+              </button>
+            )}
+            </div>
+          </td>
+        </tr>
       )}
 
       {/* ===================== EXPANDED ===================== */}
       {expanded && !isSeparator && (
         <tr>
-          <td colSpan={7} className="bg-gray-50 px-6 py-4 space-y-3">
+          <td colSpan={8} className="bg-gray-50 px-6 py-4 space-y-3">
             {/* ===== CREATE PENDING ===== */}
             {remainingSafe > 0 && (
               <div className="flex items-center gap-3">
