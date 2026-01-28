@@ -1,7 +1,7 @@
 """Add separator functionality to order items
 
 Revision ID: add_separator_items
-Revises: 94fd5fb54453
+Revises: 97ed71639336
 Create Date: 2026-01-28 20:40:00.000000
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'add_separator_items'
-down_revision = '94fd5fb54453'
+down_revision = '97ed71639336'
 branch_labels = None
 depends_on = None
 
