@@ -119,7 +119,7 @@ export default function TransactionsTable() {
     }));
   }, [productLookup, transactions]);
 
-  const uniqueStates = ["All", "Committed", "Pending", "Rolled_Back", "Cancelled"];
+  const stateFilterOptions = ["All", "Committed", "Pending", "Rolled_Back", "Cancelled"];
 
   return (
     <MDTable
@@ -157,7 +157,7 @@ export default function TransactionsTable() {
             value={filterState}
             onChange={(e) => setFilterState(e.target.value)}
           >
-            {uniqueStates.map((t) => (
+            {stateFilterOptions.map((t) => (
               <option key={t}>{t}</option>
             ))}
           </select>

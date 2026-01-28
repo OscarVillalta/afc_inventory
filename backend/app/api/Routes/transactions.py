@@ -90,21 +90,15 @@ def filter_transactions():
     # Date filters
     try:
         if start_date and end_date:
-            # Between two dates
+            # Between two dates (inclusive)
             filters.append(Transaction.created_at >= datetime.fromisoformat(start_date))
             filters.append(Transaction.created_at <= datetime.fromisoformat(end_date))
         elif before_date:
-            # Before a specific date
-            filters.append(Transaction.created_at < datetime.fromisoformat(before_date))
+            # Before a specific date (inclusive)
+            filters.append(Transaction.created_at <= datetime.fromisoformat(before_date))
         elif after_date:
-            # After a specific date
-            filters.append(Transaction.created_at > datetime.fromisoformat(after_date))
-        elif start_date:
-            # On or after start date
-            filters.append(Transaction.created_at >= datetime.fromisoformat(start_date))
-        elif end_date:
-            # On or before end date
-            filters.append(Transaction.created_at <= datetime.fromisoformat(end_date))
+            # After a specific date (inclusive)
+            filters.append(Transaction.created_at >= datetime.fromisoformat(after_date))
     except ValueError:
         return jsonify({"error": "Invalid date format. Use ISO format (YYYY-MM-DD)."}), 400
 
