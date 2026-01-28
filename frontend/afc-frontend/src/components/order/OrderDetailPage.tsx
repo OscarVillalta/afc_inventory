@@ -235,12 +235,9 @@ export default function OrderDetailPage() {
       }
       await refreshOrder();
       setSelectedItems(new Set());
-    } catch (err: any) {
-      alert(
-        err?.response?.data?.error ||
-        err?.message ||
-        "Failed to allocate selected items"
-      );
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : "Failed to allocate selected items";
+      alert(errorMsg);
     }
   }
 
@@ -265,12 +262,9 @@ export default function OrderDetailPage() {
       }
       await refreshOrder();
       setSelectedItems(new Set());
-    } catch (err: any) {
-      alert(
-        err?.response?.data?.error ||
-        err?.message ||
-        "Failed to commit selected items"
-      );
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : "Failed to commit selected items";
+      alert(errorMsg);
     }
   }
 
@@ -304,12 +298,9 @@ export default function OrderDetailPage() {
       }
       await refreshOrder();
       setSelectedItems(new Set());
-    } catch (err: any) {
-      alert(
-        err?.response?.data?.error ||
-        err?.message ||
-        "Failed to cancel selected items"
-      );
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : "Failed to cancel selected items";
+      alert(errorMsg);
     }
   }
 
@@ -343,12 +334,9 @@ export default function OrderDetailPage() {
       }
       await refreshOrder();
       setSelectedItems(new Set());
-    } catch (err: any) {
-      alert(
-        err?.response?.data?.error ||
-        err?.message ||
-        "Failed to rollback selected items"
-      );
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : "Failed to rollback selected items";
+      alert(errorMsg);
     }
   }
 
