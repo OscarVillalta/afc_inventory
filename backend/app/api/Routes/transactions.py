@@ -15,7 +15,7 @@ def get_transactions():
     limit = request.args.get("limit", default=25, type=int)
     offset = (page - 1) * limit
 
-    query = select(Transaction).offset(offset).limit(limit)
+    query = select(Transaction).offset(offset).limit(limit).order_by(Transaction.id.desc())
     txns = db.execute(query).scalars().all()
 
     total_count = db.execute(
