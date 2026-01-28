@@ -366,6 +366,7 @@ class OrderItem(Base, SerializerMixin):
     quantity_ordered: Mapped[int] = mapped_column(default=0, nullable=False)
     quantity_fulfilled: Mapped[int] = mapped_column(default=0)
     note: Mapped[Optional[str]] = mapped_column(nullable=True)
+    position: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     completion_date: Mapped[Optional[datetime]] = mapped_column(nullable=True)
 

@@ -97,8 +97,11 @@ def get_order_items(order_id):
     if not order:
         return jsonify({"error": "Order not found"}), 404
 
+    # Sort items by position
+    sorted_items = sorted(order.items, key=lambda x: x.position)
+    
     items = []
-    for item in order.items:
+    for item in sorted_items:
         if item.is_separator:
             # Separator items don't have a product
             part_number = ""
@@ -123,6 +126,7 @@ def get_order_items(order_id):
             "quantity_fulfilled": item.quantity_fulfilled,
             "status": item.status,
             "note": item.note,
+            "position": item.position,
         })
 
     return jsonify(items), 200

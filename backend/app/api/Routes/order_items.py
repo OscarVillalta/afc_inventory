@@ -54,7 +54,27 @@ def create_order_item():
         quantity_ordered = data["quantity_ordered"]
 
     # ----------------------------
-    # 3️⃣ Create OrderItem
+    # 3️⃣ Handle position
+    # ----------------------------
+    position = data.get("position")
+    if position is None:
+        # If no position specified, add at the end
+        max_position = db.query(func.max(OrderItem.position)).filter(
+            OrderItem.order_id == order.id
+        ).scalar() or -1
+        position = max_position + 1
+    else:
+        # If position is specified, shift existing items down
+        db.query(OrderItem).filter(
+            OrderItem.order_id == order.id,
+            OrderItem.position >= position
+        ).update(
+            {OrderItem.position: OrderItem.position + 1},
+            synchronize_session=False
+        )
+
+    # ----------------------------
+    # 4️⃣ Create OrderItem
     # ----------------------------
     item = OrderItem(
         order_id=order.id,
@@ -63,13 +83,14 @@ def create_order_item():
         quantity_ordered=quantity_ordered,
         quantity_fulfilled=0,
         note=data.get("note"),
+        position=position,
     )
 
     db.add(item)
     db.commit()
 
     # ----------------------------
-    # 4️⃣ Return serialized result
+    # 5️⃣ Return serialized result
     # ----------------------------
     return jsonify(item_schema.dump(item)), 201
 
@@ -394,4 +415,76 @@ def delete_order_item(item_id):
     db.commit()
 
     return jsonify({"success": True}), 200
+
+
+@order_item_bp.route("/orders/<int:order_id>/items/reorder", methods=["PATCH"])
+def reorder_order_items(order_id):
+    """
+    Reorder items in an order.
+    Expects JSON body with:
+    {
+        "item_id": <id of item to move>,
+        "new_position": <new position index>
+    }
+    """
+    db = g.db
+    data = request.get_json() or {}
+
+    item_id = data.get("item_id")
+    new_position = data.get("new_position")
+
+    if item_id is None or new_position is None:
+        return jsonify({"error": "item_id and new_position are required"}), 400
+
+    # Verify order exists
+    order = db.get(Order, order_id)
+    if not order:
+        return jsonify({"error": "Order not found"}), 404
+
+    # Verify item exists and belongs to this order
+    item = db.get(OrderItem, item_id)
+    if not item:
+        return jsonify({"error": "Item not found"}), 404
+    
+    if item.order_id != order_id:
+        return jsonify({"error": "Item does not belong to this order"}), 400
+
+    old_position = item.position
+
+    if old_position == new_position:
+        return jsonify({"message": "Item already in that position"}), 200
+
+    # Update positions
+    if old_position < new_position:
+        # Moving down: shift items between old and new position up
+        db.query(OrderItem).filter(
+            OrderItem.order_id == order_id,
+            OrderItem.position > old_position,
+            OrderItem.position <= new_position
+        ).update(
+            {OrderItem.position: OrderItem.position - 1},
+            synchronize_session=False
+        )
+    else:
+        # Moving up: shift items between new and old position down
+        db.query(OrderItem).filter(
+            OrderItem.order_id == order_id,
+            OrderItem.position >= new_position,
+            OrderItem.position < old_position
+        ).update(
+            {OrderItem.position: OrderItem.position + 1},
+            synchronize_session=False
+        )
+
+    # Update the item's position
+    item.position = new_position
+    db.commit()
+
+    return jsonify({
+        "message": "Item reordered successfully",
+        "item_id": item_id,
+        "old_position": old_position,
+        "new_position": new_position
+    }), 200
+
 
