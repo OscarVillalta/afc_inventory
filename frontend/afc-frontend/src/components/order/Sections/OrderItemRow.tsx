@@ -116,7 +116,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
       await updateOrderItem(item.id, { note: editedNote });
       setIsEditingNote(false);
       await onRefresh();
-    } catch (err) {
+    } catch {
       setError("Failed to update description.");
     } finally {
       setSaving(false);
@@ -140,7 +140,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
       await updateOrderItem(item.id, { quantity_ordered: editedQty });
       setIsEditingQty(false);
       await onRefresh();
-    } catch (err) {
+    } catch {
       setError("Failed to update quantity.");
     } finally {
       setSaving(false);
