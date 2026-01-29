@@ -82,7 +82,7 @@ export default function OrderItemsTable({
     if (partNumberFilter || descriptionFilter || statusFilter || sectionFilter) {
       if (sectionFilter) {
         // Special logic for section search
-        // Find matching sections and include them plus their items and the next section
+        // Find matching sections and include them plus their items
         const matchingSections: OrderItemPayload[] = [];
         let i = 0;
         
@@ -103,11 +103,7 @@ export default function OrderItemsTable({
                 i++;
               }
               
-              // Add the next section separator if it exists (for context)
-              if (i < filtered.length && filtered[i].is_separator) {
-                matchingSections.push(filtered[i]);
-                i++;
-              }
+              // Don't increment i here - let the loop check the next separator
               continue;
             }
           }
