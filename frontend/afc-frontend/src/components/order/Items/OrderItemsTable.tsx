@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import {
   DndContext,
   closestCenter,
@@ -20,6 +20,7 @@ import { fetchProducts } from "../../../api/products";
 import { reorderOrderItems } from "../../../api/orderDetail";
 import AddOrderItemForm from "../Sections/AddOrderItem";
 import OrderItemRow from "../Sections/OrderItemRow";
+import LineItemsMenu from "./LineItemsMenu";
 
 interface Props {
   orderId: number;
@@ -49,6 +50,16 @@ export default function OrderItemsTable({
   const [localItems, setLocalItems] = useState<OrderItemPayload[]>([]);
   const selectAllRef = useRef<HTMLInputElement>(null);
 
+  // Search and filter states
+  const [partNumberFilter, setPartNumberFilter] = useState("");
+  const [sectionFilter, setSectionFilter] = useState("");
+  const [descriptionFilter, setDescriptionFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(25);
+
   const isCompleted = orderStatus === "Completed";
 
   // Sensors for drag and drop
@@ -63,14 +74,99 @@ export default function OrderItemsTable({
     })
   );
 
+  // Filter and paginate items (memoized for performance)
+  const { items: displayedItems, totalItems, totalPages } = useMemo(() => {
+    let filtered = [...localItems];
+
+    // Apply filters
+    if (partNumberFilter || descriptionFilter || statusFilter || sectionFilter) {
+      if (sectionFilter) {
+        // Special logic for section search
+        // Find matching sections and include them plus their items and the next section
+        const matchingSections: OrderItemPayload[] = [];
+        let i = 0;
+        
+        while (i < filtered.length) {
+          const item = filtered[i];
+          
+          if (item.is_separator) {
+            // Check if section matches
+            const sectionName = item.note || "";
+            if (sectionName.toLowerCase().includes(sectionFilter.toLowerCase())) {
+              // Add the matching section
+              matchingSections.push(item);
+              i++;
+              
+              // Add all items under this section (until next separator)
+              while (i < filtered.length && !filtered[i].is_separator) {
+                matchingSections.push(filtered[i]);
+                i++;
+              }
+              
+              // Add the next section separator if it exists (for context)
+              if (i < filtered.length && filtered[i].is_separator) {
+                matchingSections.push(filtered[i]);
+                i++;
+              }
+              continue;
+            }
+          }
+          i++;
+        }
+        
+        filtered = matchingSections;
+      } else {
+        // Regular filtering for non-section searches
+        filtered = filtered.filter((item) => {
+          // Separators are included if they pass the filters or if any filter is active
+          if (item.is_separator) {
+            return true; // Keep separators to maintain structure
+          }
+
+          const matchesPartNumber = !partNumberFilter || 
+            item.part_number.toLowerCase().includes(partNumberFilter.toLowerCase());
+          
+          const matchesDescription = !descriptionFilter || 
+            (item.note && item.note.toLowerCase().includes(descriptionFilter.toLowerCase()));
+          
+          const matchesStatus = !statusFilter || 
+            item.status === statusFilter;
+
+          return matchesPartNumber && matchesDescription && matchesStatus;
+        });
+      }
+    }
+
+    // Calculate pagination
+    const totalItems = filtered.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedItems = filtered.slice(startIndex, endIndex);
+
+    return {
+      items: paginatedItems,
+      totalItems,
+      totalPages,
+    };
+  }, [localItems, partNumberFilter, sectionFilter, descriptionFilter, statusFilter, currentPage, itemsPerPage]);
+
   // Update local items when props change
   useEffect(() => {
     setLocalItems(items);
   }, [items]);
 
+  // Reset to page 1 if current page is invalid after filtering
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+    }
+  }, [currentPage, totalPages]);
+
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      onSelectedItemsChange(new Set(items.map(item => item.id)));
+      // Select all displayed items on the current page
+      onSelectedItemsChange(new Set(displayedItems.map(item => item.id)));
     } else {
       onSelectedItemsChange(new Set());
     }
@@ -114,8 +210,8 @@ export default function OrderItemsTable({
     }
   };
 
-  const allSelected = items.length > 0 && selectedItems.size === items.length;
-  const someSelected = selectedItems.size > 0 && selectedItems.size < items.length;
+  const allSelected = displayedItems.length > 0 && displayedItems.every(item => selectedItems.has(item.id));
+  const someSelected = displayedItems.some(item => selectedItems.has(item.id)) && !allSelected;
 
   // Handle drag end
   async function handleDragEnd(event: DragEndEvent) {
@@ -169,6 +265,24 @@ export default function OrderItemsTable({
 
   return (
     <div className="space-y-4">
+      {/* Line Items Menu with Search and Pagination */}
+      <LineItemsMenu
+        partNumberFilter={partNumberFilter}
+        setPartNumberFilter={setPartNumberFilter}
+        sectionFilter={sectionFilter}
+        setSectionFilter={setSectionFilter}
+        descriptionFilter={descriptionFilter}
+        setDescriptionFilter={setDescriptionFilter}
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
+        currentPage={currentPage}
+        setCurrentPage={setCurrentPage}
+        totalPages={totalPages}
+        itemsPerPage={itemsPerPage}
+        setItemsPerPage={setItemsPerPage}
+        totalItems={totalItems}
+      />
+
       <div className="rounded-xl bg-white shadow-sm border overflow-hidden">
         <div className="px-4 py-3 border-b text-sm font-semibold text-white bg-[#313545]">
           Line Items
@@ -201,7 +315,7 @@ export default function OrderItemsTable({
               </tr>
             </thead>
             <SortableContext
-              items={localItems.map(item => item.id)}
+              items={displayedItems.map(item => item.id)}
               strategy={verticalListSortingStrategy}
             >
               <tbody>
@@ -211,14 +325,14 @@ export default function OrderItemsTable({
                       Loading items…
                     </td>
                   </tr>
-                ) : localItems.length === 0 ? (
+                ) : displayedItems.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="p-4 text-gray-400 italic">
-                      No line items yet
+                      {localItems.length === 0 ? "No line items yet" : "No items match the current filters"}
                     </td>
                   </tr>
                 ) : (
-                  localItems.map((item) => (
+                  displayedItems.map((item) => (
                     <OrderItemRow
                       key={item.id}
                       item={item}
