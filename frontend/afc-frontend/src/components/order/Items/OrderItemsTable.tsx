@@ -29,6 +29,8 @@ interface Props {
   loading: boolean;
   onRefresh: () => void;
   txnRefreshKey: number;
+  selectedItems: Set<number>;
+  onSelectedItemsChange: (items: Set<number>) => void;
 }
 
 export default function OrderItemsTable({
@@ -39,10 +41,11 @@ export default function OrderItemsTable({
   loading,
   onRefresh,
   txnRefreshKey,
+  selectedItems,
+  onSelectedItemsChange,
 }: Props) {
   const [products, setProducts] = useState<Product[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
   const [localItems, setLocalItems] = useState<OrderItemPayload[]>([]);
   const selectAllRef = useRef<HTMLInputElement>(null);
 
@@ -67,9 +70,9 @@ export default function OrderItemsTable({
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedItems(new Set(items.map(item => item.id)));
+      onSelectedItemsChange(new Set(items.map(item => item.id)));
     } else {
-      setSelectedItems(new Set());
+      onSelectedItemsChange(new Set());
     }
   };
 
@@ -98,7 +101,7 @@ export default function OrderItemsTable({
       } else {
         sectionItems.forEach(id => newSelected.delete(id));
       }
-      setSelectedItems(newSelected);
+      onSelectedItemsChange(newSelected);
     } else {
       // Regular item selection
       const newSelected = new Set(selectedItems);
@@ -107,7 +110,7 @@ export default function OrderItemsTable({
       } else {
         newSelected.delete(itemId);
       }
-      setSelectedItems(newSelected);
+      onSelectedItemsChange(newSelected);
     }
   };
 
@@ -143,7 +146,7 @@ export default function OrderItemsTable({
 
   // Reset selected items when items list changes
   useEffect(() => {
-    setSelectedItems(new Set());
+    onSelectedItemsChange(new Set());
   }, [items.length]);
 
   // Update indeterminate state for select all checkbox

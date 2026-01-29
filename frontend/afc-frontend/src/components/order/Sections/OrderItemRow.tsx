@@ -9,6 +9,8 @@ import {
   fetchOrderItemTransactions,
   createOrderItemTransaction,
   commitTransaction,
+  cancelTransaction,
+  rollbackTransaction,
   deleteOrderItem,
   updateOrderItem,
 } from "../../../api/orderDetail";
@@ -221,6 +223,50 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
     
   }
 
+  /* ===== Cancel transaction ===== */
+  async function handleCancel(
+    e: React.MouseEvent,
+    txnId: number
+  ) {
+    e.stopPropagation();
+
+    setError(null);
+
+    try {
+      await cancelTransaction(txnId);
+      await onRefresh();
+      await loadTransactions(true);
+    } catch (err: unknown) {
+      const error = JSON.parse((err as Error)?.message || '{}')
+      const msg = error["error"] || "Unable to cancel transaction.";
+      setError(msg);
+    }
+  }
+
+  /* ===== Rollback transaction ===== */
+  async function handleRollback(
+    e: React.MouseEvent,
+    txnId: number
+  ) {
+    e.stopPropagation();
+
+    if (!confirm("Are you sure you want to rollback this transaction? This will create a reversal transaction.")) {
+      return;
+    }
+
+    setError(null);
+
+    try {
+      await rollbackTransaction(txnId);
+      await onRefresh();
+      await loadTransactions(true);
+    } catch (err: unknown) {
+      const error = JSON.parse((err as Error)?.message || '{}')
+      const msg = error["error"] || "Unable to rollback transaction.";
+      setError(msg);
+    }
+  }
+
   /* ===== Delete item (only if no transactions) ===== */
   async function handleDeleteItem(e: React.MouseEvent) {
     e.stopPropagation();
@@ -330,6 +376,9 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
         >
           <td className="w-8 px-2">
             <div 
+              ref={setActivatorNodeRef}
+              {...attributes}
+              {...listeners}
               className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600"
             >
               ⋮⋮
@@ -346,8 +395,6 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
           </td>
           <td 
             className="pl-7 px-3 py-3 font-semibold cursor-grab active:cursor-grabbing"
-            ref={setActivatorNodeRef}
-            {...attributes}
             {...listeners}
             title="Drag to reorder"
           >
@@ -594,17 +641,41 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
                         <td>{tx.created_at}</td>
 
                         <td>
-                          {tx.state === "pending" && (
-                            <button
-                              className="btn btn-xs btn-success"
-                              disabled={!!error}
-                              onClick={(e) =>
-                                handleCommit(e, tx.id)
-                              }
-                            >
-                              Commit
-                            </button>
-                          )}
+                          <div className="flex gap-2">
+                            {tx.state === "pending" && (
+                              <>
+                                <button
+                                  className="btn btn-xs btn-success"
+                                  disabled={!!error}
+                                  onClick={(e) =>
+                                    handleCommit(e, tx.id)
+                                  }
+                                >
+                                  Commit
+                                </button>
+                                <button
+                                  className="btn btn-xs btn-error"
+                                  disabled={!!error}
+                                  onClick={(e) =>
+                                    handleCancel(e, tx.id)
+                                  }
+                                >
+                                  Cancel
+                                </button>
+                              </>
+                            )}
+                            {tx.state === "committed" && (
+                              <button
+                                className="btn btn-xs btn-warning"
+                                disabled={!!error}
+                                onClick={(e) =>
+                                  handleRollback(e, tx.id)
+                                }
+                              >
+                                Rollback
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))
