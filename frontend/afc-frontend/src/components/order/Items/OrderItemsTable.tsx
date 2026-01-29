@@ -103,11 +103,7 @@ export default function OrderItemsTable({
                 i++;
               }
               
-              // Add the next section separator if it exists (for context)
-              if (i < filtered.length && filtered[i].is_separator) {
-                matchingSections.push(filtered[i]);
-                i++;
-              }
+              // Don't increment i here - let the loop check the next separator
               continue;
             }
           }
