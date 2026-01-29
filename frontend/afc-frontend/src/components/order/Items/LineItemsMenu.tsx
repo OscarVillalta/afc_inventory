@@ -99,39 +99,19 @@ export default function LineItemsMenu({
             }}
             aria-label="Filter by status"
           >
-            <option value="">All Statuses</option>
+            <option value="">All </option>
             <option value="Pending">Pending</option>
             <option value="Partially Fulfilled">Partially Fulfilled</option>
-            <option value="Fulfilled">Fulfilled</option>
+            <option value="Completed">Completed</option>
           </select>
         </div>
       </div>
 
       {/* Pagination Row */}
-      <div className="flex items-center justify-between border-t pt-3">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-500">Items per page:</span>
-          <select
-            className="select select-sm select-bordered"
-            value={itemsPerPage}
-            onChange={(e) => {
-              setItemsPerPage(Number(e.target.value));
-              setCurrentPage(1);
-            }}
-          >
-            <option value={10}>10</option>
-            <option value={25}>25</option>
-            <option value={50}>50</option>
-            <option value={100}>100</option>
-          </select>
-          <span className="text-sm text-gray-500">
-            Showing {totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} -{" "}
-            {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems}
-          </span>
-        </div>
+      <div className="flex items-end justify-between border-t pt-3">
 
         {/* Pagination Controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex grow-32 justify-center gap-2">
           <button
             className="btn btn-sm btn-outline"
             disabled={currentPage === 1}
@@ -183,6 +163,29 @@ export default function LineItemsMenu({
             Next
           </button>
         </div>
+
+        <div className="flex flex-col grow-0 items-center gap-2">
+
+          <span className="text-[0.75rem] text-gray-500">
+            Showing {totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} -{" "}
+            {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems}
+          </span>
+
+          <select
+            className="select select-xs select-bordered"
+            value={itemsPerPage}
+            onChange={(e) => {
+              setItemsPerPage(Number(e.target.value));
+              setCurrentPage(1);
+            }}
+          >
+            <option value={10}>10</option>
+            <option value={25}>25</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+        </div>
+
       </div>
     </div>
   );
