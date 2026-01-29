@@ -105,11 +105,12 @@ export function deleteOrderItem(itemId: number) {
 }
 
 export function reorderOrderItems(orderId: number, itemId: number, newPosition: number) {
+  console.log(`Reordering item ${itemId} to position ${newPosition} in order ${orderId}`);
   return apiRequest(`/orders/${orderId}/items/reorder`, {
     method: "PATCH",
     body: JSON.stringify({
       item_id: itemId,
-      new_position: newPosition,
+      new_position: newPosition + 1,
     }),
   });
 }

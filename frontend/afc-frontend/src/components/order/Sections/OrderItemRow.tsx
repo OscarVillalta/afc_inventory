@@ -326,7 +326,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
               aria-label={`Select section: ${item.note}`}
             />
           </td>
-          <td colSpan={5} className="px-3 py-3">
+          <td colSpan={5} className="px-3 py-3 text-wrap break-all">
             <div className="flex items-center gap-2">
               {isEditingNote ? (
                 <div className="flex items-center gap-2 flex-1">
@@ -405,7 +405,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
           >
             {item.part_number}
           </td>
-          <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
+          <td className="px-3 py-3 max-w-64 text-balance break-all" onClick={(e) => e.stopPropagation()}>
             {isEditingNote ? (
               <input
                 type="text"
@@ -429,7 +429,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
               />
             ) : (
               <span
-                className="cursor-pointer hover:bg-gray-100 px-2 py-1 rounded inline-block w-full"
+                className="cursor-pointer hover:bg-gray-100 px-2 py-1 rounded inline-block"
                 onClick={() => setIsEditingNote(true)}
                 title="Click to edit"
               >
