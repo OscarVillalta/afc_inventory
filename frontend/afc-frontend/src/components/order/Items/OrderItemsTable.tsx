@@ -82,7 +82,7 @@ export default function OrderItemsTable({
     if (partNumberFilter || descriptionFilter || statusFilter || sectionFilter) {
       if (sectionFilter) {
         // Special logic for section search
-        // Find matching sections and include them plus their items and the next section
+        // Find matching sections and include them plus their items
         const matchingSections: OrderItemPayload[] = [];
         let i = 0;
         
