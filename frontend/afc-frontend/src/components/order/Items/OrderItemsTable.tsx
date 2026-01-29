@@ -109,8 +109,25 @@ export default function OrderItemsTable({
           }
           i++;
         }
-        
-        filtered = matchingSections;
+
+        filtered = matchingSections.filter((item) => {
+          // Separators are included if they pass the filters or if any filter is active
+          if (item.is_separator) {
+            return true; // Keep separators to maintain structure
+          }
+
+          const matchesPartNumber = !partNumberFilter || 
+            item.part_number.toLowerCase().includes(partNumberFilter.toLowerCase());
+          
+          const matchesDescription = !descriptionFilter || 
+            (item.note && item.note.toLowerCase().includes(descriptionFilter.toLowerCase()));
+          
+          const matchesStatus = !statusFilter || 
+            item.status === statusFilter;
+
+          return matchesPartNumber && matchesDescription && matchesStatus;
+        });
+
       } else {
         // Regular filtering for non-section searches
         filtered = filtered.filter((item) => {
@@ -169,22 +186,22 @@ export default function OrderItemsTable({
   };
 
   const handleSelectItem = (itemId: number, checked: boolean) => {
-    const item = items.find(i => i.id === itemId);
+    const item = displayedItems.find(i => i.id === itemId);
     
     if (item && item.is_separator) {
       // When selecting a separator, select all items in its section
-      const itemIndex = items.findIndex(i => i.id === itemId);
+      const itemIndex = displayedItems.findIndex(i => i.id === itemId);
       const sectionItems: number[] = [];
       
       // Add the separator itself
       sectionItems.push(itemId);
       
       // Find all items until the next separator or end of list
-      for (let i = itemIndex + 1; i < items.length; i++) {
-        if (items[i].is_separator) {
+      for (let i = itemIndex + 1; i < displayedItems.length; i++) {
+        if (displayedItems[i].is_separator) {
           break; // Stop at next separator
         }
-        sectionItems.push(items[i].id);
+        sectionItems.push(displayedItems[i].id);
       }
       
       const newSelected = new Set(selectedItems);

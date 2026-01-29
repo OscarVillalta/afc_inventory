@@ -102,10 +102,6 @@ def update_order_item(item_id):
     if not item:
         return jsonify({"error": "Order item not found"}), 404
 
-    # Only editable if not yet fulfilled
-    if item.quantity_fulfilled > 0:
-        return jsonify({"error": "Cannot modify fulfilled order item"}), 400
-
     data = request.get_json()
     if "quantity_ordered" in data:
         item.quantity_ordered = data["quantity_ordered"]

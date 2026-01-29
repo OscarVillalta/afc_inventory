@@ -357,14 +357,14 @@ export default function OrderDetailPage() {
     <MainLayout>
       <div className="flex justify-start flex-grow gap-x-4">
         {/* LEFT COLUMN */}
-        <div className="max-w-7xl space-y-4 flex-3 bg-slate-100">
+        <div className="max-w-7xl space-y-4 flex-3 bg-slate-100 ">
           <OrderHeader
             orderNumber={order.order_number}
             type={order.type}
             status={order.status}
           />
 
-          <div className="lg:col-span-8 space-y-4">
+          <div className="lg:col-span-8 space-y-4 ">
             <OrderMetaCard
               type={order.type}
               status={order.status}
