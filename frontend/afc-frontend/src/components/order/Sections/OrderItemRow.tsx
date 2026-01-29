@@ -43,11 +43,6 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
     opacity: isDragging ? 0.5 : 1,
   };
 
-  // Separate style for the main row to prevent dragging the expanded section
-  const rowStyle = {
-    ...style,
-  };
-
   // Style for expanded row - don't apply transform to prevent lag
   const expandedStyle = {
     opacity: isDragging ? 0.5 : 1,
@@ -309,7 +304,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
         /* ===================== SEPARATOR ROW ===================== */
         <tr 
           ref={setNodeRef} 
-          style={rowStyle}
+          style={style}
           className="bg-blue-50 border-t-2 border-b-2 border-blue-300"
         >
           <td className="w-8 px-2">
@@ -381,7 +376,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
         /* ===================== REGULAR ITEM ROW ===================== */
         <tr
           ref={setNodeRef}
-          style={rowStyle}
+          style={style}
           className="bg-white hover:bg-gray-50 transition"
         >
           <td className="w-8 px-2">
