@@ -20,6 +20,7 @@ import { fetchProducts } from "../../../api/products";
 import { reorderOrderItems } from "../../../api/orderDetail";
 import AddOrderItemForm from "../Sections/AddOrderItem";
 import OrderItemRow from "../Sections/OrderItemRow";
+import LineItemsMenu from "./LineItemsMenu";
 
 interface Props {
   orderId: number;
@@ -49,6 +50,16 @@ export default function OrderItemsTable({
   const [localItems, setLocalItems] = useState<OrderItemPayload[]>([]);
   const selectAllRef = useRef<HTMLInputElement>(null);
 
+  // Search and filter states
+  const [partNumberFilter, setPartNumberFilter] = useState("");
+  const [sectionFilter, setSectionFilter] = useState("");
+  const [descriptionFilter, setDescriptionFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(25);
+
   const isCompleted = orderStatus === "Completed";
 
   // Sensors for drag and drop
@@ -62,6 +73,85 @@ export default function OrderItemsTable({
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  // Filter and paginate items
+  const getFilteredAndPaginatedItems = () => {
+    let filtered = [...localItems];
+
+    // Apply filters
+    if (partNumberFilter || descriptionFilter || statusFilter || sectionFilter) {
+      if (sectionFilter) {
+        // Special logic for section search
+        // Find matching sections and include them plus their items and the next section
+        const result: OrderItemPayload[] = [];
+        let i = 0;
+        
+        while (i < filtered.length) {
+          const item = filtered[i];
+          
+          if (item.is_separator) {
+            // Check if section matches
+            const sectionName = item.note || "";
+            if (sectionName.toLowerCase().includes(sectionFilter.toLowerCase())) {
+              // Add the matching section
+              result.push(item);
+              i++;
+              
+              // Add all items under this section (until next separator)
+              while (i < filtered.length && !filtered[i].is_separator) {
+                result.push(filtered[i]);
+                i++;
+              }
+              
+              // Add the next section separator if it exists
+              if (i < filtered.length && filtered[i].is_separator) {
+                result.push(filtered[i]);
+                i++;
+              }
+              continue;
+            }
+          }
+          i++;
+        }
+        
+        filtered = result;
+      } else {
+        // Regular filtering for non-section searches
+        filtered = filtered.filter((item) => {
+          // Separators are included if they pass the filters or if any filter is active
+          if (item.is_separator) {
+            return true; // Keep separators to maintain structure
+          }
+
+          const matchesPartNumber = !partNumberFilter || 
+            item.part_number.toLowerCase().includes(partNumberFilter.toLowerCase());
+          
+          const matchesDescription = !descriptionFilter || 
+            (item.note && item.note.toLowerCase().includes(descriptionFilter.toLowerCase()));
+          
+          const matchesStatus = !statusFilter || 
+            item.status === statusFilter;
+
+          return matchesPartNumber && matchesDescription && matchesStatus;
+        });
+      }
+    }
+
+    // Calculate pagination
+    const totalItems = filtered.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedItems = filtered.slice(startIndex, endIndex);
+
+    return {
+      items: paginatedItems,
+      totalItems,
+      totalPages,
+    };
+  };
+
+  const { items: displayedItems, totalItems, totalPages } = getFilteredAndPaginatedItems();
 
   // Update local items when props change
   useEffect(() => {
@@ -169,6 +259,24 @@ export default function OrderItemsTable({
 
   return (
     <div className="space-y-4">
+      {/* Line Items Menu with Search and Pagination */}
+      <LineItemsMenu
+        partNumberFilter={partNumberFilter}
+        setPartNumberFilter={setPartNumberFilter}
+        sectionFilter={sectionFilter}
+        setSectionFilter={setSectionFilter}
+        descriptionFilter={descriptionFilter}
+        setDescriptionFilter={setDescriptionFilter}
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
+        currentPage={currentPage}
+        setCurrentPage={setCurrentPage}
+        totalPages={totalPages}
+        itemsPerPage={itemsPerPage}
+        setItemsPerPage={setItemsPerPage}
+        totalItems={totalItems}
+      />
+
       <div className="rounded-xl bg-white shadow-sm border overflow-hidden">
         <div className="px-4 py-3 border-b text-sm font-semibold text-white bg-[#313545]">
           Line Items
@@ -201,7 +309,7 @@ export default function OrderItemsTable({
               </tr>
             </thead>
             <SortableContext
-              items={localItems.map(item => item.id)}
+              items={displayedItems.map(item => item.id)}
               strategy={verticalListSortingStrategy}
             >
               <tbody>
@@ -211,14 +319,14 @@ export default function OrderItemsTable({
                       Loading items…
                     </td>
                   </tr>
-                ) : localItems.length === 0 ? (
+                ) : displayedItems.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="p-4 text-gray-400 italic">
-                      No line items yet
+                      {localItems.length === 0 ? "No line items yet" : "No items match the current filters"}
                     </td>
                   </tr>
                 ) : (
-                  localItems.map((item) => (
+                  displayedItems.map((item) => (
                     <OrderItemRow
                       key={item.id}
                       item={item}
