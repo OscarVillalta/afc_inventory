@@ -502,12 +502,30 @@ def create_order_from_qb():
     if not reference_number:
         return jsonify({"error": "reference_number is required"}), 400
     
+    # Validate reference_number format (alphanumeric, hyphens, underscores)
+    if not isinstance(reference_number, str) or not reference_number.strip():
+        return jsonify({"error": "reference_number must be a non-empty string"}), 400
+    
+    reference_number = reference_number.strip()
+    
+    # Check for duplicate order
+    existing_order = db.execute(
+        select(Order).where(Order.external_order_number == reference_number)
+    ).scalar_one_or_none()
+    
+    if existing_order:
+        return jsonify({
+            "error": "Order with this reference number already exists",
+            "existing_order_id": existing_order.id,
+            "existing_order_number": existing_order.order_number
+        }), 409  # Conflict status code
+    
     if qb_doc_type not in ["sales_order", "salesorder", "estimate", "invoice"]:
         return jsonify({
-            "error": "qb_doc_type must be one of: sales_order, estimate, invoice"
+            "error": "qb_doc_type must be one of: sales_order, salesorder, estimate, invoice"
         }), 400
     
-    # Normalize qb_doc_type
+    # Normalize qb_doc_type (salesorder -> sales_order)
     entity_type = qb_doc_type.replace("salesorder", "sales_order")
     
     # Query QuickBooks via the QB agent
@@ -527,9 +545,9 @@ def create_order_from_qb():
         qb_result = response.json()
     except requests.RequestException as e:
         return jsonify({
-            "error": "Failed to query QuickBooks",
+            "error": "Failed to connect to QuickBooks service",
             "details": str(e)
-        }), 500
+        }), 502  # Bad Gateway - external service failure
     
     # Check if QB query was successful
     if not qb_result.get("success"):
@@ -575,7 +593,7 @@ def create_order_from_qb():
         type=OrderType.OUTGOING.value,  # Sales orders/estimates/invoices are outgoing
         customer_id=customer.id if customer else None,
         external_order_number=reference_number,
-        description=metadata.get("memo", f"QB {entity_type.title()} #{reference_number}"),
+        description=metadata.get("memo", f"QB {entity_type.replace('_', ' ').title()} #{reference_number}"),
         status=OrderStatus.PENDING.value
     )
     
@@ -590,55 +608,67 @@ def create_order_from_qb():
     skipped_items = []
     position = 0
     
-    for qb_line in line_items:
-        if qb_line.get("is_separator"):
-            # Create separator item
-            separator = OrderItem(
-                order_id=order.id,
-                product_id=None,
-                is_separator=True,
-                quantity_ordered=0,
-                quantity_fulfilled=0,
-                note=qb_line.get("description", ""),
-                position=position
-            )
-            db.add(separator)
-            created_items.append({
-                "type": "separator",
-                "description": qb_line.get("description", "")
-            })
-            position += 1
-        else:
-            # Find product by name (from QB item name)
-            item_name = qb_line.get("name", "")
-            product = find_product_by_name(db, item_name)
-            
-            if not product:
-                skipped_items.append({
-                    "name": item_name,
-                    "reason": "Product not found in database"
+    try:
+        for qb_line in line_items:
+            if qb_line.get("is_separator"):
+                # Create separator item
+                separator = OrderItem(
+                    order_id=order.id,
+                    product_id=None,
+                    is_separator=True,
+                    quantity_ordered=0,
+                    quantity_fulfilled=0,
+                    note=qb_line.get("description", ""),
+                    position=position
+                )
+                db.add(separator)
+                created_items.append({
+                    "type": "separator",
+                    "description": qb_line.get("description", "")
                 })
-                continue
-            
-            # Create order item
-            order_item = OrderItem(
-                order_id=order.id,
-                product_id=product.id,
-                is_separator=False,
-                quantity_ordered=int(qb_line.get("quantity", 0)),
-                quantity_fulfilled=0,
-                note=qb_line.get("description"),
-                position=position
-            )
-            db.add(order_item)
-            created_items.append({
-                "type": "product",
-                "name": item_name,
-                "quantity": qb_line.get("quantity", 0)
-            })
-            position += 1
-    
-    db.commit()
+                position += 1
+            else:
+                # Find product by name (from QB item name)
+                item_name = qb_line.get("name", "")
+                product = find_product_by_name(db, item_name)
+                
+                if not product:
+                    skipped_items.append({
+                        "name": item_name,
+                        "reason": "Product not found in database"
+                    })
+                    continue
+                
+                # Validate quantity
+                quantity = qb_line.get("quantity", 0)
+                if quantity < 0:
+                    quantity = 0
+                
+                # Create order item
+                order_item = OrderItem(
+                    order_id=order.id,
+                    product_id=product.id,
+                    is_separator=False,
+                    quantity_ordered=int(quantity),
+                    quantity_fulfilled=0,
+                    note=qb_line.get("description"),
+                    position=position
+                )
+                db.add(order_item)
+                created_items.append({
+                    "type": "product",
+                    "name": item_name,
+                    "quantity": quantity
+                })
+                position += 1
+        
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        return jsonify({
+            "error": "Failed to create order items",
+            "details": str(e)
+        }), 500
     
     return jsonify({
         "message": "Order created successfully from QuickBooks",
@@ -658,40 +688,41 @@ def find_product_by_name(db, item_name: str):
     """
     Find a product in the database by matching the QB item name.
     Tries to match against air filter part numbers and misc item names.
+    
+    Args:
+        db: Database session
+        item_name: QuickBooks item name to search for
+    
+    Returns:
+        Product object if found, None otherwise
     """
     if not item_name:
         return None
     
-    # Try exact match on air filter part number
+    # First try exact matches
     air_filter = db.execute(
-        select(AirFilter).where(AirFilter.part_number == item_name)
-    ).scalar_one_or_none()
+        select(AirFilter).where(
+            or_(
+                AirFilter.part_number == item_name,
+                func.lower(AirFilter.part_number) == item_name.lower()
+            )
+        )
+    ).first()
     
-    if air_filter and air_filter.product:
-        return air_filter.product
+    if air_filter and air_filter[0].product:
+        return air_filter[0].product
     
-    # Try exact match on misc item name
+    # Try misc items
     misc_item = db.execute(
-        select(MiscItem).where(MiscItem.name == item_name)
-    ).scalar_one_or_none()
+        select(MiscItem).where(
+            or_(
+                MiscItem.name == item_name,
+                func.lower(MiscItem.name) == item_name.lower()
+            )
+        )
+    ).first()
     
-    if misc_item and misc_item.product:
-        return misc_item.product
-    
-    # Try case-insensitive match on air filter part number
-    air_filter = db.execute(
-        select(AirFilter).where(func.lower(AirFilter.part_number) == item_name.lower())
-    ).scalar_one_or_none()
-    
-    if air_filter and air_filter.product:
-        return air_filter.product
-    
-    # Try case-insensitive match on misc item name
-    misc_item = db.execute(
-        select(MiscItem).where(func.lower(MiscItem.name) == item_name.lower())
-    ).scalar_one_or_none()
-    
-    if misc_item and misc_item.product:
-        return misc_item.product
+    if misc_item and misc_item[0].product:
+        return misc_item[0].product
     
     return None

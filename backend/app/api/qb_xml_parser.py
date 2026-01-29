@@ -1,7 +1,7 @@
 """
 Helper module to parse QuickBooks XML responses.
 """
-import xml.etree.ElementTree as ET
+import defusedxml.ElementTree as ET
 from typing import List, Dict, Optional
 
 
@@ -59,23 +59,32 @@ def parse_qb_line_items(qbxml_response: str, entity_type: str) -> List[Dict]:
         if line_item:
             line_items.append(line_item)
     
-    # Also check for LineGroupRet (sections/groups)
-    for group_elem in ret_element.findall(".//SalesOrderLineGroupRet"):
-        # Group header can act as a separator
-        group_desc = get_element_text(group_elem, "Desc")
-        if group_desc:
-            line_items.append({
-                'is_separator': True,
-                'description': group_desc,
-                'name': None,
-                'quantity': 0
-            })
-        
-        # Lines within the group
-        for line_elem in group_elem.findall(f".//{line_tag}"):
-            line_item = parse_line_item(line_elem)
-            if line_item:
-                line_items.append(line_item)
+    # Also check for LineGroupRet (sections/groups) - entity-specific
+    group_tag_map = {
+        'sales_order': 'SalesOrderLineGroupRet',
+        'salesorder': 'SalesOrderLineGroupRet',
+        'estimate': 'EstimateLineGroupRet',
+        'invoice': 'InvoiceLineGroupRet',
+    }
+    
+    group_tag = group_tag_map.get(entity_type_lower)
+    if group_tag:
+        for group_elem in ret_element.findall(f".//{group_tag}"):
+            # Group header can act as a separator
+            group_desc = get_element_text(group_elem, "Desc")
+            if group_desc:
+                line_items.append({
+                    'is_separator': True,
+                    'description': group_desc,
+                    'name': None,
+                    'quantity': 0
+                })
+            
+            # Lines within the group
+            for line_elem in group_elem.findall(f".//{line_tag}"):
+                line_item = parse_line_item(line_elem)
+                if line_item:
+                    line_items.append(line_item)
     
     return line_items
 
@@ -100,7 +109,15 @@ def parse_line_item(line_elem: ET.Element) -> Optional[Dict]:
     
     # Get quantity
     qty_text = get_element_text(line_elem, "Quantity")
-    quantity = float(qty_text) if qty_text else 0
+    quantity = 0
+    if qty_text:
+        try:
+            quantity = float(qty_text)
+            # Ensure non-negative
+            if quantity < 0:
+                quantity = 0
+        except (ValueError, TypeError):
+            quantity = 0
     
     # If no item name but has description, treat as separator
     if not item_name and desc:
