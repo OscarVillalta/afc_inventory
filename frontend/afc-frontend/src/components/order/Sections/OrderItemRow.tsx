@@ -43,6 +43,16 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
     opacity: isDragging ? 0.5 : 1,
   };
 
+  // Separate style for the main row to prevent dragging the expanded section
+  const rowStyle = {
+    ...style,
+  };
+
+  // Style for expanded row - don't apply transform to prevent lag
+  const expandedStyle = {
+    opacity: isDragging ? 0.5 : 1,
+  };
+
   // Editable fields state
   const [isEditingNote, setIsEditingNote] = useState(false);
   const [isEditingQty, setIsEditingQty] = useState(false);
@@ -299,7 +309,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
         /* ===================== SEPARATOR ROW ===================== */
         <tr 
           ref={setNodeRef} 
-          style={style}
+          style={rowStyle}
           className="bg-blue-50 border-t-2 border-b-2 border-blue-300"
         >
           <td className="w-8 px-2">
@@ -371,7 +381,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
         /* ===================== REGULAR ITEM ROW ===================== */
         <tr
           ref={setNodeRef}
-          style={style}
+          style={rowStyle}
           className="bg-white hover:bg-gray-50 transition"
         >
           <td className="w-8 px-2">
@@ -530,8 +540,8 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
 
       {/* ===================== EXPANDED ===================== */}
       {expanded && !isSeparator && (
-        <tr>
-          <td colSpan={8} className="bg-gray-50 px-6 py-4 space-y-3">
+        <tr style={expandedStyle}>
+          <td colSpan={8} className="bg-gray-50 px-6 py-4 space-y-3" style={{ pointerEvents: isDragging ? 'none' : 'auto' }}>
             {/* ===== CREATE PENDING ===== */}
             {remainingSafe > 0 && (
               <div className="flex items-center gap-3">
@@ -589,6 +599,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
                     <th>ID</th>
                     <th>Qty</th>
                     <th>State</th>
+                    <th>Reason</th>
                     <th>Note</th>
                     <th>Date</th>
                     <th></th>
@@ -598,19 +609,19 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
                 <tbody>
                   {loadingTxns ? (
                     <tr>
-                      <td colSpan={6} className="p-4 text-gray-400">
+                      <td colSpan={7} className="p-4 text-gray-400">
                         Loading…
                       </td>
                     </tr>
                   ) : transactions.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="p-4 text-gray-400 italic">
+                      <td colSpan={7} className="p-4 text-gray-400 italic">
                         No transactions yet
                       </td>
                     </tr>
                   ) : (
                     transactions.map((tx) => (
-                      <tr key={tx.id}>
+                      <tr key={tx.id} className={tx.state === "rolled_back" ? "opacity-50" : ""}>
                         <td>{tx.id}</td>
 
                         <td
@@ -630,10 +641,18 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
                                 ? "badge-warning"
                                 : tx.state === "committed"
                                 ? "badge-success"
+                                : tx.state === "rolled_back"
+                                ? "badge-error"
                                 : "badge-ghost"
                             }`}
                           >
                             {tx.state}
+                          </span>
+                        </td>
+
+                        <td>
+                          <span className={tx.reason === "rollback" ? "text-orange-600 font-medium" : ""}>
+                            {tx.reason}
                           </span>
                         </td>
 
@@ -664,7 +683,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
                                 </button>
                               </>
                             )}
-                            {tx.state === "committed" && (
+                            {tx.state === "committed" && tx.reason !== "rollback" && (
                               <button
                                 className="btn btn-xs btn-warning"
                                 disabled={!!error}

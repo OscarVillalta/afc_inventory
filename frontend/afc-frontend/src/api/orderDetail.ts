@@ -17,6 +17,7 @@ export interface OrderItemTransaction {
   id: number;
   quantity_delta: number;
   state: "pending" | "committed" | "cancelled" | "rolled_back";
+  reason: string;
   note?: string;
   created_at: string;
 }
