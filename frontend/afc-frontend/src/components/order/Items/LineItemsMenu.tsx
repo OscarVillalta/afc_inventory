@@ -37,8 +37,9 @@ export default function LineItemsMenu({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Part Number Search */}
         <div>
-          <label className="text-xs text-gray-500 mb-1 block">Part Number</label>
+          <label htmlFor="part-number-filter" className="text-xs text-gray-500 mb-1 block">Part Number</label>
           <input
+            id="part-number-filter"
             type="text"
             placeholder="Search part number..."
             className="input input-sm input-bordered w-full"
@@ -47,13 +48,15 @@ export default function LineItemsMenu({
               setPartNumberFilter(e.target.value);
               setCurrentPage(1); // Reset to first page on filter change
             }}
+            aria-label="Search by part number"
           />
         </div>
 
         {/* Section Search */}
         <div>
-          <label className="text-xs text-gray-500 mb-1 block">Section</label>
+          <label htmlFor="section-filter" className="text-xs text-gray-500 mb-1 block">Section</label>
           <input
+            id="section-filter"
             type="text"
             placeholder="Search section..."
             className="input input-sm input-bordered w-full"
@@ -62,13 +65,15 @@ export default function LineItemsMenu({
               setSectionFilter(e.target.value);
               setCurrentPage(1);
             }}
+            aria-label="Search by section"
           />
         </div>
 
         {/* Description Search */}
         <div>
-          <label className="text-xs text-gray-500 mb-1 block">Description</label>
+          <label htmlFor="description-filter" className="text-xs text-gray-500 mb-1 block">Description</label>
           <input
+            id="description-filter"
             type="text"
             placeholder="Search description..."
             className="input input-sm input-bordered w-full"
@@ -77,19 +82,22 @@ export default function LineItemsMenu({
               setDescriptionFilter(e.target.value);
               setCurrentPage(1);
             }}
+            aria-label="Search by description"
           />
         </div>
 
         {/* Status Dropdown */}
         <div>
-          <label className="text-xs text-gray-500 mb-1 block">Status</label>
+          <label htmlFor="status-filter" className="text-xs text-gray-500 mb-1 block">Status</label>
           <select
+            id="status-filter"
             className="select select-sm select-bordered w-full"
             value={statusFilter}
             onChange={(e) => {
               setStatusFilter(e.target.value);
               setCurrentPage(1);
             }}
+            aria-label="Filter by status"
           >
             <option value="">All Statuses</option>
             <option value="Pending">Pending</option>
@@ -128,6 +136,7 @@ export default function LineItemsMenu({
             className="btn btn-sm btn-outline"
             disabled={currentPage === 1}
             onClick={() => setCurrentPage(currentPage - 1)}
+            aria-label="Go to previous page"
           >
             Previous
           </button>
@@ -148,13 +157,15 @@ export default function LineItemsMenu({
                 return (
                   <div key={page} className="flex items-center gap-1">
                     {showEllipsis && (
-                      <span className="px-2 text-gray-400">...</span>
+                      <span className="px-2 text-gray-400" aria-hidden="true">...</span>
                     )}
                     <button
                       className={`btn btn-sm ${
                         currentPage === page ? "btn-primary" : "btn-outline"
                       }`}
                       onClick={() => setCurrentPage(page)}
+                      aria-label={`Go to page ${page}`}
+                      aria-current={currentPage === page ? "page" : undefined}
                     >
                       {page}
                     </button>
@@ -167,6 +178,7 @@ export default function LineItemsMenu({
             className="btn btn-sm btn-outline"
             disabled={currentPage === totalPages || totalPages === 0}
             onClick={() => setCurrentPage(currentPage + 1)}
+            aria-label="Go to next page"
           >
             Next
           </button>

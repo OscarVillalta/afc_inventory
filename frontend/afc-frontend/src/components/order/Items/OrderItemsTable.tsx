@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import {
   DndContext,
   closestCenter,
@@ -74,8 +74,8 @@ export default function OrderItemsTable({
     })
   );
 
-  // Filter and paginate items
-  const getFilteredAndPaginatedItems = () => {
+  // Filter and paginate items (memoized for performance)
+  const { items: displayedItems, totalItems, totalPages } = useMemo(() => {
     let filtered = [...localItems];
 
     // Apply filters
@@ -83,7 +83,7 @@ export default function OrderItemsTable({
       if (sectionFilter) {
         // Special logic for section search
         // Find matching sections and include them plus their items and the next section
-        const result: OrderItemPayload[] = [];
+        const matchingSections: OrderItemPayload[] = [];
         let i = 0;
         
         while (i < filtered.length) {
@@ -94,18 +94,18 @@ export default function OrderItemsTable({
             const sectionName = item.note || "";
             if (sectionName.toLowerCase().includes(sectionFilter.toLowerCase())) {
               // Add the matching section
-              result.push(item);
+              matchingSections.push(item);
               i++;
               
               // Add all items under this section (until next separator)
               while (i < filtered.length && !filtered[i].is_separator) {
-                result.push(filtered[i]);
+                matchingSections.push(filtered[i]);
                 i++;
               }
               
-              // Add the next section separator if it exists
+              // Add the next section separator if it exists (for context)
               if (i < filtered.length && filtered[i].is_separator) {
-                result.push(filtered[i]);
+                matchingSections.push(filtered[i]);
                 i++;
               }
               continue;
@@ -114,7 +114,7 @@ export default function OrderItemsTable({
           i++;
         }
         
-        filtered = result;
+        filtered = matchingSections;
       } else {
         // Regular filtering for non-section searches
         filtered = filtered.filter((item) => {
@@ -149,18 +149,24 @@ export default function OrderItemsTable({
       totalItems,
       totalPages,
     };
-  };
-
-  const { items: displayedItems, totalItems, totalPages } = getFilteredAndPaginatedItems();
+  }, [localItems, partNumberFilter, sectionFilter, descriptionFilter, statusFilter, currentPage, itemsPerPage]);
 
   // Update local items when props change
   useEffect(() => {
     setLocalItems(items);
   }, [items]);
 
+  // Reset to page 1 if current page is invalid after filtering
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+    }
+  }, [currentPage, totalPages]);
+
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      onSelectedItemsChange(new Set(items.map(item => item.id)));
+      // Select all displayed items on the current page
+      onSelectedItemsChange(new Set(displayedItems.map(item => item.id)));
     } else {
       onSelectedItemsChange(new Set());
     }
@@ -204,8 +210,8 @@ export default function OrderItemsTable({
     }
   };
 
-  const allSelected = items.length > 0 && selectedItems.size === items.length;
-  const someSelected = selectedItems.size > 0 && selectedItems.size < items.length;
+  const allSelected = displayedItems.length > 0 && displayedItems.every(item => selectedItems.has(item.id));
+  const someSelected = displayedItems.some(item => selectedItems.has(item.id)) && !allSelected;
 
   // Handle drag end
   async function handleDragEnd(event: DragEndEvent) {
