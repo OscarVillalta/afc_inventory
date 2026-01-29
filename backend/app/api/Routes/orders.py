@@ -3,9 +3,12 @@ from sqlalchemy import select, func
 from sqlalchemy import and_, or_
 from app.api.Schemas.order_schema import OrderSchema
 from database.models import Customer, Supplier, OrderType, OrderStatus, Transaction, TransactionState
-from database.models import Order
+from database.models import Order, OrderItem, Product, AirFilter, MiscItem
 from marshmallow import ValidationError
 from datetime import datetime, timedelta
+import os
+import requests
+from app.api.qb_xml_parser import parse_qb_line_items, extract_qb_metadata
 
 order_bp = Blueprint("orders", __name__)
 order_schema = OrderSchema()
@@ -472,3 +475,254 @@ def allocate_all(order_id):
         "message": f"{len(created)} items allocated",
         "transactions_created": len(created),
     }), 201
+
+
+# ===============================
+# CREATE ORDER FROM QUICKBOOKS
+# ===============================
+
+@order_bp.route("/orders/from-qb", methods=["POST"])
+def create_order_from_qb():
+    """
+    Create a new order from QuickBooks data.
+    
+    Expects JSON body with:
+    {
+        "reference_number": "8800",
+        "qb_doc_type": "sales_order" | "estimate" | "invoice"
+    }
+    """
+    db = g.db
+    data = request.get_json() or {}
+    
+    # Validate required fields
+    reference_number = data.get("reference_number")
+    qb_doc_type = data.get("qb_doc_type", "").lower()
+    
+    if not reference_number:
+        return jsonify({"error": "reference_number is required"}), 400
+    
+    # Validate reference_number format (alphanumeric, hyphens, underscores)
+    if not isinstance(reference_number, str) or not reference_number.strip():
+        return jsonify({"error": "reference_number must be a non-empty string"}), 400
+    
+    reference_number = reference_number.strip()
+    
+    # Check for duplicate order
+    existing_order = db.execute(
+        select(Order).where(Order.external_order_number == reference_number)
+    ).scalar_one_or_none()
+    
+    if existing_order:
+        return jsonify({
+            "error": "Order with this reference number already exists",
+            "existing_order_id": existing_order.id,
+            "existing_order_number": existing_order.order_number
+        }), 409  # Conflict status code
+    
+    if qb_doc_type not in ["sales_order", "salesorder", "estimate", "invoice"]:
+        return jsonify({
+            "error": "qb_doc_type must be one of: sales_order, salesorder, estimate, invoice"
+        }), 400
+    
+    # Normalize qb_doc_type (salesorder -> sales_order)
+    entity_type = qb_doc_type.replace("salesorder", "sales_order")
+    
+    # Query QuickBooks via the QB agent
+    qb_agent_url = os.getenv("QB_AGENT_URL", "http://127.0.0.1:5055")
+    
+    try:
+        response = requests.post(
+            f"{qb_agent_url}/jobs",
+            json={
+                "op": "query",
+                "entity": entity_type,
+                "params": {"refnumber": reference_number}
+            },
+            timeout=60
+        )
+        response.raise_for_status()
+        qb_result = response.json()
+    except requests.RequestException as e:
+        return jsonify({
+            "error": "Failed to connect to QuickBooks service",
+            "details": str(e)
+        }), 502  # Bad Gateway - external service failure
+    
+    # Check if QB query was successful
+    if not qb_result.get("success"):
+        return jsonify({
+            "error": "QuickBooks query failed",
+            "qb_error": qb_result.get("errorMessage"),
+            "qb_error_code": qb_result.get("errorCode")
+        }), 400
+    
+    # Parse the QBXML response
+    qbxml_response = qb_result.get("qbxmlResponse", "")
+    
+    try:
+        line_items = parse_qb_line_items(qbxml_response, entity_type)
+        metadata = extract_qb_metadata(qbxml_response, entity_type)
+    except ValueError as e:
+        return jsonify({
+            "error": "Failed to parse QuickBooks response",
+            "details": str(e)
+        }), 400
+    
+    if not line_items:
+        return jsonify({
+            "error": "No line items found in QuickBooks response"
+        }), 400
+    
+    # Find or create customer based on QB customer name
+    customer = None
+    customer_name = metadata.get("customer_name")
+    if customer_name:
+        customer = db.execute(
+            select(Customer).where(Customer.name == customer_name)
+        ).scalar_one_or_none()
+        
+        # Create customer if doesn't exist
+        if not customer:
+            customer = Customer(name=customer_name)
+            db.add(customer)
+            db.flush()
+    
+    # Create the order
+    order = Order(
+        type=OrderType.OUTGOING.value,  # Sales orders/estimates/invoices are outgoing
+        customer_id=customer.id if customer else None,
+        external_order_number=reference_number,
+        description=metadata.get("memo", f"QB {entity_type.replace('_', ' ').title()} #{reference_number}"),
+        status=OrderStatus.PENDING.value
+    )
+    
+    db.add(order)
+    db.flush()  # Get order.id
+    
+    # Generate AFC order number
+    order.order_number = f"AFC-{order.id:06d}"
+    
+    # Process line items
+    created_items = []
+    skipped_items = []
+    position = 0
+    
+    try:
+        for qb_line in line_items:
+            if qb_line.get("is_separator"):
+                # Create separator item
+                separator = OrderItem(
+                    order_id=order.id,
+                    product_id=None,
+                    is_separator=True,
+                    quantity_ordered=0,
+                    quantity_fulfilled=0,
+                    note=qb_line.get("description", ""),
+                    position=position
+                )
+                db.add(separator)
+                created_items.append({
+                    "type": "separator",
+                    "description": qb_line.get("description", "")
+                })
+                position += 1
+            else:
+                # Find product by name (from QB item name)
+                item_name = qb_line.get("name", "")
+                product = find_product_by_name(db, item_name)
+                
+                if not product:
+                    skipped_items.append({
+                        "name": item_name,
+                        "reason": "Product not found in database"
+                    })
+                    continue
+                
+                # Validate quantity
+                quantity = qb_line.get("quantity", 0)
+                if quantity < 0:
+                    quantity = 0
+                
+                # Create order item
+                order_item = OrderItem(
+                    order_id=order.id,
+                    product_id=product.id,
+                    is_separator=False,
+                    quantity_ordered=int(quantity),
+                    quantity_fulfilled=0,
+                    note=qb_line.get("description"),
+                    position=position
+                )
+                db.add(order_item)
+                created_items.append({
+                    "type": "product",
+                    "name": item_name,
+                    "quantity": quantity
+                })
+                position += 1
+        
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        return jsonify({
+            "error": "Failed to create order items",
+            "details": str(e)
+        }), 500
+    
+    return jsonify({
+        "message": "Order created successfully from QuickBooks",
+        "order_id": order.id,
+        "order_number": order.order_number,
+        "external_order_number": order.external_order_number,
+        "customer_name": customer.name if customer else None,
+        "items_created": len(created_items),
+        "items_skipped": len(skipped_items),
+        "created_items": created_items,
+        "skipped_items": skipped_items,
+        "metadata": metadata
+    }), 201
+
+
+def find_product_by_name(db, item_name: str):
+    """
+    Find a product in the database by matching the QB item name.
+    Tries to match against air filter part numbers and misc item names.
+    
+    Args:
+        db: Database session
+        item_name: QuickBooks item name to search for
+    
+    Returns:
+        Product object if found, None otherwise
+    """
+    if not item_name:
+        return None
+    
+    # First try exact matches
+    air_filter = db.execute(
+        select(AirFilter).where(
+            or_(
+                AirFilter.part_number == item_name,
+                func.lower(AirFilter.part_number) == item_name.lower()
+            )
+        )
+    ).first()
+    
+    if air_filter and air_filter[0].product:
+        return air_filter[0].product
+    
+    # Try misc items
+    misc_item = db.execute(
+        select(MiscItem).where(
+            or_(
+                MiscItem.name == item_name,
+                func.lower(MiscItem.name) == item_name.lower()
+            )
+        )
+    ).first()
+    
+    if misc_item and misc_item[0].product:
+        return misc_item[0].product
+    
+    return None
