@@ -4,11 +4,11 @@ export default function Sidebar() {
   const { pathname } = useLocation();
 
   const links = [
-    { name: "Dashboard", to: "/", icon: "📊" },
-    { name: "Inventory", to: "/inventory", icon: "📦" },
-    { name: "Orders", to: "/order", icon: "🧾" },
-    { name: "Transactions", to: "/transactions", icon: "💱" },
-    { name: "Contracts", to: "/order", icon: "🧾" },
+    { id: "dashboard", name: "Dashboard", to: "/", icon: "📊" },
+    { id: "inventory", name: "Inventory", to: "/inventory", icon: "📦" },
+    { id: "orders", name: "Orders", to: "/order", icon: "🧾" },
+    { id: "transactions", name: "Transactions", to: "/transactions", icon: "💱" },
+    { id: "contracts", name: "Contracts", to: "/order", icon: "🧾" },
   ];
 
   return (
@@ -37,7 +37,7 @@ export default function Sidebar() {
 
           return (
             <Link
-              key={link.to}
+              key={link.id}
               to={link.to}
               className={`
                 flex items-center gap-3 px-4 py-3 rounded-lg
