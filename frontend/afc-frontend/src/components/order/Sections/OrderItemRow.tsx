@@ -329,7 +329,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
               type="checkbox"
               className="checkbox checkbox-s"
               checked={isSelected}
-              onChange={(e) => onSelectChange(e.target.checked, e.shiftKey)}
+              onChange={(e) => onSelectChange(e.target.checked, (e.nativeEvent as MouseEvent).shiftKey)}
               aria-label={`Select section: ${item.note}`}
             />
           </td>
@@ -401,7 +401,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
               type="checkbox"
               className="checkbox checkbox-s"
               checked={isSelected}
-              onChange={(e) => onSelectChange(e.target.checked, e.shiftKey)}
+              onChange={(e) => onSelectChange(e.target.checked, (e.nativeEvent as MouseEvent).shiftKey)}
               aria-label={`Select ${item.part_number}`}
             />
           </td>

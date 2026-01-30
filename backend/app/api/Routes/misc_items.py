@@ -1,5 +1,5 @@
 from flask import g, jsonify, request, Blueprint
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from marshmallow import ValidationError
 from database.models import MiscItem, Supplier, Product, Quantity
 from app.api.Schemas.misc_item_schema import MiscItemSchema
@@ -118,3 +118,75 @@ def delete_misc_item(id):
     db.commit()
 
     return jsonify({"message": "Misc item and related product deleted successfully."}), 200
+
+
+# =====================================================
+# 🔹 SEARCH misc items (with filters & pagination)
+# =====================================================
+@misc_bp.route("/misc_items/search", methods=["GET"])
+def search_misc_items():
+    db = g.db
+
+    # --- Query parameters ---
+    name = request.args.get("name")
+    description = request.args.get("description")
+    supplier_name = request.args.get("supplier")
+
+    # Pagination
+    page = request.args.get("page", default=1, type=int)
+    limit = request.args.get("limit", default=25, type=int)
+    offset = (page - 1) * limit
+
+    # --- Base Query ---
+    query = (
+        select(
+            MiscItem.id,
+            MiscItem.name,
+            MiscItem.description,
+            Product.id.label("product_id"),
+            Supplier.name.label("supplier_name"),
+
+            Quantity.on_hand,
+            Quantity.reserved,
+            Quantity.ordered,
+            Quantity.location,
+            Quantity.available,
+            Quantity.backordered,
+        )
+        .join(Supplier, MiscItem.supplier_id == Supplier.id)
+        .join(Product, Product.reference_id == MiscItem.id)
+        .join(Quantity, Quantity.product_id == Product.id)
+        .where(Product.category_id == product_category)
+        .distinct(MiscItem.id)
+    )
+
+    # --- Dynamic Filters ---
+    filters = []
+
+    if name:
+        filters.append(MiscItem.name.ilike(f"%{name}%"))
+    if description:
+        filters.append(MiscItem.description.ilike(f"%{description}%"))
+    if supplier_name:
+        filters.append(Supplier.name.ilike(f"%{supplier_name}%"))
+
+    if filters:
+        query = query.where(and_(*filters))
+
+    # --- Total Count ---
+    total = len(db.execute(query).mappings().all())
+
+    # --- Pagination ---
+    query = query.limit(limit).offset(offset)
+
+    # --- Execute ---
+    results = db.execute(query).mappings().all()
+    results = [dict(row) for row in results]
+
+    return jsonify({
+        "page": page,
+        "limit": limit,
+        "count": len(results),
+        "total": total,
+        "results": results
+    }), 200
