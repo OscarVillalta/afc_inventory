@@ -151,7 +151,7 @@ def allocate_order_item(item_id):
         .where(Transaction.state.in_(["pending", "committed"]))
     ) or 0
 
-    projected_total = existing_qty + qty_to_allocate
+    projected_total = existing_qty + qty_delta
 
     # 🔹 Prevent over-allocation
     if abs(projected_total) > abs(item.quantity_ordered):
