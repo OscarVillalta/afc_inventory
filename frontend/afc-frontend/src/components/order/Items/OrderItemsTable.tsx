@@ -49,6 +49,7 @@ export default function OrderItemsTable({
   const [showAddForm, setShowAddForm] = useState(false);
   const [localItems, setLocalItems] = useState<OrderItemPayload[]>([]);
   const selectAllRef = useRef<HTMLInputElement>(null);
+  const lastSelectedIndexRef = useRef<number | null>(null);
 
   // Search and filter states
   const [partNumberFilter, setPartNumberFilter] = useState("");
@@ -185,8 +186,9 @@ export default function OrderItemsTable({
     }
   };
 
-  const handleSelectItem = (itemId: number, checked: boolean) => {
+  const handleSelectItem = (itemId: number, checked: boolean, shiftKey: boolean = false) => {
     const item = displayedItems.find(i => i.id === itemId);
+    const currentIndex = displayedItems.findIndex(i => i.id === itemId);
     
     if (item && item.is_separator) {
       // When selecting a separator, select all items in its section
@@ -211,6 +213,18 @@ export default function OrderItemsTable({
         sectionItems.forEach(id => newSelected.delete(id));
       }
       onSelectedItemsChange(newSelected);
+      lastSelectedIndexRef.current = currentIndex;
+    } else if (shiftKey && lastSelectedIndexRef.current !== null && checked) {
+      // Shift-click: select range between last selected and current
+      const startIndex = Math.min(lastSelectedIndexRef.current, currentIndex);
+      const endIndex = Math.max(lastSelectedIndexRef.current, currentIndex);
+      
+      const newSelected = new Set(selectedItems);
+      for (let i = startIndex; i <= endIndex; i++) {
+        newSelected.add(displayedItems[i].id);
+      }
+      onSelectedItemsChange(newSelected);
+      lastSelectedIndexRef.current = currentIndex;
     } else {
       // Regular item selection
       const newSelected = new Set(selectedItems);
@@ -220,6 +234,7 @@ export default function OrderItemsTable({
         newSelected.delete(itemId);
       }
       onSelectedItemsChange(newSelected);
+      lastSelectedIndexRef.current = currentIndex;
     }
   };
 
@@ -353,7 +368,7 @@ export default function OrderItemsTable({
                       onRefresh={onRefresh}
                       txnRefreshKey={txnRefreshKey}
                       isSelected={selectedItems.has(item.id)}
-                      onSelectChange={(checked) => handleSelectItem(item.id, checked)}
+                      onSelectChange={(checked, shiftKey) => handleSelectItem(item.id, checked, shiftKey)}
                     />
                   ))
                 )}
