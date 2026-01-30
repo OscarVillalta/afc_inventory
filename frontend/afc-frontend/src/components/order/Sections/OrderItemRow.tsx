@@ -147,6 +147,13 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
       return;
     }
 
+    if (editedQty < item.quantity_fulfilled) {
+      setError("Quantity must be greater than or equal to fulfilled quantity.");
+      setEditedQty(item.quantity_ordered);
+      setIsEditingQty(false);
+      return;
+    }
+
     setSaving(true);
     try {
       await updateOrderItem(item.id, { quantity_ordered: editedQty });
@@ -465,18 +472,14 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
                   }
                 }}
                 autoFocus
-                disabled={saving || item.quantity_fulfilled > 0}
+                disabled={saving}
                 min={1}
               />
             ) : (
               <span
-                className={`cursor-pointer hover:bg-blue-50 px-2 py-1 rounded inline-block ${
-                  item.quantity_fulfilled > 0 ? 'cursor-not-allowed opacity-50' : ''
-                }`}
+                className={`cursor-pointer hover:bg-blue-50 px-2 py-1 rounded inline-block `}
                 onClick={() => {
-                  if (item.quantity_fulfilled === 0) {
                     setIsEditingQty(true);
-                  }
                 }}
                 title={item.quantity_fulfilled > 0 ? "Cannot edit fulfilled items" : "Click to edit"}
               >

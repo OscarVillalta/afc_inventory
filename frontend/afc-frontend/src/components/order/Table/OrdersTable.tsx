@@ -182,8 +182,8 @@ export default function OrdersTable({ reloadKey }: Props) {
             {row.type}
           </td>
 
-          <td className="py-3 px-2">{row.cs_name}</td>
-          <td className="py-3 px-2">{row.description}</td>
+          <td className="py-3 px-2 max-w-8">{row.cs_name}</td>
+          <td className="py-3 px-2 truncate text-ellipsis max-w-16">{row.description}</td>
 
           <td className="py-3 px-2">
             <span

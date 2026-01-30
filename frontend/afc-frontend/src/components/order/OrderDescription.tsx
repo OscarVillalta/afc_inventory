@@ -32,7 +32,7 @@ export default function OrderDescription({
         onChange={(e) => onChange(e.target.value)}
       />
 
-      {selectedItemsCount > 0 && (
+      {selectedItemsCount >= 0 && (
         <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="text-xs font-semibold text-blue-800 mb-2">
             Bulk Actions ({selectedItemsCount} selected)

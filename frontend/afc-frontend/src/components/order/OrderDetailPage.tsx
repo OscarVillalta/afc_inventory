@@ -196,21 +196,6 @@ export default function OrderDetailPage() {
     );
   }
 
-  async function handleAllocateAll() {
-    if (!order) return;
-
-    try {
-      await allocateAll(order.id);
-      await refreshOrder();
-    } catch (err: any) {
-      alert(
-        err?.response?.data?.error ||
-        err?.message ||
-        "Failed to allocate all items"
-      );
-    }
-  }
-
   async function handleAllocateSelected() {
     if (selectedItems.size === 0) {
       alert("No items selected");
@@ -358,13 +343,14 @@ export default function OrderDetailPage() {
       <div className="flex justify-start flex-grow gap-x-4">
         {/* LEFT COLUMN */}
         <div className="max-w-7xl space-y-4 flex-3 bg-slate-100 ">
-          <OrderHeader
+            <OrderHeader
             orderNumber={order.order_number}
             type={order.type}
             status={order.status}
           />
+          
 
-          <div className="lg:col-span-8 space-y-4 ">
+          <div className="lg:col-span-8 space-y-4">
             <OrderMetaCard
               type={order.type}
               status={order.status}
@@ -399,7 +385,7 @@ export default function OrderDetailPage() {
         </div>
 
         {/* RIGHT COLUMN */}
-        <div className="flex-1">
+        <div className="flex-1 sticky top-1 self-start">
           <OrderDescription
             value={order.description}
             onChange={(v) =>
@@ -421,14 +407,6 @@ export default function OrderDetailPage() {
 
             {/* ===== ORDER ACTIONS ===== */}
             <div className="flex justify-end pt-2 gap-x-2">
-              <button
-                  className="btn btn-sm btn-primary"
-                  onClick={handleAllocateAll}
-                  disabled={order.status === "Completed"}
-                >
-                  Allocate All
-              </button>
-              
               <button
               className="btn btn-sm btn-outline"
               onClick={() => window.location.reload()}
