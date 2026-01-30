@@ -140,9 +140,9 @@ def allocate_order_item(item_id):
     note = body.get("note")
 
     # 🔹 Determine direction and reason
-    sign = 1 if order.type == "supplier" else -1
+    sign = 1 if order.type == "incoming" else -1
     qty_delta = qty_to_allocate * sign
-    reason = "receive" if order.type == "supplier" else "shipment"
+    reason = "receive" if order.type == "incoming" else "shipment"
 
     # 🔹 Compute total already allocated (pending + committed)
     existing_qty = db.scalar(
