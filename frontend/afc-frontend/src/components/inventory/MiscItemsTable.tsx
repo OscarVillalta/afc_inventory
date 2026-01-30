@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import MDTable from "../table/MDtable";
 import { fetchMiscItems } from "../../api/miscItems";
 import type { MiscItemResponse, MiscItemPayload } from "../../api/miscItems";
@@ -30,6 +30,7 @@ export default function MiscItemsTable() {
 
   const [data, setData] = useState<MiscItemResponse>();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   /* ===================== FILTER STATE ===================== */
   const [searchName, setSearchName] = useState("");
@@ -49,8 +50,9 @@ export default function MiscItemsTable() {
 
   /* ===================== LOAD DATA (SERVER-SIDE FILTERING) ===================== */
 
-  const loadData = () => {
+  const loadData = useCallback(() => {
     setLoading(true);
+    setError(null);
 
     fetchMiscItems(page, pageSize, {
         name: searchName || undefined,
@@ -58,12 +60,13 @@ export default function MiscItemsTable() {
         supplier: filterSupplier || undefined,
       })
       .then((res) => setData(res))
+      .catch(() => setError("Failed to load misc items"))
       .finally(() => setLoading(false));
-  };
+  }, [page, searchName, filterDescription, filterSupplier]);
 
   useEffect(() => {
     loadData();
-  }, [page, searchName, filterDescription, filterSupplier]);
+  }, [loadData]);
 
   const rows: MiscItemPayload[] = data?.results ?? [];
 
@@ -122,6 +125,11 @@ export default function MiscItemsTable() {
 
   return (
     <div>
+      {error && (
+        <div className="alert alert-error mb-4">
+          <span>{error}</span>
+        </div>
+      )}
 
       <MDTable
         title="Miscellaneous Items"
@@ -214,7 +222,7 @@ export default function MiscItemsTable() {
               className="py-3 px-2 cursor-pointer hover:scale-110 transition"
               onClick={(e) => {
                 e.stopPropagation();
-                handleEdit(row)
+                handleEdit(row);
               }}
             >
               {/* edit icon */}
