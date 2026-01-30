@@ -145,20 +145,21 @@ def allocate_order_item(item_id):
     reason = "receive" if order.type == "supplier" else "shipment"
 
     # 🔹 Compute total already allocated (pending + committed)
-    existing_qty = db.scalar(
-        select(func.coalesce(func.sum(Transaction.quantity_delta), 0))
+    # Use absolute value of quantity_delta since transactions can be positive or negative
+    existing_qty_abs = db.scalar(
+        select(func.coalesce(func.sum(func.abs(Transaction.quantity_delta)), 0))
         .where(Transaction.order_item_id == item.id)
         .where(Transaction.state.in_(["pending", "committed"]))
     ) or 0
 
-    projected_total = existing_qty + qty_to_allocate
+    projected_total = existing_qty_abs + qty_to_allocate
 
     # 🔹 Prevent over-allocation
-    if abs(projected_total) > abs(item.quantity_ordered):
+    if projected_total > item.quantity_ordered:
         return jsonify({
             "error": "Allocation exceeds quantity ordered.",
             "ordered": item.quantity_ordered,
-            "allocated_so_far": existing_qty,
+            "allocated_so_far": existing_qty_abs,
             "attempted_allocation": qty_to_allocate
         }), 400
 
