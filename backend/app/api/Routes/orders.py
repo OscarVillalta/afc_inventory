@@ -3,7 +3,7 @@ from sqlalchemy import select, func
 from sqlalchemy import and_, or_
 from app.api.Schemas.order_schema import OrderSchema
 from database.models import Customer, Supplier, OrderType, OrderStatus, Transaction, TransactionState
-from database.models import Order, OrderItem, Product, AirFilter, MiscItem
+from database.models import Order, OrderItem, Product, AirFilter, MiscItem, Quantity
 from marshmallow import ValidationError
 from datetime import datetime, timedelta
 import os
@@ -13,6 +13,9 @@ from app.api.qb_xml_parser import parse_qb_line_items, extract_qb_metadata
 order_bp = Blueprint("orders", __name__)
 order_schema = OrderSchema()
 order_list_schema = OrderSchema(many=True)
+
+# Product category ID for Misc Items (must match product_categories table)
+MISC_ITEM_CATEGORY_ID = 2
 
 # GET all orders (paginated, filterable)
 @order_bp.route("/orders", methods=["GET"])
@@ -481,16 +484,61 @@ def allocate_all(order_id):
 # CREATE ORDER FROM QUICKBOOKS
 # ===============================
 
+def get_or_create_qb_supplier(db):
+    """
+    Get or create a default supplier for QuickBooks items.
+    
+    Args:
+        db: Database session
+        
+    Returns:
+        Supplier object
+        
+    Raises:
+        Exception: If supplier creation fails
+    """
+    supplier_name = "QuickBooks"
+    supplier = db.execute(
+        select(Supplier).where(Supplier.name == supplier_name)
+    ).scalar_one_or_none()
+    
+    if not supplier:
+        try:
+            supplier = Supplier(name=supplier_name)
+            db.add(supplier)
+            db.flush()
+        except Exception as e:
+            # Re-query in case another transaction created it concurrently
+            supplier = db.execute(
+                select(Supplier).where(Supplier.name == supplier_name)
+            ).scalar_one_or_none()
+            if not supplier:
+                raise Exception(f"Failed to create QuickBooks supplier: {str(e)}")
+    
+    return supplier
+
+
 @order_bp.route("/orders/from-qb", methods=["POST"])
 def create_order_from_qb():
     """
     Create a new order from QuickBooks data.
+    
+    Automatically creates MiscItem products for unmatched QuickBooks items.
+    Unmatched items are associated with a "QuickBooks" supplier that is 
+    created automatically if it doesn't exist.
     
     Expects JSON body with:
     {
         "reference_number": "8800",
         "qb_doc_type": "sales_order" | "estimate" | "invoice"
     }
+    
+    Returns:
+        JSON with order details, including:
+        - new_products: Array of newly created MiscItem products
+        - new_products_created: Count of new products created
+        - created_items: All order items created
+        - skipped_items: Items that were skipped (if any)
     """
     db = g.db
     data = request.get_json() or {}
@@ -603,8 +651,12 @@ def create_order_from_qb():
     # Generate AFC order number
     order.order_number = f"AFC-{order.id:06d}"
     
+    # Get or create QB supplier once (used for auto-created MiscItems)
+    qb_supplier = None
+    
     # Process line items
     created_items = []
+    new_products = []  # Track newly created MiscItems
     skipped_items = []
     position = 0
     
@@ -629,15 +681,67 @@ def create_order_from_qb():
                 position += 1
             else:
                 # Find product by name (from QB item name)
-                item_name = qb_line.get("name", "")
+                item_name = qb_line.get("name", "").strip()
+                
+                # Validate item name
+                if not item_name:
+                    skipped_items.append({
+                        "name": "(empty)",
+                        "reason": "Item name is empty or missing"
+                    })
+                    position += 1
+                    continue
+                
                 product = find_product_by_name(db, item_name)
                 
                 if not product:
-                    skipped_items.append({
-                        "name": item_name,
-                        "reason": "Product not found in database"
+                    # Create a new MiscItem for unmatched QB items
+                    if qb_supplier is None:
+                        qb_supplier = get_or_create_qb_supplier(db)
+                    
+                    # Validate and truncate name if necessary (max 100 chars)
+                    validated_name = item_name[:100]
+                    
+                    # Validate and truncate description if necessary (max 255 chars)
+                    description = qb_line.get("description", "") or ""
+                    validated_description = description[:255]
+                    
+                    # Create MiscItem
+                    misc_item = MiscItem(
+                        name=validated_name,
+                        description=validated_description,
+                        supplier_id=qb_supplier.id
+                    )
+                    db.add(misc_item)
+                    db.flush()
+                    
+                    # Create associated Product (category_id for Misc Items)
+                    product = Product(
+                        category_id=MISC_ITEM_CATEGORY_ID,
+                        reference_id=misc_item.id
+                    )
+                    db.add(product)
+                    db.flush()
+                    
+                    # Create Quantity record
+                    qty = Quantity(
+                        product_id=product.id,
+                        on_hand=0,
+                        reserved=0,
+                        ordered=0,
+                        location=0
+                    )
+                    db.add(qty)
+                    db.flush()
+                    
+                    # Track newly created product
+                    new_products.append({
+                        "name": validated_name,
+                        "description": validated_description,
+                        "product_id": product.id,
+                        "misc_item_id": misc_item.id
                     })
-                    continue
+
                 
                 # Validate quantity
                 quantity = qb_line.get("quantity", 0)
@@ -677,8 +781,10 @@ def create_order_from_qb():
         "external_order_number": order.external_order_number,
         "customer_name": customer.name if customer else None,
         "items_created": len(created_items),
+        "new_products_created": len(new_products),
         "items_skipped": len(skipped_items),
         "created_items": created_items,
+        "new_products": new_products,
         "skipped_items": skipped_items,
         "metadata": metadata
     }), 201
