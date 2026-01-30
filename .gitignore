@@ -49,3 +49,20 @@ Thumbs.db
 dist/
 build/
 transactions-page.png
+
+# C# / .NET
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+*.cache
+*.dll
+*.exe
+*.pdb
+*.nupkg
+project.lock.json
+project.assets.json
+*.nuget.props
+*.nuget.targets
+*.nuget.dgspec.json
+*.nuget.cache
