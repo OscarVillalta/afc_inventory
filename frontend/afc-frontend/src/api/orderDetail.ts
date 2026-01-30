@@ -1,0 +1,126 @@
+import { apiRequest } from "./apiClient";
+
+export interface OrderItemPayload {
+  id: number;
+  order_id: number;
+  product_id: number | null;
+  is_separator: boolean;
+  part_number: string;
+  quantity_ordered: number;
+  quantity_fulfilled: number;
+  status:string;
+  note?: string;
+  position: number;
+}
+
+export interface OrderItemTransaction {
+  id: number;
+  quantity_delta: number;
+  state: "pending" | "committed" | "cancelled" | "rolled_back";
+  reason: string;
+  note?: string;
+  created_at: string;
+}
+
+export function fetchOrderItems(orderId: string) {
+  return apiRequest(
+    `/orders/${orderId}/items`
+  ) as Promise<OrderItemPayload[]>;
+}
+
+export function fetchOrderItemTransactions(itemId: number) {
+  return apiRequest(
+    `/order_items/${itemId}/transactions`
+  ) as Promise <OrderItemTransaction[]>;
+}
+
+export function createOrderItemTransaction(
+  payload: {
+    product_id: number | null;
+    order_id: number;
+    order_item_id: number;
+    quantity_delta: number;
+    reason: string;
+    note?: string;
+  }
+) {
+    console.log(JSON.stringify(payload))
+  // No auto_commit here — we want PENDING transactions
+  return apiRequest(`/transactions`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function commitTransaction(transactionId: number) {
+  return apiRequest(`/transactions/${transactionId}/commit`, {
+    method: "PATCH",
+  });
+}
+
+export function cancelTransaction(transactionId: number) {
+  return apiRequest(`/transactions/${transactionId}/cancel`, {
+    method: "PATCH",
+  });
+}
+
+export function rollbackTransaction(transactionId: number) {
+  return apiRequest(`/transactions/${transactionId}/rollback`, {
+    method: "PATCH",
+  });
+}
+
+export function allocateOrderItem(itemId: number, quantity: number, note?: string) {
+  return apiRequest(`/order_items/${itemId}/allocate`, {
+    method: "POST",
+    body: JSON.stringify({ quantity, note }),
+  });
+}
+
+export function commitAllOrderItemTransactions(itemId: number) {
+  return apiRequest(`/order_items/${itemId}/commit_all`, {
+    method: "PATCH",
+  });
+}
+
+export function createOrderItem(payload: {
+  order_id: number;
+  product_id?: number | null;
+  is_separator?: boolean;
+  quantity_ordered?: number;
+  note?: string;
+  position?: number;
+}) {
+  console.log(JSON.stringify(payload))
+  return apiRequest("/order_items", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteOrderItem(itemId: number) {
+  return apiRequest(`/order_items/${itemId}`, {
+    method: "DELETE",
+  });
+}
+
+export function reorderOrderItems(orderId: number, itemId: number, newPosition: number) {
+  console.log(`Reordering item ${itemId} to position ${newPosition} in order ${orderId}`);
+  return apiRequest(`/orders/${orderId}/items/reorder`, {
+    method: "PATCH",
+    body: JSON.stringify({
+      item_id: itemId,
+      new_position: newPosition + 1,
+    }),
+  });
+}
+
+export function updateOrderItem(itemId: number, payload: {
+  quantity_ordered?: number;
+  note?: string;
+}): Promise<void> {
+  return apiRequest(`/order_items/${itemId}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
