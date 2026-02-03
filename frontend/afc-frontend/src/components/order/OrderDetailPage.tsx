@@ -23,7 +23,6 @@ import {
   rollbackTransaction,
   fetchOrderItemTransactions,
 } from "../../api/orderDetail";
-import { allocateAll } from "../../api/ordersTable";
 
 
 /* ===================== TYPES ===================== */
@@ -66,20 +65,6 @@ export default function OrderDetailPage() {
   const [txnRefreshKey, setTxnRefreshKey] = useState(0);
 
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
-
-  function handleTypeChange(newType: OrderType) {
-    setOrder((prev) =>
-      prev
-        ? {
-            ...prev,
-            type: newType,
-          }
-        : prev
-    );
-
-  // 🔑 Clear entity selection when type flips
-  setSelectedEntityId(null);
-  }
 
   async function handleSave() {
     if (!order || !orderId) return;

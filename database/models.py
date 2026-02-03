@@ -453,25 +453,39 @@ class Transaction(Base, SerializerMixin):
         if self.state != TransactionState.COMMITTED.value:
             raise ValueError("Only committed transactions can be rolled back.")
 
+        if not self.product or not self.product.quantity:
+            raise ValueError("Product or quantity record missing.")
+
+        qty_record = self.product.quantity
+
+        reversed_delta = -self.quantity_delta  # opposite sign
+        rollback_requires_stock = reversed_delta < 0  # removing stock
+
+        # ✅ NEW: Prevent negative on_hand when rollback would remove stock
+        if rollback_requires_stock:
+            required = abs(reversed_delta)
+            if qty_record.on_hand < required:
+                raise ValueError(
+                    f"Cannot rollback transaction #{self.id}: "
+                    f"rollback would remove {required} from on_hand, "
+                    f"but only {qty_record.on_hand} is available."
+                )
+
         reversed_txn = Transaction(
             product_id=self.product_id,
             order_id=self.order_id,
             order_item_id=self.order_item_id,
-            quantity_delta=-self.quantity_delta,
+            quantity_delta=reversed_delta,
             reason=TransactionReason.ROLLBACK.value,
             state=TransactionState.COMMITTED.value,
             note=f"Reversal of transaction #{self.id}",
         )
 
-        if not self.product or not self.product.quantity:
-            raise ValueError("Product or quantity record missing.")
-
-        qty_record = self.product.quantity
+        # Apply the reversal to physical inventory
         qty_record.on_hand += reversed_txn.quantity_delta
 
         if self.order_item:
             item = self.order_item
-            # reversed_txn.quantity_delta is opposite sign; fulfilled should subtract by abs(original delta)
             item.quantity_fulfilled -= abs(self.quantity_delta)
             item.quantity_fulfilled = max(0, min(item.quantity_fulfilled, item.quantity_ordered))
 
@@ -483,9 +497,19 @@ class Transaction(Base, SerializerMixin):
         db.add(reversed_txn)
         return reversed_txn
 
+
     def cancel(self):
         if self.state == TransactionState.PENDING.value:
+
+            qty_record = self.product.quantity
+            if self.quantity_delta > 0:
+                qty_record.ordered -= abs(self.quantity_delta)
+            else:
+                qty_record.reserved -= abs(self.quantity_delta)
+
             self.state = TransactionState.CANCELLED.value
+        else:
+            raise ValueError("Only pending transactions can be cancelled.")
 
 
 # =====================================================

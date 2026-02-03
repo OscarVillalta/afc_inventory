@@ -4,6 +4,9 @@ from database.models import Quantity, Transaction, Product, TransactionState, Or
 from datetime import datetime, timezone
 from app.api.Schemas.transaction_schema import TransactionSchema
 
+class InventoryConflictError(Exception):
+    pass
+
 transaction_bp = Blueprint("transactions", __name__)
 txn_schema = TransactionSchema()
 txn_list_schema = TransactionSchema(many=True)
@@ -274,6 +277,7 @@ def cancel_transaction(txn_id):
 def rollback_transaction(txn_id):
     db = g.db
     txn = db.get(Transaction, txn_id)
+
     if not txn:
         return jsonify({"error": "Transaction not found"}), 404
 
@@ -285,9 +289,18 @@ def rollback_transaction(txn_id):
             "original_transaction": txn_schema.dump(txn),
             "rollback_transaction": txn_schema.dump(new_txn)
         }), 200
-    except Exception as e:
+
+    except InventoryConflictError as e:
+        db.rollback()
+        return jsonify({"error": str(e)}), 409
+
+    except ValueError as e:
         db.rollback()
         return jsonify({"error": str(e)}), 400
+
+    except Exception:
+        db.rollback()
+        return jsonify({"error": "Unexpected error while rolling back transaction"}), 500
 
 # =====================================================
 # 🔹 GET Ledger for a Product

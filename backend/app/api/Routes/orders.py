@@ -113,9 +113,10 @@ def get_order_items(order_id):
             part_number = ""
         else:
             product = item.product
-            if product and product.air_filter:
+
+            if product and product.category.name == "Air Filters":
                 part_number = product.air_filter.part_number
-            elif product and product.misc_item:
+            elif product and product.category.name == "Miscelaneous Items":
                 part_number = product.misc_item.name
             elif product:
                 part_number = f"Product #{product.id}"

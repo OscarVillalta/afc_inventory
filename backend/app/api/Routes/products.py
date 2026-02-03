@@ -1,3 +1,4 @@
+from pprint import pp
 from flask import g, jsonify, Blueprint
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
@@ -136,12 +137,11 @@ def get_products_names():
     response = []
     for p in results:
         category = p.category.name if p.category else "Unknown"
-        quantity = p.quantity.to_dict() if p.quantity else {}
 
         # --- Determine which subtable applies ---
-        if p.air_filter:
+        if p.category.name == "Air Filters":
             details = p.air_filter.to_dict()["part_number"]
-        elif p.misc_item:
+        elif p.category.name == "Miscelaneous Items":
             details = p.misc_item.to_dict()["name"]
         else:
             details = {}

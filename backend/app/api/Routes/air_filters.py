@@ -168,7 +168,7 @@ def search_air_filters():
         )
         .join(Supplier, AirFilter.supplier_id == Supplier.id)
         .join(AirFilterCategory, AirFilter.category_id == AirFilterCategory.id)
-        .join(Product, Product.reference_id == AirFilter.id)
+        .join(Product, and_(Product.category_id == 1, Product.reference_id == AirFilter.id))
         .join(Quantity, Quantity.product_id == Product.id)
         .distinct(AirFilter.id)
     )
