@@ -28,7 +28,7 @@ export default function OrdersSearchPage() {
     setSearched(true);
     
     try {
-      const filters: any = {};
+      const filters: Record<string, string> = {};
       
       if (searchId) filters.order_number = searchId;
       if (searchCustomer) filters.search = searchCustomer;
@@ -145,7 +145,7 @@ export default function OrdersSearchPage() {
                   value={filterType}
                   onChange={(e) => setFilterType(e.target.value)}
                 >
-                  <option>All</option>
+                  <option value="All">All</option>
                   <option value="incoming">Incoming</option>
                   <option value="outgoing">Outgoing</option>
                   <option value="contract">Contract</option>
