@@ -200,7 +200,7 @@ export default function OrderDetailPage() {
       await Promise.all(
         nonSeparatorItems.map(item => {
           const remaining = item.quantity_ordered - item.quantity_fulfilled;
-          return remaining > 0 ? allocateOrderItem(item.id, remaining) : Promise.resolve();
+          return allocateOrderItem(item.id);
         })
       );
       await refreshOrder();

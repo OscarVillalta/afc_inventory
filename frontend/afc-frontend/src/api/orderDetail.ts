@@ -70,10 +70,10 @@ export function rollbackTransaction(transactionId: number) {
   });
 }
 
-export function allocateOrderItem(itemId: number, quantity: number, note?: string) {
-  return apiRequest(`/order_items/${itemId}/allocate`, {
+export function allocateOrderItem(itemId: number, note?: string) {
+  return apiRequest(`/order_items/${itemId}/allocate_remaining`, {
     method: "POST",
-    body: JSON.stringify({ quantity, note }),
+    body: JSON.stringify({ note }),
   });
 }
 

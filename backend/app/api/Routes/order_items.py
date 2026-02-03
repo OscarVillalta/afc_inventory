@@ -146,11 +146,11 @@ def allocate_order_item(item_id):
 
     # 🔹 Compute total already allocated (pending + committed)
     # Use absolute value of quantity_delta since transactions can be positive or negative
-    existing_qty_abs = db.scalar(
-        select(func.coalesce(func.sum(func.abs(Transaction.quantity_delta)), 0))
+    existing_qty_abs = abs(db.scalar(
+        select(func.coalesce(func.sum(Transaction.quantity_delta), 0))
         .where(Transaction.order_item_id == item.id)
-        .where(Transaction.state.in_(["pending", "committed"]))
-    ) or 0
+        .where(Transaction.state.in_(["pending", "committed", "rolled_back"]))
+    )) or 0
 
     projected_total = existing_qty_abs + qty_to_allocate
 
@@ -169,6 +169,65 @@ def allocate_order_item(item_id):
         order_id=order.id,
         order_item_id=item.id,
         quantity_delta=qty_delta,
+        reason=reason,
+        state="pending",
+        note=note or None
+    )
+
+    db.add(txn)
+    order.update_status()
+    db.commit()
+
+    return jsonify({
+        "message": f"Allocated {qty_to_allocate} unit(s) for order item {item_id}.",
+        "transaction": txn.to_dict(),
+        "order_status": order.status
+    }), 201
+
+@order_item_bp.route("/order_items/<int:item_id>/allocate_remaining", methods=["POST"])
+def allocate_remaining_order_items(item_id):
+    db = g.db
+    item = db.get(OrderItem, item_id)
+    if not item:
+        return jsonify({"error": "Order item not found"}), 404
+
+    order = item.order
+    if not order:
+        return jsonify({"error": "Order not associated"}), 400
+    
+    sign = 1 if order.type == "supplier" else -1
+    reason = "receive" if order.type == "supplier" else "shipment"
+    body = request.get_json(silent=True) or {}
+    note = body.get("note")
+    
+    existing_qty = db.scalar(
+        select(func.coalesce(func.sum(Transaction.quantity_delta), 0))
+        .where(Transaction.order_item_id == item.id)
+        .where(Transaction.state.in_(["pending", "committed", "rolled_back"]))
+    ) or 0
+
+    qty_to_allocate = item.quantity_ordered - abs(existing_qty)
+
+    # 🔹 Prevent over-allocation
+    if qty_to_allocate < 0:
+        return jsonify({
+            "error": "There is more allocated than ordered already.",
+            "ordered": item.quantity_ordered,
+            "allocated_so_far": existing_qty,
+            "attempted_allocation": qty_to_allocate
+        }), 400
+    
+    if qty_to_allocate == 0:
+        return jsonify({
+            "error": "Order item is already fully allocated.",
+        }), 400
+
+    # 🔹 Create pending transaction
+    txn = Transaction(
+        product_id=item.product_id,
+        order_id=order.id,
+        order_item_id=item.id,
+        quantity_delta= qty_to_allocate * sign,
         reason=reason,
         state="pending",
         note=note or None
