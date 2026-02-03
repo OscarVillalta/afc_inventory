@@ -7,6 +7,7 @@ export default function Sidebar() {
     { name: "Dashboard", to: "/", icon: "📊" },
     { name: "Inventory", to: "/inventory", icon: "📦" },
     { name: "Orders", to: "/order", icon: "🧾" },
+    { name: "Search Orders", to: "/orders/search", icon: "🔍" },
     { name: "Transactions", to: "/transactions", icon: "💱" },
     { name: "Contracts", to: "/order", icon: "🧾" },
   ];
