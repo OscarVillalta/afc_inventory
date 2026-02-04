@@ -4,6 +4,7 @@ import { fetchAirFilters } from "../../api/airfilters";
 import type { AirFilterResponse, AirFilterPayload } from "../../api/airfilters";
 import { autocommitTxn } from "../../api/transactions";
 import type { createTxnRequest } from "../../api/transactions";
+import { usePersistedFilters } from "../../hooks/usePersistedFilters";
 
 /* ============================================================
    TYPES
@@ -35,14 +36,16 @@ export default function AirFiltersTable() {
   const [data, setData] = useState<AirFilterResponse>();
   const [loading, setLoading] = useState(false);
 
-  /* ===================== FILTER STATE ===================== */
-  const [searchPart, setSearchPart] = useState("");
-  const [filterSupplier, setFilterSupplier] = useState("");
-  const [filterCategory, setFilterCategory] = useState("");
-  const [filterMerv, setFilterMerv] = useState<number | "">("");
-  const [filterHeight, setFilterHeight] = useState<number | "">("");
-  const [filterWidth, setFilterWidth] = useState<number | "">("");
-  const [filterDepth, setFilterDepth] = useState<number | "">("");
+  /* ===================== FILTER STATE (PERSISTED) ===================== */
+  const [filters, setFilter] = usePersistedFilters("filters_airfilters", {
+    searchPart: "",
+    filterSupplier: "",
+    filterCategory: "",
+    filterMerv: "" as number | "",
+    filterHeight: "" as number | "",
+    filterWidth: "" as number | "",
+    filterDepth: "" as number | "",
+  });
 
 
   /* ===================== EDIT MODAL ===================== */
@@ -62,13 +65,13 @@ export default function AirFiltersTable() {
     setLoading(true);
 
     fetchAirFilters(page, pageSize, {
-        part_number: searchPart || undefined,
-        supplier: filterSupplier || undefined,
-        category: filterCategory || undefined,
-        merv: filterMerv || undefined,
-        height: filterHeight || undefined,
-        width: filterWidth || undefined,
-        depth: filterDepth || undefined,
+        part_number: filters.searchPart || undefined,
+        supplier: filters.filterSupplier || undefined,
+        category: filters.filterCategory || undefined,
+        merv: filters.filterMerv || undefined,
+        height: filters.filterHeight || undefined,
+        width: filters.filterWidth || undefined,
+        depth: filters.filterDepth || undefined,
       })
       .then((res) => setData(res))
       .finally(() => setLoading(false));
@@ -76,7 +79,7 @@ export default function AirFiltersTable() {
 
   useEffect(() => {
     loadData();
-  }, [page, searchPart, filterSupplier, filterCategory, filterMerv, filterHeight, filterWidth, filterDepth]);
+  }, [page, filters.searchPart, filters.filterSupplier, filters.filterCategory, filters.filterMerv, filters.filterHeight, filters.filterWidth, filters.filterDepth]);
 
   const rows: AirFilterPayload[] = data?.results ?? [];
 
@@ -166,10 +169,10 @@ export default function AirFiltersTable() {
             <input
               className="input input-bordered input-xs w-full"
               placeholder="Search..."
-              value={searchPart}
+              value={filters.searchPart}
               onChange={(e) => {
                 setPage(1);
-                setSearchPart(e.target.value);
+                setFilter("searchPart", e.target.value);
               }}
             />
           </th>
@@ -178,10 +181,10 @@ export default function AirFiltersTable() {
             <input
               className="input input-bordered input-xs w-full"
               placeholder="Supplier..."
-              value={filterSupplier}
+              value={filters.filterSupplier}
               onChange={(e) => {
                 setPage(1);
-                setFilterSupplier(e.target.value);
+                setFilter("filterSupplier", e.target.value);
               }}
             />
           </th>
@@ -190,10 +193,10 @@ export default function AirFiltersTable() {
             <input
               className="input input-bordered input-xs w-full"
               placeholder="Category..."
-              value={filterCategory}
+              value={filters.filterCategory}
               onChange={(e) => {
                 setPage(1);
-                setFilterCategory(e.target.value);
+                setFilter("filterCategory", e.target.value);
               }}
             />
           </th>
@@ -204,10 +207,10 @@ export default function AirFiltersTable() {
                 type="number"
                 placeholder="H"
                 className="input input-bordered input-xs w-14 text-center"
-                value={filterHeight}
+                value={filters.filterHeight}
                 onChange={(e) => {
                   setPage(1);
-                  setFilterHeight(e.target.value ? Number(e.target.value) : "");
+                  setFilter("filterHeight", e.target.value ? Number(e.target.value) : "");
                 }}
               />
 
@@ -217,10 +220,10 @@ export default function AirFiltersTable() {
                 type="number"
                 placeholder="W"
                 className="input input-bordered input-xs w-14 text-center"
-                value={filterWidth}
+                value={filters.filterWidth}
                 onChange={(e) => {
                   setPage(1);
-                  setFilterWidth(e.target.value ? Number(e.target.value) : "");
+                  setFilter("filterWidth", e.target.value ? Number(e.target.value) : "");
                 }}
               />
 
@@ -230,10 +233,10 @@ export default function AirFiltersTable() {
                 type="number"
                 placeholder="D"
                 className="input input-bordered input-xs w-14 text-center"
-                value={filterDepth}
+                value={filters.filterDepth}
                 onChange={(e) => {
                   setPage(1);
-                  setFilterDepth(e.target.value ? Number(e.target.value) : "");
+                  setFilter("filterDepth", e.target.value ? Number(e.target.value) : "");
                 }}
               />
             </div>
@@ -243,10 +246,10 @@ export default function AirFiltersTable() {
             <input
               className="input input-bordered input-xs self-start"
               placeholder="MERV..."
-              value={filterMerv}
+              value={filters.filterMerv}
               onChange={(e) => {
                 setPage(1);
-                setFilterMerv(e.target.value ? Number(e.target.value) : "");
+                setFilter("filterMerv", e.target.value ? Number(e.target.value) : "");
               }}
             />
           </th>

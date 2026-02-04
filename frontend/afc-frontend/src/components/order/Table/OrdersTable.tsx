@@ -5,6 +5,7 @@ import type {
 } from "../../../api/ordersTable";
 import { fetchOrders } from "../../../api/ordersTable"
 import { useNavigate } from 'react-router-dom'
+import { usePersistedFilters } from "../../../hooks/usePersistedFilters";
 
 function formatUTCDate(iso: string) {
   const d = new Date(iso);
@@ -20,12 +21,14 @@ export default function OrdersTable({ reloadKey }: Props) {
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  // === FILTER STATES (UI only — NOT used for filtering yet) ===
-  const [searchOrder, setSearchOrder] = useState("");
-  const [searchDescription, setSearchDescription] = useState("");
-  const [filterType, setFilterType] = useState("All");
-  const [filterStatus, setFilterStatus] = useState("All");
-  const [filterCustomer, setFilterCustomer] = useState("All");
+  // === FILTER STATES (PERSISTED, UI only — NOT used for filtering yet) ===
+  const [filters, setFilter] = usePersistedFilters("filters_orders", {
+    searchOrder: "",
+    searchDescription: "",
+    filterType: "All",
+    filterStatus: "All",
+    filterCustomer: "All",
+  });
 
   // === API STATE ===
   const [rows, setRows] = useState<OrderRowItemPayload[]>([]);
@@ -78,16 +81,16 @@ export default function OrdersTable({ reloadKey }: Props) {
             type="text"
             placeholder="Search..."
             className="input input-bordered input-xs w-full"
-            value={searchOrder}
-            onChange={(e) => setSearchOrder(e.target.value)}
+            value={filters.searchOrder}
+            onChange={(e) => setFilter("searchOrder", e.target.value)}
           />
         </th>
 
         <th className="px-2 pb-2">
           <select
             className="select select-bordered select-xs w-full"
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
+            value={filters.filterType}
+            onChange={(e) => setFilter("filterType", e.target.value)}
           >
             {uniqueTypes.map((t) => (
               <option key={t}>{t}</option>
@@ -98,8 +101,8 @@ export default function OrdersTable({ reloadKey }: Props) {
         <th className="px-2 pb-2">
           <select
             className="select select-bordered select-xs w-full"
-            value={filterCustomer}
-            onChange={(e) => setFilterCustomer(e.target.value)}
+            value={filters.filterCustomer}
+            onChange={(e) => setFilter("filterCustomer", e.target.value)}
           >
             {uniqueCustomers.map((c) => (
               <option key={c}>{c}</option>
@@ -112,16 +115,16 @@ export default function OrdersTable({ reloadKey }: Props) {
             type="text"
             placeholder="Search..."
             className="input input-bordered input-xs w-full"
-            value={searchDescription}
-            onChange={(e) => setSearchDescription(e.target.value)}
+            value={filters.searchDescription}
+            onChange={(e) => setFilter("searchDescription", e.target.value)}
           />
         </th>
 
         <th className="px-2 pb-2 w-40">
           <select
             className="select select-bordered select-xs w-full"
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
+            value={filters.filterStatus}
+            onChange={(e) => setFilter("filterStatus", e.target.value)}
           >
             {uniqueStatuses.map((s) => (
               <option key={s}>{s}</option>
