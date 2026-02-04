@@ -15,10 +15,13 @@ This .NET application provides a lightweight REST API that translates HTTP reque
 
 ## Requirements
 
-- Windows OS (QuickBooks Desktop is Windows-only)
-- .NET 10.0 or higher
-- QuickBooks Desktop installed and running
-- QuickBooks SDK (QBXMLRP2) installed
+- **Windows OS** (QuickBooks Desktop is Windows-only)
+- **.NET 10.0 or higher**
+- **QuickBooks Desktop** installed and running
+- **QuickBooks SDK (QBXMLRP2)** installed
+- **Windows for building** - The COM reference cannot be built on Linux/Mac
+
+> ⚠️ **Important**: This application can only be built and run on Windows due to QuickBooks Desktop's dependency on the Windows-only QBXMLRP2 COM library. Building on Linux or macOS will fail with error MSB4803.
 
 ## Configuration
 
