@@ -338,6 +338,8 @@ def search_orders():
     db = g.db
 
     search = request.args.get("search")
+    customer_name = request.args.get("customer_name")
+    supplier_name = request.args.get("supplier_name")
     order_type = request.args.get("type")
     status = request.args.get("status")
     
@@ -390,6 +392,13 @@ def search_orders():
                 Supplier.name.ilike(f"%{search}%"),
             )
         )
+    
+    # Separate customer and supplier name filters
+    if customer_name:
+        filters.append(Customer.name.ilike(f"%{customer_name}%"))
+    
+    if supplier_name:
+        filters.append(Supplier.name.ilike(f"%{supplier_name}%"))
     
     # Date filters for created_at
     if created_from:

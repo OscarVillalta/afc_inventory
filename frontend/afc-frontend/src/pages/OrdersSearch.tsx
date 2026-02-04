@@ -7,6 +7,7 @@ import type { Customer } from "../api/customers";
 import type { Supplier } from "../api/suppliers";
 import { fetchCustomers } from "../api/customers";
 import { fetchSuppliers } from "../api/suppliers";
+import AutocompleteInput from "../components/AutocompleteInput";
 
 export default function OrdersSearchPage() {
   const navigate = useNavigate();
@@ -18,7 +19,12 @@ export default function OrdersSearchPage() {
   // Search filters
   const [searchId, setSearchId] = useState("");
   const [searchCustomer, setSearchCustomer] = useState("");
+  const [searchSupplier, setSearchSupplier] = useState("");
   const [filterType, setFilterType] = useState("All");
+  
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(10);
   
   // Advanced filters (sidebar)
   const [dateFrom, setDateFrom] = useState("");
@@ -43,15 +49,17 @@ export default function OrdersSearchPage() {
     fetchSuppliers().then(setSuppliers).catch(console.error);
   }, []);
 
-  const handleSearch = async () => {
+  const handleSearch = async (page = 1) => {
     setLoading(true);
     setSearched(true);
+    setCurrentPage(page);
     
     try {
       const filters: Record<string, string> = {};
       
       if (searchId) filters.order_number = searchId;
-      if (searchCustomer) filters.search = searchCustomer;
+      if (searchCustomer) filters.customer_name = searchCustomer;
+      if (searchSupplier) filters.supplier_name = searchSupplier;
       if (filterType && filterType !== "All") filters.type = filterType;
       
       // Date filters based on selected type
@@ -68,7 +76,7 @@ export default function OrdersSearchPage() {
         filters.product_ids = selectedProducts.join(",");
       }
       
-      const response = await fetchOrders(1, 50, filters);
+      const response = await fetchOrders(page, pageSize, filters);
       setResults(response.results || []);
       setTotalResults(response.total || 0);
     } catch (error) {
@@ -83,6 +91,7 @@ export default function OrdersSearchPage() {
   const handleClearSearch = () => {
     setSearchId("");
     setSearchCustomer("");
+    setSearchSupplier("");
     setFilterType("All");
     setDateFrom("");
     setDateTo("");
@@ -92,6 +101,7 @@ export default function OrdersSearchPage() {
     setResults([]);
     setTotalResults(0);
     setSearched(false);
+    setCurrentPage(1);
   };
 
   const setPresetDateRange = (preset: string) => {
@@ -156,21 +166,25 @@ export default function OrdersSearchPage() {
                 />
               </div>
 
-              {/* Customer Input */}
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Customer
-                </label>
-                <select
-                    className="select select-bordered w-full"
-                    value={searchCustomer}
-                    onChange={(e) => setSearchCustomer(e.target.value)}
-                  >
-                    {customers.map((c) => (
-                      <option key={c.id}>{c.name}</option>
-                    ))}
-                </select>
-              </div>
+              {/* Customer Autocomplete */}
+              <AutocompleteInput
+                label="Customer"
+                placeholder="Search customers..."
+                options={customers}
+                value={searchCustomer}
+                onChange={setSearchCustomer}
+                className="flex-1"
+              />
+
+              {/* Supplier Autocomplete */}
+              <AutocompleteInput
+                label="Supplier"
+                placeholder="Search suppliers..."
+                options={suppliers}
+                value={searchSupplier}
+                onChange={setSearchSupplier}
+                className="flex-1"
+              />
 
               {/* Type Dropdown */}
               <div className="flex-1">
@@ -192,7 +206,7 @@ export default function OrdersSearchPage() {
               {/* Search Button */}
               <button
                 className="btn btn-primary px-8"
-                onClick={handleSearch}
+                onClick={() => handleSearch(1)}
                 disabled={loading}
               >
                 {loading ? (
@@ -237,62 +251,92 @@ export default function OrdersSearchPage() {
                 <p className="text-gray-400 text-sm mt-2">Use the search filters above to find orders</p>
               </div>
             ) : (
-              results.map((order) => (
-                <div
-                  key={order.id}
-                  className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer p-5 border border-gray-100"
-                  onClick={() => navigate(`/orders/${order.id}`)}
-                >
-                  <div className="flex items-start justify-between">
-                    {/* Left section */}
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          Order #{order.id}
-                        </h3>
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            order.type === "outgoing"
-                              ? "bg-red-100 text-red-700"
-                              : "bg-green-100 text-green-700"
+              <>
+                {results.map((order) => (
+                  <div
+                    key={order.id}
+                    className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer p-5 border border-gray-100"
+                    onClick={() => navigate(`/orders/${order.id}`)}
+                  >
+                    <div className="flex items-start justify-between">
+                      {/* Left section */}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            Order #{order.id}
+                          </h3>
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              order.type === "outgoing"
+                                ? "bg-red-100 text-red-700"
+                                : "bg-green-100 text-green-700"
+                            }`}
+                          >
+                            {order.type.charAt(0).toUpperCase() + order.type.slice(1)}
+                          </span>
+                        </div>
+                        
+                        <div className="text-sm text-gray-600 space-y-1">
+                          <div>
+                            <span className="font-medium">Customer:</span> {order.cs_name}
+                          </div>
+                          {order.description && (
+                            <div className="text-gray-500 truncate">
+                              {order.description}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Right section */}
+                      <div className="text-right ml-4">
+                        <div
+                          className={`inline-block px-3 py-1 rounded-full text-sm font-medium mb-2 ${
+                            order.status === "Completed"
+                              ? "bg-green-100 text-green-700"
+                              : order.status.includes("Partial")
+                              ? "bg-blue-100 text-blue-700"
+                              : "bg-gray-200 text-gray-700"
                           }`}
                         >
-                          {order.type.charAt(0).toUpperCase() + order.type.slice(1)}
-                        </span>
-                      </div>
-                      
-                      <div className="text-sm text-gray-600 space-y-1">
-                        <div>
-                          <span className="font-medium">Customer:</span> {order.cs_name}
+                          {order.status}
                         </div>
-                        {order.description && (
-                          <div className="text-gray-500 truncate">
-                            {order.description}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Right section */}
-                    <div className="text-right ml-4">
-                      <div
-                        className={`inline-block px-3 py-1 rounded-full text-sm font-medium mb-2 ${
-                          order.status === "Completed"
-                            ? "bg-green-100 text-green-700"
-                            : order.status.includes("Partial")
-                            ? "bg-blue-100 text-blue-700"
-                            : "bg-gray-200 text-gray-700"
-                        }`}
-                      >
-                        {order.status}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {formatDate(order.created_at)}
+                        <div className="text-xs text-gray-500">
+                          {formatDate(order.created_at)}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))
+                ))}
+                
+                {/* Pagination Controls */}
+                {totalResults > pageSize && (
+                  <div className="bg-white rounded-lg shadow-sm p-4 flex items-center justify-between">
+                    <div className="text-sm text-gray-600">
+                      Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalResults)} of {totalResults}
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        className="btn btn-sm btn-outline"
+                        onClick={() => handleSearch(currentPage - 1)}
+                        disabled={currentPage === 1 || loading}
+                      >
+                        Previous
+                      </button>
+                      <span className="flex items-center px-4 text-sm font-medium text-gray-700">
+                        Page {currentPage} of {Math.ceil(totalResults / pageSize)}
+                      </span>
+                      <button
+                        className="btn btn-sm btn-outline"
+                        onClick={() => handleSearch(currentPage + 1)}
+                        disabled={currentPage >= Math.ceil(totalResults / pageSize) || loading}
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -468,7 +512,7 @@ export default function OrdersSearchPage() {
             {/* Apply Filters Button */}
             <button
               className="btn btn-primary btn-block"
-              onClick={handleSearch}
+              onClick={() => handleSearch(1)}
               disabled={loading}
             >
               Apply Filters
