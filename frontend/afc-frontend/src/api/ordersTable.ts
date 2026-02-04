@@ -26,8 +26,9 @@ export interface OrderSearchParams {
   cs_name?: string;
   created_from?: string;   // YYYY-MM-DD
   created_to?: string;
-  completed_from?: string;
-  completed_to?: string;
+  completed_from?: string;  // YYYY-MM-DD
+  completed_to?: string;    // YYYY-MM-DD
+  product_ids?: string;     // Comma-separated product IDs
 }
 
 export interface OrderDetailPayload {
