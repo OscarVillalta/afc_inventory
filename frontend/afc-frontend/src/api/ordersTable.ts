@@ -24,6 +24,8 @@ export interface OrderSearchParams {
   type?: string;
   status?: string;
   cs_name?: string;
+  customer_name?: string;      // New: Filter by customer name
+  supplier_name?: string;      // New: Filter by supplier name
   created_from?: string;   // YYYY-MM-DD
   created_to?: string;
   completed_from?: string;  // YYYY-MM-DD
