@@ -4,6 +4,7 @@ import { fetchTransactions, type TransactionFilters } from "../../api/transactio
 import type { TransactionPayload } from "../../api/transactions";
 import { fetchProducts } from "../../api/products";
 import type { Product } from "../../api/products";
+import { usePersistedFilters } from "../../hooks/usePersistedFilters";
 
 interface TransactionRow {
   id: string;
@@ -35,14 +36,16 @@ export default function TransactionsTable() {
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  // === FILTER STATES ===
-  const [searchProduct, setSearchProduct] = useState("");
-  const [filterState, setFilterState] = useState("All");
-  const [filterReason, setFilterReason] = useState("");
-  const [filterNote, setFilterNote] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [dateFilterMode, setDateFilterMode] = useState<"between" | "before" | "after" | "none">("none");
+  // === FILTER STATES (PERSISTED) ===
+  const [filters, setFilter] = usePersistedFilters("filters_transactions", {
+    searchProduct: "",
+    filterState: "All",
+    filterReason: "",
+    filterNote: "",
+    startDate: "",
+    endDate: "",
+    dateFilterMode: "none" as "between" | "before" | "after" | "none",
+  });
 
   const [products, setProducts] = useState<Product[]>([]);
   const [transactions, setTransactions] = useState<TransactionPayload[]>([]);
@@ -56,24 +59,24 @@ export default function TransactionsTable() {
     setError(null);
 
     // Build filters object
-    const filters: TransactionFilters = {};
-    if (searchProduct) filters.product_name = searchProduct;
-    if (filterState && filterState !== "All") filters.state = filterState;
-    if (filterReason) filters.reason = filterReason;
-    if (filterNote) filters.note = filterNote;
+    const apiFilters: TransactionFilters = {};
+    if (filters.searchProduct) apiFilters.product_name = filters.searchProduct;
+    if (filters.filterState && filters.filterState !== "All") apiFilters.state = filters.filterState;
+    if (filters.filterReason) apiFilters.reason = filters.filterReason;
+    if (filters.filterNote) apiFilters.note = filters.filterNote;
     
     // Date filters based on mode
-    if (dateFilterMode === "between" && startDate && endDate) {
-      filters.start_date = startDate;
-      filters.end_date = endDate;
-    } else if (dateFilterMode === "before" && startDate) {
-      filters.before_date = startDate;
-    } else if (dateFilterMode === "after" && startDate) {
-      filters.after_date = startDate;
+    if (filters.dateFilterMode === "between" && filters.startDate && filters.endDate) {
+      apiFilters.start_date = filters.startDate;
+      apiFilters.end_date = filters.endDate;
+    } else if (filters.dateFilterMode === "before" && filters.startDate) {
+      apiFilters.before_date = filters.startDate;
+    } else if (filters.dateFilterMode === "after" && filters.startDate) {
+      apiFilters.after_date = filters.startDate;
     }
 
     Promise.allSettled([
-      fetchTransactions(page, pageSize, filters),
+      fetchTransactions(page, pageSize, apiFilters),
       fetchProducts(),
     ])
       .then(([transactionsResult, productsResult]) => {
@@ -101,7 +104,7 @@ export default function TransactionsTable() {
 
   useEffect(() => {
     loadTransactions();
-  }, [page, pageSize, searchProduct, filterState, filterReason, filterNote, startDate, endDate, dateFilterMode]);
+  }, [page, pageSize, filters.searchProduct, filters.filterState, filters.filterReason, filters.filterNote, filters.startDate, filters.endDate, filters.dateFilterMode]);
 
   const productLookup = useMemo(() => {
     return new Map(products.map((product) => [product.id, product.part_number]));
@@ -145,8 +148,8 @@ export default function TransactionsTable() {
           <input
             className="input input-bordered input-xs w-full"
             placeholder="Search Product"
-            value={searchProduct}
-            onChange={(e) => setSearchProduct(e.target.value)}
+            value={filters.searchProduct}
+            onChange={(e) => setFilter("searchProduct", e.target.value)}
           />
         </th>
 
@@ -154,8 +157,8 @@ export default function TransactionsTable() {
         <th className="py-2 pr-2">
           <select
             className="select select-bordered select-xs w-full"
-            value={filterState}
-            onChange={(e) => setFilterState(e.target.value)}
+            value={filters.filterState}
+            onChange={(e) => setFilter("filterState", e.target.value)}
           >
             {stateFilterOptions.map((t) => (
               <option key={t}>{t}</option>
@@ -171,8 +174,8 @@ export default function TransactionsTable() {
           <input
             className="input input-bordered input-xs w-full"
             placeholder="Search Reason"
-            value={filterReason}
-            onChange={(e) => setFilterReason(e.target.value)}
+            value={filters.filterReason}
+            onChange={(e) => setFilter("filterReason", e.target.value)}
           />
         </th>
 
@@ -181,8 +184,8 @@ export default function TransactionsTable() {
           <input
             className="input input-bordered input-xs w-full"
             placeholder="Search Note"
-            value={filterNote}
-            onChange={(e) => setFilterNote(e.target.value)}
+            value={filters.filterNote}
+            onChange={(e) => setFilter("filterNote", e.target.value)}
           />
         </th>
 
@@ -191,11 +194,11 @@ export default function TransactionsTable() {
           <div className="flex flex-col gap-1">
             <select
               className="select select-bordered select-xs w-full"
-              value={dateFilterMode}
+              value={filters.dateFilterMode}
               onChange={(e) => {
-                setDateFilterMode(e.target.value as typeof dateFilterMode);
-                setStartDate("");
-                setEndDate("");
+                setFilter("dateFilterMode", e.target.value as typeof filters.dateFilterMode);
+                setFilter("startDate", "");
+                setFilter("endDate", "");
               }}
             >
               <option value="none">All Dates</option>
@@ -204,32 +207,32 @@ export default function TransactionsTable() {
               <option value="after">After</option>
             </select>
             
-            {dateFilterMode === "between" && (
+            {filters.dateFilterMode === "between" && (
               <>
                 <input
                   type="date"
                   className="input input-bordered input-xs w-full"
                   placeholder="Start Date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
+                  value={filters.startDate}
+                  onChange={(e) => setFilter("startDate", e.target.value)}
                 />
                 <input
                   type="date"
                   className="input input-bordered input-xs w-full"
                   placeholder="End Date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
+                  value={filters.endDate}
+                  onChange={(e) => setFilter("endDate", e.target.value)}
                 />
               </>
             )}
             
-            {(dateFilterMode === "before" || dateFilterMode === "after") && (
+            {(filters.dateFilterMode === "before" || filters.dateFilterMode === "after") && (
               <input
                 type="date"
                 className="input input-bordered input-xs w-full"
-                placeholder={dateFilterMode === "before" ? "Before Date" : "After Date"}
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                placeholder={filters.dateFilterMode === "before" ? "Before Date" : "After Date"}
+                value={filters.startDate}
+                onChange={(e) => setFilter("startDate", e.target.value)}
               />
             )}
           </div>

@@ -8,6 +8,7 @@ import type { Supplier } from "../api/suppliers";
 import { fetchCustomers } from "../api/customers";
 import { fetchSuppliers } from "../api/suppliers";
 import AutocompleteInput from "../components/AutocompleteInput";
+import { usePersistedFilters } from "../hooks/usePersistedFilters";
 
 export default function OrdersSearchPage() {
   const navigate = useNavigate();
@@ -24,25 +25,25 @@ export default function OrdersSearchPage() {
     { id: 4, name: "contract" },
   ];
   
-  // Search filters
-  const [searchId, setSearchId] = useState("");
-  const [searchCustomer, setSearchCustomer] = useState("");
-  const [searchSupplier, setSearchSupplier] = useState("");
-  const [filterType, setFilterType] = useState("All");
+  // Search filters (PERSISTED)
+  const [filters, setFilter] = usePersistedFilters("filters_orders_search", {
+    searchId: "",
+    searchCustomer: "",
+    searchSupplier: "",
+    filterType: "All",
+    dateFrom: "",
+    dateTo: "",
+    dateFilterType: "created" as "created" | "completed",
+    selectedProducts: [] as number[],
+    productSearch: "",
+  });
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
   
-  // Advanced filters (sidebar)
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
-  const [dateFilterType, setDateFilterType] = useState<"created" | "completed">("created");
-  const [selectedProducts, setSelectedProducts] = useState<number[]>([]);
-  
   // Available products for filtering
   const [availableProducts, setAvailableProducts] = useState<Product[]>([]);
-  const [productSearch, setProductSearch] = useState("");
   
   // Results
   const [results, setResults] = useState<OrderRowItemPayload[]>([]);
@@ -63,28 +64,28 @@ export default function OrdersSearchPage() {
     setCurrentPage(page);
     
     try {
-      const filters: Record<string, string> = {};
+      const apiFilters: Record<string, string> = {};
       
-      if (searchId) filters.order_number = searchId;
-      if (searchCustomer) filters.customer_name = searchCustomer;
-      if (searchSupplier) filters.supplier_name = searchSupplier;
-      if (filterType && filterType !== "All") filters.type = filterType;
+      if (filters.searchId) apiFilters.order_number = filters.searchId;
+      if (filters.searchCustomer) apiFilters.customer_name = filters.searchCustomer;
+      if (filters.searchSupplier) apiFilters.supplier_name = filters.searchSupplier;
+      if (filters.filterType && filters.filterType !== "All") apiFilters.type = filters.filterType;
       
       // Date filters based on selected type
-      if (dateFilterType === "created") {
-        if (dateFrom) filters.created_from = dateFrom;
-        if (dateTo) filters.created_to = dateTo;
+      if (filters.dateFilterType === "created") {
+        if (filters.dateFrom) apiFilters.created_from = filters.dateFrom;
+        if (filters.dateTo) apiFilters.created_to = filters.dateTo;
       } else {
-        if (dateFrom) filters.completed_from = dateFrom;
-        if (dateTo) filters.completed_to = dateTo;
+        if (filters.dateFrom) apiFilters.completed_from = filters.dateFrom;
+        if (filters.dateTo) apiFilters.completed_to = filters.dateTo;
       }
       
       // Product filters
-      if (selectedProducts.length > 0) {
-        filters.product_ids = selectedProducts.join(",");
+      if (filters.selectedProducts.length > 0) {
+        apiFilters.product_ids = filters.selectedProducts.join(",");
       }
       
-      const response = await fetchOrders(page, pageSize, filters);
+      const response = await fetchOrders(page, pageSize, apiFilters);
       setResults(response.results || []);
       setTotalResults(response.total || 0);
     } catch (error) {
@@ -97,15 +98,15 @@ export default function OrdersSearchPage() {
   };
 
   const handleClearSearch = () => {
-    setSearchId("");
-    setSearchCustomer("");
-    setSearchSupplier("");
-    setFilterType("All");
-    setDateFrom("");
-    setDateTo("");
-    setDateFilterType("created");
-    setSelectedProducts([]);
-    setProductSearch("");
+    setFilter("searchId", "");
+    setFilter("searchCustomer", "");
+    setFilter("searchSupplier", "");
+    setFilter("filterType", "All");
+    setFilter("dateFrom", "");
+    setFilter("dateTo", "");
+    setFilter("dateFilterType", "created");
+    setFilter("selectedProducts", []);
+    setFilter("productSearch", "");
     setResults([]);
     setTotalResults(0);
     setSearched(false);
@@ -118,21 +119,21 @@ export default function OrdersSearchPage() {
     
     switch (preset) {
       case 'today':
-        setDateFrom(todayStr);
-        setDateTo(todayStr);
+        setFilter("dateFrom", todayStr);
+        setFilter("dateTo", todayStr);
         break;
       case 'last7': {
         const last7 = new Date(today);
         last7.setDate(last7.getDate() - 7);
-        setDateFrom(last7.toISOString().split('T')[0]);
-        setDateTo(todayStr);
+        setFilter("dateFrom", last7.toISOString().split('T')[0]);
+        setFilter("dateTo", todayStr);
         break;
       }
       case 'last30': {
         const last30 = new Date(today);
         last30.setDate(last30.getDate() - 30);
-        setDateFrom(last30.toISOString().split('T')[0]);
-        setDateTo(todayStr);
+        setFilter("dateFrom", last30.toISOString().split('T')[0]);
+        setFilter("dateTo", todayStr);
         break;
       }
     }
@@ -168,8 +169,8 @@ export default function OrdersSearchPage() {
                   type="text"
                   placeholder="AFC-000123"
                   className="input input-bordered w-full"
-                  value={searchId}
-                  onChange={(e) => setSearchId(e.target.value)}
+                  value={filters.searchId}
+                  onChange={(e) => setFilter("searchId", e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 />
               </div>
@@ -179,8 +180,8 @@ export default function OrdersSearchPage() {
                 label="Customer"
                 placeholder="Search customers..."
                 options={customers}
-                value={searchCustomer}
-                onChange={setSearchCustomer}
+                value={filters.searchCustomer}
+                onChange={(value) => setFilter("searchCustomer", value)}
                 className="flex-1"
               />
 
@@ -189,8 +190,8 @@ export default function OrdersSearchPage() {
                 label="Supplier"
                 placeholder="Search suppliers..."
                 options={suppliers}
-                value={searchSupplier}
-                onChange={setSearchSupplier}
+                value={filters.searchSupplier}
+                onChange={(value) => setFilter("searchSupplier", value)}
                 className="flex-1"
               />
 
@@ -199,8 +200,8 @@ export default function OrdersSearchPage() {
                 label="Type"
                 placeholder="Select type..."
                 options={typeOptions}
-                value={filterType}
-                onChange={setFilterType}
+                value={filters.filterType}
+                onChange={(value) => setFilter("filterType", value)}
                 className="flex-1"
               />
 
@@ -358,21 +359,21 @@ export default function OrdersSearchPage() {
                 <div className="flex rounded-lg border border-gray-300 overflow-hidden">
                   <button
                     className={`flex-1 py-2 text-xs font-medium transition-colors ${
-                      dateFilterType === "created"
+                      filters.dateFilterType === "created"
                         ? "bg-primary text-white"
                         : "bg-white text-gray-700 hover:bg-gray-50"
                     }`}
-                    onClick={() => setDateFilterType("created")}
+                    onClick={() => setFilter("dateFilterType", "created")}
                   >
                     Creation Date
                   </button>
                   <button
                     className={`flex-1 py-2 text-xs font-medium transition-colors ${
-                      dateFilterType === "completed"
+                      filters.dateFilterType === "completed"
                         ? "bg-primary text-white"
                         : "bg-white text-gray-700 hover:bg-gray-50"
                     }`}
-                    onClick={() => setDateFilterType("completed")}
+                    onClick={() => setFilter("dateFilterType", "completed")}
                   >
                     Completion Date
                   </button>
@@ -410,8 +411,8 @@ export default function OrdersSearchPage() {
                   <input
                     type="date"
                     className="input input-bordered input-sm w-full"
-                    value={dateFrom}
-                    onChange={(e) => setDateFrom(e.target.value)}
+                    value={filters.dateFrom}
+                    onChange={(e) => setFilter("dateFrom", e.target.value)}
                   />
                 </div>
                 <div>
@@ -421,8 +422,8 @@ export default function OrdersSearchPage() {
                   <input
                     type="date"
                     className="input input-bordered input-sm w-full"
-                    value={dateTo}
-                    onChange={(e) => setDateTo(e.target.value)}
+                    value={filters.dateTo}
+                    onChange={(e) => setFilter("dateTo", e.target.value)}
                   />
                 </div>
               </div>
@@ -439,14 +440,14 @@ export default function OrdersSearchPage() {
                 type="text"
                 placeholder="Search products..."
                 className="input input-bordered input-sm w-full mb-3"
-                value={productSearch}
-                onChange={(e) => setProductSearch(e.target.value)}
+                value={filters.productSearch}
+                onChange={(e) => setFilter("productSearch", e.target.value)}
               />
               
               {/* Selected Products Count */}
-              {selectedProducts.length > 0 && (
+              {filters.selectedProducts.length > 0 && (
                 <div className="text-xs text-gray-600 mb-2">
-                  {selectedProducts.length} product{selectedProducts.length !== 1 ? 's' : ''} selected
+                  {filters.selectedProducts.length} product{filters.selectedProducts.length !== 1 ? 's' : ''} selected
                 </div>
               )}
               
@@ -454,9 +455,9 @@ export default function OrdersSearchPage() {
               <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg">
                 {(() => {
                   const filteredProducts = availableProducts.filter((product) =>
-                    productSearch === "" ||
-                    product.part_number.toLowerCase().includes(productSearch.toLowerCase()) ||
-                    product.category.toLowerCase().includes(productSearch.toLowerCase())
+                    filters.productSearch === "" ||
+                    product.part_number.toLowerCase().includes(filters.productSearch.toLowerCase()) ||
+                    product.category.toLowerCase().includes(filters.productSearch.toLowerCase())
                   );
                   
                   return filteredProducts.length > 0 ? (
@@ -468,13 +469,13 @@ export default function OrdersSearchPage() {
                         <input
                           type="checkbox"
                           className="checkbox checkbox-sm checkbox-primary"
-                          checked={selectedProducts.includes(product.id)}
+                          checked={filters.selectedProducts.includes(product.id)}
                           onChange={(e) => {
                             if (e.target.checked) {
-                              setSelectedProducts([...selectedProducts, product.id]);
+                              setFilter("selectedProducts", [...filters.selectedProducts, product.id]);
                             } else {
-                              setSelectedProducts(
-                                selectedProducts.filter((id) => id !== product.id)
+                              setFilter("selectedProducts", 
+                                filters.selectedProducts.filter((id) => id !== product.id)
                               );
                             }
                           }}
@@ -498,10 +499,10 @@ export default function OrdersSearchPage() {
               </div>
               
               {/* Clear Products Button */}
-              {selectedProducts.length > 0 && (
+              {filters.selectedProducts.length > 0 && (
                 <button
                   className="btn btn-ghost btn-sm w-full mt-2"
-                  onClick={() => setSelectedProducts([])}
+                  onClick={() => setFilter("selectedProducts", [])}
                 >
                   Clear Selection
                 </button>

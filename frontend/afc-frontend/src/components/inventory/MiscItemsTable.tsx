@@ -4,6 +4,7 @@ import { fetchMiscItems } from "../../api/miscItems";
 import type { MiscItemResponse, MiscItemPayload } from "../../api/miscItems";
 import { autocommitTxn } from "../../api/transactions";
 import type { createTxnRequest } from "../../api/transactions";
+import { usePersistedFilters } from "../../hooks/usePersistedFilters";
 
 /* ============================================================
    TYPES
@@ -32,10 +33,12 @@ export default function MiscItemsTable() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /* ===================== FILTER STATE ===================== */
-  const [searchName, setSearchName] = useState("");
-  const [filterDescription, setFilterDescription] = useState("");
-  const [filterSupplier, setFilterSupplier] = useState("");
+  /* ===================== FILTER STATE (PERSISTED) ===================== */
+  const [filters, setFilter] = usePersistedFilters("filters_miscitems", {
+    searchName: "",
+    filterDescription: "",
+    filterSupplier: "",
+  });
 
   /* ===================== EDIT MODAL ===================== */
   const [openEdit, setOpenEdit] = useState(false);
@@ -55,14 +58,14 @@ export default function MiscItemsTable() {
     setError(null);
 
     fetchMiscItems(page, pageSize, {
-        name: searchName || undefined,
-        description: filterDescription || undefined,
-        supplier: filterSupplier || undefined,
+        name: filters.searchName || undefined,
+        description: filters.filterDescription || undefined,
+        supplier: filters.filterSupplier || undefined,
       })
       .then((res) => setData(res))
       .catch(() => setError("Failed to load misc items"))
       .finally(() => setLoading(false));
-  }, [page, searchName, filterDescription, filterSupplier]);
+  }, [page, filters.searchName, filters.filterDescription, filters.filterSupplier]);
 
   useEffect(() => {
     loadData();
@@ -155,10 +158,10 @@ export default function MiscItemsTable() {
             <input
               className="input input-bordered input-xs w-full"
               placeholder="Search name..."
-              value={searchName}
+              value={filters.searchName}
               onChange={(e) => {
                 setPage(1);
-                setSearchName(e.target.value);
+                setFilter("searchName", e.target.value);
               }}
             />
           </th>
@@ -167,10 +170,10 @@ export default function MiscItemsTable() {
             <input
               className="input input-bordered input-xs w-full"
               placeholder="Description..."
-              value={filterDescription}
+              value={filters.filterDescription}
               onChange={(e) => {
                 setPage(1);
-                setFilterDescription(e.target.value);
+                setFilter("filterDescription", e.target.value);
               }}
             />
           </th>
@@ -179,10 +182,10 @@ export default function MiscItemsTable() {
             <input
               className="input input-bordered input-xs w-full"
               placeholder="Supplier..."
-              value={filterSupplier}
+              value={filters.filterSupplier}
               onChange={(e) => {
                 setPage(1);
-                setFilterSupplier(e.target.value);
+                setFilter("filterSupplier", e.target.value);
               }}
             />
           </th>
