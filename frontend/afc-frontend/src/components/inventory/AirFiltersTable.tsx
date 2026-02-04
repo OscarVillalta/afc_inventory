@@ -79,6 +79,8 @@ export default function AirFiltersTable() {
 
   useEffect(() => {
     loadData();
+    // Note: Using individual filter properties instead of the filters object
+    // to avoid unnecessary re-renders from object reference changes
   }, [page, filters.searchPart, filters.filterSupplier, filters.filterCategory, filters.filterMerv, filters.filterHeight, filters.filterWidth, filters.filterDepth]);
 
   const rows: AirFilterPayload[] = data?.results ?? [];

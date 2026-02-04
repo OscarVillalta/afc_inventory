@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 /**
  * Custom hook to persist filter state in localStorage
@@ -10,6 +10,9 @@ export function usePersistedFilters<T extends Record<string, any>>(
   storageKey: string,
   initialState: T
 ): [T, (key: keyof T, value: any) => void, () => void] {
+  // Store initial state in a ref to avoid recreating clearFilters
+  const initialStateRef = useRef(initialState);
+  
   // Initialize state from localStorage or use initial state
   const [filters, setFilters] = useState<T>(() => {
     try {
@@ -44,8 +47,8 @@ export function usePersistedFilters<T extends Record<string, any>>(
 
   // Clear all filters (reset to initial state)
   const clearFilters = useCallback(() => {
-    setFilters(initialState);
-  }, [initialState]);
+    setFilters({ ...initialStateRef.current });
+  }, []);
 
   return [filters, setFilter, clearFilters];
 }

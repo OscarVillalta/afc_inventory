@@ -104,6 +104,8 @@ export default function TransactionsTable() {
 
   useEffect(() => {
     loadTransactions();
+    // Note: Using individual filter properties instead of the filters object
+    // to avoid unnecessary re-renders from object reference changes
   }, [page, pageSize, filters.searchProduct, filters.filterState, filters.filterReason, filters.filterNote, filters.startDate, filters.endDate, filters.dateFilterMode]);
 
   const productLookup = useMemo(() => {
