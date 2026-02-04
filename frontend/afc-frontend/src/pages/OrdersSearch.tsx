@@ -3,9 +3,17 @@ import { useNavigate } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import { fetchOrders, type OrderRowItemPayload } from "../api/ordersTable";
 import { fetchProducts, type Product } from "../api/products";
+import type { Customer } from "../api/customers";
+import type { Supplier } from "../api/suppliers";
+import { fetchCustomers } from "../api/customers";
+import { fetchSuppliers } from "../api/suppliers";
 
 export default function OrdersSearchPage() {
   const navigate = useNavigate();
+
+  //Customer and supplier list
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   
   // Search filters
   const [searchId, setSearchId] = useState("");
@@ -28,9 +36,11 @@ export default function OrdersSearchPage() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   
-  // Load products on mount
+  // Load products customer and suppliers on mount
   useEffect(() => {
     fetchProducts().then(setAvailableProducts).catch(console.error);
+    fetchCustomers().then(setCustomers).catch(console.error);
+    fetchSuppliers().then(setSuppliers).catch(console.error);
   }, []);
 
   const handleSearch = async () => {
@@ -151,14 +161,15 @@ export default function OrdersSearchPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Customer
                 </label>
-                <input
-                  type="text"
-                  placeholder="Customer name..."
-                  className="input input-bordered w-full"
-                  value={searchCustomer}
-                  onChange={(e) => setSearchCustomer(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                />
+                <select
+                    className="select select-bordered w-full"
+                    value={searchCustomer}
+                    onChange={(e) => setSearchCustomer(e.target.value)}
+                  >
+                    {customers.map((c) => (
+                      <option key={c.id}>{c.name}</option>
+                    ))}
+                </select>
               </div>
 
               {/* Type Dropdown */}
