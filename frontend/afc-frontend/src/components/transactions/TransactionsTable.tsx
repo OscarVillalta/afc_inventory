@@ -104,7 +104,7 @@ export default function TransactionsTable() {
 
   useEffect(() => {
     loadTransactions();
-  }, [page, pageSize, filters]);
+  }, [page, pageSize, filters.searchProduct, filters.filterState, filters.filterReason, filters.filterNote, filters.startDate, filters.endDate, filters.dateFilterMode]);
 
   const productLookup = useMemo(() => {
     return new Map(products.map((product) => [product.id, product.part_number]));

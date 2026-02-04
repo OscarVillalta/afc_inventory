@@ -65,7 +65,7 @@ export default function MiscItemsTable() {
       .then((res) => setData(res))
       .catch(() => setError("Failed to load misc items"))
       .finally(() => setLoading(false));
-  }, [page, filters.searchName, filters.filterDescription, filters.filterSupplier]);
+  }, [page, pageSize, filters.searchName, filters.filterDescription, filters.filterSupplier]);
 
   useEffect(() => {
     loadData();

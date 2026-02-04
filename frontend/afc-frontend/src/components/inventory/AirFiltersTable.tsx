@@ -79,7 +79,7 @@ export default function AirFiltersTable() {
 
   useEffect(() => {
     loadData();
-  }, [page, filters]);
+  }, [page, filters.searchPart, filters.filterSupplier, filters.filterCategory, filters.filterMerv, filters.filterHeight, filters.filterWidth, filters.filterDepth]);
 
   const rows: AirFilterPayload[] = data?.results ?? [];
 
