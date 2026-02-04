@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import { fetchOrders, type OrderRowItemPayload } from "../api/ordersTable";
+import { fetchProducts, type Product } from "../api/products";
 
 export default function OrdersSearchPage() {
   const navigate = useNavigate();
@@ -14,14 +15,23 @@ export default function OrdersSearchPage() {
   // Advanced filters (sidebar)
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  // Product filtering to be implemented later
-  // const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [dateFilterType, setDateFilterType] = useState<"created" | "completed">("created");
+  const [selectedProducts, setSelectedProducts] = useState<number[]>([]);
+  
+  // Available products for filtering
+  const [availableProducts, setAvailableProducts] = useState<Product[]>([]);
+  const [productSearch, setProductSearch] = useState("");
   
   // Results
   const [results, setResults] = useState<OrderRowItemPayload[]>([]);
   const [totalResults, setTotalResults] = useState(0);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  
+  // Load products on mount
+  useEffect(() => {
+    fetchProducts().then(setAvailableProducts).catch(console.error);
+  }, []);
 
   const handleSearch = async () => {
     setLoading(true);
@@ -33,8 +43,20 @@ export default function OrdersSearchPage() {
       if (searchId) filters.order_number = searchId;
       if (searchCustomer) filters.search = searchCustomer;
       if (filterType && filterType !== "All") filters.type = filterType;
-      if (dateFrom) filters.created_from = dateFrom;
-      if (dateTo) filters.created_to = dateTo;
+      
+      // Date filters based on selected type
+      if (dateFilterType === "created") {
+        if (dateFrom) filters.created_from = dateFrom;
+        if (dateTo) filters.created_to = dateTo;
+      } else {
+        if (dateFrom) filters.completed_from = dateFrom;
+        if (dateTo) filters.completed_to = dateTo;
+      }
+      
+      // Product filters
+      if (selectedProducts.length > 0) {
+        filters.product_ids = selectedProducts.join(",");
+      }
       
       const response = await fetchOrders(1, 50, filters);
       setResults(response.results || []);
@@ -54,7 +76,9 @@ export default function OrdersSearchPage() {
     setFilterType("All");
     setDateFrom("");
     setDateTo("");
-    // setSelectedProducts([]);
+    setDateFilterType("created");
+    setSelectedProducts([]);
+    setProductSearch("");
     setResults([]);
     setTotalResults(0);
     setSearched(false);
@@ -69,18 +93,20 @@ export default function OrdersSearchPage() {
         setDateFrom(todayStr);
         setDateTo(todayStr);
         break;
-      case 'last7':
+      case 'last7': {
         const last7 = new Date(today);
         last7.setDate(last7.getDate() - 7);
         setDateFrom(last7.toISOString().split('T')[0]);
         setDateTo(todayStr);
         break;
-      case 'last30':
+      }
+      case 'last30': {
         const last30 = new Date(today);
         last30.setDate(last30.getDate() - 30);
         setDateFrom(last30.toISOString().split('T')[0]);
         setDateTo(todayStr);
         break;
+      }
     }
   };
 
@@ -273,6 +299,32 @@ export default function OrdersSearchPage() {
                 Date Range
               </h3>
               
+              {/* Date Filter Type Toggle */}
+              <div className="mb-3">
+                <div className="flex rounded-lg border border-gray-300 overflow-hidden">
+                  <button
+                    className={`flex-1 py-2 text-xs font-medium transition-colors ${
+                      dateFilterType === "created"
+                        ? "bg-primary text-white"
+                        : "bg-white text-gray-700 hover:bg-gray-50"
+                    }`}
+                    onClick={() => setDateFilterType("created")}
+                  >
+                    Creation Date
+                  </button>
+                  <button
+                    className={`flex-1 py-2 text-xs font-medium transition-colors ${
+                      dateFilterType === "completed"
+                        ? "bg-primary text-white"
+                        : "bg-white text-gray-700 hover:bg-gray-50"
+                    }`}
+                    onClick={() => setDateFilterType("completed")}
+                  >
+                    Completion Date
+                  </button>
+                </div>
+              </div>
+              
               {/* Preset Buttons */}
               <div className="flex gap-2 mb-4">
                 <button
@@ -327,15 +379,79 @@ export default function OrdersSearchPage() {
               <h3 className="text-sm font-medium text-gray-700 mb-3">
                 Products Included
               </h3>
+              
+              {/* Product Search Input */}
               <input
                 type="text"
                 placeholder="Search products..."
-                className="input input-bordered input-sm w-full"
-                disabled
+                className="input input-bordered input-sm w-full mb-3"
+                value={productSearch}
+                onChange={(e) => setProductSearch(e.target.value)}
               />
-              <p className="text-xs text-gray-400 mt-2">
-                Product filtering coming soon
-              </p>
+              
+              {/* Selected Products Count */}
+              {selectedProducts.length > 0 && (
+                <div className="text-xs text-gray-600 mb-2">
+                  {selectedProducts.length} product{selectedProducts.length !== 1 ? 's' : ''} selected
+                </div>
+              )}
+              
+              {/* Product List */}
+              <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg">
+                {(() => {
+                  const filteredProducts = availableProducts.filter((product) =>
+                    productSearch === "" ||
+                    product.part_number.toLowerCase().includes(productSearch.toLowerCase()) ||
+                    product.category.toLowerCase().includes(productSearch.toLowerCase())
+                  );
+                  
+                  return filteredProducts.length > 0 ? (
+                    filteredProducts.map((product) => (
+                      <label
+                        key={product.id}
+                        className="flex items-center gap-2 p-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                      >
+                        <input
+                          type="checkbox"
+                          className="checkbox checkbox-sm checkbox-primary"
+                          checked={selectedProducts.includes(product.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedProducts([...selectedProducts, product.id]);
+                            } else {
+                              setSelectedProducts(
+                                selectedProducts.filter((id) => id !== product.id)
+                              );
+                            }
+                          }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-medium text-gray-900 truncate">
+                            {product.part_number}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {product.category}
+                          </div>
+                        </div>
+                      </label>
+                    ))
+                  ) : (
+                    <div className="p-4 text-xs text-gray-400 text-center">
+                      No products found
+                    </div>
+                  );
+                })()}
+              </div>
+              
+              {/* Clear Products Button */}
+              {selectedProducts.length > 0 && (
+                <button
+                  className="btn btn-ghost btn-sm w-full mt-2"
+                  onClick={() => setSelectedProducts([])}
+                >
+                  Clear Selection
+                </button>
+              )}
             </div>
 
             {/* Apply Filters Button */}

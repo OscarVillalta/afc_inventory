@@ -340,6 +340,17 @@ def search_orders():
     search = request.args.get("search")
     order_type = request.args.get("type")
     status = request.args.get("status")
+    
+    # Date filters for created_at
+    created_from = request.args.get("created_from")
+    created_to = request.args.get("created_to")
+    
+    # Date filters for completed_at
+    completed_from = request.args.get("completed_from")
+    completed_to = request.args.get("completed_to")
+    
+    # Product filtering - comma separated product IDs
+    product_ids = request.args.get("product_ids")
 
     page = request.args.get("page", default=1, type=int)
     limit = request.args.get("limit", default=25, type=int)
@@ -379,6 +390,57 @@ def search_orders():
                 Supplier.name.ilike(f"%{search}%"),
             )
         )
+    
+    # Date filters for created_at
+    if created_from:
+        try:
+            from_date = parse_date(created_from)
+            filters.append(Order.created_at >= from_date)
+        except ValueError:
+            pass
+    
+    if created_to:
+        try:
+            to_date = parse_date(created_to)
+            # Add one day to include the entire end date
+            to_date = to_date + timedelta(days=1)
+            filters.append(Order.created_at < to_date)
+        except ValueError:
+            pass
+    
+    # Date filters for completed_at
+    if completed_from:
+        try:
+            from_date = parse_date(completed_from)
+            filters.append(Order.completed_at >= from_date)
+        except ValueError:
+            pass
+    
+    if completed_to:
+        try:
+            to_date = parse_date(completed_to)
+            # Add one day to include the entire end date
+            to_date = to_date + timedelta(days=1)
+            filters.append(Order.completed_at < to_date)
+        except ValueError:
+            pass
+    
+    # Product filtering - filter orders containing specific products
+    if product_ids:
+        try:
+            # Parse comma-separated product IDs
+            product_id_list = [int(pid.strip()) for pid in product_ids.split(",") if pid.strip()]
+            if product_id_list:
+                # Use a subquery to find orders that contain any of the specified products
+                # This approach is cleaner and avoids potential JOIN conflicts
+                product_filter_subquery = (
+                    select(OrderItem.order_id)
+                    .where(OrderItem.product_id.in_(product_id_list))
+                    .distinct()
+                )
+                filters.append(Order.id.in_(product_filter_subquery))
+        except (ValueError, AttributeError):
+            pass
 
     if filters:
         query = query.where(and_(*filters))
