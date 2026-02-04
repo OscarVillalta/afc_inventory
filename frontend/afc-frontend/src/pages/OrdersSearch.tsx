@@ -16,6 +16,14 @@ export default function OrdersSearchPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   
+  // Type options for autocomplete
+  const typeOptions = [
+    { id: 1, name: "All" },
+    { id: 2, name: "incoming" },
+    { id: 3, name: "outgoing" },
+    { id: 4, name: "contract" },
+  ];
+  
   // Search filters
   const [searchId, setSearchId] = useState("");
   const [searchCustomer, setSearchCustomer] = useState("");
@@ -186,22 +194,15 @@ export default function OrdersSearchPage() {
                 className="flex-1"
               />
 
-              {/* Type Dropdown */}
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Type
-                </label>
-                <select
-                  className="select select-bordered w-full"
-                  value={filterType}
-                  onChange={(e) => setFilterType(e.target.value)}
-                >
-                  <option value="All">All</option>
-                  <option value="incoming">Incoming</option>
-                  <option value="outgoing">Outgoing</option>
-                  <option value="contract">Contract</option>
-                </select>
-              </div>
+              {/* Type Autocomplete */}
+              <AutocompleteInput
+                label="Type"
+                placeholder="Select type..."
+                options={typeOptions}
+                value={filterType}
+                onChange={setFilterType}
+                className="flex-1"
+              />
 
               {/* Search Button */}
               <button
@@ -224,6 +225,30 @@ export default function OrdersSearchPage() {
               <div className="text-sm text-gray-600">
                 Found <span className="font-semibold text-gray-900">{totalResults}</span> result{totalResults !== 1 ? 's' : ''}
               </div>
+              
+              {/* Pagination Controls in Center */}
+              {totalResults > pageSize && (
+                <div className="flex gap-2">
+                  <button
+                    className="btn btn-sm btn-outline"
+                    onClick={() => handleSearch(currentPage - 1)}
+                    disabled={currentPage === 1 || loading}
+                  >
+                    Previous
+                  </button>
+                  <span className="flex items-center px-4 text-sm font-medium text-gray-700">
+                    Page {currentPage} of {Math.ceil(totalResults / pageSize)}
+                  </span>
+                  <button
+                    className="btn btn-sm btn-outline"
+                    onClick={() => handleSearch(currentPage + 1)}
+                    disabled={currentPage >= Math.ceil(totalResults / pageSize) || loading}
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+              
               <button
                 className="btn btn-ghost btn-sm"
                 onClick={handleClearSearch}
@@ -278,7 +303,9 @@ export default function OrdersSearchPage() {
                         
                         <div className="text-sm text-gray-600 space-y-1">
                           <div>
-                            <span className="font-medium">Customer:</span> {order.cs_name}
+                            <span className="font-medium">
+                              {order.type === "incoming" ? "Supplier:" : "Customer:"}
+                            </span> {order.cs_name}
                           </div>
                           {order.description && (
                             <div className="text-gray-500 truncate">
@@ -308,34 +335,6 @@ export default function OrdersSearchPage() {
                     </div>
                   </div>
                 ))}
-                
-                {/* Pagination Controls */}
-                {totalResults > pageSize && (
-                  <div className="bg-white rounded-lg shadow-sm p-4 flex items-center justify-between">
-                    <div className="text-sm text-gray-600">
-                      Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalResults)} of {totalResults}
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        className="btn btn-sm btn-outline"
-                        onClick={() => handleSearch(currentPage - 1)}
-                        disabled={currentPage === 1 || loading}
-                      >
-                        Previous
-                      </button>
-                      <span className="flex items-center px-4 text-sm font-medium text-gray-700">
-                        Page {currentPage} of {Math.ceil(totalResults / pageSize)}
-                      </span>
-                      <button
-                        className="btn btn-sm btn-outline"
-                        onClick={() => handleSearch(currentPage + 1)}
-                        disabled={currentPage >= Math.ceil(totalResults / pageSize) || loading}
-                      >
-                        Next
-                      </button>
-                    </div>
-                  </div>
-                )}
               </>
             )}
           </div>
