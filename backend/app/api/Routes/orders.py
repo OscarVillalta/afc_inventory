@@ -425,17 +425,20 @@ def search_orders():
         except ValueError:
             pass
     
-    # Product filtering - join with OrderItem to filter orders containing specific products
+    # Product filtering - filter orders containing specific products
     if product_ids:
         try:
             # Parse comma-separated product IDs
             product_id_list = [int(pid.strip()) for pid in product_ids.split(",") if pid.strip()]
             if product_id_list:
-                # Join with OrderItem to filter by products
-                query = query.join(OrderItem, Order.id == OrderItem.order_id)
-                filters.append(OrderItem.product_id.in_(product_id_list))
-                # Use distinct to avoid duplicate orders if they have multiple matching products
-                query = query.distinct()
+                # Use a subquery to find orders that contain any of the specified products
+                # This approach is cleaner and avoids potential JOIN conflicts
+                product_filter_subquery = (
+                    select(OrderItem.order_id)
+                    .where(OrderItem.product_id.in_(product_id_list))
+                    .distinct()
+                )
+                filters.append(Order.id.in_(product_filter_subquery))
         except (ValueError, AttributeError):
             pass
 

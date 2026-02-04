@@ -398,50 +398,49 @@ export default function OrdersSearchPage() {
               
               {/* Product List */}
               <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg">
-                {availableProducts
-                  .filter((product) =>
+                {(() => {
+                  const filteredProducts = availableProducts.filter((product) =>
                     productSearch === "" ||
                     product.part_number.toLowerCase().includes(productSearch.toLowerCase()) ||
                     product.category.toLowerCase().includes(productSearch.toLowerCase())
-                  )
-                  .map((product) => (
-                    <label
-                      key={product.id}
-                      className="flex items-center gap-2 p-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                    >
-                      <input
-                        type="checkbox"
-                        className="checkbox checkbox-sm checkbox-primary"
-                        checked={selectedProducts.includes(product.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedProducts([...selectedProducts, product.id]);
-                          } else {
-                            setSelectedProducts(
-                              selectedProducts.filter((id) => id !== product.id)
-                            );
-                          }
-                        }}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs font-medium text-gray-900 truncate">
-                          {product.part_number}
+                  );
+                  
+                  return filteredProducts.length > 0 ? (
+                    filteredProducts.map((product) => (
+                      <label
+                        key={product.id}
+                        className="flex items-center gap-2 p-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                      >
+                        <input
+                          type="checkbox"
+                          className="checkbox checkbox-sm checkbox-primary"
+                          checked={selectedProducts.includes(product.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedProducts([...selectedProducts, product.id]);
+                            } else {
+                              setSelectedProducts(
+                                selectedProducts.filter((id) => id !== product.id)
+                              );
+                            }
+                          }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-medium text-gray-900 truncate">
+                            {product.part_number}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {product.category}
+                          </div>
                         </div>
-                        <div className="text-xs text-gray-500">
-                          {product.category}
-                        </div>
-                      </div>
-                    </label>
-                  ))}
-                {availableProducts.filter((product) =>
-                  productSearch === "" ||
-                  product.part_number.toLowerCase().includes(productSearch.toLowerCase()) ||
-                  product.category.toLowerCase().includes(productSearch.toLowerCase())
-                ).length === 0 && (
-                  <div className="p-4 text-xs text-gray-400 text-center">
-                    No products found
-                  </div>
-                )}
+                      </label>
+                    ))
+                  ) : (
+                    <div className="p-4 text-xs text-gray-400 text-center">
+                      No products found
+                    </div>
+                  );
+                })()}
               </div>
               
               {/* Clear Products Button */}
