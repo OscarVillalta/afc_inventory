@@ -11,6 +11,21 @@ transaction_bp = Blueprint("transactions", __name__)
 txn_schema = TransactionSchema()
 txn_list_schema = TransactionSchema(many=True)
 
+
+def validate_product_or_child_product_exclusive(data):
+    """Validate that either product_id or child_product_id is provided, but not both"""
+    has_product = "product_id" in data and data["product_id"] is not None
+    has_child = "child_product_id" in data and data["child_product_id"] is not None
+    
+    if not has_product and not has_child:
+        return {"error": "Either product_id or child_product_id is required"}, 400
+    
+    if has_product and has_child:
+        return {"error": "Cannot specify both product_id and child_product_id"}, 400
+    
+    return None
+
+
 @transaction_bp.route("/transactions", methods=["GET"])
 def get_transactions():
     db = g.db
@@ -139,12 +154,10 @@ def create_transaction():
     db = g.db
     data = request.get_json() or {}
 
-    # Either product_id or child_product_id must be provided
-    if "product_id" not in data and "child_product_id" not in data:
-        return jsonify({"error": "Either product_id or child_product_id is required"}), 400
-    
-    if "product_id" in data and "child_product_id" in data:
-        return jsonify({"error": "Cannot specify both product_id and child_product_id"}), 400
+    # Validate that either product_id or child_product_id is provided (but not both)
+    validation_error = validate_product_or_child_product_exclusive(data)
+    if validation_error:
+        return jsonify(validation_error[0]), validation_error[1]
 
     required_fields = ["quantity_delta", "reason"]
     for field in required_fields:
@@ -156,7 +169,7 @@ def create_transaction():
     child_product = None
     qty_record = None
     
-    if "product_id" in data:
+    if "product_id" in data and data["product_id"] is not None:
         product = db.get(Product, data["product_id"])
         if not product or not product.quantity:
             return jsonify({"error": "Product or quantity record not found"}), 404

@@ -8,6 +8,10 @@ child_product_bp = Blueprint("child_products", __name__)
 child_product_schema = ChildProductSchema()
 child_product_list_schema = ChildProductSchema(many=True)
 
+# Category constants
+CATEGORY_AIR_FILTERS = 1
+CATEGORY_MISC_ITEMS = 2
+
 # =====================================================
 # 🔹 GET all Child Products
 # =====================================================
@@ -85,9 +89,9 @@ def create_child_air_filter():
     db.add(new_filter)
     db.flush()
     
-    # Create the child product (category 1 = Air Filters)
+    # Create the child product
     child_product = ChildProduct(
-        category_id=1,
+        category_id=CATEGORY_AIR_FILTERS,
         reference_id=new_filter.id,
         parent_product_id=data["parent_product_id"]
     )
@@ -139,9 +143,9 @@ def create_child_misc_item():
     db.add(new_misc_item)
     db.flush()
     
-    # Create the child product (category 2 = Misc Items)
+    # Create the child product
     child_product = ChildProduct(
-        category_id=2,
+        category_id=CATEGORY_MISC_ITEMS,
         reference_id=new_misc_item.id,
         parent_product_id=data["parent_product_id"]
     )

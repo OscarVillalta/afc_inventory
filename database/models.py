@@ -257,6 +257,7 @@ class ChildProduct(Base, SerializerMixin):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     category_id: Mapped[int] = mapped_column(ForeignKey("product_categories.id"), nullable=False)
     reference_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    # CASCADE: Deleting the parent product will automatically delete all child products
     parent_product_id: Mapped[int] = mapped_column(ForeignKey("products.id", ondelete="CASCADE"), nullable=False)
 
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
@@ -474,6 +475,7 @@ class Transaction(Base, SerializerMixin):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
     product_id: Mapped[Optional[int]] = mapped_column(ForeignKey("products.id", ondelete="RESTRICT"), nullable=True)
+    # RESTRICT: Transactions prevent deletion of child products (must delete transaction first)
     child_product_id: Mapped[Optional[int]] = mapped_column(ForeignKey("child_products.id", ondelete="RESTRICT"), nullable=True)
     order_id: Mapped[Optional[int]] = mapped_column(ForeignKey("orders.id", ondelete="SET NULL"))
     order_item_id: Mapped[Optional[int]] = mapped_column(ForeignKey("order_items.id", ondelete="SET NULL"))
