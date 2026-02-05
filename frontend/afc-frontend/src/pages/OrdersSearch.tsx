@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import { fetchOrders, type OrderRowItemPayload } from "../api/ordersTable";
 import { fetchProducts, type Product } from "../api/products";
@@ -12,6 +12,7 @@ import { usePersistedFilters } from "../hooks/usePersistedFilters";
 
 export default function OrdersSearchPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   //Customer and supplier list
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -57,6 +58,28 @@ export default function OrdersSearchPage() {
     fetchCustomers().then(setCustomers).catch(console.error);
     fetchSuppliers().then(setSuppliers).catch(console.error);
   }, []);
+  
+  // Handle URL parameters on mount
+  useEffect(() => {
+    const typeParam = searchParams.get('type');
+    const productIdsParam = searchParams.get('product_ids');
+    
+    if (typeParam || productIdsParam) {
+      // Update filters from URL params
+      if (typeParam) {
+        setFilter("filterType", typeParam);
+      }
+      if (productIdsParam) {
+        const productIds = productIdsParam.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
+        setFilter("selectedProducts", productIds);
+      }
+      
+      // Automatically trigger search if URL params are present
+      setTimeout(() => {
+        handleSearch(1);
+      }, 100);
+    }
+  }, [searchParams]);
 
   const handleSearch = async (page = 1) => {
     setLoading(true);
