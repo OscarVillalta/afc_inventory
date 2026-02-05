@@ -49,21 +49,46 @@ def create_air_filter():
     db.add(new_filter)
     db.flush()
 
-    product = Product(category_id=ProductCategory_id, reference_id=new_filter.id)
+    # 2️⃣ Create Product record with optional parent
+    parent_product_id = data.get("parent_product_id")
+    
+    # Validate parent product if provided
+    if parent_product_id:
+        parent_product = db.get(Product, parent_product_id)
+        if not parent_product:
+            return jsonify({"error": "Invalid parent product ID"}), 400
+        # Ensure parent has its own quantity (not a child product)
+        if parent_product.parent_product_id:
+            return jsonify({"error": "Parent product cannot itself be a child product"}), 400
+    
+    product = Product(
+        category_id=ProductCategory_id, 
+        reference_id=new_filter.id,
+        parent_product_id=parent_product_id
+    )
     db.add(product)
     db.flush()
 
-    # 3️⃣ Create Quantity record
-    qty = Quantity(product_id=product.id, on_hand=0, reserved=0, ordered=0, location=0)
-    db.add(qty)
+    # 3️⃣ Create Quantity record only if no parent (parent products share quantity)
+    if not parent_product_id:
+        qty = Quantity(product_id=product.id, on_hand=0, reserved=0, ordered=0, location=0)
+        db.add(qty)
+    
     db.commit()
 
-    return jsonify({
+    response = {
         "message": "Air Filter created successfully",
         "air_filter": new_filter.to_dict(include_relationships=True),
         "product_id": product.id,
-        "quantity_id": qty.id
-    }), 201
+    }
+    
+    if not parent_product_id:
+        response["quantity_id"] = qty.id
+    else:
+        response["parent_product_id"] = parent_product_id
+        response["message"] = "Air Filter created successfully (sharing quantity with parent product)"
+    
+    return jsonify(response), 201
 
 
 # --- PATCH (partial update) ---

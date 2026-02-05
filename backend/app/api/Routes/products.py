@@ -30,7 +30,10 @@ def get_products():
     response = []
     for p in results:
         category = p.category.name if p.category else "Unknown"
-        quantity = p.quantity.to_dict() if p.quantity else {}
+        
+        # Get effective quantity (from parent if applicable)
+        effective_qty = p.get_effective_quantity()
+        quantity = effective_qty.to_dict() if effective_qty else {}
 
         # --- Determine which subtable applies ---
         if p.air_filter:
@@ -46,6 +49,7 @@ def get_products():
             "id": p.id,
             "category": category,
             "reference_id": p.reference_id,
+            "parent_product_id": p.parent_product_id,
             "details": details,
             "quantity": quantity
         })
@@ -75,7 +79,10 @@ def get_product(id):
         return jsonify({"error": "Product not found"}), 404
 
     category = product.category.name if product.category else "Unknown"
-    quantity = product.quantity.to_dict() if product.quantity else {}
+    
+    # Get effective quantity (from parent if applicable)
+    effective_qty = product.get_effective_quantity()
+    quantity = effective_qty.to_dict() if effective_qty else {}
 
     if product.air_filter:
         details = product.air_filter.to_dict()
@@ -90,6 +97,7 @@ def get_product(id):
         "id": product.id,
         "category": category,
         "reference_id": product.reference_id,
+        "parent_product_id": product.parent_product_id,
         "details": details,
         "quantity": quantity
     }), 200

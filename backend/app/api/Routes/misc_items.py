@@ -56,23 +56,46 @@ def create_misc_item():
     db.add(misc_item)
     db.flush()
 
+    # Create Product record with optional parent
+    parent_product_id = data.get("parent_product_id")
+    
+    # Validate parent product if provided
+    if parent_product_id:
+        parent_product = db.get(Product, parent_product_id)
+        if not parent_product:
+            return jsonify({"error": "Invalid parent product ID"}), 400
+        # Ensure parent has its own quantity (not a child product)
+        if parent_product.parent_product_id:
+            return jsonify({"error": "Parent product cannot itself be a child product"}), 400
+
     new_product = Product(
         category_id=product_category,
-        reference_id=misc_item.id
+        reference_id=misc_item.id,
+        parent_product_id=parent_product_id
     )
     db.add(new_product)
     db.flush()
 
-    qty = Quantity(product_id=new_product.id, on_hand=0, reserved=0, ordered=0, location=0)
-    db.add(qty)
+    # Create Quantity record only if no parent (parent products share quantity)
+    if not parent_product_id:
+        qty = Quantity(product_id=new_product.id, on_hand=0, reserved=0, ordered=0, location=0)
+        db.add(qty)
+    
     db.commit()
 
-    return jsonify({
+    response = {
         "message": "Misc item created successfully.",
         "misc_item": misc_schema.dump(misc_item),
         "product_id": new_product.id,
-        "quantity_id": qty.id
-    }), 201
+    }
+    
+    if not parent_product_id:
+        response["quantity_id"] = qty.id
+    else:
+        response["parent_product_id"] = parent_product_id
+        response["message"] = "Misc item created successfully (sharing quantity with parent product)"
+    
+    return jsonify(response), 201
 
 
 # =====================================================

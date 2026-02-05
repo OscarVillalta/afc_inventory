@@ -179,10 +179,24 @@ class Product(Base, SerializerMixin):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     category_id: Mapped[int] = mapped_column(ForeignKey("product_categories.id"), nullable=False)
     reference_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    parent_product_id: Mapped[Optional[int]] = mapped_column(ForeignKey("products.id"), nullable=True)
 
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     category: Mapped["ProductCategory"] = relationship("ProductCategory", back_populates="products")
+    
+    # Self-referential relationship for parent-child products
+    parent_product: Mapped[Optional["Product"]] = relationship(
+        "Product",
+        remote_side="Product.id",
+        back_populates="child_products",
+        foreign_keys=[parent_product_id]
+    )
+    child_products: Mapped[List["Product"]] = relationship(
+        "Product",
+        back_populates="parent_product",
+        foreign_keys=[parent_product_id]
+    )
 
     air_filter: Mapped[Optional["AirFilter"]] = relationship(
         "AirFilter",
@@ -219,6 +233,16 @@ class Product(Base, SerializerMixin):
         back_populates="product",
         passive_deletes=True,
     )
+
+    def get_effective_quantity(self) -> Optional["Quantity"]:
+        """
+        Returns the quantity record to use for this product.
+        If this product has a parent_product_id, returns the parent's quantity.
+        Otherwise, returns this product's own quantity.
+        """
+        if self.parent_product_id and self.parent_product:
+            return self.parent_product.quantity
+        return self.quantity
 
 
 # =====================================================
@@ -416,10 +440,12 @@ class Transaction(Base, SerializerMixin):
         if self.state != TransactionState.PENDING.value:
             return
 
-        if not self.product or not self.product.quantity:
-            raise ValueError("Product or quantity record missing.")
+        if not self.product:
+            raise ValueError("Product record missing.")
 
-        qty_record = self.product.quantity
+        qty_record = self.product.get_effective_quantity()
+        if not qty_record:
+            raise ValueError("Quantity record missing for product or its parent.")
 
         # Apply physical change
         qty_record.on_hand += self.quantity_delta
@@ -446,10 +472,12 @@ class Transaction(Base, SerializerMixin):
         if self.state != TransactionState.COMMITTED.value:
             raise ValueError("Only committed transactions can be rolled back.")
 
-        if not self.product or not self.product.quantity:
-            raise ValueError("Product or quantity record missing.")
+        if not self.product:
+            raise ValueError("Product record missing.")
 
-        qty_record = self.product.quantity
+        qty_record = self.product.get_effective_quantity()
+        if not qty_record:
+            raise ValueError("Quantity record missing for product or its parent.")
 
         reversed_delta = -self.quantity_delta  # opposite sign
         rollback_requires_stock = reversed_delta < 0  # removing stock
@@ -494,11 +522,12 @@ class Transaction(Base, SerializerMixin):
     def cancel(self):
         if self.state == TransactionState.PENDING.value:
 
-            qty_record = self.product.quantity
-            if self.quantity_delta > 0:
-                qty_record.ordered -= abs(self.quantity_delta)
-            else:
-                qty_record.reserved -= abs(self.quantity_delta)
+            qty_record = self.product.get_effective_quantity()
+            if qty_record:
+                if self.quantity_delta > 0:
+                    qty_record.ordered -= abs(self.quantity_delta)
+                else:
+                    qty_record.reserved -= abs(self.quantity_delta)
 
             self.state = TransactionState.CANCELLED.value
         else:

@@ -145,8 +145,12 @@ def create_transaction():
             return jsonify({"error": f"{field} is required"}), 400
 
     product = db.get(Product, data["product_id"])
-    if not product or not product.quantity:
-        return jsonify({"error": "Product or quantity record not found"}), 404
+    if not product:
+        return jsonify({"error": "Product not found"}), 404
+    
+    qty_record = product.get_effective_quantity()
+    if not qty_record:
+        return jsonify({"error": "Quantity record not found for product or its parent"}), 404
 
     order = None
     order_item = None
@@ -188,15 +192,13 @@ def create_transaction():
         state=TransactionState.PENDING.value,
     )
 
-    qty = product.quantity
-
     # ===============================
     # Apply PENDING inventory effect
     # ===============================
     if qty_delta < 0 :
-        qty.reserved += abs_qty
+        qty_record.reserved += abs_qty
     else :
-       qty.ordered += abs_qty 
+       qty_record.ordered += abs_qty 
 
 
     db.add(txn)
@@ -236,10 +238,11 @@ def commit_transaction(txn_id):
 
         if txn.quantity_delta < 0:  # outgoing
             product = db.get(Product, txn.product_id)
+            qty_record = product.get_effective_quantity()
             qty = abs(txn.quantity_delta)
 
-            if qty > product.quantity.on_hand:
-                return jsonify({ "error": f"Not enough inventory. On hand: {product.quantity.on_hand}, required: {qty}"}), 409
+            if qty > qty_record.on_hand:
+                return jsonify({ "error": f"Not enough inventory. On hand: {qty_record.on_hand}, required: {qty}"}), 409
    
         txn.commit()
         db.commit()
