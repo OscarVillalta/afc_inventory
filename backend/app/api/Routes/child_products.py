@@ -47,7 +47,7 @@ def get_child_product(id):
 # =====================================================
 # 🔹 POST new Child Product (Air Filter)
 # =====================================================
-@child_product_bp.route("/child_products/air_filter", methods=["POST"])
+@child_product_bp.route("/child_products/air_filters", methods=["POST"])
 def create_child_air_filter():
     """Create a child product that references an air filter and shares parent's quantity"""
     db = g.db

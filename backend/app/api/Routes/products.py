@@ -75,7 +75,12 @@ def get_product(id):
         return jsonify({"error": "Product not found"}), 404
 
     category = product.category.name if product.category else "Unknown"
-    quantity = product.quantity.to_dict() if product.quantity else {}
+
+    if product.quantity:
+        quantity = product.quantity.to_dict()
+        quantity["available"] = product.quantity.available
+        quantity["backordered"] = product.quantity.backordered
+    
 
     if product.air_filter:
         details = product.air_filter.to_dict()

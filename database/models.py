@@ -318,7 +318,7 @@ class Quantity(Base, SerializerMixin):
 
     @hybrid_property
     def available(self):
-        return self.on_hand - self.reserved
+        return max(self.on_hand - self.reserved, 0)
 
     @available.expression
     def available(cls):
@@ -326,7 +326,7 @@ class Quantity(Base, SerializerMixin):
 
     @hybrid_property
     def backordered(self):
-        return max(0, -self.available)
+        return abs(min(0, self.on_hand - self.reserved))
 
     @backordered.expression
     def backordered(cls):

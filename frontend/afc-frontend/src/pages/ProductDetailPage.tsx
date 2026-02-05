@@ -177,7 +177,7 @@ export default function ProductDetailPage() {
 
   return (
     <MainLayout>
-      <div className="p-6 max-w-7xl mx-auto space-y-6 bg-white">
+      <div className="p-6  mx-auto space-y-6 bg-white">
         {/* ========== BREADCRUMB + HEADER ========== */}
         <div className="space-y-4">
           {/* Breadcrumb */}
@@ -232,12 +232,12 @@ export default function ProductDetailPage() {
           <StatCard
             label="Available"
             value={available}
-            className={available > 0 ? "text-green-600" : ""}
+            className={available > 0 ? "text-green-600" : " text-gray-600"}
           />
           <StatCard
             label="Backordered"
             value={backordered}
-            className={backordered > 0 ? "text-red-600" : ""}
+            className={backordered > 0 ? "text-red-600" : "text-gray-600"}
           />
         </div>
 
