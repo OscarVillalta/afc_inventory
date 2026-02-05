@@ -153,12 +153,8 @@ export default function AirFiltersTable() {
           "Category",
           "Dimensions",
           "MERV",
-          "On Hand",
-          "Ordered",
-          "Reserved",
-          "Available",
-          "Backordered",
-          "",
+          "STOCK",
+
         ]}
         page={page}
         pageSize={pageSize}
@@ -167,7 +163,7 @@ export default function AirFiltersTable() {
       >
         {/* ================= FILTER ROW (SERVER-DRIVEN) ================= */}
         <tr className="border-b">
-          <th className="pr-3 pb-2">
+          <th className="pr-3 pb-2 border-spacing-y-4">
             <input
               className="input input-bordered input-xs w-full"
               placeholder="Search..."
@@ -243,7 +239,7 @@ export default function AirFiltersTable() {
             </div>
           </th>
 
-          <th className="pb-2 w-1/22">
+          <th className=" pr-2 pb-2 w-1/18">
             <input
               className="input input-bordered input-xs self-start text-center w-full"
               placeholder="MERV..."
@@ -255,7 +251,14 @@ export default function AirFiltersTable() {
             />
           </th>
 
-          <th colSpan={6}></th>
+          <th className="flex justify-between items-center bg-blue-200 py-8 px-2 border-t-2 border-x-2 border-blue-300">
+              <span className="font-medium text-blue-500">On Hand</span>
+              <span className="font-medium text-blue-500">Ordered</span>
+              <span className="font-medium text-blue-500">Reserved</span>
+              <span className="font-medium text-blue-500">Available</span>
+              <span className="font-medium text-blue-500">Backordered</span>
+          </th>
+
         </tr>
 
         {/* ================= DATA ROWS ================= */}
@@ -272,27 +275,30 @@ export default function AirFiltersTable() {
               {row.height} x {row.width} x {row.depth}
             </td>
             <td className="py-3 px-2">{row.merv_rating}</td>
-            <td className="py-3 px-2 font-medium text-white text-center bg-[#262a39] rounded-l-xl">{row.on_hand}</td>
-            <td className="py-3 px-2 font-medium text-white text-center bg-[#262a39]">{row.ordered}</td>
-            <td className="py-3 px-2 font-medium text-white text-center bg-[#262a39]">{row.reserved}</td>
-
-            <td className="py-3 px-2 text-center bg-[#262a39]"> {
-                row.available > 0 ? (
-                  <span className="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-600">{row.available}</span>
-                ) : ( 
-                  <span className="text-gray-400">{row.available}</span>
-                )
-              }
-            </td>
-
-            <td className="py-3 px-2 font-medium text-center bg-[#262a39] rounded-r-xl">
-              {row.backordered > 0 ? (
+            <td className="py-3 px-2 font-medium text-center  bg-blue-100">
+              <div className="flex justify-between items-center gap-1">
+                <span className="py-3 px-2 font-medium text-center">{row.on_hand}</span>
+                <span className="py-3 px-2 font-medium text-center">{row.ordered}</span>
+                <span className="py-3 px-2 font-medium text-center">{row.reserved}</span>
+                <span className="py-3 px-2 text-center">{
+                  row.available > 0 ? (
+                    <span className="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-600">{row.available}</span>
+                  ) : ( 
+                    <span className="text-gray-400">{row.available}</span>
+                  )
+                }
+              </span>
+              <span className="py-3 px-2 text-center">
+                {row.backordered > 0 ? (
                 <span className="px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-700 font-semibold">
                   {row.backordered}
                 </span>
-              ) : (
-                <span className="text-gray-400">—</span>
-              )}
+                ) : (
+                  <span className="text-gray-400">—</span>
+                )}
+              </span>
+              </div>
+              
             </td>
 
             <td

@@ -40,7 +40,7 @@ export default function MDTable({
 
       {/* Main Table Container */}
       <div className="bg-white rounded-2xl shadow-md p-6 border border-gray-100 pt-12">
-        <table className="w-full border-separate border-spacing-y-2">
+        <table className="w-full border-separate border-spacing-y-2 border-separate">
           <thead>
             <tr>
               {columns.map((col) => (
