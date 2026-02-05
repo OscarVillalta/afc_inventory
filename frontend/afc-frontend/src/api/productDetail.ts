@@ -67,3 +67,24 @@ export async function fetchProductOrderItems(productId: number) {
   // We'll need to check backend API for the exact endpoint
   return apiRequest(`/order-items/search?product_id=${productId}`) as Promise<OrderItem[]>;
 }
+
+export interface ProductOrderSummary {
+  id: number;
+  order_number?: string;
+  type: string;
+  cs_name: string;
+  status: string;
+  created_at: string;
+  eta?: string;
+}
+
+export async function fetchProductOrders(
+  productId: number, 
+  orderType: 'incoming' | 'outgoing',
+  limit: number = 5
+): Promise<ProductOrderSummary[]> {
+  const response = await apiRequest(
+    `/orders/search?product_ids=${productId}&type=${orderType}&limit=${limit}`
+  ) as { results: ProductOrderSummary[] };
+  return response.results || [];
+}

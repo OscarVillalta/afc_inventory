@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   XAxis,
   YAxis,
@@ -15,8 +15,10 @@ import MainLayout from "../layouts/MainLayout";
 import {
   fetchProductDetail,
   fetchProductTransactions,
+  fetchProductOrders,
   type ProductDetail,
   type TransactionItem,
+  type ProductOrderSummary,
 } from "../api/productDetail";
 
 /* ============================================================
@@ -35,8 +37,11 @@ interface StockProjection {
 
 export default function ProductDetailPage() {
   const { productId } = useParams<{ productId: string }>();
+  const navigate = useNavigate();
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [transactions, setTransactions] = useState<TransactionItem[]>([]);
+  const [incomingOrders, setIncomingOrders] = useState<ProductOrderSummary[]>([]);
+  const [outgoingOrders, setOutgoingOrders] = useState<ProductOrderSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -45,12 +50,16 @@ export default function ProductDetailPage() {
     const loadData = async () => {
       try {
         setLoading(true);
-        const [productData, txnData] = await Promise.all([
+        const [productData, txnData, incomingData, outgoingData] = await Promise.all([
           fetchProductDetail(Number(productId)),
           fetchProductTransactions(Number(productId), 1, 20),
+          fetchProductOrders(Number(productId), 'incoming', 5),
+          fetchProductOrders(Number(productId), 'outgoing', 5),
         ]);
         setProduct(productData);
         setTransactions(txnData.results);
+        setIncomingOrders(incomingData);
+        setOutgoingOrders(outgoingData);
       } catch (error) {
         console.error("Failed to load product detail:", error);
         // Use mock data for demonstration when backend is unavailable
@@ -102,6 +111,44 @@ export default function ProductDetailPage() {
             state: "committed",
             note: "Physical count correction",
             created_at: "2026-02-04T09:15:00Z",
+          },
+        ]);
+        setIncomingOrders([
+          {
+            id: 1,
+            order_number: "PO-1234",
+            type: "incoming",
+            cs_name: "Filter Dynamics Inc.",
+            status: "Pending",
+            created_at: "2026-01-15T10:00:00Z",
+            eta: "2026-03-15",
+          },
+          {
+            id: 2,
+            order_number: "PO-1235",
+            type: "incoming",
+            cs_name: "Filter Dynamics Inc.",
+            status: "Committed",
+            created_at: "2026-01-20T10:00:00Z",
+            eta: "2026-03-22",
+          },
+        ]);
+        setOutgoingOrders([
+          {
+            id: 3,
+            order_number: "ORD-5678",
+            type: "outgoing",
+            cs_name: "ABC Corp",
+            status: "Pending",
+            created_at: "2026-02-01T10:00:00Z",
+          },
+          {
+            id: 4,
+            order_number: "ORD-5679",
+            type: "outgoing",
+            cs_name: "XYZ Inc",
+            status: "Completed",
+            created_at: "2026-02-03T10:00:00Z",
           },
         ]);
       } finally {
@@ -288,75 +335,105 @@ export default function ProductDetailPage() {
         <div className="grid grid-cols-3 gap-4">
           {/* Incoming Shipments */}
           <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-            <div className="bg-[#363b4c] text-white px-4 py-3">
+            <div 
+              className="bg-[#363b4c] text-white px-4 py-3 cursor-pointer hover:bg-[#4a5063] transition-colors"
+              onClick={() => navigate(`/orders/search?type=incoming&product_ids=${productId}`)}
+              title="Click to view all incoming orders for this product"
+            >
               <h3 className="font-semibold">Incoming Shipments</h3>
             </div>
             <div className="p-4">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-gray-600 border-b">
-                    <th className="pb-2">PO #</th>
-                    <th className="pb-2">Qty</th>
-                    <th className="pb-2">ETA</th>
-                    <th className="pb-2">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="border-b text-gray-700">
-                    <td className="py-2">PO-1234</td>
-                    <td className="py-2">50</td>
-                    <td className="py-2">Mar 15</td>
-                    <td className="py-2">
-                      <span className="text-xs px-2 py-1 bg-yellow-100 text-yellow-700 rounded">
-                        Pending
-                      </span>
-                    </td>
-                  </tr>
-                  <tr className="text-gray-700">
-                    <td className="py-2">PO-1235</td>
-                    <td className="py-2">100</td>
-                    <td className="py-2">Mar 22</td>
-                    <td className="py-2">
-                      <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded">
-                        Committed
-                      </span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+              {incomingOrders.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-4">No incoming shipments</p>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-gray-600 border-b">
+                      <th className="pb-2">Order #</th>
+                      <th className="pb-2">Supplier</th>
+                      <th className="pb-2">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {incomingOrders.map((order) => (
+                      <tr 
+                        key={order.id}
+                        className="border-b last:border-b-0 text-gray-700 cursor-pointer hover:bg-gray-50 transition-colors"
+                        onClick={() => navigate(`/orders/${order.id}`)}
+                        title="Click to view order details"
+                      >
+                        <td className="py-2">{order.order_number || `#${order.id}`}</td>
+                        <td className="py-2 truncate max-w-[120px]" title={order.cs_name}>
+                          {order.cs_name}
+                        </td>
+                        <td className="py-2">
+                          <span className={`text-xs px-2 py-1 rounded ${
+                            order.status === 'Completed' 
+                              ? 'bg-green-100 text-green-700'
+                              : order.status.includes('Partial')
+                              ? 'bg-blue-100 text-blue-700'
+                              : 'bg-yellow-100 text-yellow-700'
+                          }`}>
+                            {order.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
 
           {/* Outgoing Orders */}
           <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-            <div className="bg-[#363b4c] text-white px-4 py-3">
+            <div 
+              className="bg-[#363b4c] text-white px-4 py-3 cursor-pointer hover:bg-[#4a5063] transition-colors"
+              onClick={() => navigate(`/orders/search?type=outgoing&product_ids=${productId}`)}
+              title="Click to view all outgoing orders for this product"
+            >
               <h3 className="font-semibold">Outgoing Orders</h3>
             </div>
             <div className="p-4">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-gray-600 border-b">
-                    <th className="pb-2">Order #</th>
-                    <th className="pb-2">Customer</th>
-                    <th className="pb-2">Qty</th>
-                    <th className="pb-2">Ship Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="border-b text-gray-700">
-                    <td className="py-2">ORD-5678</td>
-                    <td className="py-2">ABC Corp</td>
-                    <td className="py-2">25</td>
-                    <td className="py-2">Mar 10</td>
-                  </tr>
-                  <tr className="text-gray-700">
-                    <td className="py-2">ORD-5679</td>
-                    <td className="py-2">XYZ Inc</td>
-                    <td className="py-2">15</td>
-                    <td className="py-2">Mar 12</td>
-                  </tr>
-                </tbody>
-              </table>
+              {outgoingOrders.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-4">No outgoing orders</p>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-gray-600 border-b">
+                      <th className="pb-2">Order #</th>
+                      <th className="pb-2">Customer</th>
+                      <th className="pb-2">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {outgoingOrders.map((order) => (
+                      <tr 
+                        key={order.id}
+                        className="border-b last:border-b-0 text-gray-700 cursor-pointer hover:bg-gray-50 transition-colors"
+                        onClick={() => navigate(`/orders/${order.id}`)}
+                        title="Click to view order details"
+                      >
+                        <td className="py-2">{order.order_number || `#${order.id}`}</td>
+                        <td className="py-2 truncate max-w-[120px]" title={order.cs_name}>
+                          {order.cs_name}
+                        </td>
+                        <td className="py-2">
+                          <span className={`text-xs px-2 py-1 rounded ${
+                            order.status === 'Completed' 
+                              ? 'bg-green-100 text-green-700'
+                              : order.status.includes('Partial')
+                              ? 'bg-blue-100 text-blue-700'
+                              : 'bg-yellow-100 text-yellow-700'
+                          }`}>
+                            {order.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
 
