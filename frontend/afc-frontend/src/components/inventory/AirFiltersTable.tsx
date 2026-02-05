@@ -50,6 +50,9 @@ export default function AirFiltersTable() {
   });
 
 
+  /* ===================== DIMENSION FILTER TOGGLE ===================== */
+  const [showDimensionFilters, setShowDimensionFilters] = useState(false);
+
   /* ===================== EDIT MODAL ===================== */
   const [openEdit, setOpenEdit] = useState(false);
   const [editRow, setEditRow] = useState<EditFormState | null>(null);
@@ -201,41 +204,63 @@ export default function AirFiltersTable() {
 
           <th className="pr-2 pb-2 w-1/10">
             <div className="flex flex-col items-center gap-1 justify-center">
-              <div>
-                <input
-                  type="number"
-                  placeholder="H"
-                  className="input input-bordered input-xs w-14 text-center"
-                  value={filters.filterHeight}
-                  onChange={(e) => {
-                    setPage(1);
-                    setFilter("filterHeight", e.target.value ? Number(e.target.value) : "");
-                  }}
-                />
-                <span className="text-gray-400 text-xs mx-1">x</span>
-            
-                <input
-                type="number"
-                placeholder="W"
-                className="input input-bordered input-xs w-14 text-center"
-                value={filters.filterWidth}
-                onChange={(e) => {
-                  setPage(1);
-                  setFilter("filterWidth", e.target.value ? Number(e.target.value) : "");
-                }}
-              />
-              </div>
+              {!showDimensionFilters ? (
+                <button
+                  className="btn btn-xs btn-outline btn-ghost"
+                  onClick={() => setShowDimensionFilters(true)}
+                >
+                  Filter Dimensions
+                </button>
+              ) : (
+                <>
+                  <div>
+                    <input
+                      type="number"
+                      placeholder="H"
+                      className="input input-bordered input-xs w-14 text-center"
+                      value={filters.filterHeight}
+                      onChange={(e) => {
+                        setPage(1);
+                        setFilter("filterHeight", e.target.value ? Number(e.target.value) : "");
+                      }}
+                    />
+                    <span className="text-gray-400 text-xs mx-1">x</span>
+                
+                    <input
+                    type="number"
+                    placeholder="W"
+                    className="input input-bordered input-xs w-14 text-center"
+                    value={filters.filterWidth}
+                    onChange={(e) => {
+                      setPage(1);
+                      setFilter("filterWidth", e.target.value ? Number(e.target.value) : "");
+                    }}
+                  />
+                  </div>
 
-              <input
-                type="number"
-                placeholder="D"
-                className="input input-bordered input-xs w-14 text-center self-center"
-                value={filters.filterDepth}
-                onChange={(e) => {
-                  setPage(1);
-                  setFilter("filterDepth", e.target.value ? Number(e.target.value) : "");
-                }}
-              />
+                  <input
+                    type="number"
+                    placeholder="D"
+                    className="input input-bordered input-xs w-14 text-center self-center"
+                    value={filters.filterDepth}
+                    onChange={(e) => {
+                      setPage(1);
+                      setFilter("filterDepth", e.target.value ? Number(e.target.value) : "");
+                    }}
+                  />
+                  <button
+                    className="btn btn-xs btn-ghost"
+                    onClick={() => {
+                      setShowDimensionFilters(false);
+                      setFilter("filterHeight", "");
+                      setFilter("filterWidth", "");
+                      setFilter("filterDepth", "");
+                    }}
+                  >
+                    ✕
+                  </button>
+                </>
+              )}
             </div>
           </th>
 
@@ -251,12 +276,12 @@ export default function AirFiltersTable() {
             />
           </th>
 
-          <th className="flex justify-between items-center bg-blue-200 py-8 px-2 border-t-2 border-x-2 border-blue-300">
-              <span className="font-medium text-blue-500">On Hand</span>
-              <span className="font-medium text-blue-500">Ordered</span>
-              <span className="font-medium text-blue-500">Reserved</span>
-              <span className="font-medium text-blue-500">Available</span>
-              <span className="font-medium text-blue-500">Backordered</span>
+          <th className="flex justify-between items-center bg-blue-50 py-8 px-2 border-2 border-blue-400 rounded-lg shadow-sm">
+              <span className="font-semibold text-blue-600">On Hand</span>
+              <span className="font-semibold text-blue-600">Ordered</span>
+              <span className="font-semibold text-blue-600">Reserved</span>
+              <span className="font-semibold text-blue-600">Available</span>
+              <span className="font-semibold text-blue-600">Backordered</span>
           </th>
 
         </tr>
@@ -275,7 +300,7 @@ export default function AirFiltersTable() {
               {row.height} x {row.width} x {row.depth}
             </td>
             <td className="py-3 px-2">{row.merv_rating}</td>
-            <td className="py-3 px-2 font-medium text-center  bg-blue-100">
+            <td className="py-3 px-2 font-medium text-center bg-blue-50 border-2 border-blue-400 rounded-lg shadow-sm">
               <div className="flex justify-between items-center gap-1">
                 <span className="py-3 px-2 font-medium text-center">{row.on_hand}</span>
                 <span className="py-3 px-2 font-medium text-center">{row.ordered}</span>
