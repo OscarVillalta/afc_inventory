@@ -1,5 +1,5 @@
 from pprint import pp
-from flask import g, jsonify, Blueprint, request
+from flask import g, jsonify, Blueprint
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from database.models import Product, ProductCategory, AirFilter, MiscItem, Quantity, Supplier
@@ -30,10 +30,7 @@ def get_products():
     response = []
     for p in results:
         category = p.category.name if p.category else "Unknown"
-        
-        # Get effective quantity (from parent if applicable)
-        effective_qty = p.get_effective_quantity()
-        quantity = effective_qty.to_dict() if effective_qty else {}
+        quantity = p.quantity.to_dict() if p.quantity else {}
 
         # --- Determine which subtable applies ---
         if p.air_filter:
@@ -49,7 +46,6 @@ def get_products():
             "id": p.id,
             "category": category,
             "reference_id": p.reference_id,
-            "parent_product_id": p.parent_product_id,
             "details": details,
             "quantity": quantity
         })
@@ -79,10 +75,7 @@ def get_product(id):
         return jsonify({"error": "Product not found"}), 404
 
     category = product.category.name if product.category else "Unknown"
-    
-    # Get effective quantity (from parent if applicable)
-    effective_qty = product.get_effective_quantity()
-    quantity = effective_qty.to_dict() if effective_qty else {}
+    quantity = product.quantity.to_dict() if product.quantity else {}
 
     if product.air_filter:
         details = product.air_filter.to_dict()
@@ -97,7 +90,6 @@ def get_product(id):
         "id": product.id,
         "category": category,
         "reference_id": product.reference_id,
-        "parent_product_id": product.parent_product_id,
         "details": details,
         "quantity": quantity
     }), 200
@@ -123,59 +115,6 @@ def archive_product(id):
 @product_bp.route("/products/<int:id>", methods=["DELETE"])
 def delete_product(id):
     return jsonify({"error": "Products cannot be deleted. Archive instead."}), 409
-
-
-@product_bp.route("/products/<int:id>/parent", methods=["PATCH"])
-def update_product_parent(id):
-    """Update the parent_product_id of a product"""
-    db = g.db
-    product = db.get(Product, id)
-    
-    if not product:
-        return jsonify({"error": "Product not found"}), 404
-    
-    data = request.get_json() or {}
-    parent_product_id = data.get("parent_product_id")
-    
-    # Validate parent product if provided
-    if parent_product_id is not None:
-        if parent_product_id == id:
-            return jsonify({"error": "Product cannot be its own parent"}), 400
-            
-        parent_product = db.get(Product, parent_product_id)
-        if not parent_product:
-            return jsonify({"error": "Invalid parent product ID"}), 400
-            
-        # Ensure parent has its own quantity (not a child product)
-        if parent_product.parent_product_id:
-            return jsonify({"error": "Parent product cannot itself be a child product"}), 400
-        
-        # Check if this would create a circular reference
-        # (if any child of this product is the proposed parent)
-        if product.child_products:
-            for child in product.child_products:
-                if child.id == parent_product_id:
-                    return jsonify({"error": "Circular reference detected"}), 400
-    
-    # Update the parent_product_id
-    old_parent = product.parent_product_id
-    product.parent_product_id = parent_product_id
-    
-    # If changing from standalone to child, we should keep the quantity but it won't be used
-    # If changing from child to standalone, create a quantity if it doesn't exist
-    if old_parent is not None and parent_product_id is None:
-        # Becoming standalone - ensure it has a quantity
-        if not product.quantity:
-            qty = Quantity(product_id=product.id, on_hand=0, reserved=0, ordered=0, location=0)
-            db.add(qty)
-    
-    db.commit()
-    
-    return jsonify({
-        "message": "Product parent updated successfully",
-        "product_id": product.id,
-        "parent_product_id": product.parent_product_id
-    }), 200
 
 # =====================================================
 # 🔹 GET all product names (for searches and such)

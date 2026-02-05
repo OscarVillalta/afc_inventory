@@ -1,6 +1,6 @@
 from flask import abort, g, jsonify, request, Blueprint
 from sqlalchemy import select, func
-from database.models import Quantity, Transaction, Product, TransactionState, OrderType, Order, OrderItem, AirFilter
+from database.models import Quantity, Transaction, Product, ChildProduct, TransactionState, OrderType, Order, OrderItem, AirFilter
 from datetime import datetime, timezone
 from app.api.Schemas.transaction_schema import TransactionSchema
 
@@ -139,18 +139,35 @@ def create_transaction():
     db = g.db
     data = request.get_json() or {}
 
-    required_fields = ["product_id", "quantity_delta", "reason"]
+    # Either product_id or child_product_id must be provided
+    if "product_id" not in data and "child_product_id" not in data:
+        return jsonify({"error": "Either product_id or child_product_id is required"}), 400
+    
+    if "product_id" in data and "child_product_id" in data:
+        return jsonify({"error": "Cannot specify both product_id and child_product_id"}), 400
+
+    required_fields = ["quantity_delta", "reason"]
     for field in required_fields:
         if field not in data:
             return jsonify({"error": f"{field} is required"}), 400
 
-    product = db.get(Product, data["product_id"])
-    if not product:
-        return jsonify({"error": "Product not found"}), 404
+    # Get the product or child_product and its quantity
+    product = None
+    child_product = None
+    qty_record = None
     
-    qty_record = product.get_effective_quantity()
-    if not qty_record:
-        return jsonify({"error": "Quantity record not found for product or its parent"}), 404
+    if "product_id" in data:
+        product = db.get(Product, data["product_id"])
+        if not product or not product.quantity:
+            return jsonify({"error": "Product or quantity record not found"}), 404
+        qty_record = product.quantity
+    else:
+        child_product = db.get(ChildProduct, data["child_product_id"])
+        if not child_product:
+            return jsonify({"error": "Child product not found"}), 404
+        qty_record = child_product.quantity
+        if not qty_record:
+            return jsonify({"error": "Parent product's quantity record not found"}), 404
 
     order = None
     order_item = None
@@ -183,7 +200,8 @@ def create_transaction():
     # Create PENDING transaction
     # ===============================
     txn = Transaction(
-        product_id=product.id,
+        product_id=product.id if product else None,
+        child_product_id=child_product.id if child_product else None,
         order_id=order.id if order else None,
         order_item_id=order_item.id if order_item else None,
         quantity_delta=qty_delta,
@@ -237,8 +255,8 @@ def commit_transaction(txn_id):
 
 
         if txn.quantity_delta < 0:  # outgoing
-            product = db.get(Product, txn.product_id)
-            qty_record = product.get_effective_quantity()
+            # Get quantity from the appropriate source
+            qty_record = txn._get_quantity_record()
             qty = abs(txn.quantity_delta)
 
             if qty > qty_record.on_hand:

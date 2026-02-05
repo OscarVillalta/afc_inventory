@@ -49,46 +49,21 @@ def create_air_filter():
     db.add(new_filter)
     db.flush()
 
-    # 2️⃣ Create Product record with optional parent
-    parent_product_id = data.get("parent_product_id")
-    
-    # Validate parent product if provided
-    if parent_product_id:
-        parent_product = db.get(Product, parent_product_id)
-        if not parent_product:
-            return jsonify({"error": "Invalid parent product ID"}), 400
-        # Ensure parent has its own quantity (not a child product)
-        if parent_product.parent_product_id:
-            return jsonify({"error": "Parent product cannot itself be a child product"}), 400
-    
-    product = Product(
-        category_id=ProductCategory_id, 
-        reference_id=new_filter.id,
-        parent_product_id=parent_product_id
-    )
+    product = Product(category_id=ProductCategory_id, reference_id=new_filter.id)
     db.add(product)
     db.flush()
 
-    # 3️⃣ Create Quantity record only if no parent (parent products share quantity)
-    if not parent_product_id:
-        qty = Quantity(product_id=product.id, on_hand=0, reserved=0, ordered=0, location=0)
-        db.add(qty)
-    
+    # 3️⃣ Create Quantity record
+    qty = Quantity(product_id=product.id, on_hand=0, reserved=0, ordered=0, location=0)
+    db.add(qty)
     db.commit()
 
-    response = {
+    return jsonify({
         "message": "Air Filter created successfully",
         "air_filter": new_filter.to_dict(include_relationships=True),
         "product_id": product.id,
-    }
-    
-    if not parent_product_id:
-        response["quantity_id"] = qty.id
-    else:
-        response["parent_product_id"] = parent_product_id
-        response["message"] = "Air Filter created successfully (sharing quantity with parent product)"
-    
-    return jsonify(response), 201
+        "quantity_id": qty.id
+    }), 201
 
 
 # --- PATCH (partial update) ---
@@ -170,9 +145,6 @@ def search_air_filters():
     offset = (page - 1) * limit
 
     # --- Base Query ---
-    # We need to get the effective quantity which might be from parent product
-    from sqlalchemy import case
-    
     query = (
         select(
             AirFilter.id,
@@ -182,7 +154,6 @@ def search_air_filters():
             AirFilter.width,
             AirFilter.depth,
             Product.id.label("product_id"),
-            Product.parent_product_id,
             Supplier.name.label("supplier_name"),
             AirFilterCategory.name.label("filter_category"),
 
@@ -198,10 +169,7 @@ def search_air_filters():
         .join(Supplier, AirFilter.supplier_id == Supplier.id)
         .join(AirFilterCategory, AirFilter.category_id == AirFilterCategory.id)
         .join(Product, and_(Product.category_id == 1, Product.reference_id == AirFilter.id))
-        .outerjoin(Quantity, Quantity.product_id == case(
-            (Product.parent_product_id.isnot(None), Product.parent_product_id),
-            else_=Product.id
-        ))
+        .join(Quantity, Quantity.product_id == Product.id)
         .distinct(AirFilter.id)
     )
 

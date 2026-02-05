@@ -56,46 +56,23 @@ def create_misc_item():
     db.add(misc_item)
     db.flush()
 
-    # Create Product record with optional parent
-    parent_product_id = data.get("parent_product_id")
-    
-    # Validate parent product if provided
-    if parent_product_id:
-        parent_product = db.get(Product, parent_product_id)
-        if not parent_product:
-            return jsonify({"error": "Invalid parent product ID"}), 400
-        # Ensure parent has its own quantity (not a child product)
-        if parent_product.parent_product_id:
-            return jsonify({"error": "Parent product cannot itself be a child product"}), 400
-
     new_product = Product(
         category_id=product_category,
-        reference_id=misc_item.id,
-        parent_product_id=parent_product_id
+        reference_id=misc_item.id
     )
     db.add(new_product)
     db.flush()
 
-    # Create Quantity record only if no parent (parent products share quantity)
-    if not parent_product_id:
-        qty = Quantity(product_id=new_product.id, on_hand=0, reserved=0, ordered=0, location=0)
-        db.add(qty)
-    
+    qty = Quantity(product_id=new_product.id, on_hand=0, reserved=0, ordered=0, location=0)
+    db.add(qty)
     db.commit()
 
-    response = {
+    return jsonify({
         "message": "Misc item created successfully.",
         "misc_item": misc_schema.dump(misc_item),
         "product_id": new_product.id,
-    }
-    
-    if not parent_product_id:
-        response["quantity_id"] = qty.id
-    else:
-        response["parent_product_id"] = parent_product_id
-        response["message"] = "Misc item created successfully (sharing quantity with parent product)"
-    
-    return jsonify(response), 201
+        "quantity_id": qty.id
+    }), 201
 
 
 # =====================================================
@@ -161,16 +138,12 @@ def search_misc_items():
     offset = (page - 1) * limit
 
     # --- Base Query ---
-    # Use outerjoin and case to get quantity from parent if it exists
-    from sqlalchemy import case
-    
     query = (
         select(
             MiscItem.id,
             MiscItem.name,
             MiscItem.description,
             Product.id.label("product_id"),
-            Product.parent_product_id,
             Supplier.name.label("supplier_name"),
 
             Quantity.on_hand,
@@ -182,10 +155,7 @@ def search_misc_items():
         )
         .join(Supplier, MiscItem.supplier_id == Supplier.id)
         .join(Product, Product.reference_id == MiscItem.id)
-        .outerjoin(Quantity, Quantity.product_id == case(
-            (Product.parent_product_id.isnot(None), Product.parent_product_id),
-            else_=Product.id
-        ))
+        .join(Quantity, Quantity.product_id == Product.id)
         .where(Product.category_id == product_category)
         .distinct(MiscItem.id)
     )

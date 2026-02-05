@@ -148,6 +148,15 @@ class AirFilter(Base, SerializerMixin):
         viewonly=True,
     )
 
+    child_product: Mapped[Optional["ChildProduct"]] = relationship(
+        "ChildProduct",
+        primaryjoin=lambda: ChildProduct.reference_id == foreign(AirFilter.id),
+        foreign_keys=lambda: [ChildProduct.reference_id],
+        back_populates="air_filter",
+        uselist=False,
+        viewonly=True,
+    )
+
 
 class MiscItem(Base, SerializerMixin):
     __tablename__ = "misc_items"
@@ -168,6 +177,15 @@ class MiscItem(Base, SerializerMixin):
         viewonly=True,
     )
 
+    child_product: Mapped[Optional["ChildProduct"]] = relationship(
+        "ChildProduct",
+        primaryjoin=lambda: ChildProduct.reference_id == foreign(MiscItem.id),
+        foreign_keys=lambda: [ChildProduct.reference_id],
+        back_populates="misc_item",
+        uselist=False,
+        viewonly=True,
+    )
+
 
 # =====================================================
 # 🔹 Product (Catalog Root w/ Soft Delete)
@@ -179,24 +197,10 @@ class Product(Base, SerializerMixin):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     category_id: Mapped[int] = mapped_column(ForeignKey("product_categories.id"), nullable=False)
     reference_id: Mapped[int] = mapped_column(Integer, nullable=False)
-    parent_product_id: Mapped[Optional[int]] = mapped_column(ForeignKey("products.id"), nullable=True)
 
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     category: Mapped["ProductCategory"] = relationship("ProductCategory", back_populates="products")
-    
-    # Self-referential relationship for parent-child products
-    parent_product: Mapped[Optional["Product"]] = relationship(
-        "Product",
-        remote_side="Product.id",
-        back_populates="child_products",
-        foreign_keys=[parent_product_id]
-    )
-    child_products: Mapped[List["Product"]] = relationship(
-        "Product",
-        back_populates="parent_product",
-        foreign_keys=[parent_product_id]
-    )
 
     air_filter: Mapped[Optional["AirFilter"]] = relationship(
         "AirFilter",
@@ -234,15 +238,64 @@ class Product(Base, SerializerMixin):
         passive_deletes=True,
     )
 
-    def get_effective_quantity(self) -> Optional["Quantity"]:
-        """
-        Returns the quantity record to use for this product.
-        If this product has a parent_product_id, returns the parent's quantity.
-        Otherwise, returns this product's own quantity.
-        """
-        if self.parent_product_id and self.parent_product:
-            return self.parent_product.quantity
-        return self.quantity
+    child_products: Mapped[List["ChildProduct"]] = relationship(
+        "ChildProduct",
+        back_populates="parent_product",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
+
+
+# =====================================================
+# 🔹 ChildProduct (Uses Parent's Quantity)
+# =====================================================
+
+class ChildProduct(Base, SerializerMixin):
+    __tablename__ = "child_products"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    category_id: Mapped[int] = mapped_column(ForeignKey("product_categories.id"), nullable=False)
+    reference_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    parent_product_id: Mapped[int] = mapped_column(ForeignKey("products.id", ondelete="CASCADE"), nullable=False)
+
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    category: Mapped["ProductCategory"] = relationship("ProductCategory")
+    parent_product: Mapped["Product"] = relationship("Product", back_populates="child_products", passive_deletes=True)
+
+    air_filter: Mapped[Optional["AirFilter"]] = relationship(
+        "AirFilter",
+        primaryjoin=lambda: ChildProduct.reference_id == foreign(AirFilter.id),
+        foreign_keys=lambda: [ChildProduct.reference_id],
+        back_populates="child_product",
+        uselist=False,
+    )
+
+    misc_item: Mapped[Optional["MiscItem"]] = relationship(
+        "MiscItem",
+        primaryjoin=lambda: ChildProduct.reference_id == foreign(MiscItem.id),
+        foreign_keys=lambda: [ChildProduct.reference_id],
+        back_populates="child_product",
+        uselist=False,
+    )
+
+    transactions: Mapped[List["Transaction"]] = relationship(
+        "Transaction",
+        back_populates="child_product",
+        passive_deletes=True,
+    )
+
+    order_items: Mapped[List["OrderItem"]] = relationship(
+        "OrderItem",
+        back_populates="child_product",
+        passive_deletes=True,
+    )
+
+    @property
+    def quantity(self) -> Optional["Quantity"]:
+        """Returns the parent product's quantity"""
+        return self.parent_product.quantity if self.parent_product else None
 
 
 # =====================================================
@@ -378,6 +431,7 @@ class OrderItem(Base, SerializerMixin):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     order_id: Mapped[int] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"), nullable=False)
     product_id: Mapped[Optional[int]] = mapped_column(ForeignKey("products.id"), nullable=True)
+    child_product_id: Mapped[Optional[int]] = mapped_column(ForeignKey("child_products.id"), nullable=True)
 
     is_separator: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     quantity_ordered: Mapped[int] = mapped_column(default=0, nullable=False)
@@ -389,6 +443,7 @@ class OrderItem(Base, SerializerMixin):
 
     order: Mapped["Order"] = relationship("Order", back_populates="items")
     product: Mapped[Optional["Product"]] = relationship("Product", back_populates="order_items")
+    child_product: Mapped[Optional["ChildProduct"]] = relationship("ChildProduct", back_populates="order_items")
 
     transactions: Mapped[List["Transaction"]] = relationship(
         "Transaction",
@@ -418,7 +473,8 @@ class Transaction(Base, SerializerMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
-    product_id: Mapped[int] = mapped_column(ForeignKey("products.id", ondelete="RESTRICT"), nullable=False)
+    product_id: Mapped[Optional[int]] = mapped_column(ForeignKey("products.id", ondelete="RESTRICT"), nullable=True)
+    child_product_id: Mapped[Optional[int]] = mapped_column(ForeignKey("child_products.id", ondelete="RESTRICT"), nullable=True)
     order_id: Mapped[Optional[int]] = mapped_column(ForeignKey("orders.id", ondelete="SET NULL"))
     order_item_id: Mapped[Optional[int]] = mapped_column(ForeignKey("order_items.id", ondelete="SET NULL"))
 
@@ -430,22 +486,28 @@ class Transaction(Base, SerializerMixin):
 
     order: Mapped[Optional["Order"]] = relationship("Order", back_populates="transactions", passive_deletes=True)
     order_item: Mapped[Optional["OrderItem"]] = relationship("OrderItem", back_populates="transactions", passive_deletes=True)
-    product: Mapped["Product"] = relationship("Product", back_populates="transactions", passive_deletes=True)
+    product: Mapped[Optional["Product"]] = relationship("Product", back_populates="transactions", passive_deletes=True)
+    child_product: Mapped[Optional["ChildProduct"]] = relationship("ChildProduct", back_populates="transactions", passive_deletes=True)
 
     # ================================
     #  Inventory Logic
     # ================================
 
+    def _get_quantity_record(self) -> Optional["Quantity"]:
+        """Helper to get the appropriate quantity record (parent's for child products)"""
+        if self.child_product:
+            return self.child_product.quantity
+        elif self.product:
+            return self.product.quantity
+        return None
+
     def commit(self):
         if self.state != TransactionState.PENDING.value:
             return
 
-        if not self.product:
-            raise ValueError("Product record missing.")
-
-        qty_record = self.product.get_effective_quantity()
+        qty_record = self._get_quantity_record()
         if not qty_record:
-            raise ValueError("Quantity record missing for product or its parent.")
+            raise ValueError("Quantity record missing.")
 
         # Apply physical change
         qty_record.on_hand += self.quantity_delta
@@ -472,12 +534,9 @@ class Transaction(Base, SerializerMixin):
         if self.state != TransactionState.COMMITTED.value:
             raise ValueError("Only committed transactions can be rolled back.")
 
-        if not self.product:
-            raise ValueError("Product record missing.")
-
-        qty_record = self.product.get_effective_quantity()
+        qty_record = self._get_quantity_record()
         if not qty_record:
-            raise ValueError("Quantity record missing for product or its parent.")
+            raise ValueError("Quantity record missing.")
 
         reversed_delta = -self.quantity_delta  # opposite sign
         rollback_requires_stock = reversed_delta < 0  # removing stock
@@ -494,6 +553,7 @@ class Transaction(Base, SerializerMixin):
 
         reversed_txn = Transaction(
             product_id=self.product_id,
+            child_product_id=self.child_product_id,
             order_id=self.order_id,
             order_item_id=self.order_item_id,
             quantity_delta=reversed_delta,
@@ -522,7 +582,7 @@ class Transaction(Base, SerializerMixin):
     def cancel(self):
         if self.state == TransactionState.PENDING.value:
 
-            qty_record = self.product.get_effective_quantity()
+            qty_record = self._get_quantity_record()
             if qty_record:
                 if self.quantity_delta > 0:
                     qty_record.ordered -= abs(self.quantity_delta)
@@ -541,5 +601,6 @@ class Transaction(Base, SerializerMixin):
 Index("ix_transactions_order_id", Transaction.order_id)
 Index("ix_transactions_order_item_id", Transaction.order_item_id)
 Index("ix_transactions_product_id", Transaction.product_id)
+Index("ix_transactions_child_product_id", Transaction.child_product_id)
 Index("ix_transactions_state", Transaction.state)
 Index("ix_transactions_created_at", Transaction.created_at)

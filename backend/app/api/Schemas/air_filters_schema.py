@@ -9,5 +9,4 @@ class AirFilterSchema(Schema):
     height = fields.Int(load_default=0)
     width = fields.Int(load_default=0)
     depth = fields.Int(load_default=0)
-    parent_product_id = fields.Int(allow_none=True, load_default=None)
 
