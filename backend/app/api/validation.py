@@ -61,11 +61,12 @@ def validate_positive_number(value: Any, field_name: str = "value", allow_zero: 
     except (TypeError, ValueError):
         raise ValidationError(f"{field_name} must be a number")
     
-    min_value = 0.0 if allow_zero else 0.0
-    if allow_zero and float_value < min_value:
-        raise ValidationError(f"{field_name} must be >= {min_value}")
-    elif not allow_zero and float_value <= min_value:
-        raise ValidationError(f"{field_name} must be > {min_value}")
+    if allow_zero:
+        if float_value < 0.0:
+            raise ValidationError(f"{field_name} must be >= 0")
+    else:
+        if float_value <= 0.0:
+            raise ValidationError(f"{field_name} must be > 0")
     
     return float_value
 
