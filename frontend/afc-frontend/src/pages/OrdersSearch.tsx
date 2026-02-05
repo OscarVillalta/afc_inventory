@@ -79,6 +79,7 @@ export default function OrdersSearchPage() {
         handleSearch(1);
       }, 100);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   const handleSearch = async (page = 1) => {
