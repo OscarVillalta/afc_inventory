@@ -170,6 +170,16 @@ def search_air_filters():
     offset = (page - 1) * limit
 
     # --- Base Query ---
+    # We need to get the effective quantity which might be from parent product
+    # First, create a subquery to get the effective product_id for quantity lookup
+    from sqlalchemy import case, func as sql_func
+    
+    # Subquery to get the quantity product_id (either self or parent)
+    effective_product_id = case(
+        (Product.parent_product_id.isnot(None), Product.parent_product_id),
+        else_=Product.id
+    ).label('effective_product_id')
+    
     query = (
         select(
             AirFilter.id,
@@ -179,6 +189,7 @@ def search_air_filters():
             AirFilter.width,
             AirFilter.depth,
             Product.id.label("product_id"),
+            Product.parent_product_id,
             Supplier.name.label("supplier_name"),
             AirFilterCategory.name.label("filter_category"),
 
@@ -194,7 +205,10 @@ def search_air_filters():
         .join(Supplier, AirFilter.supplier_id == Supplier.id)
         .join(AirFilterCategory, AirFilter.category_id == AirFilterCategory.id)
         .join(Product, and_(Product.category_id == 1, Product.reference_id == AirFilter.id))
-        .join(Quantity, Quantity.product_id == Product.id)
+        .outerjoin(Quantity, Quantity.product_id == case(
+            (Product.parent_product_id.isnot(None), Product.parent_product_id),
+            else_=Product.id
+        ))
         .distinct(AirFilter.id)
     )
 

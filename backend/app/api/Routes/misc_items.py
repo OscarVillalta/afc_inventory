@@ -161,12 +161,16 @@ def search_misc_items():
     offset = (page - 1) * limit
 
     # --- Base Query ---
+    # Use outerjoin and case to get quantity from parent if it exists
+    from sqlalchemy import case
+    
     query = (
         select(
             MiscItem.id,
             MiscItem.name,
             MiscItem.description,
             Product.id.label("product_id"),
+            Product.parent_product_id,
             Supplier.name.label("supplier_name"),
 
             Quantity.on_hand,
@@ -178,7 +182,10 @@ def search_misc_items():
         )
         .join(Supplier, MiscItem.supplier_id == Supplier.id)
         .join(Product, Product.reference_id == MiscItem.id)
-        .join(Quantity, Quantity.product_id == Product.id)
+        .outerjoin(Quantity, Quantity.product_id == case(
+            (Product.parent_product_id.isnot(None), Product.parent_product_id),
+            else_=Product.id
+        ))
         .where(Product.category_id == product_category)
         .distinct(MiscItem.id)
     )
