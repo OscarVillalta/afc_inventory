@@ -195,8 +195,8 @@ def allocate_remaining_order_items(item_id):
     if not order:
         return jsonify({"error": "Order not associated"}), 400
     
-    sign = 1 if order.type == "supplier" else -1
-    reason = "receive" if order.type == "supplier" else "shipment"
+    sign = 1 if order.type == "incoming" else -1
+    reason = "receive" if order.type == "incoming" else "shipment"
     body = request.get_json(silent=True) or {}
     note = body.get("note")
     
@@ -219,8 +219,8 @@ def allocate_remaining_order_items(item_id):
     
     if qty_to_allocate == 0:
         return jsonify({
-            "error": "Order item is already fully allocated.",
-        }), 400
+            "message": "Order item is already fully allocated.",
+        }), 203
 
     # 🔹 Create pending transaction
     txn = Transaction(
@@ -233,8 +233,12 @@ def allocate_remaining_order_items(item_id):
         note=note or None
     )
 
-    db.add(txn)
-    order.update_status()
+    if order.type == "incoming":
+        item.product.quantity.ordered += qty_to_allocate
+    else:
+        item.product.quantity.reserved += qty_to_allocate
+
+    db.add(txn)  
     db.commit()
 
     return jsonify({
@@ -320,8 +324,8 @@ def commit_all_order_item_txns(item_id):
             txn.commit()
             committed += 1
 
-        order.update_status()
         db.commit()
+        order.update_status()
 
         return jsonify({
             "message": f"Committed {committed} pending transaction(s) for order item {item_id}.",

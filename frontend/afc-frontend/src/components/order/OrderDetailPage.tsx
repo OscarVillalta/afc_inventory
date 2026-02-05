@@ -199,7 +199,6 @@ export default function OrderDetailPage() {
     try {
       await Promise.all(
         nonSeparatorItems.map(item => {
-          const remaining = item.quantity_ordered - item.quantity_fulfilled;
           return allocateOrderItem(item.id);
         })
       );

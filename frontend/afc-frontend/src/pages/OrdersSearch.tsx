@@ -281,7 +281,7 @@ export default function OrdersSearchPage() {
                 {results.map((order) => (
                   <div
                     key={order.id}
-                    className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer p-5 border border-gray-100"
+                    className="bg-white rounded-lg shadow-sm hover:shadow-lg transition-shadow cursor-pointer p-5 border border-gray-100"
                     onClick={() => navigate(`/orders/${order.id}`)}
                   >
                     <div className="flex items-start justify-between">

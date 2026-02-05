@@ -306,13 +306,6 @@ class Order(Base, SerializerMixin):
     )
 
     def update_status(self):
-        """
-        Status is derived from items:
-        - No items OR all qty_fulfilled == 0 -> Pending
-        - All items fulfilled -> Completed
-        - Otherwise -> Partially Fulfilled
-        Note: Separator items are excluded from status calculation
-        """
         if not self.items:
             self.status = OrderStatus.PENDING.value
             self.completed_at = None
@@ -445,7 +438,7 @@ class Transaction(Base, SerializerMixin):
             item.quantity_fulfilled += abs(self.quantity_delta)
             item.quantity_fulfilled = max(0, min(item.quantity_fulfilled, item.quantity_ordered))
 
-            # Update order status directly (no sections now)
+            # Update order status directly
             if item.order:
                 item.order.update_status()
 

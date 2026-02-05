@@ -48,7 +48,7 @@ export default function Inventory() {
         </div>
 
         {/* CONTENT */}
-        <div className="mt-6">
+        <div className="mt-10">
           {tab === "filters" && <AirFiltersTable />}
           {tab === "misc" && <MiscItemsTable />}
         </div>

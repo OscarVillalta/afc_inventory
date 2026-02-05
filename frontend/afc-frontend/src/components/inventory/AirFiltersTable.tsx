@@ -201,22 +201,22 @@ export default function AirFiltersTable() {
             />
           </th>
 
-          <th className="pr-2 pb-2 w-1/8">
-            <div className="flex items-center gap-1">
-              <input
-                type="number"
-                placeholder="H"
-                className="input input-bordered input-xs w-14 text-center"
-                value={filters.filterHeight}
-                onChange={(e) => {
-                  setPage(1);
-                  setFilter("filterHeight", e.target.value ? Number(e.target.value) : "");
-                }}
-              />
-
-              <span className="text-gray-400 text-xs">×</span>
-
-              <input
+          <th className="pr-2 pb-2 w-1/10">
+            <div className="flex flex-col items-center gap-1 justify-center">
+              <div>
+                <input
+                  type="number"
+                  placeholder="H"
+                  className="input input-bordered input-xs w-14 text-center"
+                  value={filters.filterHeight}
+                  onChange={(e) => {
+                    setPage(1);
+                    setFilter("filterHeight", e.target.value ? Number(e.target.value) : "");
+                  }}
+                />
+                <span className="text-gray-400 text-xs mx-1">x</span>
+            
+                <input
                 type="number"
                 placeholder="W"
                 className="input input-bordered input-xs w-14 text-center"
@@ -226,13 +226,12 @@ export default function AirFiltersTable() {
                   setFilter("filterWidth", e.target.value ? Number(e.target.value) : "");
                 }}
               />
-
-              <span className="text-gray-400 text-xs">×</span>
+              </div>
 
               <input
                 type="number"
                 placeholder="D"
-                className="input input-bordered input-xs w-14 text-center"
+                className="input input-bordered input-xs w-14 text-center self-center"
                 value={filters.filterDepth}
                 onChange={(e) => {
                   setPage(1);
@@ -244,7 +243,7 @@ export default function AirFiltersTable() {
 
           <th className="pb-2 w-1/22">
             <input
-              className="input input-bordered input-xs self-start"
+              className="input input-bordered input-xs self-start text-center w-full"
               placeholder="MERV..."
               value={filters.filterMerv}
               onChange={(e) => {
@@ -267,19 +266,20 @@ export default function AirFiltersTable() {
               {row.height} x {row.width} x {row.depth}
             </td>
             <td className="py-3 px-2">{row.merv_rating}</td>
-            <td className="py-3 px-2">{row.on_hand}</td>
-            <td className="py-3 px-2">{row.ordered}</td>
-            <td className="py-3 px-2">{row.reserved}</td>
+            <td className="py-3 px-2 font-medium text-white text-center bg-[#262a39] rounded-l-xl">{row.on_hand}</td>
+            <td className="py-3 px-2 font-medium text-white text-center bg-[#262a39]">{row.ordered}</td>
+            <td className="py-3 px-2 font-medium text-white text-center bg-[#262a39]">{row.reserved}</td>
 
-            <td
-              className={`py-3 px-2 font-medium ${
-                row.available > 0 ? "text-green-600" : "text-gray-400"
-              }`}
-            >
-              {row.available}
+            <td className="py-3 px-2 text-center bg-[#262a39]"> {
+                row.available > 0 ? (
+                  <span className="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-600">{row.available}</span>
+                ) : ( 
+                  <span className="text-gray-400">{row.available}</span>
+                )
+              }
             </td>
 
-            <td className="py-3 px-2">
+            <td className="py-3 px-2 font-medium text-center bg-[#262a39] rounded-r-xl">
               {row.backordered > 0 ? (
                 <span className="px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-700 font-semibold">
                   {row.backordered}
