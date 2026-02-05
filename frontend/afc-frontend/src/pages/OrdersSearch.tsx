@@ -65,24 +65,24 @@ export default function OrdersSearchPage() {
     const productIdsParam = searchParams.get('product_ids');
     
     if (typeParam || productIdsParam) {
-      // Update filters from URL params
+      // Update filters from URL params and trigger search in one go
+      const updatedFilters: Record<string, string | number[]> = {};
+      
       if (typeParam) {
-        setFilter("filterType", typeParam);
+        updatedFilters.filterType = typeParam;
       }
       if (productIdsParam) {
         const productIds = productIdsParam.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
-        setFilter("selectedProducts", productIds);
+        updatedFilters.selectedProducts = productIds;
       }
       
-      // Automatically trigger search if URL params are present
-      setTimeout(() => {
-        handleSearch(1);
-      }, 100);
+      // Perform the search directly with the URL parameters
+      performSearch(1, updatedFilters);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  const handleSearch = async (page = 1) => {
+  const performSearch = async (page: number, additionalFilters: Record<string, string | number[]> = {}) => {
     setLoading(true);
     setSearched(true);
     setCurrentPage(page);
@@ -90,28 +90,39 @@ export default function OrdersSearchPage() {
     try {
       const apiFilters: Record<string, string> = {};
       
-      if (filters.searchId) apiFilters.order_number = filters.searchId;
-      if (filters.searchCustomer) apiFilters.customer_name = filters.searchCustomer;
-      if (filters.searchSupplier) apiFilters.supplier_name = filters.searchSupplier;
-      if (filters.filterType && filters.filterType !== "All") apiFilters.type = filters.filterType;
+      // Merge current filters with additional filters
+      const activeFilters = { ...filters, ...additionalFilters };
+      
+      if (activeFilters.searchId) apiFilters.order_number = activeFilters.searchId as string;
+      if (activeFilters.searchCustomer) apiFilters.customer_name = activeFilters.searchCustomer as string;
+      if (activeFilters.searchSupplier) apiFilters.supplier_name = activeFilters.searchSupplier as string;
+      if (activeFilters.filterType && activeFilters.filterType !== "All") apiFilters.type = activeFilters.filterType as string;
       
       // Date filters based on selected type
-      if (filters.dateFilterType === "created") {
-        if (filters.dateFrom) apiFilters.created_from = filters.dateFrom;
-        if (filters.dateTo) apiFilters.created_to = filters.dateTo;
+      if (activeFilters.dateFilterType === "created") {
+        if (activeFilters.dateFrom) apiFilters.created_from = activeFilters.dateFrom as string;
+        if (activeFilters.dateTo) apiFilters.created_to = activeFilters.dateTo as string;
       } else {
-        if (filters.dateFrom) apiFilters.completed_from = filters.dateFrom;
-        if (filters.dateTo) apiFilters.completed_to = filters.dateTo;
+        if (activeFilters.dateFrom) apiFilters.completed_from = activeFilters.dateFrom as string;
+        if (activeFilters.dateTo) apiFilters.completed_to = activeFilters.dateTo as string;
       }
       
       // Product filters
-      if (filters.selectedProducts.length > 0) {
-        apiFilters.product_ids = filters.selectedProducts.join(",");
+      const selectedProducts = activeFilters.selectedProducts as number[];
+      if (selectedProducts && selectedProducts.length > 0) {
+        apiFilters.product_ids = selectedProducts.join(",");
       }
       
       const response = await fetchOrders(page, pageSize, apiFilters);
       setResults(response.results || []);
       setTotalResults(response.total || 0);
+      
+      // Update the persisted filters if we used additional filters
+      if (Object.keys(additionalFilters).length > 0) {
+        Object.entries(additionalFilters).forEach(([key, value]) => {
+          setFilter(key as keyof typeof filters, value);
+        });
+      }
     } catch (error) {
       console.error("Search failed:", error);
       setResults([]);
@@ -119,6 +130,10 @@ export default function OrdersSearchPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSearch = async (page = 1) => {
+    await performSearch(page);
   };
 
   const handleClearSearch = () => {
