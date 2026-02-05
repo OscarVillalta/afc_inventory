@@ -1,98 +1,159 @@
 from flask import Blueprint, g, jsonify, request
 from sqlalchemy import select, func
+from sqlalchemy.exc import IntegrityError, DatabaseError
 from app.api.Schemas.order_item_schema import OrderItemSchema
 from database.models import OrderItem, Order, Product, Transaction, TransactionState, OrderType
 from marshmallow import ValidationError
+from typing import Tuple, Any
+
+from app.api.validation import (
+    validate_positive_integer,
+    validate_string,
+    ValidationError as CustomValidationError
+)
+from app.api.error_handling import (
+    handle_database_error,
+    handle_validation_error,
+    safe_commit,
+    ResourceNotFoundError,
+    InvalidInputError
+)
 
 order_item_bp = Blueprint("order_items", __name__)
 item_schema = OrderItemSchema()
 item_list_schema = OrderItemSchema(many=True)
 
-# 🔹 GET a single order item
+# GET a single order item
 @order_item_bp.route("/order_items/<int:item_id>", methods=["GET"])
-def get_order_item(item_id):
+def get_order_item(item_id: int) -> Tuple[Any, int]:
+    """
+    Retrieve a single order item by ID.
+    
+    Args:
+        item_id: The ID of the order item
+    
+    Returns:
+        JSON response with order item details
+    """
     db = g.db
-    item = db.get(OrderItem, item_id)
-    if not item:
-        return jsonify({"error": "Order item not found"}), 404
-
-    return jsonify(item_schema.dump(item)), 200
+    
+    try:
+        item_id = validate_positive_integer(item_id, "item_id")
+        item = db.get(OrderItem, item_id)
+        
+        if not item:
+            raise ResourceNotFoundError("Order item", item_id)
+        
+        return jsonify(item_schema.dump(item)), 200
+        
+    except ResourceNotFoundError as e:
+        return jsonify(e.to_dict()), e.status_code
+    except CustomValidationError as e:
+        return handle_validation_error(e)
+    except Exception as e:
+        return jsonify({"error": "Unexpected error", "details": str(e)}), 500
 
 @order_item_bp.route("/order_items", methods=["POST"])
-def create_order_item():
+def create_order_item() -> Tuple[Any, int]:
+    """
+    Create a new order item.
+    
+    Request Body:
+        order_id (int): ID of the parent order
+        product_id (int): ID of the product (not required for separators)
+        is_separator (bool): Whether this is a separator item
+        quantity_ordered (int): Quantity ordered
+        note (str): Optional note
+        position (int): Optional position in the order
+    
+    Returns:
+        JSON response with created order item
+    """
     db = g.db
     json_data = request.get_json() or {}
-
-    # ----------------------------
-    # 1️⃣ Validate via Marshmallow
-    # ----------------------------
-    try:
-        data = item_schema.load(json_data)
-    except ValidationError as err:
-        return jsonify(err.messages), 400
-
-    # ----------------------------
-    # 2️⃣ Business integrity checks
-    # ----------------------------
-    order = db.get(Order, data["order_id"])
-    if not order:
-        return jsonify({"error": "Order not found"}), 404
-
-    is_separator = data.get("is_separator", False)
     
-    # Separator items don't need a product
-    if is_separator:
-        if not data.get("note"):
-            return jsonify({"error": "Separator items must have a note/description"}), 400
-        product_id = None
-        quantity_ordered = 0
-    else:
-        product = db.get(Product, data["product_id"])
-        if not product:
-            return jsonify({"error": "Product not found"}), 404
-        product_id = product.id
-        quantity_ordered = data["quantity_ordered"]
-
-    # ----------------------------
-    # 3️⃣ Handle position
-    # ----------------------------
-    position = data.get("position")
-    if position is None:
-        # If no position specified, add at the end
-        max_position = db.query(func.max(OrderItem.position)).filter(
-            OrderItem.order_id == order.id
-        ).scalar() or -1
-        position = max_position + 1
-    else:
-        # If position is specified, shift existing items down
-        db.query(OrderItem).filter(
-            OrderItem.order_id == order.id,
-            OrderItem.position >= position
-        ).update(
-            {OrderItem.position: OrderItem.position + 1},
-            synchronize_session=False
+    try:
+        # Validate via Marshmallow
+        data = item_schema.load(json_data)
+        
+        # Business integrity checks
+        order = db.get(Order, data["order_id"])
+        if not order:
+            raise ResourceNotFoundError("Order", data["order_id"])
+        
+        is_separator = data.get("is_separator", False)
+        
+        # Separator items don't need a product
+        if is_separator:
+            if not data.get("note"):
+                raise InvalidInputError("Separator items must have a note/description")
+            product_id = None
+            quantity_ordered = 0
+        else:
+            if "product_id" not in data:
+                raise InvalidInputError("product_id is required for non-separator items")
+            
+            product = db.get(Product, data["product_id"])
+            if not product:
+                raise ResourceNotFoundError("Product", data["product_id"])
+            
+            product_id = product.id
+            quantity_ordered = validate_positive_integer(
+                data["quantity_ordered"], 
+                "quantity_ordered", 
+                allow_zero=True
+            )
+        
+        # Handle position
+        position = data.get("position")
+        if position is None:
+            # If no position specified, add at the end
+            max_position_result = db.execute(
+                select(func.max(OrderItem.position))
+                .where(OrderItem.order_id == order.id)
+            ).scalar()
+            position = (max_position_result or -1) + 1
+        else:
+            position = validate_positive_integer(position, "position", allow_zero=True)
+            # If position is specified, shift existing items down
+            # Use SQLAlchemy 2.0 style update
+            from sqlalchemy import update
+            db.execute(
+                update(OrderItem)
+                .where(OrderItem.order_id == order.id)
+                .where(OrderItem.position >= position)
+                .values(position=OrderItem.position + 1)
+            )
+        
+        # Create OrderItem
+        item = OrderItem(
+            order_id=order.id,
+            product_id=product_id,
+            is_separator=is_separator,
+            quantity_ordered=quantity_ordered,
+            quantity_fulfilled=0,
+            note=data.get("note"),
+            position=position,
         )
-
-    # ----------------------------
-    # 4️⃣ Create OrderItem
-    # ----------------------------
-    item = OrderItem(
-        order_id=order.id,
-        product_id=product_id,
-        is_separator=is_separator,
-        quantity_ordered=quantity_ordered,
-        quantity_fulfilled=0,
-        note=data.get("note"),
-        position=position,
-    )
-
-    db.add(item)
-    db.commit()
-
-    # ----------------------------
-    # 5️⃣ Return serialized result
-    # ----------------------------
-    return jsonify(item_schema.dump(item)), 201
+        
+        db.add(item)
+        safe_commit(db, "creating order item")
+        
+        return jsonify(item_schema.dump(item)), 201
+        
+    except ValidationError as err:
+        return jsonify({"error": "Validation failed", "details": err.messages}), 400
+    except (ResourceNotFoundError, InvalidInputError, CustomValidationError) as e:
+        return jsonify(e.to_dict()), e.status_code
+    except IntegrityError as e:
+        db.rollback()
+        return handle_database_error(e, "creating order item")
+    except DatabaseError as e:
+        db.rollback()
+        return handle_database_error(e, "creating order item")
+    except Exception as e:
+        db.rollback()
+        return jsonify({"error": "Unexpected error", "details": str(e)}), 500
 
 # 🔹 PATCH: Update general info (quantity/note)
 @order_item_bp.route("/order_items/<int:item_id>", methods=["PATCH"])
@@ -248,50 +309,76 @@ def allocate_remaining_order_items(item_id):
     }), 201
 
 @order_item_bp.route("/order_items/<int:item_id>/commit", methods=["PATCH"])
-def commit_single_order_item_txn(item_id):
-    db = g.db
-    item = db.get(OrderItem, item_id)
-    if not item:
-        return jsonify({"error": "Order item not found"}), 404
-
-    order = item.order
-    if not order:
-        return jsonify({"error": "Order not associated"}), 400
-
-    # 🔹 Extract txn_id if provided in the body
-    data = request.get_json(silent=True) or {}
-    txn_id = data.get("txn_id")
-
-    if not txn_id:
-        return jsonify({"error": "txn_id is required"}), 400
-
-    txn = db.get(Transaction, txn_id)
-    if not txn:
-        return jsonify({"error": "Transaction not found"}), 404
+def commit_single_order_item_txn(item_id: int) -> Tuple[Any, int]:
+    """
+    Commit a pending transaction for an order item.
     
-    if txn.order_item_id != item.id:
-        return jsonify({"error": "Transaction does not belong to this order item"}), 400
-
-    if txn.state != "pending":
-        return jsonify({"message": "Transaction already committed or cancelled"}), 200
- 
-
-    # 🔹 Perform the commit
+    Args:
+        item_id: The ID of the order item
+    
+    Request Body:
+        txn_id (int): The ID of the transaction to commit
+    
+    Returns:
+        JSON response with committed transaction details
+    """
+    db = g.db
+    
     try:
+        # Validate item_id
+        item_id = validate_positive_integer(item_id, "item_id")
+        
+        item = db.get(OrderItem, item_id)
+        if not item:
+            raise ResourceNotFoundError("Order item", item_id)
+        
+        order = item.order
+        if not order:
+            raise InvalidInputError("Order item is not associated with an order")
+        
+        # Extract txn_id from request body
+        data = request.get_json(silent=True) or {}
+        if "txn_id" not in data:
+            raise InvalidInputError("txn_id is required in request body")
+        
+        txn_id = validate_positive_integer(data["txn_id"], "txn_id")
+        
+        txn = db.get(Transaction, txn_id)
+        if not txn:
+            raise ResourceNotFoundError("Transaction", txn_id)
+        
+        if txn.order_item_id != item.id:
+            raise InvalidInputError("Transaction does not belong to this order item")
+        
+        if txn.state != "pending":
+            return jsonify({
+                "message": "Transaction already committed or cancelled",
+                "transaction": txn.to_dict()
+            }), 200
+        
+        # Perform the commit
         txn.commit()
         order.update_status()
-        db.commit()
-
+        safe_commit(db, "committing transaction")
+        
         return jsonify({
             "message": f"Transaction {txn.id} committed successfully for order item {item_id}.",
             "transaction": txn.to_dict(),
             "order_item": item.to_dict(),
             "order_status": order.status
         }), 200
-
+        
+    except (ResourceNotFoundError, InvalidInputError, CustomValidationError) as e:
+        return jsonify(e.to_dict()), e.status_code
     except ValueError as e:
         db.rollback()
         return jsonify({"error": f"Validation error: {str(e)}"}), 400
+    except IntegrityError as e:
+        db.rollback()
+        return handle_database_error(e, "committing transaction")
+    except DatabaseError as e:
+        db.rollback()
+        return handle_database_error(e, "committing transaction")
     except Exception as e:
         db.rollback()
         return jsonify({"error": f"Unexpected error: {str(e)}"}), 500

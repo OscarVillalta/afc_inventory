@@ -49,3 +49,14 @@ Thumbs.db
 dist/
 build/
 transactions-page.png
+
+# .NET / C#
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+*.cache
+*.user
+*.suo
+.vs/

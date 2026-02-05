@@ -1,4 +1,8 @@
-﻿using System;
+﻿// NOTE: This Worker class is for STANDALONE TESTING ONLY.
+// It is not used when running the web API.
+// To test the QB agent standalone, you can temporarily add this as a hosted service in Program.cs
+
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
@@ -16,7 +20,8 @@ public sealed class Worker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        Console.WriteLine("[Worker] AFC QB Agent started.");
+        Console.WriteLine("[Worker] AFC QB Agent Worker started (TESTING MODE).");
+        Console.WriteLine("[Worker] WARNING: This is for standalone testing only!");
 
         while (!stoppingToken.IsCancellationRequested)
         {
