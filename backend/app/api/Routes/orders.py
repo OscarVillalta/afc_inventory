@@ -1,97 +1,166 @@
 from flask import Blueprint, g, jsonify, request
 from sqlalchemy import select, func
 from sqlalchemy import and_, or_
+from sqlalchemy.exc import IntegrityError, DatabaseError
 from app.api.Schemas.order_schema import OrderSchema
 from database.models import Customer, Supplier, OrderType, OrderStatus, Transaction, TransactionState
 from database.models import Order, OrderItem, Product, AirFilter, MiscItem, Quantity
 from marshmallow import ValidationError
 from datetime import datetime, timedelta
-import os
+from typing import Optional, Dict, Any, List, Tuple
 import requests
+
+from app.config import Config
+from app.api.validation import (
+    validate_positive_integer,
+    validate_string,
+    validate_enum,
+    validate_pagination,
+    sanitize_search_string,
+    ValidationError as CustomValidationError
+)
+from app.api.error_handling import (
+    handle_database_error,
+    handle_validation_error,
+    handle_external_service_error,
+    safe_commit,
+    ResourceNotFoundError,
+    DuplicateResourceError,
+    ExternalServiceError
+)
 from app.api.qb_xml_parser import parse_qb_line_items, extract_qb_metadata
 
 order_bp = Blueprint("orders", __name__)
 order_schema = OrderSchema()
 order_list_schema = OrderSchema(many=True)
 
-# Product category ID for Misc Items (must match product_categories table)
-MISC_ITEM_CATEGORY_ID = 2
-
 # GET all orders (paginated, filterable)
 @order_bp.route("/orders", methods=["GET"])
-def get_orders():
+def get_orders() -> Tuple[Any, int]:
+    """
+    Retrieve all orders with pagination and optional filters.
+    
+    Query Parameters:
+        page (int): Page number (default: 1)
+        limit (int): Items per page (default: 25, max: 100)
+        type (str): Filter by order type ("incoming" | "outgoing")
+        status (str): Filter by order status
+        search (str): Search keyword in order_number
+    
+    Returns:
+        JSON response with paginated orders and metadata
+    """
     db = g.db
-    page = request.args.get("page", default=1, type=int)
-    limit = request.args.get("limit", default=25, type=int)
-    offset = (page - 1) * limit
-
-    # --- Optional filters
-    type_filter = request.args.get("type")          # "incoming" | "outgoing"
-    status_filter = request.args.get("status")      # "Pending", "Completed"
-    search = request.args.get("search", "")         # keyword in order_number or description
-
-    query = select(Order)
-    if type_filter:
-        query = query.where(Order.type == type_filter)
-    if status_filter:
-        query = query.where(Order.status == status_filter)
-    if search:
-        query = query.where(Order.order_number.ilike(f"%{search}%"))
-
-    query = query.order_by(Order.created_at.desc()).offset(offset).limit(limit)
-    results = db.execute(query).scalars().all()
-
-    total = db.execute(
-        select(func.count()).select_from(Order)
-    ).scalar()
-
-    return jsonify({
-        "page": page,
-        "limit": limit,
-        "total": total,
-        "results": order_list_schema.dump(results)
-    }), 200
+    
+    try:
+        # Validate pagination parameters
+        page, limit = validate_pagination(
+            request.args.get("page"),
+            request.args.get("limit"),
+            max_limit=Config.MAX_PAGE_SIZE,
+            default_page=1,
+            default_limit=Config.DEFAULT_PAGE_SIZE
+        )
+        offset = (page - 1) * limit
+        
+        # Sanitize and validate optional filters
+        type_filter = request.args.get("type")
+        status_filter = request.args.get("status")
+        search = sanitize_search_string(request.args.get("search", ""))
+        
+        # Build query
+        query = select(Order)
+        
+        if type_filter:
+            # Validate enum value if needed
+            query = query.where(Order.type == type_filter)
+        
+        if status_filter:
+            query = query.where(Order.status == status_filter)
+        
+        if search:
+            query = query.where(Order.order_number.ilike(f"%{search}%"))
+        
+        query = query.order_by(Order.created_at.desc()).offset(offset).limit(limit)
+        results = db.execute(query).scalars().all()
+        
+        total = db.execute(
+            select(func.count()).select_from(Order)
+        ).scalar()
+        
+        return jsonify({
+            "page": page,
+            "limit": limit,
+            "total": total,
+            "results": order_list_schema.dump(results)
+        }), 200
+        
+    except CustomValidationError as e:
+        return handle_validation_error(e)
+    except DatabaseError as e:
+        return handle_database_error(e, "fetching orders")
+    except Exception as e:
+        return jsonify({"error": "Unexpected error", "details": str(e)}), 500
 
 
 # GET single order with items
 @order_bp.route("/orders/<int:order_id>", methods=["GET"])
-def get_order(order_id):
+def get_order(order_id: int) -> Tuple[Any, int]:
+    """
+    Retrieve a single order by ID with all its items.
+    
+    Args:
+        order_id: The ID of the order to retrieve
+    
+    Returns:
+        JSON response with order details and items
+    """
     db = g.db
-    order = db.get(Order, order_id)
+    
+    try:
+        # Validate order_id
+        order_id = validate_positive_integer(order_id, "order_id")
+        
+        order = db.get(Order, order_id)
+        if not order:
+            raise ResourceNotFoundError("Order", order_id)
 
-    if not order:
-        return jsonify({"error": "Order not found"}), 404
-
-    # Determine customer or supplier name
-    cs_name = None
-    cs_id = None
-    if order.type == OrderType.OUTGOING.value and order.customer:
-        cs_id = order.customer.id
-        cs_name = order.customer.name
-
-    elif order.type == OrderType.INCOMING.value and order.supplier:
-        cs_id = order.supplier.id
-        cs_name = order.supplier.name
-
-    return jsonify({
-        "id": order.id,
-        "order_number": order.order_number,
-        "external_order_number": order.external_order_number,
-        "type": order.type,
-        "cs_id": cs_id,
-        "cs_name": cs_name,
-        "status": order.status,
-        "description": order.description,
-        "created_at": order.created_at.strftime("%Y-%m-%d"),
-        "completed_at": (
-            order.completed_at.strftime("%Y-%m-%d")
-            if order.completed_at else None
-        ),
-        "eta": (
-            order.eta.strftime("%Y-%m-%d")
-            if order.eta else None
-        ),
-    }), 200
+        # Determine customer or supplier name
+        cs_name = None
+        cs_id = None
+        if order.type == OrderType.OUTGOING.value and order.customer:
+            cs_id = order.customer.id
+            cs_name = order.customer.name
+        elif order.type == OrderType.INCOMING.value and order.supplier:
+            cs_id = order.supplier.id
+            cs_name = order.supplier.name
+        
+        return jsonify({
+            "id": order.id,
+            "order_number": order.order_number,
+            "external_order_number": order.external_order_number,
+            "type": order.type,
+            "cs_id": cs_id,
+            "cs_name": cs_name,
+            "status": order.status,
+            "description": order.description,
+            "created_at": order.created_at.strftime(Config.DATE_FORMAT),
+            "completed_at": (
+                order.completed_at.strftime(Config.DATE_FORMAT)
+                if order.completed_at else None
+            ),
+            "eta": (
+                order.eta.strftime(Config.DATE_FORMAT)
+                if order.eta else None
+            ),
+        }), 200
+        
+    except ResourceNotFoundError as e:
+        return jsonify(e.to_dict()), e.status_code
+    except CustomValidationError as e:
+        return handle_validation_error(e)
+    except Exception as e:
+        return jsonify({"error": "Unexpected error", "details": str(e)}), 500
 
 
 # GET order items
@@ -567,25 +636,32 @@ def get_or_create_qb_supplier(db):
         Supplier object
         
     Raises:
-        Exception: If supplier creation fails
+        IntegrityError: If supplier creation fails due to database constraint
+        DatabaseError: If database operation fails
     """
-    supplier_name = "QuickBooks"
     supplier = db.execute(
-        select(Supplier).where(Supplier.name == supplier_name)
+        select(Supplier).where(Supplier.name == Config.QB_SUPPLIER_NAME)
     ).scalar_one_or_none()
     
     if not supplier:
         try:
-            supplier = Supplier(name=supplier_name)
+            supplier = Supplier(name=Config.QB_SUPPLIER_NAME)
             db.add(supplier)
             db.flush()
-        except Exception as e:
+        except IntegrityError:
             # Re-query in case another transaction created it concurrently
             supplier = db.execute(
-                select(Supplier).where(Supplier.name == supplier_name)
+                select(Supplier).where(Supplier.name == Config.QB_SUPPLIER_NAME)
             ).scalar_one_or_none()
             if not supplier:
-                raise Exception(f"Failed to create QuickBooks supplier: {str(e)}")
+                raise
+        except DatabaseError:
+            # Re-query in case of other database errors
+            supplier = db.execute(
+                select(Supplier).where(Supplier.name == Config.QB_SUPPLIER_NAME)
+            ).scalar_one_or_none()
+            if not supplier:
+                raise
     
     return supplier
 
@@ -634,40 +710,48 @@ def create_order_from_qb():
     ).scalar_one_or_none()
     
     if existing_order:
-        return jsonify({
-            "error": "Order with this reference number already exists",
-            "existing_order_id": existing_order.id,
-            "existing_order_number": existing_order.order_number
-        }), 409  # Conflict status code
+        raise DuplicateResourceError("Order", "external_order_number", reference_number)
     
-    if qb_doc_type not in ["sales_order", "salesorder", "estimate", "invoice"]:
-        return jsonify({
-            "error": "qb_doc_type must be one of: sales_order, salesorder, estimate, invoice"
-        }), 400
+    # Validate qb_doc_type
+    valid_types = ["sales_order", "salesorder", "estimate", "invoice"]
+    if qb_doc_type not in valid_types:
+        raise CustomValidationError(
+            f"qb_doc_type must be one of: {', '.join(valid_types)}"
+        )
     
     # Normalize qb_doc_type (salesorder -> sales_order)
     entity_type = qb_doc_type.replace("salesorder", "sales_order")
     
     # Query QuickBooks via the QB agent
-    qb_agent_url = os.getenv("QB_AGENT_URL", "http://127.0.0.1:5055")
-    
     try:
+        headers = {}
+        if Config.QB_API_KEY:
+            headers["X-API-Key"] = Config.QB_API_KEY
+        
         response = requests.post(
-            f"{qb_agent_url}/jobs",
+            f"{Config.QB_AGENT_URL}/jobs",
             json={
                 "op": "query",
                 "entity": entity_type,
                 "params": {"refnumber": reference_number}
             },
-            timeout=60
+            headers=headers,
+            timeout=Config.QB_REQUEST_TIMEOUT
         )
         response.raise_for_status()
         qb_result = response.json()
+    except requests.exceptions.Timeout:
+        raise ExternalServiceError(
+            "QuickBooks Agent",
+            f"Request timed out after {Config.QB_REQUEST_TIMEOUT} seconds"
+        )
+    except requests.exceptions.ConnectionError:
+        raise ExternalServiceError(
+            "QuickBooks Agent",
+            "Connection refused. Is the QB Agent running?"
+        )
     except requests.RequestException as e:
-        return jsonify({
-            "error": "Failed to connect to QuickBooks service",
-            "details": str(e)
-        }), 502  # Bad Gateway - external service failure
+        raise ExternalServiceError("QuickBooks Agent", str(e))
     
     # Check if QB query was successful
     if not qb_result.get("success"):
@@ -789,7 +873,7 @@ def create_order_from_qb():
                     
                     # Create associated Product (category_id for Misc Items)
                     product = Product(
-                        category_id=MISC_ITEM_CATEGORY_ID,
+                        category_id=Config.MISC_ITEM_CATEGORY_ID,
                         reference_id=misc_item.id
                     )
                     db.add(product)
@@ -838,11 +922,25 @@ def create_order_from_qb():
                 })
                 position += 1
         
-        db.commit()
+        safe_commit(db, "creating order from QuickBooks")
+        
+    except (CustomValidationError, DuplicateResourceError, ExternalServiceError) as e:
+        db.rollback()
+        return jsonify(e.to_dict()), e.status_code
+    except IntegrityError as e:
+        db.rollback()
+        return handle_database_error(e, "creating order from QuickBooks")
+    except DatabaseError as e:
+        db.rollback()
+        return handle_database_error(e, "creating order from QuickBooks")
+    except requests.RequestException as e:
+        db.rollback()
+        return handle_external_service_error(e, "QuickBooks Agent")
     except Exception as e:
         db.rollback()
+        # Log the full error for debugging but return generic message
         return jsonify({
-            "error": "Failed to create order items",
+            "error": "Failed to create order from QuickBooks",
             "details": str(e)
         }), 500
     
