@@ -1,0 +1,182 @@
+from flask import g, jsonify, request, Blueprint
+from sqlalchemy import select
+from marshmallow import ValidationError
+from database.models import ChildProduct, Product, AirFilter, MiscItem, ProductCategory, Supplier, AirFilterCategory
+from app.api.Schemas.child_product_schema import ChildProductSchema
+
+child_product_bp = Blueprint("child_products", __name__)
+child_product_schema = ChildProductSchema()
+child_product_list_schema = ChildProductSchema(many=True)
+
+# Category constants
+CATEGORY_AIR_FILTERS = 1
+CATEGORY_MISC_ITEMS = 2
+
+# =====================================================
+# 🔹 GET all Child Products
+# =====================================================
+@child_product_bp.route("/child_products", methods=["GET"])
+def get_child_products():
+    db = g.db
+    results = db.execute(select(ChildProduct)).scalars().all()
+    return jsonify([cp.to_dict(include_relationships=True) for cp in results]), 200
+
+
+# =====================================================
+# 🔹 GET single Child Product
+# =====================================================
+@child_product_bp.route("/child_products/<int:id>", methods=["GET"])
+def get_child_product(id):
+    db = g.db
+    cp = db.get(ChildProduct, id)
+    if not cp:
+        return jsonify({"error": "Child product not found"}), 404
+    
+    # Include parent product information
+    response = cp.to_dict()
+    response["parent_product"] = {
+        "id": cp.parent_product.id,
+        "category_id": cp.parent_product.category_id,
+        "reference_id": cp.parent_product.reference_id
+    } if cp.parent_product else None
+    response["quantity"] = cp.quantity.to_dict() if cp.quantity else None
+    
+    return jsonify(response), 200
+
+
+# =====================================================
+# 🔹 POST new Child Product (Air Filter)
+# =====================================================
+@child_product_bp.route("/child_products/air_filter", methods=["POST"])
+def create_child_air_filter():
+    """Create a child product that references an air filter and shares parent's quantity"""
+    db = g.db
+    data = request.get_json() or {}
+    
+    # Required fields
+    required = ["part_number", "supplier_id", "category_id", "parent_product_id"]
+    for field in required:
+        if field not in data:
+            return jsonify({"error": f"{field} is required"}), 400
+    
+    # Validate parent product exists and has quantity
+    parent_product = db.get(Product, data["parent_product_id"])
+    if not parent_product:
+        return jsonify({"error": "Parent product not found"}), 400
+    if not parent_product.quantity:
+        return jsonify({"error": "Parent product does not have a quantity record"}), 400
+    
+    # Validate supplier and category
+    supplier = db.get(Supplier, data["supplier_id"])
+    if not supplier:
+        return jsonify({"error": "Invalid supplier ID"}), 400
+    
+    category = db.get(AirFilterCategory, data["category_id"])
+    if not category:
+        return jsonify({"error": "Invalid air filter category ID"}), 400
+    
+    # Create the air filter record
+    air_filter_data = {
+        "part_number": data["part_number"],
+        "supplier_id": data["supplier_id"],
+        "category_id": data["category_id"],
+        "merv_rating": data.get("merv_rating", 0),
+        "height": data.get("height", 0),
+        "width": data.get("width", 0),
+        "depth": data.get("depth", 1)
+    }
+    new_filter = AirFilter.from_dict(air_filter_data)
+    db.add(new_filter)
+    db.flush()
+    
+    # Create the child product
+    child_product = ChildProduct(
+        category_id=CATEGORY_AIR_FILTERS,
+        reference_id=new_filter.id,
+        parent_product_id=data["parent_product_id"]
+    )
+    db.add(child_product)
+    db.commit()
+    
+    return jsonify({
+        "message": "Child air filter product created successfully",
+        "child_product_id": child_product.id,
+        "air_filter": new_filter.to_dict(),
+        "parent_product_id": child_product.parent_product_id
+    }), 201
+
+
+# =====================================================
+# 🔹 POST new Child Product (Misc Item)
+# =====================================================
+@child_product_bp.route("/child_products/misc_item", methods=["POST"])
+def create_child_misc_item():
+    """Create a child product that references a misc item and shares parent's quantity"""
+    db = g.db
+    data = request.get_json() or {}
+    
+    # Required fields
+    required = ["name", "supplier_id", "parent_product_id"]
+    for field in required:
+        if field not in data:
+            return jsonify({"error": f"{field} is required"}), 400
+    
+    # Validate parent product exists and has quantity
+    parent_product = db.get(Product, data["parent_product_id"])
+    if not parent_product:
+        return jsonify({"error": "Parent product not found"}), 400
+    if not parent_product.quantity:
+        return jsonify({"error": "Parent product does not have a quantity record"}), 400
+    
+    # Validate supplier
+    supplier = db.get(Supplier, data["supplier_id"])
+    if not supplier:
+        return jsonify({"error": "Invalid supplier ID"}), 400
+    
+    # Create the misc item record
+    misc_item_data = {
+        "name": data["name"],
+        "supplier_id": data["supplier_id"],
+        "description": data.get("description", "")
+    }
+    new_misc_item = MiscItem.from_dict(misc_item_data)
+    db.add(new_misc_item)
+    db.flush()
+    
+    # Create the child product
+    child_product = ChildProduct(
+        category_id=CATEGORY_MISC_ITEMS,
+        reference_id=new_misc_item.id,
+        parent_product_id=data["parent_product_id"]
+    )
+    db.add(child_product)
+    db.commit()
+    
+    return jsonify({
+        "message": "Child misc item product created successfully",
+        "child_product_id": child_product.id,
+        "misc_item": new_misc_item.to_dict(),
+        "parent_product_id": child_product.parent_product_id
+    }), 201
+
+
+# =====================================================
+# 🔹 DELETE Child Product
+# =====================================================
+@child_product_bp.route("/child_products/<int:id>", methods=["DELETE"])
+def delete_child_product(id):
+    db = g.db
+    cp = db.get(ChildProduct, id)
+    if not cp:
+        return jsonify({"error": "Child product not found"}), 404
+    
+    # Delete the associated air filter or misc item
+    if cp.air_filter:
+        db.delete(cp.air_filter)
+    elif cp.misc_item:
+        db.delete(cp.misc_item)
+    
+    db.delete(cp)
+    db.commit()
+    
+    return jsonify({"message": "Child product deleted successfully"}), 200

@@ -3,7 +3,8 @@ from database.models import TransactionReason, TransactionState
 
 class TransactionSchema(Schema):
     id = fields.Int(dump_only=True)
-    product_id = fields.Int(required=True)
+    product_id = fields.Int(allow_none=True, load_default=None)
+    child_product_id = fields.Int(allow_none=True, load_default=None)
     order_id = fields.Int(load_default=None)
     order_item_id = fields.Int(load_default=None)
     quantity_delta = fields.Int(required=True)  # signed integer (+in, -out)

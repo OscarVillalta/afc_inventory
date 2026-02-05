@@ -1,6 +1,6 @@
 from flask import abort, g, jsonify, request, Blueprint
 from sqlalchemy import select, func
-from database.models import Quantity, Transaction, Product, TransactionState, OrderType, Order, OrderItem, AirFilter
+from database.models import Quantity, Transaction, Product, ChildProduct, TransactionState, OrderType, Order, OrderItem, AirFilter
 from datetime import datetime, timezone
 from app.api.Schemas.transaction_schema import TransactionSchema
 
@@ -10,6 +10,21 @@ class InventoryConflictError(Exception):
 transaction_bp = Blueprint("transactions", __name__)
 txn_schema = TransactionSchema()
 txn_list_schema = TransactionSchema(many=True)
+
+
+def validate_product_or_child_product_exclusive(data):
+    """Validate that either product_id or child_product_id is provided, but not both"""
+    has_product = "product_id" in data and data["product_id"] is not None
+    has_child = "child_product_id" in data and data["child_product_id"] is not None
+    
+    if not has_product and not has_child:
+        return {"error": "Either product_id or child_product_id is required"}, 400
+    
+    if has_product and has_child:
+        return {"error": "Cannot specify both product_id and child_product_id"}, 400
+    
+    return None
+
 
 @transaction_bp.route("/transactions", methods=["GET"])
 def get_transactions():
@@ -139,14 +154,33 @@ def create_transaction():
     db = g.db
     data = request.get_json() or {}
 
-    required_fields = ["product_id", "quantity_delta", "reason"]
+    # Validate that either product_id or child_product_id is provided (but not both)
+    validation_error = validate_product_or_child_product_exclusive(data)
+    if validation_error:
+        return jsonify(validation_error[0]), validation_error[1]
+
+    required_fields = ["quantity_delta", "reason"]
     for field in required_fields:
         if field not in data:
             return jsonify({"error": f"{field} is required"}), 400
 
-    product = db.get(Product, data["product_id"])
-    if not product or not product.quantity:
-        return jsonify({"error": "Product or quantity record not found"}), 404
+    # Get the product or child_product and its quantity
+    product = None
+    child_product = None
+    qty_record = None
+    
+    if "product_id" in data and data["product_id"] is not None:
+        product = db.get(Product, data["product_id"])
+        if not product or not product.quantity:
+            return jsonify({"error": "Product or quantity record not found"}), 404
+        qty_record = product.quantity
+    else:
+        child_product = db.get(ChildProduct, data["child_product_id"])
+        if not child_product:
+            return jsonify({"error": "Child product not found"}), 404
+        qty_record = child_product.quantity
+        if not qty_record:
+            return jsonify({"error": "Parent product's quantity record not found"}), 404
 
     order = None
     order_item = None
@@ -179,7 +213,8 @@ def create_transaction():
     # Create PENDING transaction
     # ===============================
     txn = Transaction(
-        product_id=product.id,
+        product_id=product.id if product else None,
+        child_product_id=child_product.id if child_product else None,
         order_id=order.id if order else None,
         order_item_id=order_item.id if order_item else None,
         quantity_delta=qty_delta,
@@ -188,15 +223,13 @@ def create_transaction():
         state=TransactionState.PENDING.value,
     )
 
-    qty = product.quantity
-
     # ===============================
     # Apply PENDING inventory effect
     # ===============================
     if qty_delta < 0 :
-        qty.reserved += abs_qty
+        qty_record.reserved += abs_qty
     else :
-       qty.ordered += abs_qty 
+       qty_record.ordered += abs_qty 
 
 
     db.add(txn)
@@ -235,11 +268,12 @@ def commit_transaction(txn_id):
 
 
         if txn.quantity_delta < 0:  # outgoing
-            product = db.get(Product, txn.product_id)
+            # Get quantity from the appropriate source
+            qty_record = txn._get_quantity_record()
             qty = abs(txn.quantity_delta)
 
-            if qty > product.quantity.on_hand:
-                return jsonify({ "error": f"Not enough inventory. On hand: {product.quantity.on_hand}, required: {qty}"}), 409
+            if qty > qty_record.on_hand:
+                return jsonify({ "error": f"Not enough inventory. On hand: {qty_record.on_hand}, required: {qty}"}), 409
    
         txn.commit()
         db.commit()
