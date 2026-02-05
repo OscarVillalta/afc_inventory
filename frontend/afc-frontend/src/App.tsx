@@ -5,6 +5,7 @@ import Order from "./pages/Orders";
 import OrdersSearch from "./pages/OrdersSearch";
 import TransactionsPage from "./pages/Transactions";
 import OrderDetailPage from "./components/order/OrderDetailPage";
+import ProductDetailPage from "./pages/ProductDetailPage";
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/orders/search" element={<OrdersSearch />} />
         <Route path="/transactions" element={<TransactionsPage/>}/>
         <Route path="/orders/:orderId" element={<OrderDetailPage />} />
+        <Route path="/products/:productId" element={<ProductDetailPage />} />
       </Routes>
     </BrowserRouter>
   );
