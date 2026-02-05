@@ -171,14 +171,7 @@ def search_air_filters():
 
     # --- Base Query ---
     # We need to get the effective quantity which might be from parent product
-    # First, create a subquery to get the effective product_id for quantity lookup
-    from sqlalchemy import case, func as sql_func
-    
-    # Subquery to get the quantity product_id (either self or parent)
-    effective_product_id = case(
-        (Product.parent_product_id.isnot(None), Product.parent_product_id),
-        else_=Product.id
-    ).label('effective_product_id')
+    from sqlalchemy import case
     
     query = (
         select(
