@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import MDTable from "../table/MDtable";
 import { fetchAirFilters } from "../../api/airfilters";
 import type { AirFilterResponse, AirFilterPayload } from "../../api/airfilters";
@@ -30,6 +31,7 @@ interface EditFormState {
 ============================================================ */
 
 export default function AirFiltersTable() {
+  const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const pageSize = 12;
 
@@ -258,7 +260,11 @@ export default function AirFiltersTable() {
 
         {/* ================= DATA ROWS ================= */}
         {rows.map((row) => (
-          <tr key={row.id} className="bg-white shadow-sm rounded-xl">
+          <tr 
+            key={row.id} 
+            className="bg-white shadow-sm rounded-xl cursor-pointer hover:bg-gray-50 transition"
+            onClick={() => navigate(`/products/${row.product_id}`)}
+          >
             <td className="py-3 px-2 font-semibold">{row.part_number}</td>
             <td className="py-3 px-2">{row.supplier_name ?? "—"}</td>
             <td className="py-3 px-2">{row.filter_category}</td>

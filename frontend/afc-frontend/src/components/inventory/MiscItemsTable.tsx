@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import MDTable from "../table/MDtable";
 import { fetchMiscItems } from "../../api/miscItems";
 import type { MiscItemResponse, MiscItemPayload } from "../../api/miscItems";
@@ -26,6 +27,7 @@ interface EditFormState {
 ============================================================ */
 
 export default function MiscItemsTable() {
+  const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const pageSize = 12;
 
@@ -195,7 +197,11 @@ export default function MiscItemsTable() {
 
         {/* ================= DATA ROWS ================= */}
         {rows.map((row) => (
-          <tr key={row.id} className="bg-white shadow-sm rounded-xl">
+          <tr 
+            key={row.id} 
+            className="bg-white shadow-sm rounded-xl cursor-pointer hover:bg-gray-50 transition"
+            onClick={() => navigate(`/products/${row.product_id}`)}
+          >
             <td className="py-3 px-2 font-semibold">{row.name}</td>
             <td className="py-3 px-2">{row.description ?? "—"}</td>
             <td className="py-3 px-2">{row.supplier_name ?? "—"}</td>
