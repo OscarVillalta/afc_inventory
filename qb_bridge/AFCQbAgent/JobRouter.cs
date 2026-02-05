@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace AfcQbAgent;
 
@@ -8,11 +9,13 @@ public sealed class JobRouter
 {
     private readonly QbSdk _qbSdk;
     private readonly QbxmlBuilder _qbxmlBuilder;
+    private readonly ILogger<JobRouter>? _logger;
 
-    public JobRouter(QbSdk qbSdk, QbxmlBuilder qbxmlBuilder)
+    public JobRouter(QbSdk qbSdk, QbxmlBuilder qbxmlBuilder, ILogger<JobRouter>? logger = null)
     {
         _qbSdk = qbSdk;
         _qbxmlBuilder = qbxmlBuilder;
+        _logger = logger;
     }
 
     public async Task<JobResultDto> ExecuteJobAsync(JobDto job, CancellationToken ct)
@@ -20,11 +23,13 @@ public sealed class JobRouter
         if (job == null)
             throw new ArgumentNullException(nameof(job));
 
-        // Health check job
+        _logger?.LogInformation("Executing job {JobId}: {Op}/{Entity}", job.JobId, job.Op, job.Entity);
 
+        // Health check job (agent ping - no QB call)
         if (string.Equals(job.Op, "ping", StringComparison.OrdinalIgnoreCase) &&
             string.Equals(job.Entity, "agent", StringComparison.OrdinalIgnoreCase))
         {
+            _logger?.LogDebug("Agent ping successful");
             return new JobResultDto
             {
                 JobId = job.JobId,
@@ -37,10 +42,14 @@ public sealed class JobRouter
         try
         {
             // 1) Build QBXML request
+            _logger?.LogDebug("Building QBXML request for job {JobId}", job.JobId);
             var requestXml = _qbxmlBuilder.Build(job);
 
             // 2) Execute against QuickBooks (raw QBXML in / raw QBXML out)
+            _logger?.LogDebug("Executing QBXML request for job {JobId}", job.JobId);
             var responseXml = await _qbSdk.ExecuteAsync(requestXml, ct);
+
+            _logger?.LogInformation("Job {JobId} completed successfully", job.JobId);
 
             // 3) Return raw payloads only
             return new JobResultDto
@@ -58,6 +67,11 @@ public sealed class JobRouter
             if (ex is AgentException aex)
                 errorCode = aex.Code;
 
+            _logger?.LogError(ex, "Job {JobId} failed with error code {ErrorCode}", job.JobId, errorCode);
+
+            // Only include stack trace in development/debug mode
+            var includeStackTrace = _logger?.IsEnabled(LogLevel.Debug) ?? false;
+
             return new JobResultDto
             {
                 JobId = job.JobId,
@@ -65,7 +79,7 @@ public sealed class JobRouter
                 ErrorCode = errorCode,
                 ErrorMessage = ex.Message,
                 ExceptionType = ex.GetType().Name,
-                StackTrace = ex.StackTrace
+                StackTrace = includeStackTrace ? ex.StackTrace : null
             };
         }
 
