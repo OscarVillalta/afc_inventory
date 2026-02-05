@@ -225,17 +225,17 @@ export default function AirFiltersTable() {
                       }}
                     />
                     <span className="text-gray-400 text-xs mx-1">x</span>
-                
+                    
                     <input
-                    type="number"
-                    placeholder="W"
-                    className="input input-bordered input-xs w-14 text-center"
-                    value={filters.filterWidth}
-                    onChange={(e) => {
-                      setPage(1);
-                      setFilter("filterWidth", e.target.value ? Number(e.target.value) : "");
-                    }}
-                  />
+                      type="number"
+                      placeholder="W"
+                      className="input input-bordered input-xs w-14 text-center"
+                      value={filters.filterWidth}
+                      onChange={(e) => {
+                        setPage(1);
+                        setFilter("filterWidth", e.target.value ? Number(e.target.value) : "");
+                      }}
+                    />
                   </div>
 
                   <input
