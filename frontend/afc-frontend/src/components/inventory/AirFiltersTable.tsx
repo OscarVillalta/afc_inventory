@@ -133,17 +133,19 @@ export default function AirFiltersTable() {
       })
       .then((res) => {
         setData(res);
-        
+
         // Auto-expand parents when search matches child products
         if (filters.searchPart && res.results) {
-          const newExpandedRows = new Set<number>();
-          res.results.forEach((product) => {
-            if (product.parent_product_id) {
-              // This is a child product that matched the search
-              newExpandedRows.add(product.parent_product_id);
-            }
+          setExpandedRows((prev) => {
+            const newExpandedRows = new Set(prev);
+            res.results.forEach((product) => {
+              if (product.parent_product_id) {
+                // This is a child product that matched the search
+                newExpandedRows.add(product.parent_product_id);
+              }
+            });
+            return newExpandedRows;
           });
-          setExpandedRows(newExpandedRows);
         }
       })
       .finally(() => setLoading(false));
