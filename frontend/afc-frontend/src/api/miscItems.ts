@@ -7,6 +7,8 @@ import { apiRequest } from "./apiClient";
 export interface MiscItemPayload {
   id: number;
   product_id: number;
+  child_product_id?: number | null;
+  parent_product_id?: number | null;
   name: string;
   description: string | null;
   supplier_name: string;
