@@ -9,6 +9,7 @@ import { fetchCustomers } from "../api/customers";
 import { fetchSuppliers } from "../api/suppliers";
 import AutocompleteInput from "../components/AutocompleteInput";
 import { usePersistedFilters } from "../hooks/usePersistedFilters";
+import CreateOrderModal from "../components/order/Table/CreateOrderModal";
 
 export default function OrdersSearchPage() {
   const navigate = useNavigate();
@@ -17,6 +18,9 @@ export default function OrdersSearchPage() {
   //Customer and supplier list
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  
+  // Create Order Modal state
+  const [showCreateModal, setShowCreateModal] = useState(false);
   
   // Type options for autocomplete
   const typeOptions = [
@@ -194,9 +198,28 @@ export default function OrdersSearchPage() {
         <div className="flex-1 flex flex-col">
           {/* Header Search Controls */}
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <h1 className="text-2xl font-bold mb-6 text-gray-800">
-              Search Orders
-            </h1>
+            <div className="flex items-center justify-between mb-6">
+              <h1 className="text-2xl font-bold text-gray-800">
+                Search Orders
+              </h1>
+              <button
+                className="
+                  px-5 py-2.5 rounded-lg
+                  text-sm font-semibold text-white
+                  shadow-md transition
+                  cursor-pointer
+                  hover:shadow-lg hover:-translate-y-0.5
+                  active:translate-y-0
+                "
+                style={{
+                  background:
+                    "linear-gradient(90deg, #3A7BD5 0%, #2B60C8 100%)",
+                }}
+                onClick={() => setShowCreateModal(true)}
+              >
+                + Create Order
+              </button>
+            </div>
             
             <div className="flex gap-4 items-end">
               {/* ID Input */}
@@ -559,6 +582,19 @@ export default function OrdersSearchPage() {
           </div>
         </div>
       </div>
+
+      {/* ===================== CREATE MODAL ===================== */}
+      <CreateOrderModal
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onCreated={(orderId?: number) => {
+          setShowCreateModal(false);
+          // If backend returns ID → go straight to detail
+          if (orderId) {
+            navigate(`/orders/${orderId}`);
+          }
+        }}
+      />
     </MainLayout>
   );
 }
