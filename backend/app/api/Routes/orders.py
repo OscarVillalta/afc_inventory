@@ -967,7 +967,7 @@ def create_order_from_qb():
 
 def find_product_by_name(db, item_name: str):
     """
-    Find a product in the database by matching the QB item name.
+    Find a product or child product in the database by matching the QB item name.
     Tries to match against air filter part numbers and misc item names.
     
     Args:
@@ -975,12 +975,12 @@ def find_product_by_name(db, item_name: str):
         item_name: QuickBooks item name to search for
     
     Returns:
-        Product object if found, None otherwise
+        Product or ChildProduct object if found, None otherwise
     """
     if not item_name:
         return None
     
-    # First try exact matches
+    # First try exact matches for air filters
     air_filter = db.execute(
         select(AirFilter).where(
             or_(
@@ -990,8 +990,13 @@ def find_product_by_name(db, item_name: str):
         )
     ).first()
     
-    if air_filter and air_filter[0].product:
-        return air_filter[0].product
+    # Prefer returning Product over ChildProduct
+    if air_filter:
+        if air_filter[0].product:
+            return air_filter[0].product
+        elif air_filter[0].child_product:
+            # Return the parent product for child products
+            return air_filter[0].child_product.parent_product
     
     # Try misc items
     misc_item = db.execute(
@@ -1003,7 +1008,12 @@ def find_product_by_name(db, item_name: str):
         )
     ).first()
     
-    if misc_item and misc_item[0].product:
-        return misc_item[0].product
+    # Prefer returning Product over ChildProduct
+    if misc_item:
+        if misc_item[0].product:
+            return misc_item[0].product
+        elif misc_item[0].child_product:
+            # Return the parent product for child products
+            return misc_item[0].child_product.parent_product
     
     return None

@@ -28,6 +28,12 @@ def get_quantity(id):
 # --- POST new quantity ---
 @quantity_bp.route("/quantities", methods=["POST"])
 def create_quantity():
+    """
+    Create a new quantity record for a Product.
+    
+    Note: Child products do not have their own quantity records.
+    They share the parent product's quantity via the ChildProduct.quantity property.
+    """
     db = g.db
     try:
         data = quantity_schema.load(request.get_json())
