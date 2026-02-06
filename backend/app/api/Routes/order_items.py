@@ -94,12 +94,12 @@ def create_order_item() -> Tuple[Any, int]:
         else:
             # Check for product_id or child_product_id
             has_product = "product_id" in data and data["product_id"] is not None
-            has_child = "child_product_id" in data and data["child_product_id"] is not None
+            has_child_product = "child_product_id" in data and data["child_product_id"] is not None
             
-            if not has_product and not has_child:
+            if not has_product and not has_child_product:
                 raise InvalidInputError("Either product_id or child_product_id is required for non-separator items")
             
-            if has_product and has_child:
+            if has_product and has_child_product:
                 raise InvalidInputError("Cannot specify both product_id and child_product_id")
             
             if has_product:
@@ -315,7 +315,15 @@ def allocate_remaining_order_items(item_id):
     )
 
     # Get the quantity record - works for both Product and ChildProduct
-    qty_record = item.product.quantity if item.product else item.child_product.quantity
+    if item.product:
+        qty_record = item.product.quantity
+    elif item.child_product:
+        qty_record = item.child_product.quantity
+    else:
+        return jsonify({"error": "Order item has no product or child product"}), 400
+    
+    if not qty_record:
+        return jsonify({"error": "Quantity record not found"}), 404
     
     if order.type == "incoming":
         qty_record.ordered += qty_to_allocate

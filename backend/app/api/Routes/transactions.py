@@ -352,17 +352,20 @@ def rollback_transaction(txn_id):
         return jsonify({"error": "Unexpected error while rolling back transaction"}), 500
 
 # =====================================================
-# 🔹 GET Ledger for a Product
+# 🔹 Helper for Ledger Queries
 # =====================================================
-@transaction_bp.route("/transactions/ledger/<int:product_id>", methods=["GET"])
-def get_transaction_ledger(product_id):
-    db = g.db
-
-    # Ensure product exists
-    product = db.get(Product, product_id)
-    if not product:
-        return jsonify({"error": "Product not found"}), 404
-
+def _get_transaction_ledger(db, product_id=None, child_product_id=None):
+    """
+    Helper function to retrieve transaction ledger for either a Product or ChildProduct.
+    
+    Args:
+        db: Database session
+        product_id: ID of the product (mutually exclusive with child_product_id)
+        child_product_id: ID of the child product (mutually exclusive with product_id)
+    
+    Returns:
+        dict: Ledger data with pagination and results
+    """
     # --- Query parameters
     page = request.args.get("page", default=1, type=int)
     limit = request.args.get("limit", default=50, type=int)
@@ -372,14 +375,22 @@ def get_transaction_ledger(product_id):
     include_pending = request.args.get("include_pending", "false").lower() == "true"
 
     # --- Build filters
-    filters = [Transaction.product_id == product_id]
+    if product_id:
+        filters = [Transaction.product_id == product_id]
+        balance_filter_product_id = product_id
+        balance_filter_child_product_id = None
+    else:
+        filters = [Transaction.child_product_id == child_product_id]
+        balance_filter_product_id = None
+        balance_filter_child_product_id = child_product_id
+    
     try:
         if start_date:
             filters.append(Transaction.created_at >= datetime.fromisoformat(start_date))
         if end_date:
             filters.append(Transaction.created_at <= datetime.fromisoformat(end_date))
     except ValueError:
-        return jsonify({"error": "Invalid date format. Use ISO format (YYYY-MM-DD)."}), 400
+        return {"error": "Invalid date format. Use ISO format (YYYY-MM-DD)."}, 400
     
     if not include_pending:
         filters.append(Transaction.state == "committed")
@@ -414,23 +425,45 @@ def get_transaction_ledger(product_id):
         select(func.count()).select_from(Transaction).where(*filters)
     ).scalar()
 
-    final_balance = (
-        db.execute(
-            select(func.sum(Transaction.quantity_delta))
-            .where(Transaction.product_id == product_id)
-            .where(Transaction.state == "committed")
-        ).scalar()
-        or 0
-    )
+    # Build final balance query based on product type
+    balance_query = select(func.sum(Transaction.quantity_delta)).where(Transaction.state == "committed")
+    if balance_filter_product_id:
+        balance_query = balance_query.where(Transaction.product_id == balance_filter_product_id)
+    else:
+        balance_query = balance_query.where(Transaction.child_product_id == balance_filter_child_product_id)
+    
+    final_balance = db.execute(balance_query).scalar() or 0
 
-    return jsonify({
-        "product_id": product_id,
+    result = {
         "page": page,
         "limit": limit,
         "total": total_count,
         "final_balance": final_balance,
         "results": [dict(row) for row in results],
-    }), 200
+    }
+    
+    if product_id:
+        result["product_id"] = product_id
+    else:
+        result["child_product_id"] = child_product_id
+    
+    return result, 200
+
+
+# =====================================================
+# 🔹 GET Ledger for a Product
+# =====================================================
+@transaction_bp.route("/transactions/ledger/<int:product_id>", methods=["GET"])
+def get_transaction_ledger(product_id):
+    db = g.db
+
+    # Ensure product exists
+    product = db.get(Product, product_id)
+    if not product:
+        return jsonify({"error": "Product not found"}), 404
+
+    result, status = _get_transaction_ledger(db, product_id=product_id)
+    return jsonify(result), status
 
 
 # =====================================================
@@ -445,72 +478,7 @@ def get_child_product_transaction_ledger(child_product_id):
     if not child_product:
         return jsonify({"error": "Child product not found"}), 404
 
-    # --- Query parameters
-    page = request.args.get("page", default=1, type=int)
-    limit = request.args.get("limit", default=50, type=int)
-    offset = (page - 1) * limit
-    start_date = request.args.get("start_date", type=str)
-    end_date = request.args.get("end_date", type=str)
-    include_pending = request.args.get("include_pending", "false").lower() == "true"
+    result, status = _get_transaction_ledger(db, child_product_id=child_product_id)
+    return jsonify(result), status
 
-    # --- Build filters
-    filters = [Transaction.child_product_id == child_product_id]
-    try:
-        if start_date:
-            filters.append(Transaction.created_at >= datetime.fromisoformat(start_date))
-        if end_date:
-            filters.append(Transaction.created_at <= datetime.fromisoformat(end_date))
-    except ValueError:
-        return jsonify({"error": "Invalid date format. Use ISO format (YYYY-MM-DD)."}), 400
-    
-    if not include_pending:
-        filters.append(Transaction.state == "committed")
-
-    # --- Define running balance (chronological)
-    running_balance = func.sum(Transaction.quantity_delta).over(
-        order_by=Transaction.created_at
-    ).label("running_balance")
-
-    # --- Main query (DESC output)
-    query = (
-        select(
-            Transaction.id,
-            Transaction.created_at,
-            Transaction.reason,
-            Transaction.quantity_delta,
-            Transaction.state,
-            Transaction.note,
-            running_balance,
-        )
-        .where(*filters)
-        .order_by(Transaction.created_at.desc())
-        .limit(limit)
-        .offset(offset)
-    )
-
-    # Execute paginated ledger
-    results = db.execute(query).mappings().all()
-
-    # Total count & final balance
-    total_count = db.execute(
-        select(func.count()).select_from(Transaction).where(*filters)
-    ).scalar()
-
-    final_balance = (
-        db.execute(
-            select(func.sum(Transaction.quantity_delta))
-            .where(Transaction.child_product_id == child_product_id)
-            .where(Transaction.state == "committed")
-        ).scalar()
-        or 0
-    )
-
-    return jsonify({
-        "child_product_id": child_product_id,
-        "page": page,
-        "limit": limit,
-        "total": total_count,
-        "final_balance": final_balance,
-        "results": [dict(row) for row in results],
-    }), 200
 
