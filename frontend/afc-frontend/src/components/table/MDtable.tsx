@@ -46,7 +46,7 @@ export default function MDTable({
               {columns.map((col) => (
                 <th
                   key={col}
-                  className="text-left text-gray-600 font-semibold pb-3 text-sm uppercase tracking-wide"
+                  className="text-center text-gray-600 font-bold text-m uppercase tracking-wide"
                 >
                   {col}
                 </th>

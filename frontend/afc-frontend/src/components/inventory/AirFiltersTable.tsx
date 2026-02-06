@@ -156,6 +156,7 @@ export default function AirFiltersTable() {
           "Category",
           "Dimensions",
           "MERV",
+          "",
           "STOCK",
 
         ]}
@@ -166,7 +167,7 @@ export default function AirFiltersTable() {
       >
         {/* ================= FILTER ROW (SERVER-DRIVEN) ================= */}
         <tr className="border-b">
-          <th className="pr-3 pb-2 border-spacing-y-4">
+          <th className="pr-3 pb-2">
             <input
               className="input input-bordered input-xs w-full"
               placeholder="Search..."
@@ -264,7 +265,7 @@ export default function AirFiltersTable() {
             </div>
           </th>
 
-          <th className=" pr-2 pb-2 w-1/18">
+          <th className=" pr-3 pb-2 w-1/18">
             <input
               className="input input-bordered input-xs self-start text-center w-full"
               placeholder="MERV..."
@@ -276,7 +277,9 @@ export default function AirFiltersTable() {
             />
           </th>
 
-          <th className="flex justify-between items-center bg-blue-50 py-8 px-2 border-2 border-blue-400 rounded-lg shadow-sm">
+          <th></th>
+
+          <th className="flex justify-between items-center bg-blue-50 py-6 px-2 border-2 border-blue-400 rounded-lg shadow-sm">
               <span className="font-semibold text-blue-600">On Hand</span>
               <span className="font-semibold text-blue-600">Ordered</span>
               <span className="font-semibold text-blue-600">Reserved</span>
@@ -293,33 +296,34 @@ export default function AirFiltersTable() {
             className="bg-white shadow-sm rounded-xl cursor-pointer hover:bg-gray-50 transition"
             onClick={() => navigate(`/products/${row.product_id}`)}
           >
-            <td className="py-3 px-2 font-semibold">{row.part_number}</td>
-            <td className="py-3 px-2">{row.supplier_name ?? "—"}</td>
+            <td className="py-3 px-2 font-semibold  w-1/6">{row.part_number}</td>
+            <td className="py-3 px-2 w-1/5">{row.supplier_name ?? "—"}</td>
             <td className="py-3 px-2">{row.filter_category}</td>
             <td className="py-3 px-2 text-center">
               {row.height} x {row.width} x {row.depth}
             </td>
-            <td className="py-3 px-2">{row.merv_rating}</td>
-            <td className="py-3 px-2 font-medium text-center bg-blue-50 border-2 border-blue-400 rounded-lg shadow-sm">
-              <div className="flex justify-between items-center gap-1">
-                <span className="py-3 px-2 font-medium text-center">{row.on_hand}</span>
-                <span className="py-3 px-2 font-medium text-center">{row.ordered}</span>
-                <span className="py-3 px-2 font-medium text-center">{row.reserved}</span>
-                <span className="py-3 px-2 text-center">{
+            <td className="py-3 text-center">{row.merv_rating}</td>
+            <td className="w-1/32 text-center"></td>
+            <td className="py-3 font-medium text-center bg-blue-50 border-2 border-blue-400 rounded-lg shadow-sm">
+              <div className="flex justify-around items-center gap-5">
+                <span className="font-medium text-center">{row.on_hand}</span>
+                <span className="font-medium text-center">{row.ordered}</span>
+                <span className="font-medium text-center">{row.reserved}</span>
+                <span className="text-center">{
                   row.available > 0 ? (
-                    <span className="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-600">{row.available}</span>
+                    <span className=" py-2 px-2 text-xs rounded-full bg-green-100 text-green-600 text-center">{row.available}</span>
                   ) : ( 
-                    <span className="text-gray-400">{row.available}</span>
+                    <span className=" py-2 px-2 text-gray-400 text-center">{row.available}</span>
                   )
                 }
               </span>
-              <span className="py-3 px-2 text-center">
+              <span className="font-medium text-center">
                 {row.backordered > 0 ? (
-                <span className="px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-700 font-semibold">
+                <span className=" py-2 px-2 text-xs rounded-full bg-red-100 text-red-700 font-semibold text-center">
                   {row.backordered}
                 </span>
                 ) : (
-                  <span className="text-gray-400">—</span>
+                  <span className=" py-2 px-2 text-gray-400 text-center">—</span>
                 )}
               </span>
               </div>
@@ -327,7 +331,7 @@ export default function AirFiltersTable() {
             </td>
 
             <td
-              className="py-3 px-2 cursor-pointer hover:scale-110 transition"
+              className="py-3 pl-5 cursor-pointer hover:scale-110 transition"
               onClick={(e) => {
                 e.stopPropagation();
                 handleEdit(row)
