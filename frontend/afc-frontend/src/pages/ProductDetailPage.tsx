@@ -63,18 +63,21 @@ export default function ProductDetailPage() {
       } catch (error) {
         console.error("Failed to load product detail:", error);
         // Use mock data for demonstration when backend is unavailable
+        // Product with ID 1 has child products, Product with ID 2 has no children
+        const hasChildren = Number(productId) === 1;
+        
         setProduct({
           id: Number(productId),
           category: "Air Filters",
           reference_id: 1,
           details: {
-            part_number: "AF-16252-11",
+            part_number: hasChildren ? "AF-16252-11" : "AF-20304-13",
             supplier_name: "Filter Dynamics Inc.",
-            filter_category: "MERV 11",
-            height: 16,
-            width: 25,
+            filter_category: hasChildren ? "MERV 11" : "MERV 13",
+            height: hasChildren ? 16 : 20,
+            width: hasChildren ? 25 : 30,
             depth: 2,
-            merv_rating: 11,
+            merv_rating: hasChildren ? 11 : 13,
           },
           quantity: {
             on_hand: 45,
@@ -83,6 +86,36 @@ export default function ProductDetailPage() {
             available: 25,
             backordered: 5,
           },
+          child_products: hasChildren ? [
+            {
+              id: 101,
+              category: "Air Filters",
+              reference_id: 10,
+              details: {
+                part_number: "AF-16252-11-ALT",
+                supplier_name: "Alternative Filters Co.",
+                filter_category: "MERV 11",
+                height: 16,
+                width: 25,
+                depth: 2,
+                merv_rating: 11,
+              },
+            },
+            {
+              id: 102,
+              category: "Air Filters",
+              reference_id: 11,
+              details: {
+                part_number: "AF-16252-11-ECO",
+                supplier_name: "Eco Filters Inc.",
+                filter_category: "MERV 11",
+                height: 16,
+                width: 25,
+                depth: 2,
+                merv_rating: 11,
+              },
+            },
+          ] : [],
         });
         setTransactions([
           {

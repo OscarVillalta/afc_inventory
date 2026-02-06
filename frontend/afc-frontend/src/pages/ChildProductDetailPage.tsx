@@ -14,8 +14,6 @@ import {
 import MainLayout from "../layouts/MainLayout";
 import {
   fetchChildProductDetail,
-  fetchProductTransactions,
-  fetchProductOrders,
   type ChildProductDetail,
   type TransactionItem,
   type ProductOrderSummary,
@@ -61,6 +59,46 @@ export default function ChildProductDetailPage() {
         setOutgoingOrders([]);
       } catch (error) {
         console.error("Failed to load child product detail:", error);
+        // Use mock data for demonstration when backend is unavailable
+        setChildProduct({
+          id: Number(childProductId),
+          category: "Air Filters",
+          reference_id: 10,
+          details: {
+            part_number: "AF-16252-11-ALT",
+            supplier_name: "Alternative Filters Co.",
+            filter_category: "MERV 11",
+            height: 16,
+            width: 25,
+            depth: 2,
+            merv_rating: 11,
+          },
+          quantity: {
+            on_hand: 45,
+            reserved: 20,
+            ordered: 60,
+            available: 25,
+            backordered: 5,
+          },
+          parent_product: {
+            id: 1,
+            category: "Air Filters",
+            category_id: 1,
+            reference_id: 1,
+            details: {
+              part_number: "AF-16252-11",
+              supplier_name: "Filter Dynamics Inc.",
+              filter_category: "MERV 11",
+              height: 16,
+              width: 25,
+              depth: 2,
+              merv_rating: 11,
+            },
+          },
+        });
+        setTransactions([]);
+        setIncomingOrders([]);
+        setOutgoingOrders([]);
       } finally {
         setLoading(false);
       }
