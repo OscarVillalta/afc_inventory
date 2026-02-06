@@ -28,20 +28,72 @@ def get_child_products():
 @child_product_bp.route("/child_products/<int:id>", methods=["GET"])
 def get_child_product(id):
     db = g.db
-    cp = db.get(ChildProduct, id)
+    
+    from sqlalchemy.orm import selectinload
+    
+    cp = db.execute(
+        select(ChildProduct)
+        .where(ChildProduct.id == id)
+        .options(
+            selectinload(ChildProduct.category),
+            selectinload(ChildProduct.air_filter).selectinload(AirFilter.supplier),
+            selectinload(ChildProduct.misc_item).selectinload(MiscItem.supplier),
+            selectinload(ChildProduct.parent_product).selectinload(Product.air_filter).selectinload(AirFilter.supplier),
+            selectinload(ChildProduct.parent_product).selectinload(Product.misc_item).selectinload(MiscItem.supplier),
+            selectinload(ChildProduct.parent_product).selectinload(Product.quantity)
+        )
+    ).scalars().first()
+    
     if not cp:
         return jsonify({"error": "Child product not found"}), 404
     
-    # Include parent product information
-    response = cp.to_dict()
-    response["parent_product"] = {
-        "id": cp.parent_product.id,
-        "category_id": cp.parent_product.category_id,
-        "reference_id": cp.parent_product.reference_id
-    } if cp.parent_product else None
-    response["quantity"] = cp.quantity.to_dict() if cp.quantity else None
+    category = cp.category.name if cp.category else "Unknown"
     
-    return jsonify(response), 200
+    # Get child product details
+    if cp.air_filter:
+        details = cp.air_filter.to_dict()
+        details["supplier_name"] = cp.air_filter.supplier.name if cp.air_filter.supplier else None
+    elif cp.misc_item:
+        details = cp.misc_item.to_dict()
+        details["supplier_name"] = cp.misc_item.supplier.name if cp.misc_item.supplier else None
+    else:
+        details = {}
+    
+    # Get parent product information
+    parent_data = None
+    if cp.parent_product:
+        parent_category = cp.parent_product.category.name if cp.parent_product.category else "Unknown"
+        if cp.parent_product.air_filter:
+            parent_details = cp.parent_product.air_filter.to_dict()
+            parent_details["supplier_name"] = cp.parent_product.air_filter.supplier.name if cp.parent_product.air_filter.supplier else None
+        elif cp.parent_product.misc_item:
+            parent_details = cp.parent_product.misc_item.to_dict()
+            parent_details["supplier_name"] = cp.parent_product.misc_item.supplier.name if cp.parent_product.misc_item.supplier else None
+        else:
+            parent_details = {}
+        
+        parent_data = {
+            "id": cp.parent_product.id,
+            "category": parent_category,
+            "category_id": cp.parent_product.category_id,
+            "reference_id": cp.parent_product.reference_id,
+            "details": parent_details
+        }
+    
+    # Get quantity (shared with parent)
+    quantity_data = cp.quantity.to_dict() if cp.quantity else None
+    if cp.quantity:
+        quantity_data["available"] = cp.quantity.available
+        quantity_data["backordered"] = cp.quantity.backordered
+    
+    return jsonify({
+        "id": cp.id,
+        "category": category,
+        "reference_id": cp.reference_id,
+        "details": details,
+        "quantity": quantity_data,
+        "parent_product": parent_data
+    }), 200
 
 
 # =====================================================
