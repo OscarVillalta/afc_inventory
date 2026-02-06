@@ -503,17 +503,22 @@ def search_orders():
         except ValueError:
             pass
     
-    # Product filtering - filter orders containing specific products
+    # Product filtering - filter orders containing specific products or child products
     if product_ids:
         try:
             # Parse comma-separated product IDs
             product_id_list = [int(pid.strip()) for pid in product_ids.split(",") if pid.strip()]
             if product_id_list:
                 # Use a subquery to find orders that contain any of the specified products
-                # This approach is cleaner and avoids potential JOIN conflicts
+                # Check both product_id and child_product_id
                 product_filter_subquery = (
                     select(OrderItem.order_id)
-                    .where(OrderItem.product_id.in_(product_id_list))
+                    .where(
+                        or_(
+                            OrderItem.product_id.in_(product_id_list),
+                            OrderItem.child_product_id.in_(product_id_list)
+                        )
+                    )
                     .distinct()
                 )
                 filters.append(Order.id.in_(product_filter_subquery))

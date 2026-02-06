@@ -1,5 +1,5 @@
 from flask import abort, g, jsonify, request, Blueprint
-from sqlalchemy import select, func
+from sqlalchemy import select, func, or_
 from database.models import Quantity, Transaction, Product, ChildProduct, TransactionState, OrderType, Order, OrderItem, AirFilter
 from datetime import datetime, timezone
 from app.api.Schemas.transaction_schema import TransactionSchema
@@ -61,6 +61,7 @@ def filter_transactions():
 
     # --- Filters
     product_id = request.args.get("product_id", type=int)
+    child_product_id = request.args.get("child_product_id", type=int)
     product_name = request.args.get("product_name", type=str)
     order_id = request.args.get("order_id", type=int)
     state = request.args.get("state")
@@ -85,17 +86,31 @@ def filter_transactions():
     if product_id:
         filters.append(Transaction.product_id == product_id)
     
-    # Search by product name (partial match)
+    if child_product_id:
+        filters.append(Transaction.child_product_id == child_product_id)
+    
+    # Search by product name (partial match) - check both Product and ChildProduct
     if product_name:
         AirFilter_subquery = select(AirFilter.id).where(
             AirFilter.part_number.ilike(f"%{product_name}%")
         )
 
+        # Products with matching air filters
         product_subquery = select(Product.id).where(
             Product.reference_id.in_(AirFilter_subquery)
         )
+        
+        # Child products with matching air filters
+        child_product_subquery = select(ChildProduct.id).where(
+            ChildProduct.reference_id.in_(AirFilter_subquery)
+        )
 
-        filters.append(Transaction.product_id.in_(product_subquery))
+        filters.append(
+            or_(
+                Transaction.product_id.in_(product_subquery),
+                Transaction.child_product_id.in_(child_product_subquery)
+            )
+        )
     
     if order_id:
         filters.append(Transaction.order_id == order_id)
@@ -416,3 +431,86 @@ def get_transaction_ledger(product_id):
         "final_balance": final_balance,
         "results": [dict(row) for row in results],
     }), 200
+
+
+# =====================================================
+# 🔹 GET Ledger for a Child Product
+# =====================================================
+@transaction_bp.route("/transactions/ledger/child_product/<int:child_product_id>", methods=["GET"])
+def get_child_product_transaction_ledger(child_product_id):
+    db = g.db
+
+    # Ensure child product exists
+    child_product = db.get(ChildProduct, child_product_id)
+    if not child_product:
+        return jsonify({"error": "Child product not found"}), 404
+
+    # --- Query parameters
+    page = request.args.get("page", default=1, type=int)
+    limit = request.args.get("limit", default=50, type=int)
+    offset = (page - 1) * limit
+    start_date = request.args.get("start_date", type=str)
+    end_date = request.args.get("end_date", type=str)
+    include_pending = request.args.get("include_pending", "false").lower() == "true"
+
+    # --- Build filters
+    filters = [Transaction.child_product_id == child_product_id]
+    try:
+        if start_date:
+            filters.append(Transaction.created_at >= datetime.fromisoformat(start_date))
+        if end_date:
+            filters.append(Transaction.created_at <= datetime.fromisoformat(end_date))
+    except ValueError:
+        return jsonify({"error": "Invalid date format. Use ISO format (YYYY-MM-DD)."}), 400
+    
+    if not include_pending:
+        filters.append(Transaction.state == "committed")
+
+    # --- Define running balance (chronological)
+    running_balance = func.sum(Transaction.quantity_delta).over(
+        order_by=Transaction.created_at
+    ).label("running_balance")
+
+    # --- Main query (DESC output)
+    query = (
+        select(
+            Transaction.id,
+            Transaction.created_at,
+            Transaction.reason,
+            Transaction.quantity_delta,
+            Transaction.state,
+            Transaction.note,
+            running_balance,
+        )
+        .where(*filters)
+        .order_by(Transaction.created_at.desc())
+        .limit(limit)
+        .offset(offset)
+    )
+
+    # Execute paginated ledger
+    results = db.execute(query).mappings().all()
+
+    # Total count & final balance
+    total_count = db.execute(
+        select(func.count()).select_from(Transaction).where(*filters)
+    ).scalar()
+
+    final_balance = (
+        db.execute(
+            select(func.sum(Transaction.quantity_delta))
+            .where(Transaction.child_product_id == child_product_id)
+            .where(Transaction.state == "committed")
+        ).scalar()
+        or 0
+    )
+
+    return jsonify({
+        "child_product_id": child_product_id,
+        "page": page,
+        "limit": limit,
+        "total": total_count,
+        "final_balance": final_balance,
+        "results": [dict(row) for row in results],
+    }), 200
+

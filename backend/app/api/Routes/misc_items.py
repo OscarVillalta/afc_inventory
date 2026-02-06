@@ -1,7 +1,7 @@
 from flask import g, jsonify, request, Blueprint
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, or_
 from marshmallow import ValidationError
-from database.models import MiscItem, Supplier, Product, Quantity
+from database.models import MiscItem, Supplier, Product, Quantity, ChildProduct
 from app.api.Schemas.misc_item_schema import MiscItemSchema
 
 misc_bp = Blueprint("misc_items", __name__)
@@ -114,6 +114,13 @@ def delete_misc_item(id):
     if product:
         db.delete(product)
 
+    # Delete associated child product if exists
+    child_product = db.execute(
+        select(ChildProduct).where(ChildProduct.reference_id == id)
+    ).scalar_one_or_none()
+    if child_product:
+        db.delete(child_product)
+
     db.delete(item)
     db.commit()
 
@@ -144,6 +151,7 @@ def search_misc_items():
             MiscItem.name,
             MiscItem.description,
             Product.id.label("product_id"),
+            ChildProduct.id.label("child_product_id"),
             Supplier.name.label("supplier_name"),
 
             Quantity.on_hand,
@@ -154,9 +162,9 @@ def search_misc_items():
             Quantity.backordered,
         )
         .join(Supplier, MiscItem.supplier_id == Supplier.id)
-        .join(Product, Product.reference_id == MiscItem.id)
-        .join(Quantity, Quantity.product_id == Product.id)
-        .where(Product.category_id == product_category)
+        .outerjoin(Product, and_(Product.reference_id == MiscItem.id, Product.category_id == product_category))
+        .outerjoin(ChildProduct, and_(ChildProduct.reference_id == MiscItem.id, ChildProduct.category_id == product_category))
+        .outerjoin(Quantity, or_(Quantity.product_id == Product.id, Quantity.product_id == ChildProduct.parent_product_id))
         .distinct(MiscItem.id)
     )
 
