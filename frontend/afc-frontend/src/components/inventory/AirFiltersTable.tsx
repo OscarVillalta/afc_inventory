@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import React from "react";
+import { useEffect, useState, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
 import MDTable from "../table/MDtable";
 import { fetchAirFilters } from "../../api/airfilters";
@@ -88,7 +87,7 @@ export default function AirFiltersTable() {
 
   const [data, setData] = useState<AirFilterResponse>();
   const [loading, setLoading] = useState(false);
-  
+
   /* ===================== EXPANDED ROWS STATE ===================== */
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
 
@@ -378,7 +377,7 @@ export default function AirFiltersTable() {
           const hasChildren = group.children.length > 0;
           
           return (
-            <React.Fragment key={group.parent.id}>
+            <Fragment key={group.parent.id}>
               {/* PARENT ROW */}
               <tr 
                 className="bg-white shadow-sm rounded-xl cursor-pointer hover:bg-gray-50 transition"
@@ -558,7 +557,7 @@ export default function AirFiltersTable() {
                   </td>
                 </tr>
               ))}
-            </React.Fragment>
+            </Fragment>
           );
         })}
 

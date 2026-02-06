@@ -1,5 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
-import React from "react";
+import { useEffect, useState, useCallback, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
 import MDTable from "../table/MDtable";
 import { fetchMiscItems } from "../../api/miscItems";
@@ -85,7 +84,7 @@ export default function MiscItemsTable() {
   const [data, setData] = useState<MiscItemResponse>();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   /* ===================== EXPANDED ROWS STATE ===================== */
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
 
@@ -284,7 +283,7 @@ export default function MiscItemsTable() {
           const hasChildren = group.children.length > 0;
           
           return (
-            <React.Fragment key={group.parent.id}>
+            <Fragment key={group.parent.id}>
               {/* PARENT ROW */}
               <tr 
                 className="bg-white shadow-sm rounded-xl cursor-pointer hover:bg-gray-50 transition"
@@ -463,7 +462,7 @@ export default function MiscItemsTable() {
                   </td>
                 </tr>
               ))}
-            </React.Fragment>
+            </Fragment>
           );
         })}
 
