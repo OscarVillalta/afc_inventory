@@ -1,4 +1,4 @@
-import { useEffect, useState, Fragment } from "react";
+import { useEffect, useState, useMemo, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
 import MDTable from "../table/MDtable";
 import { fetchAirFilters } from "../../api/airfilters";
@@ -156,8 +156,8 @@ export default function AirFiltersTable() {
   }, [page, filters.searchPart, filters.filterSupplier, filters.filterCategory, filters.filterMerv, filters.filterHeight, filters.filterWidth, filters.filterDepth]);
 
   const rows: AirFilterPayload[] = data?.results ?? [];
-  const groupedProducts = groupProducts(rows);
-  
+  const groupedProducts = useMemo(() => groupProducts(rows), [rows]);
+
   /* ===================== EXPAND/COLLAPSE HANDLERS ===================== */
   
   const toggleExpand = (productId: number) => {

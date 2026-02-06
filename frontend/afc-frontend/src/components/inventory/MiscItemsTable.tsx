@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, Fragment } from "react";
+import { useEffect, useState, useCallback, useMemo, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
 import MDTable from "../table/MDtable";
 import { fetchMiscItems } from "../../api/miscItems";
@@ -143,8 +143,8 @@ export default function MiscItemsTable() {
   }, [loadData]);
 
   const rows: MiscItemPayload[] = data?.results ?? [];
-  const groupedProducts = groupProducts(rows);
-  
+  const groupedProducts = useMemo(() => groupProducts(rows), [rows]);
+
   /* ===================== EXPAND/COLLAPSE HANDLERS ===================== */
   
   const toggleExpand = (productId: number) => {
