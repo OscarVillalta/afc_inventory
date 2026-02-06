@@ -1,6 +1,6 @@
 from flask import g, jsonify, request, Blueprint
 from sqlalchemy import func, select, and_
-from database.models import AirFilter, AirFilterCategory, Supplier, Product, ProductCategory, Quantity
+from database.models import AirFilter, AirFilterCategory, Supplier, Product, ProductCategory, Quantity, ChildProduct
 from marshmallow import ValidationError
 from app.api.Schemas.air_filters_schema import AirFilterSchema
 
@@ -154,6 +154,7 @@ def search_air_filters():
             AirFilter.width,
             AirFilter.depth,
             Product.id.label("product_id"),
+            ChildProduct.id.label("child_product_id"),
             Supplier.name.label("supplier_name"),
             AirFilterCategory.name.label("filter_category"),
 
