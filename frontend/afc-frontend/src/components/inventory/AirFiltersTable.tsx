@@ -159,7 +159,7 @@ export default function AirFiltersTable() {
   const groupedProducts = useMemo(() => groupProducts(rows), [rows]);
 
   /* ===================== EXPAND/COLLAPSE HANDLERS ===================== */
-  
+
   const toggleExpand = (productId: number) => {
     setExpandedRows((prev) => {
       const newSet = new Set(prev);
