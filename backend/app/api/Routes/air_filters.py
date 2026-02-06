@@ -162,6 +162,7 @@ def search_air_filters():
             AirFilter.depth,
             Product.id.label("product_id"),
             ChildProduct.id.label("child_product_id"),
+            ChildProduct.parent_product_id.label("parent_product_id"),
             Supplier.name.label("supplier_name"),
             AirFilterCategory.name.label("filter_category"),
 

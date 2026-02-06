@@ -156,6 +156,7 @@ def search_misc_items():
             MiscItem.description,
             Product.id.label("product_id"),
             ChildProduct.id.label("child_product_id"),
+            ChildProduct.parent_product_id.label("parent_product_id"),
             Supplier.name.label("supplier_name"),
 
             Quantity.on_hand,

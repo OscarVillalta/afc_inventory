@@ -7,6 +7,8 @@ import { apiRequest } from "./apiClient";
 export interface AirFilterPayload {
   id: number;
   product_id: number;
+  child_product_id?: number | null;
+  parent_product_id?: number | null;
   part_number: string;
   merv_rating: number;
 

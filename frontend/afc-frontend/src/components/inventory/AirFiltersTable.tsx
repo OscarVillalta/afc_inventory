@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import MDTable from "../table/MDtable";
 import { fetchAirFilters } from "../../api/airfilters";
@@ -26,6 +27,56 @@ interface EditFormState {
   reserved: number;
 }
 
+interface GroupedProduct {
+  parent: AirFilterPayload;
+  children: AirFilterPayload[];
+  isExpanded: boolean;
+}
+
+/* ============================================================
+   HELPER FUNCTIONS
+============================================================ */
+
+/**
+ * Group products by parent-child relationship
+ */
+function groupProducts(products: AirFilterPayload[]): GroupedProduct[] {
+  const parentMap = new Map<number, GroupedProduct>();
+  const childProducts: AirFilterPayload[] = [];
+
+  // First pass: identify parents and children
+  products.forEach((product) => {
+    if (product.parent_product_id) {
+      // This is a child product
+      childProducts.push(product);
+    } else {
+      // This is a parent product (or standalone)
+      parentMap.set(product.product_id, {
+        parent: product,
+        children: [],
+        isExpanded: false,
+      });
+    }
+  });
+
+  // Second pass: attach children to parents
+  childProducts.forEach((child) => {
+    const parentGroup = parentMap.get(child.parent_product_id!);
+    if (parentGroup) {
+      parentGroup.children.push(child);
+    } else {
+      // Orphaned child - treat as standalone
+      parentMap.set(child.product_id, {
+        parent: child,
+        children: [],
+        isExpanded: false,
+      });
+    }
+  });
+
+  return Array.from(parentMap.values());
+}
+
 /* ============================================================
    COMPONENT
 ============================================================ */
@@ -37,6 +88,9 @@ export default function AirFiltersTable() {
 
   const [data, setData] = useState<AirFilterResponse>();
   const [loading, setLoading] = useState(false);
+  
+  /* ===================== EXPANDED ROWS STATE ===================== */
+  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
 
   /* ===================== FILTER STATE (PERSISTED) ===================== */
   const [filters, setFilter] = usePersistedFilters("filters_airfilters", {
@@ -78,7 +132,21 @@ export default function AirFiltersTable() {
         width: filters.filterWidth || undefined,
         depth: filters.filterDepth || undefined,
       })
-      .then((res) => setData(res))
+      .then((res) => {
+        setData(res);
+        
+        // Auto-expand parents when search matches child products
+        if (filters.searchPart && res.results) {
+          const newExpandedRows = new Set<number>();
+          res.results.forEach((product) => {
+            if (product.parent_product_id) {
+              // This is a child product that matched the search
+              newExpandedRows.add(product.parent_product_id);
+            }
+          });
+          setExpandedRows(newExpandedRows);
+        }
+      })
       .finally(() => setLoading(false));
   };
 
@@ -87,6 +155,21 @@ export default function AirFiltersTable() {
   }, [page, filters.searchPart, filters.filterSupplier, filters.filterCategory, filters.filterMerv, filters.filterHeight, filters.filterWidth, filters.filterDepth]);
 
   const rows: AirFilterPayload[] = data?.results ?? [];
+  const groupedProducts = groupProducts(rows);
+  
+  /* ===================== EXPAND/COLLAPSE HANDLERS ===================== */
+  
+  const toggleExpand = (productId: number) => {
+    setExpandedRows((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(productId)) {
+        newSet.delete(productId);
+      } else {
+        newSet.add(productId);
+      }
+      return newSet;
+    });
+  };
 
   /* ===================== EDIT HANDLERS ===================== */
 
@@ -290,82 +373,194 @@ export default function AirFiltersTable() {
         </tr>
 
         {/* ================= DATA ROWS ================= */}
-        {rows.map((row) => (
-          <tr 
-            key={row.id} 
-            className="bg-white shadow-sm rounded-xl cursor-pointer hover:bg-gray-50 transition"
-            onClick={() => navigate(`/products/${row.product_id}`)}
-          >
-            <td className="py-3 px-2 font-semibold  w-1/6">{row.part_number}</td>
-            <td className="py-3 px-2 w-1/5">{row.supplier_name ?? "—"}</td>
-            <td className="py-3 px-2">{row.filter_category}</td>
-            <td className="py-3 px-2 text-center">
-              {row.height} x {row.width} x {row.depth}
-            </td>
-            <td className="py-3 text-center">{row.merv_rating}</td>
-            <td className="w-1/32 text-center"></td>
-            <td className="py-3 font-medium text-center bg-blue-50 border-2 border-blue-400 rounded-lg shadow-sm">
-              <div className="flex justify-around items-center gap-5">
-                <span className="font-medium text-center">{row.on_hand}</span>
-                <span className="font-medium text-center">{row.ordered}</span>
-                <span className="font-medium text-center">{row.reserved}</span>
-                <span className="text-center">{
-                  row.available > 0 ? (
-                    <span className=" py-2 px-2 text-xs rounded-full bg-green-100 text-green-600 text-center">{row.available}</span>
-                  ) : ( 
-                    <span className=" py-2 px-2 text-gray-400 text-center">{row.available}</span>
-                  )
-                }
-              </span>
-              <span className="font-medium text-center">
-                {row.backordered > 0 ? (
-                <span className=" py-2 px-2 text-xs rounded-full bg-red-100 text-red-700 font-semibold text-center">
-                  {row.backordered}
-                </span>
-                ) : (
-                  <span className=" py-2 px-2 text-gray-400 text-center">—</span>
-                )}
-              </span>
-              </div>
-              
-            </td>
-
-            <td
-              className="py-3 pl-5 cursor-pointer hover:scale-110 transition"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleEdit(row)
-              }}
-            >
-              {/* edit icon unchanged */}
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="25"
-                viewBox="0 0 48 48"
-                fill="none"
+        {groupedProducts.map((group) => {
+          const isExpanded = expandedRows.has(group.parent.product_id);
+          const hasChildren = group.children.length > 0;
+          
+          return (
+            <React.Fragment key={group.parent.id}>
+              {/* PARENT ROW */}
+              <tr 
+                className="bg-white shadow-sm rounded-xl cursor-pointer hover:bg-gray-50 transition"
               >
-                <rect width="48" height="48" fill="white" fillOpacity="0.01" />
-                <path
-                  d="M29 4H9C7.9 4 7 4.9 7 6V42C7 43.1 7.9 44 9 44H37C38.1 44 39 43.1 39 42V20"
-                  stroke="#000"
-                  strokeWidth="4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path d="M13 18H21" stroke="#000" strokeWidth="4" strokeLinecap="round" />
-                <path d="M13 28H25" stroke="#000" strokeWidth="4" strokeLinecap="round" />
-                <path
-                  d="M41 6L29 18"
-                  stroke="#000"
-                  strokeWidth="4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </td>
-          </tr>
-        ))}
+                <td 
+                  className="py-3 px-2 font-semibold w-1/6"
+                  onClick={() => navigate(`/products/${group.parent.product_id}`)}
+                >
+                  <div className="flex items-center gap-2">
+                    {hasChildren && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleExpand(group.parent.product_id);
+                        }}
+                        className="text-gray-400 hover:text-gray-600 transition"
+                      >
+                        {isExpanded ? "▼" : "▶"}
+                      </button>
+                    )}
+                    <span>{group.parent.part_number}</span>
+                  </div>
+                </td>
+                <td 
+                  className="py-3 px-2 w-1/5"
+                  onClick={() => navigate(`/products/${group.parent.product_id}`)}
+                >
+                  {group.parent.supplier_name ?? "—"}
+                </td>
+                <td 
+                  className="py-3 px-2"
+                  onClick={() => navigate(`/products/${group.parent.product_id}`)}
+                >
+                  {group.parent.filter_category}
+                </td>
+                <td 
+                  className="py-3 px-2 text-center"
+                  onClick={() => navigate(`/products/${group.parent.product_id}`)}
+                >
+                  {group.parent.height} x {group.parent.width} x {group.parent.depth}
+                </td>
+                <td 
+                  className="py-3 text-center"
+                  onClick={() => navigate(`/products/${group.parent.product_id}`)}
+                >
+                  {group.parent.merv_rating}
+                </td>
+                <td 
+                  className="w-1/32 text-center"
+                  onClick={() => navigate(`/products/${group.parent.product_id}`)}
+                ></td>
+                <td 
+                  className="py-3 font-medium text-center bg-blue-50 border-2 border-blue-400 rounded-lg shadow-sm"
+                  onClick={() => navigate(`/products/${group.parent.product_id}`)}
+                >
+                  <div className="flex justify-around items-center gap-5">
+                    <span className="font-medium text-center">{group.parent.on_hand}</span>
+                    <span className="font-medium text-center">{group.parent.ordered}</span>
+                    <span className="font-medium text-center">{group.parent.reserved}</span>
+                    <span className="text-center">{
+                      group.parent.available > 0 ? (
+                        <span className="py-2 px-2 text-xs rounded-full bg-green-100 text-green-600 text-center">{group.parent.available}</span>
+                      ) : ( 
+                        <span className="py-2 px-2 text-gray-400 text-center">{group.parent.available}</span>
+                      )
+                    }
+                    </span>
+                    <span className="font-medium text-center">
+                      {group.parent.backordered > 0 ? (
+                      <span className="py-2 px-2 text-xs rounded-full bg-red-100 text-red-700 font-semibold text-center">
+                        {group.parent.backordered}
+                      </span>
+                      ) : (
+                        <span className="py-2 px-2 text-gray-400 text-center">—</span>
+                      )}
+                    </span>
+                  </div>
+                </td>
+
+                <td
+                  className="py-3 pl-5 cursor-pointer hover:scale-110 transition"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEdit(group.parent)
+                  }}
+                >
+                  {/* edit icon */}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="25"
+                    viewBox="0 0 48 48"
+                    fill="none"
+                  >
+                    <rect width="48" height="48" fill="white" fillOpacity="0.01" />
+                    <path
+                      d="M29 4H9C7.9 4 7 4.9 7 6V42C7 43.1 7.9 44 9 44H37C38.1 44 39 43.1 39 42V20"
+                      stroke="#000"
+                      strokeWidth="4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path d="M13 18H21" stroke="#000" strokeWidth="4" strokeLinecap="round" />
+                    <path d="M13 28H25" stroke="#000" strokeWidth="4" strokeLinecap="round" />
+                    <path
+                      d="M41 6L29 18"
+                      stroke="#000"
+                      strokeWidth="4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </td>
+              </tr>
+
+              {/* CHILD ROWS */}
+              {isExpanded && group.children.map((child) => (
+                <tr 
+                  key={child.id} 
+                  className="bg-blue-50 hover:bg-blue-100 transition cursor-pointer"
+                >
+                  <td 
+                    className="py-3 px-2 font-semibold w-1/6 pl-10"
+                    onClick={() => navigate(`/products/${child.product_id}`)}
+                  >
+                    <span className="text-gray-600">↳ {child.part_number}</span>
+                  </td>
+                  <td 
+                    className="py-3 px-2 w-1/5"
+                    onClick={() => navigate(`/products/${child.product_id}`)}
+                  >
+                    {child.supplier_name ?? "—"}
+                  </td>
+                  <td 
+                    className="py-3 px-2"
+                    onClick={() => navigate(`/products/${child.product_id}`)}
+                  >
+                    {child.filter_category}
+                  </td>
+                  <td 
+                    className="py-3 px-2 text-center"
+                    onClick={() => navigate(`/products/${child.product_id}`)}
+                  >
+                    {child.height} x {child.width} x {child.depth}
+                  </td>
+                  <td 
+                    className="py-3 text-center"
+                    onClick={() => navigate(`/products/${child.product_id}`)}
+                  >
+                    {child.merv_rating}
+                  </td>
+                  <td 
+                    className="w-1/32 text-center"
+                    onClick={() => navigate(`/products/${child.product_id}`)}
+                  ></td>
+                  <td 
+                    className="py-3 font-medium text-center bg-white border-2 border-blue-300 rounded-lg shadow-sm"
+                    onClick={() => navigate(`/products/${child.product_id}`)}
+                  >
+                    <div className="flex justify-around items-center gap-5">
+                      <span className="font-medium text-center text-gray-500">—</span>
+                      <span className="font-medium text-center text-gray-500">—</span>
+                      <span className="font-medium text-center text-gray-500">—</span>
+                      <span className="font-medium text-center text-gray-500">—</span>
+                      <span className="font-medium text-center text-gray-500">—</span>
+                    </div>
+                  </td>
+
+                  <td
+                    className="py-3 pl-5 cursor-pointer hover:scale-110 transition"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Child products share parent's quantity, so we don't allow editing
+                    }}
+                  >
+                    {/* No edit icon for children */}
+                  </td>
+                </tr>
+              ))}
+            </React.Fragment>
+          );
+        })}
 
         {loading && (
           <tr>
