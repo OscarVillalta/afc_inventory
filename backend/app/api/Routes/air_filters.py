@@ -1,5 +1,5 @@
 from flask import g, jsonify, request, Blueprint
-from sqlalchemy import func, select, and_
+from sqlalchemy import func, select, and_, or_
 from database.models import AirFilter, AirFilterCategory, Supplier, Product, ProductCategory, Quantity, ChildProduct
 from marshmallow import ValidationError
 from app.api.Schemas.air_filters_schema import AirFilterSchema
@@ -117,6 +117,9 @@ def delete_air_filter(id):
     # Cascade delete linked product + quantity
     if flt.product:
         db.delete(flt.product)
+    # Also delete linked child product if exists
+    if flt.child_product:
+        db.delete(flt.child_product)
     db.delete(flt)
     db.commit()
     return jsonify({"message": "Air Filter deleted successfully."}), 200
@@ -145,6 +148,10 @@ def search_air_filters():
     offset = (page - 1) * limit
 
     # --- Base Query ---
+    # Note: Using OUTER JOINs to include AirFilters even if they lack associated
+    # Product/ChildProduct/Quantity records (which shouldn't happen in normal operation,
+    # but allows for debugging orphaned records). Items without quantity data will have
+    # NULL values in those fields.
     query = (
         select(
             AirFilter.id,
@@ -169,8 +176,9 @@ def search_air_filters():
         )
         .join(Supplier, AirFilter.supplier_id == Supplier.id)
         .join(AirFilterCategory, AirFilter.category_id == AirFilterCategory.id)
-        .join(Product, and_(Product.category_id == 1, Product.reference_id == AirFilter.id))
-        .join(Quantity, Quantity.product_id == Product.id)
+        .outerjoin(Product, and_(Product.category_id == 1, Product.reference_id == AirFilter.id))
+        .outerjoin(ChildProduct, and_(ChildProduct.category_id == 1, ChildProduct.reference_id == AirFilter.id))
+        .outerjoin(Quantity, or_(Quantity.product_id == Product.id, Quantity.product_id == ChildProduct.parent_product_id))
         .distinct(AirFilter.id)
     )
 

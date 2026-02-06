@@ -2,7 +2,7 @@ from flask import Blueprint, g, jsonify, request
 from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError, DatabaseError
 from app.api.Schemas.order_item_schema import OrderItemSchema
-from database.models import OrderItem, Order, Product, Transaction, TransactionState, OrderType
+from database.models import OrderItem, Order, Product, ChildProduct, Transaction, TransactionState, OrderType
 from marshmallow import ValidationError
 from typing import Tuple, Any
 
@@ -61,6 +61,7 @@ def create_order_item() -> Tuple[Any, int]:
     Request Body:
         order_id (int): ID of the parent order
         product_id (int): ID of the product (not required for separators)
+        child_product_id (int): ID of the child product (alternative to product_id)
         is_separator (bool): Whether this is a separator item
         quantity_ordered (int): Quantity ordered
         note (str): Optional note
@@ -88,16 +89,32 @@ def create_order_item() -> Tuple[Any, int]:
             if not data.get("note"):
                 raise InvalidInputError("Separator items must have a note/description")
             product_id = None
+            child_product_id = None
             quantity_ordered = 0
         else:
-            if "product_id" not in data:
-                raise InvalidInputError("product_id is required for non-separator items")
+            # Check for product_id or child_product_id
+            has_product = "product_id" in data and data["product_id"] is not None
+            has_child_product = "child_product_id" in data and data["child_product_id"] is not None
             
-            product = db.get(Product, data["product_id"])
-            if not product:
-                raise ResourceNotFoundError("Product", data["product_id"])
+            if not has_product and not has_child_product:
+                raise InvalidInputError("Either product_id or child_product_id is required for non-separator items")
             
-            product_id = product.id
+            if has_product and has_child_product:
+                raise InvalidInputError("Cannot specify both product_id and child_product_id")
+            
+            if has_product:
+                product = db.get(Product, data["product_id"])
+                if not product:
+                    raise ResourceNotFoundError("Product", data["product_id"])
+                product_id = product.id
+                child_product_id = None
+            else:
+                child_product = db.get(ChildProduct, data["child_product_id"])
+                if not child_product:
+                    raise ResourceNotFoundError("ChildProduct", data["child_product_id"])
+                product_id = None
+                child_product_id = child_product.id
+            
             quantity_ordered = validate_positive_integer(
                 data["quantity_ordered"], 
                 "quantity_ordered", 
@@ -129,6 +146,7 @@ def create_order_item() -> Tuple[Any, int]:
         item = OrderItem(
             order_id=order.id,
             product_id=product_id,
+            child_product_id=child_product_id,
             is_separator=is_separator,
             quantity_ordered=quantity_ordered,
             quantity_fulfilled=0,
@@ -227,6 +245,7 @@ def allocate_order_item(item_id):
     # 🔹 Create pending transaction
     txn = Transaction(
         product_id=item.product_id,
+        child_product_id=item.child_product_id,
         order_id=order.id,
         order_item_id=item.id,
         quantity_delta=qty_delta,
@@ -286,6 +305,7 @@ def allocate_remaining_order_items(item_id):
     # 🔹 Create pending transaction
     txn = Transaction(
         product_id=item.product_id,
+        child_product_id=item.child_product_id,
         order_id=order.id,
         order_item_id=item.id,
         quantity_delta= qty_to_allocate * sign,
@@ -294,10 +314,21 @@ def allocate_remaining_order_items(item_id):
         note=note or None
     )
 
-    if order.type == "incoming":
-        item.product.quantity.ordered += qty_to_allocate
+    # Get the quantity record - works for both Product and ChildProduct
+    if item.product:
+        qty_record = item.product.quantity
+    elif item.child_product:
+        qty_record = item.child_product.quantity
     else:
-        item.product.quantity.reserved += qty_to_allocate
+        return jsonify({"error": "Order item has no product or child product"}), 400
+    
+    if not qty_record:
+        return jsonify({"error": "Quantity record not found"}), 404
+    
+    if order.type == "incoming":
+        qty_record.ordered += qty_to_allocate
+    else:
+        qty_record.reserved += qty_to_allocate
 
     db.add(txn)  
     db.commit()
@@ -490,13 +521,23 @@ def create_order_item_transaction(order_item_id):
 
     order = item.order
     product = item.product
+    child_product = item.child_product
 
-    if not product or not product.quantity:
+    # Get the quantity record - works for both Product and ChildProduct
+    if product:
+        qty = product.quantity
+    elif child_product:
+        qty = child_product.quantity
+    else:
         return jsonify({
-            "error": "Product or quantity record missing"
+            "error": "Product or child product missing"
         }), 400
 
-    qty = product.quantity
+    if not qty:
+        return jsonify({
+            "error": "Quantity record missing"
+        }), 400
+
     remaining = item.quantity_ordered - item.quantity_fulfilled
 
     if quantity > remaining:
@@ -508,7 +549,8 @@ def create_order_item_transaction(order_item_id):
     # Create PENDING transaction
     # -------------------------
     txn = Transaction(
-        product_id=product.id,
+        product_id=product.id if product else None,
+        child_product_id=child_product.id if child_product else None,
         order_id=order.id,
         order_item_id=item.id,
         quantity_delta=quantity,

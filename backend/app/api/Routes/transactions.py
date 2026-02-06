@@ -1,5 +1,5 @@
 from flask import abort, g, jsonify, request, Blueprint
-from sqlalchemy import select, func
+from sqlalchemy import select, func, or_
 from database.models import Quantity, Transaction, Product, ChildProduct, TransactionState, OrderType, Order, OrderItem, AirFilter
 from datetime import datetime, timezone
 from app.api.Schemas.transaction_schema import TransactionSchema
@@ -61,6 +61,7 @@ def filter_transactions():
 
     # --- Filters
     product_id = request.args.get("product_id", type=int)
+    child_product_id = request.args.get("child_product_id", type=int)
     product_name = request.args.get("product_name", type=str)
     order_id = request.args.get("order_id", type=int)
     state = request.args.get("state")
@@ -85,17 +86,31 @@ def filter_transactions():
     if product_id:
         filters.append(Transaction.product_id == product_id)
     
-    # Search by product name (partial match)
+    if child_product_id:
+        filters.append(Transaction.child_product_id == child_product_id)
+    
+    # Search by product name (partial match) - check both Product and ChildProduct
     if product_name:
         AirFilter_subquery = select(AirFilter.id).where(
             AirFilter.part_number.ilike(f"%{product_name}%")
         )
 
+        # Products with matching air filters
         product_subquery = select(Product.id).where(
             Product.reference_id.in_(AirFilter_subquery)
         )
+        
+        # Child products with matching air filters
+        child_product_subquery = select(ChildProduct.id).where(
+            ChildProduct.reference_id.in_(AirFilter_subquery)
+        )
 
-        filters.append(Transaction.product_id.in_(product_subquery))
+        filters.append(
+            or_(
+                Transaction.product_id.in_(product_subquery),
+                Transaction.child_product_id.in_(child_product_subquery)
+            )
+        )
     
     if order_id:
         filters.append(Transaction.order_id == order_id)
@@ -337,17 +352,20 @@ def rollback_transaction(txn_id):
         return jsonify({"error": "Unexpected error while rolling back transaction"}), 500
 
 # =====================================================
-# 🔹 GET Ledger for a Product
+# 🔹 Helper for Ledger Queries
 # =====================================================
-@transaction_bp.route("/transactions/ledger/<int:product_id>", methods=["GET"])
-def get_transaction_ledger(product_id):
-    db = g.db
-
-    # Ensure product exists
-    product = db.get(Product, product_id)
-    if not product:
-        return jsonify({"error": "Product not found"}), 404
-
+def _get_transaction_ledger(db, product_id=None, child_product_id=None):
+    """
+    Helper function to retrieve transaction ledger for either a Product or ChildProduct.
+    
+    Args:
+        db: Database session
+        product_id: ID of the product (mutually exclusive with child_product_id)
+        child_product_id: ID of the child product (mutually exclusive with product_id)
+    
+    Returns:
+        dict: Ledger data with pagination and results
+    """
     # --- Query parameters
     page = request.args.get("page", default=1, type=int)
     limit = request.args.get("limit", default=50, type=int)
@@ -357,14 +375,22 @@ def get_transaction_ledger(product_id):
     include_pending = request.args.get("include_pending", "false").lower() == "true"
 
     # --- Build filters
-    filters = [Transaction.product_id == product_id]
+    if product_id:
+        filters = [Transaction.product_id == product_id]
+        balance_filter_product_id = product_id
+        balance_filter_child_product_id = None
+    else:
+        filters = [Transaction.child_product_id == child_product_id]
+        balance_filter_product_id = None
+        balance_filter_child_product_id = child_product_id
+    
     try:
         if start_date:
             filters.append(Transaction.created_at >= datetime.fromisoformat(start_date))
         if end_date:
             filters.append(Transaction.created_at <= datetime.fromisoformat(end_date))
     except ValueError:
-        return jsonify({"error": "Invalid date format. Use ISO format (YYYY-MM-DD)."}), 400
+        return {"error": "Invalid date format. Use ISO format (YYYY-MM-DD)."}, 400
     
     if not include_pending:
         filters.append(Transaction.state == "committed")
@@ -399,20 +425,60 @@ def get_transaction_ledger(product_id):
         select(func.count()).select_from(Transaction).where(*filters)
     ).scalar()
 
-    final_balance = (
-        db.execute(
-            select(func.sum(Transaction.quantity_delta))
-            .where(Transaction.product_id == product_id)
-            .where(Transaction.state == "committed")
-        ).scalar()
-        or 0
-    )
+    # Build final balance query based on product type
+    balance_query = select(func.sum(Transaction.quantity_delta)).where(Transaction.state == "committed")
+    if balance_filter_product_id:
+        balance_query = balance_query.where(Transaction.product_id == balance_filter_product_id)
+    else:
+        balance_query = balance_query.where(Transaction.child_product_id == balance_filter_child_product_id)
+    
+    final_balance = db.execute(balance_query).scalar() or 0
 
-    return jsonify({
-        "product_id": product_id,
+    result = {
         "page": page,
         "limit": limit,
         "total": total_count,
         "final_balance": final_balance,
         "results": [dict(row) for row in results],
-    }), 200
+    }
+    
+    if product_id:
+        result["product_id"] = product_id
+    else:
+        result["child_product_id"] = child_product_id
+    
+    return result, 200
+
+
+# =====================================================
+# 🔹 GET Ledger for a Product
+# =====================================================
+@transaction_bp.route("/transactions/ledger/<int:product_id>", methods=["GET"])
+def get_transaction_ledger(product_id):
+    db = g.db
+
+    # Ensure product exists
+    product = db.get(Product, product_id)
+    if not product:
+        return jsonify({"error": "Product not found"}), 404
+
+    result, status = _get_transaction_ledger(db, product_id=product_id)
+    return jsonify(result), status
+
+
+# =====================================================
+# 🔹 GET Ledger for a Child Product
+# =====================================================
+@transaction_bp.route("/transactions/ledger/child_product/<int:child_product_id>", methods=["GET"])
+def get_child_product_transaction_ledger(child_product_id):
+    db = g.db
+
+    # Ensure child product exists
+    child_product = db.get(ChildProduct, child_product_id)
+    if not child_product:
+        return jsonify({"error": "Child product not found"}), 404
+
+    result, status = _get_transaction_ledger(db, child_product_id=child_product_id)
+    return jsonify(result), status
+
+
