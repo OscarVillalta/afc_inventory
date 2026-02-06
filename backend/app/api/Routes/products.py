@@ -2,7 +2,7 @@ from pprint import pp
 from flask import g, jsonify, Blueprint
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
-from database.models import Product, ProductCategory, AirFilter, MiscItem, Quantity, Supplier
+from database.models import Product, ProductCategory, AirFilter, MiscItem, Quantity, Supplier, ChildProduct
 from app.api.Schemas.product_schema import ProductSchema
 
 product_bp = Blueprint("products", __name__)
@@ -67,7 +67,9 @@ def get_product(id):
             selectinload(Product.category),
             selectinload(Product.quantity),
             selectinload(Product.air_filter).selectinload(AirFilter.supplier),
-            selectinload(Product.misc_item).selectinload(MiscItem.supplier)
+            selectinload(Product.misc_item).selectinload(MiscItem.supplier),
+            selectinload(Product.child_products).selectinload(ChildProduct.air_filter).selectinload(AirFilter.supplier),
+            selectinload(Product.child_products).selectinload(ChildProduct.misc_item).selectinload(MiscItem.supplier)
         )
     ).scalars().first()
 
@@ -91,12 +93,34 @@ def get_product(id):
     else:
         details = {}
 
+    # Include child products
+    child_products_data = []
+    for child in product.child_products:
+        if child.is_active:
+            child_category = child.category.name if child.category else "Unknown"
+            if child.air_filter:
+                child_details = child.air_filter.to_dict()
+                child_details["supplier_name"] = child.air_filter.supplier.name if child.air_filter.supplier else None
+            elif child.misc_item:
+                child_details = child.misc_item.to_dict()
+                child_details["supplier_name"] = child.misc_item.supplier.name if child.misc_item.supplier else None
+            else:
+                child_details = {}
+            
+            child_products_data.append({
+                "id": child.id,
+                "category": child_category,
+                "reference_id": child.reference_id,
+                "details": child_details
+            })
+
     return jsonify({
         "id": product.id,
         "category": category,
         "reference_id": product.reference_id,
         "details": details,
-        "quantity": quantity
+        "quantity": quantity,
+        "child_products": child_products_data
     }), 200
 
 

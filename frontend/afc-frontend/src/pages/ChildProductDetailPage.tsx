@@ -13,10 +13,8 @@ import {
 
 import MainLayout from "../layouts/MainLayout";
 import {
-  fetchProductDetail,
-  fetchProductTransactions,
-  fetchProductOrders,
-  type ProductDetail,
+  fetchChildProductDetail,
+  type ChildProductDetail,
   type TransactionItem,
   type ProductOrderSummary,
 } from "../api/productDetail";
@@ -35,49 +33,45 @@ interface StockProjection {
    COMPONENT
 ============================================================ */
 
-export default function ProductDetailPage() {
-  const { productId } = useParams<{ productId: string }>();
+export default function ChildProductDetailPage() {
+  const { childProductId } = useParams<{ childProductId: string }>();
   const navigate = useNavigate();
-  const [product, setProduct] = useState<ProductDetail | null>(null);
+  const [childProduct, setChildProduct] = useState<ChildProductDetail | null>(null);
   const [transactions, setTransactions] = useState<TransactionItem[]>([]);
   const [incomingOrders, setIncomingOrders] = useState<ProductOrderSummary[]>([]);
   const [outgoingOrders, setOutgoingOrders] = useState<ProductOrderSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!productId) return;
+    if (!childProductId) return;
 
     const loadData = async () => {
       try {
         setLoading(true);
-        const [productData, txnData, incomingData, outgoingData] = await Promise.all([
-          fetchProductDetail(Number(productId)),
-          fetchProductTransactions(Number(productId), 1, 20),
-          fetchProductOrders(Number(productId), 'incoming', 5),
-          fetchProductOrders(Number(productId), 'outgoing', 5),
-        ]);
-        setProduct(productData);
-        setTransactions(txnData.results);
-        setIncomingOrders(incomingData);
-        setOutgoingOrders(outgoingData);
-      } catch (error) {
-        console.error("Failed to load product detail:", error);
-        // Use mock data for demonstration when backend is unavailable
-        // Product with ID 1 has child products, Product with ID 2 has no children
-        const hasChildren = Number(productId) === 1;
+        const childProductData = await fetchChildProductDetail(Number(childProductId));
+        setChildProduct(childProductData);
         
-        setProduct({
-          id: Number(productId),
+        // For child products, we might want to fetch transactions and orders
+        // related to the child product itself (if the API supports it)
+        // For now, we'll use empty arrays
+        setTransactions([]);
+        setIncomingOrders([]);
+        setOutgoingOrders([]);
+      } catch (error) {
+        console.error("Failed to load child product detail:", error);
+        // Use mock data for demonstration when backend is unavailable
+        setChildProduct({
+          id: Number(childProductId),
           category: "Air Filters",
-          reference_id: 1,
+          reference_id: 10,
           details: {
-            part_number: hasChildren ? "AF-16252-11" : "AF-20304-13",
-            supplier_name: "Filter Dynamics Inc.",
-            filter_category: hasChildren ? "MERV 11" : "MERV 13",
-            height: hasChildren ? 16 : 20,
-            width: hasChildren ? 25 : 30,
+            part_number: "AF-16252-11-ALT",
+            supplier_name: "Alternative Filters Co.",
+            filter_category: "MERV 11",
+            height: 16,
+            width: 25,
             depth: 2,
-            merv_rating: hasChildren ? 11 : 13,
+            merv_rating: 11,
           },
           quantity: {
             on_hand: 45,
@@ -86,127 +80,48 @@ export default function ProductDetailPage() {
             available: 25,
             backordered: 5,
           },
-          child_products: hasChildren ? [
-            {
-              id: 101,
-              category: "Air Filters",
-              reference_id: 10,
-              details: {
-                part_number: "AF-16252-11-ALT",
-                supplier_name: "Alternative Filters Co.",
-                filter_category: "MERV 11",
-                height: 16,
-                width: 25,
-                depth: 2,
-                merv_rating: 11,
-              },
+          parent_product: {
+            id: 1,
+            category: "Air Filters",
+            category_id: 1,
+            reference_id: 1,
+            details: {
+              part_number: "AF-16252-11",
+              supplier_name: "Filter Dynamics Inc.",
+              filter_category: "MERV 11",
+              height: 16,
+              width: 25,
+              depth: 2,
+              merv_rating: 11,
             },
-            {
-              id: 102,
-              category: "Air Filters",
-              reference_id: 11,
-              details: {
-                part_number: "AF-16252-11-ECO",
-                supplier_name: "Eco Filters Inc.",
-                filter_category: "MERV 11",
-                height: 16,
-                width: 25,
-                depth: 2,
-                merv_rating: 11,
-              },
-            },
-          ] : [],
+          },
         });
-        setTransactions([
-          {
-            id: 1,
-            product_id: Number(productId),
-            quantity_delta: 50,
-            reason: "receive",
-            state: "committed",
-            note: "Shipment from supplier",
-            created_at: "2026-02-01T10:30:00Z",
-          },
-          {
-            id: 2,
-            product_id: Number(productId),
-            quantity_delta: -15,
-            reason: "shipment",
-            state: "committed",
-            note: "Order #5678",
-            created_at: "2026-02-03T14:20:00Z",
-          },
-          {
-            id: 3,
-            product_id: Number(productId),
-            quantity_delta: 5,
-            reason: "adjustment",
-            state: "committed",
-            note: "Physical count correction",
-            created_at: "2026-02-04T09:15:00Z",
-          },
-        ]);
-        setIncomingOrders([
-          {
-            id: 1,
-            order_number: "PO-1234",
-            type: "incoming",
-            cs_name: "Filter Dynamics Inc.",
-            status: "Pending",
-            created_at: "2026-01-15T10:00:00Z",
-            eta: "2026-03-15",
-          },
-          {
-            id: 2,
-            order_number: "PO-1235",
-            type: "incoming",
-            cs_name: "Filter Dynamics Inc.",
-            status: "Committed",
-            created_at: "2026-01-20T10:00:00Z",
-            eta: "2026-03-22",
-          },
-        ]);
-        setOutgoingOrders([
-          {
-            id: 3,
-            order_number: "ORD-5678",
-            type: "outgoing",
-            cs_name: "ABC Corp",
-            status: "Pending",
-            created_at: "2026-02-01T10:00:00Z",
-          },
-          {
-            id: 4,
-            order_number: "ORD-5679",
-            type: "outgoing",
-            cs_name: "XYZ Inc",
-            status: "Completed",
-            created_at: "2026-02-03T10:00:00Z",
-          },
-        ]);
+        setTransactions([]);
+        setIncomingOrders([]);
+        setOutgoingOrders([]);
       } finally {
         setLoading(false);
       }
     };
 
     loadData();
-  }, [productId]);
+  }, [childProductId]);
 
   if (loading) {
     return (
       <MainLayout>
         <div className="flex items-center justify-center h-full">
-          <p className="text-gray-500">Loading product details...</p>
+          <p className="text-gray-500">Loading child product details...</p>
         </div>
       </MainLayout>
     );
   }
 
-  if (!product) {
+  if (!childProduct) {
     return (
       <MainLayout>
         <div className="flex items-center justify-center h-full">
-          <p className="text-red-500">Product not found</p>
+          <p className="text-red-500">Child product not found</p>
         </div>
       </MainLayout>
     );
@@ -216,7 +131,7 @@ export default function ProductDetailPage() {
   const generateStockProjection = (): StockProjection[] => {
     const data: StockProjection[] = [];
     const today = new Date();
-    let level = product.quantity.on_hand;
+    let level = childProduct.quantity.on_hand;
 
     for (let i = 0; i <= 90; i += 10) {
       const date = new Date(today);
@@ -247,13 +162,20 @@ export default function ProductDetailPage() {
   const stockProjection = generateStockProjection();
 
   // Extract details
-  const partNumber = product.details.part_number || product.details.name || "N/A";
-  const description = product.details.filter_category
-    ? `${product.details.height}x${product.details.width}x${product.details.depth} MERV ${product.details.merv_rating} Filter`
-    : product.details.description || "No description";
-  const vendor = product.details.supplier_name || "N/A";
+  const partNumber = childProduct.details.part_number || childProduct.details.name || "N/A";
+  const description = childProduct.details.filter_category
+    ? `${childProduct.details.height}x${childProduct.details.width}x${childProduct.details.depth} MERV ${childProduct.details.merv_rating} Filter`
+    : childProduct.details.description || "No description";
+  const vendor = childProduct.details.supplier_name || "N/A";
 
-  const { on_hand, reserved, ordered, available, backordered } = product.quantity;
+  const { on_hand, reserved, ordered, available, backordered } = childProduct.quantity;
+
+  // Parent product info
+  const parentPartNumber = childProduct.parent_product?.details.part_number || 
+                          childProduct.parent_product?.details.name || "N/A";
+  const parentDescription = childProduct.parent_product?.details.filter_category
+    ? `${childProduct.parent_product.details.height}x${childProduct.parent_product.details.width}x${childProduct.parent_product.details.depth} MERV ${childProduct.parent_product.details.merv_rating} Filter`
+    : childProduct.parent_product?.details.description || "No description";
 
   return (
     <MainLayout>
@@ -266,7 +188,7 @@ export default function ProductDetailPage() {
               Inventory
             </Link>
             <span className="mx-2">/</span>
-            <span className="text-gray-700">Product Details</span>
+            <span className="text-gray-700">Child Product Details</span>
           </div>
 
           {/* Header */}
@@ -289,7 +211,12 @@ export default function ProductDetailPage() {
             </div>
 
             <div className="flex-1">
-              <h1 className="text-3xl font-bold text-[#363b4c]">{partNumber}</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-3xl font-bold text-[#363b4c]">{partNumber}</h1>
+                <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">
+                  Child Product
+                </span>
+              </div>
               <p className="text-lg text-gray-600 mt-1">{description}</p>
 
               <div className="flex gap-6 mt-4 text-sm text-gray-600">
@@ -320,6 +247,48 @@ export default function ProductDetailPage() {
             className={backordered > 0 ? "text-red-600" : "text-gray-600"}
           />
         </div>
+
+        {/* ========== PARENT PRODUCT INFO ========== */}
+        {childProduct.parent_product && (
+          <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+            <div className="bg-[#363b4c] text-white px-4 py-3">
+              <h3 className="font-semibold">Parent Product</h3>
+            </div>
+            <div className="p-4">
+              <div
+                className="border border-gray-200 rounded p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                onClick={() => navigate(`/products/${childProduct.parent_product?.id}`)}
+                title="Click to view parent product details"
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="font-medium text-gray-800 text-lg">{parentPartNumber}</p>
+                    <p className="text-sm text-gray-600 mt-1">{parentDescription}</p>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Supplier: {childProduct.parent_product.details.supplier_name || "N/A"}
+                    </p>
+                    <p className="text-xs text-blue-600 mt-2 italic">
+                      Note: This child product shares inventory with its parent
+                    </p>
+                  </div>
+                  <svg
+                    className="w-5 h-5 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ========== PROJECTED STOCK LEVEL ========== */}
         <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
@@ -368,11 +337,7 @@ export default function ProductDetailPage() {
         <div className="grid grid-cols-3 gap-4">
           {/* Incoming Shipments */}
           <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-            <div 
-              className="bg-[#363b4c] text-white px-4 py-3 cursor-pointer hover:bg-[#4a5063] transition-colors"
-              onClick={() => navigate(`/orders/search?type=incoming&product_ids=${productId}`)}
-              title="Click to view all incoming orders for this product"
-            >
+            <div className="bg-[#363b4c] text-white px-4 py-3">
               <h3 className="font-semibold">Incoming Shipments</h3>
             </div>
             <div className="p-4">
@@ -420,11 +385,7 @@ export default function ProductDetailPage() {
 
           {/* Outgoing Orders */}
           <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-            <div 
-              className="bg-[#363b4c] text-white px-4 py-3 cursor-pointer hover:bg-[#4a5063] transition-colors"
-              onClick={() => navigate(`/orders/search?type=outgoing&product_ids=${productId}`)}
-              title="Click to view all outgoing orders for this product"
-            >
+            <div className="bg-[#363b4c] text-white px-4 py-3">
               <h3 className="font-semibold">Outgoing Orders</h3>
             </div>
             <div className="p-4">
@@ -484,76 +445,10 @@ export default function ProductDetailPage() {
                   </p>
                 </div>
               )}
-              <div className="flex items-start gap-2">
-                <span className="text-yellow-500 text-lg">⚠</span>
-                <p className="text-sm text-gray-700">
-                  Missing ETA for PO-1234
-                </p>
-              </div>
+              {backordered === 0 && (
+                <p className="text-sm text-gray-500 text-center py-4">No warnings</p>
+              )}
             </div>
-          </div>
-        </div>
-
-        {/* ========== CHILD PRODUCTS / CREATE CHILD PRODUCT ========== */}
-        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-          <div className="bg-[#363b4c] text-white px-4 py-3">
-            <h3 className="font-semibold">Child Products</h3>
-          </div>
-          <div className="p-4">
-            {product.child_products && product.child_products.length > 0 ? (
-              <div className="space-y-2">
-                {product.child_products.map((child) => {
-                  const childPartNumber = child.details.part_number || child.details.name || "N/A";
-                  const childDescription = child.details.filter_category
-                    ? `${child.details.height}x${child.details.width}x${child.details.depth} MERV ${child.details.merv_rating} Filter`
-                    : child.details.description || "No description";
-                  return (
-                    <div
-                      key={child.id}
-                      className="border border-gray-200 rounded p-3 hover:bg-gray-50 cursor-pointer transition-colors"
-                      onClick={() => navigate(`/child-products/${child.id}`)}
-                      title="Click to view child product details"
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-medium text-gray-800">{childPartNumber}</p>
-                          <p className="text-sm text-gray-600">{childDescription}</p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            Supplier: {child.details.supplier_name || "N/A"}
-                          </p>
-                        </div>
-                        <svg
-                          className="w-5 h-5 text-gray-400"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 5l7 7-7 7"
-                          />
-                        </svg>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-6">
-                <p className="text-gray-500 mb-4">No child products</p>
-                <button
-                  className="bg-[#363b4c] text-white px-6 py-2 rounded hover:bg-[#4a5063] transition-colors"
-                  onClick={() => {
-                    // TODO: Navigate to create child product page/modal
-                    alert("Create Child Product functionality coming soon!");
-                  }}
-                >
-                  Create Child Product
-                </button>
-              </div>
-            )}
           </div>
         </div>
 

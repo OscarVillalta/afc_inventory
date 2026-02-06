@@ -6,6 +6,7 @@ import OrdersSearch from "./pages/OrdersSearch";
 import TransactionsPage from "./pages/Transactions";
 import OrderDetailPage from "./components/order/OrderDetailPage";
 import ProductDetailPage from "./pages/ProductDetailPage";
+import ChildProductDetailPage from "./pages/ChildProductDetailPage";
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/transactions" element={<TransactionsPage/>}/>
         <Route path="/orders/:orderId" element={<OrderDetailPage />} />
         <Route path="/products/:productId" element={<ProductDetailPage />} />
+        <Route path="/child-products/:childProductId" element={<ChildProductDetailPage />} />
       </Routes>
     </BrowserRouter>
   );

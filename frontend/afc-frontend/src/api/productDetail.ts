@@ -22,6 +22,65 @@ export interface ProductDetail {
     available: number;
     backordered: number;
   };
+  child_products?: ChildProductSummary[];
+}
+
+export interface ChildProductSummary {
+  id: number;
+  category: string;
+  reference_id: number;
+  details: {
+    part_number?: string;
+    name?: string;
+    supplier_name?: string;
+    filter_category?: string;
+    height?: number;
+    width?: number;
+    depth?: number;
+    merv_rating?: number;
+    description?: string;
+  };
+}
+
+export interface ChildProductDetail {
+  id: number;
+  category: string;
+  reference_id: number;
+  details: {
+    part_number?: string;
+    name?: string;
+    supplier_name?: string;
+    filter_category?: string;
+    height?: number;
+    width?: number;
+    depth?: number;
+    merv_rating?: number;
+    description?: string;
+  };
+  quantity: {
+    on_hand: number;
+    reserved: number;
+    ordered: number;
+    available: number;
+    backordered: number;
+  };
+  parent_product?: {
+    id: number;
+    category: string;
+    category_id: number;
+    reference_id: number;
+    details: {
+      part_number?: string;
+      name?: string;
+      supplier_name?: string;
+      filter_category?: string;
+      height?: number;
+      width?: number;
+      depth?: number;
+      merv_rating?: number;
+      description?: string;
+    };
+  };
 }
 
 export interface TransactionItem {
@@ -51,6 +110,10 @@ export interface OrderItem {
 
 export async function fetchProductDetail(productId: number): Promise<ProductDetail> {
   return apiRequest(`/products/${productId}`) as Promise<ProductDetail>;
+}
+
+export async function fetchChildProductDetail(childProductId: number): Promise<ChildProductDetail> {
+  return apiRequest(`/child_products/${childProductId}`) as Promise<ChildProductDetail>;
 }
 
 export async function fetchProductTransactions(productId: number, page = 1, limit = 10) {
