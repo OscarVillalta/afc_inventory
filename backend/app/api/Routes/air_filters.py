@@ -148,6 +148,10 @@ def search_air_filters():
     offset = (page - 1) * limit
 
     # --- Base Query ---
+    # Note: Using OUTER JOINs to include AirFilters even if they lack associated
+    # Product/ChildProduct/Quantity records (which shouldn't happen in normal operation,
+    # but allows for debugging orphaned records). Items without quantity data will have
+    # NULL values in those fields.
     query = (
         select(
             AirFilter.id,

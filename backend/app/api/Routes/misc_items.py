@@ -145,6 +145,10 @@ def search_misc_items():
     offset = (page - 1) * limit
 
     # --- Base Query ---
+    # Note: Using OUTER JOINs to include MiscItems even if they lack associated
+    # Product/ChildProduct/Quantity records (which shouldn't happen in normal operation,
+    # but allows for debugging orphaned records). Items without quantity data will have
+    # NULL values in those fields.
     query = (
         select(
             MiscItem.id,
