@@ -258,16 +258,8 @@ export default function ProductDetailPage() {
   return (
     <MainLayout>
       <div className="p-6  mx-auto space-y-6 bg-white">
-        {/* ========== BREADCRUMB + HEADER ========== */}
+        {/* ========== HEADER ========== */}
         <div className="space-y-4">
-          {/* Breadcrumb */}
-          <div className="text-sm text-gray-500">
-            <Link to="/inventory" className="hover:text-gray-700">
-              Inventory
-            </Link>
-            <span className="mx-2">/</span>
-            <span className="text-gray-700">Product Details</span>
-          </div>
 
           {/* Header */}
           <div className="flex items-start gap-6">
