@@ -85,7 +85,9 @@ export interface ChildProductDetail {
 
 export interface TransactionItem {
   id: number;
-  product_id: number;
+  product_id: number | null;
+  child_product_id?: number | null;
+  order_id?: number | null;
   quantity_delta: number;
   reason: string;
   state: string;
@@ -116,8 +118,24 @@ export async function fetchChildProductDetail(childProductId: number): Promise<C
   return apiRequest(`/child_products/${childProductId}`) as Promise<ChildProductDetail>;
 }
 
-export async function fetchProductTransactions(productId: number, page = 1, limit = 10) {
-  return apiRequest(`/transactions/search?product_id=${productId}&page=${page}&limit=${limit}`) as Promise<{
+export async function fetchProductTransactions(
+  productId?: number,
+  page = 1,
+  limit = 10,
+  childProductId?: number
+) {
+  const params = new URLSearchParams();
+  params.set("page", String(page));
+  params.set("limit", String(limit));
+
+  if (typeof productId === "number") {
+    params.set("product_id", String(productId));
+  }
+  if (typeof childProductId === "number") {
+    params.set("child_product_id", String(childProductId));
+  }
+
+  return apiRequest(`/transactions/search?${params.toString()}`) as Promise<{
     page: number;
     limit: number;
     total: number;

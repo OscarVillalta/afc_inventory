@@ -11,7 +11,8 @@ export interface createTxnRequest {
 
 export interface TransactionPayload {
   id: number;
-  product_id: number;
+  product_id: number | null;
+  child_product_id?: number | null;
   order_id?: number | null;
   order_item_id?: number | null;
   quantity_delta: number;
@@ -29,6 +30,8 @@ export interface TransactionListResponse {
 }
 
 export interface TransactionFilters {
+  child_product_id?: number;
+  order_id?: number;
   product_name?: string;
   state?: string;
   reason?: string;
@@ -49,8 +52,14 @@ export function fetchTransactions(
   params.set("limit", String(limit));
   
   if (filters) {
+    if (typeof filters.child_product_id === "number") {
+      params.set("child_product_id", String(filters.child_product_id));
+    }
     if (filters.product_name) {
       params.set("product_name", filters.product_name);
+    }
+    if (typeof filters.order_id === "number") {
+      params.set("order_id", String(filters.order_id));
     }
     if (filters.state && filters.state !== "All") {
       params.set("state", filters.state.toLowerCase());

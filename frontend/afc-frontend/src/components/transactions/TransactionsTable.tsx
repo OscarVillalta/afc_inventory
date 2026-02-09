@@ -1,15 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import MDTable from "../table/MDtable";
 import { fetchTransactions, type TransactionFilters } from "../../api/transactions";
 import type { TransactionPayload } from "../../api/transactions";
-import { fetchProducts } from "../../api/products";
-import type { Product } from "../../api/products";
+import { fetchChildProducts, fetchProducts } from "../../api/products";
+import type { ChildProductName, Product } from "../../api/products";
 import { usePersistedFilters } from "../../hooks/usePersistedFilters";
 
 interface TransactionRow {
   id: string;
   product: string;
-  type: "Incoming" | "Outgoing" | "Adjustment";
+  order: string;
   state: "pending" | "committed" | "cancelled" | "rolled_back";
   qty: number;
   source: string;      // vendor or customer
@@ -24,12 +24,13 @@ function formatDate(iso: string) {
   return date.toISOString().split("T")[0];
 }
 
-function getType(txn: TransactionPayload): TransactionRow["type"] {
-  const reason = txn.reason?.toLowerCase();
-  if (reason === "adjustment" || reason === "rollback") {
-    return "Adjustment";
-  }
-  return txn.quantity_delta >= 0 ? "Incoming" : "Outgoing";
+function getChildPartNumber(cp: ChildProductName) {
+  return (
+    cp.part_number ||
+    cp.air_filter?.part_number ||
+    cp.misc_item?.name ||
+    `Child #${cp.id}`
+  );
 }
 
 export default function TransactionsTable() {
@@ -39,6 +40,7 @@ export default function TransactionsTable() {
   // === FILTER STATES (PERSISTED) ===
   const [filters, setFilter] = usePersistedFilters("filters_transactions", {
     searchProduct: "",
+    orderId: "",
     filterState: "All",
     filterReason: "",
     filterNote: "",
@@ -48,6 +50,7 @@ export default function TransactionsTable() {
   });
 
   const [products, setProducts] = useState<Product[]>([]);
+  const [childProducts, setChildProducts] = useState<ChildProductName[]>([]);
   const [transactions, setTransactions] = useState<TransactionPayload[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -57,10 +60,12 @@ export default function TransactionsTable() {
   const loadTransactions = () => {
     setLoading(true);
     setError(null);
+    setProductWarning(null);
 
     // Build filters object
     const apiFilters: TransactionFilters = {};
     if (filters.searchProduct) apiFilters.product_name = filters.searchProduct;
+    if (filters.orderId) apiFilters.order_id = Number(filters.orderId);
     if (filters.filterState && filters.filterState !== "All") apiFilters.state = filters.filterState;
     if (filters.filterReason) apiFilters.reason = filters.filterReason;
     if (filters.filterNote) apiFilters.note = filters.filterNote;
@@ -78,8 +83,9 @@ export default function TransactionsTable() {
     Promise.allSettled([
       fetchTransactions(page, pageSize, apiFilters),
       fetchProducts(),
+      fetchChildProducts(),
     ])
-      .then(([transactionsResult, productsResult]) => {
+      .then(([transactionsResult, productsResult, childProductsResult]) => {
         if (transactionsResult.status === "fulfilled") {
           setTransactions(transactionsResult.value.results ?? []);
           setTotal(transactionsResult.value.total ?? 0);
@@ -89,12 +95,24 @@ export default function TransactionsTable() {
           setTotal(0);
         }
 
+        const warnings: string[] = [];
+
         if (productsResult.status === "fulfilled") {
           setProducts(productsResult.value ?? []);
-          setProductWarning(null);
         } else {
           setProducts([]);
-          setProductWarning("Product names unavailable.");
+          warnings.push("Products unavailable.");
+        }
+
+        if (childProductsResult.status === "fulfilled") {
+          setChildProducts(childProductsResult.value ?? []);
+        } else {
+          setChildProducts([]);
+          warnings.push("Child products unavailable.");
+        }
+
+        if (warnings.length) {
+          setProductWarning(warnings.join(" "));
         }
       })
       .finally(() => {
@@ -104,23 +122,43 @@ export default function TransactionsTable() {
 
   useEffect(() => {
     loadTransactions();
-  }, [page, pageSize, filters.searchProduct, filters.filterState, filters.filterReason, filters.filterNote, filters.startDate, filters.endDate, filters.dateFilterMode]);
+  }, [page, pageSize, filters.searchProduct, filters.orderId, filters.filterState, filters.filterReason, filters.filterNote, filters.startDate, filters.endDate, filters.dateFilterMode]);
 
   const productLookup = useMemo(() => {
     return new Map(products.map((product) => [product.id, product.part_number]));
   }, [products]);
 
-  const rows = useMemo(() => {
+  const childProductLookup = useMemo(() => {
+    return new Map(
+      childProducts.map((cp) => [cp.id, getChildPartNumber(cp) ?? `Child #${cp.id}`])
+    );
+  }, [childProducts]);
+
+  const resolveProductLabel = useCallback(
+    (txn: TransactionPayload) => {
+      if (txn.child_product_id) {
+        return childProductLookup.get(txn.child_product_id) ?? `Child #${txn.child_product_id}`;
+      }
+      if (txn.product_id != null) {
+        return productLookup.get(txn.product_id) ?? `#${txn.product_id}`;
+      }
+      return "—";
+    },
+    [childProductLookup, productLookup]
+  );
+
+  const rows = useMemo<TransactionRow[]>(() => {
     return transactions.map((txn) => ({
       id: String(txn.id),
-      product: productLookup.get(txn.product_id) ?? `#${txn.product_id}`,
+      product: resolveProductLabel(txn),
+      order: txn.order_id ? `Order #${txn.order_id}` : "—",
       state: txn.state,
       qty: txn.quantity_delta,
       source: txn.reason ?? "",
       note: txn.note ?? "---",
       date: formatDate(txn.created_at),
     }));
-  }, [productLookup, transactions]);
+  }, [childProductLookup, productLookup, transactions]);
 
   const stateFilterOptions = ["All", "Committed", "Pending", "Rolled_Back", "Cancelled"];
 
@@ -129,6 +167,7 @@ export default function TransactionsTable() {
       title="Transactions Ledger"
       columns={[
         "Product",
+        "Order",
         "State",
         "Quantity",
         "Reason",
@@ -150,6 +189,16 @@ export default function TransactionsTable() {
             placeholder="Search Product"
             value={filters.searchProduct}
             onChange={(e) => setFilter("searchProduct", e.target.value)}
+          />
+        </th>
+
+        {/* Order Filter */}
+        <th className="py-2 pr-2">
+          <input
+            className="input input-bordered input-xs w-full"
+            placeholder="Order #"
+            value={filters.orderId}
+            onChange={(e) => setFilter("orderId", e.target.value)}
           />
         </th>
 
@@ -243,7 +292,7 @@ export default function TransactionsTable() {
       {/* TABLE ROWS */}
       {loading && (
         <tr>
-          <td className="py-4 text-center text-gray-500" colSpan={6}>
+          <td className="py-4 text-center text-gray-500" colSpan={7}>
             Loading transactions...
           </td>
         </tr>
@@ -251,7 +300,7 @@ export default function TransactionsTable() {
 
       {!loading && error && (
         <tr>
-          <td className="py-4 text-center text-red-600" colSpan={6}>
+          <td className="py-4 text-center text-red-600" colSpan={7}>
             {error}
           </td>
         </tr>
@@ -259,7 +308,7 @@ export default function TransactionsTable() {
 
       {!loading && !error && productWarning && (
         <tr>
-          <td className="py-2 text-center text-amber-600 text-sm" colSpan={6}>
+          <td className="py-2 text-center text-amber-600 text-sm" colSpan={7}>
             {productWarning}
           </td>
         </tr>
@@ -267,7 +316,7 @@ export default function TransactionsTable() {
 
       {!loading && !error && rows.length === 0 && (
         <tr>
-          <td className="py-4 text-center text-gray-500" colSpan={6}>
+          <td className="py-4 text-center text-gray-500" colSpan={7}>
             No transactions found.
           </td>
         </tr>
@@ -278,6 +327,7 @@ export default function TransactionsTable() {
         rows.map((row) => (
           <tr key={row.id} className="bg-white shadow-sm rounded-xl">
             <td className="py-3 px-2">{row.product}</td>
+            <td className="py-3 px-2">{row.order}</td>
 
             {/* Type badge */}
             <td className="py-3 px-2">
