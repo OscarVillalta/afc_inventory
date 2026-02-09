@@ -365,9 +365,9 @@ export default function ProductDetailPage() {
         </div>
 
         {/* ========== SUPPLY & DEMAND TABLES ========== */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-4 gap-4">
           {/* Incoming Shipments */}
-          <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+          <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden col-span-3">
             <div 
               className="bg-[#363b4c] text-white px-4 py-3 cursor-pointer hover:bg-[#4a5063] transition-colors"
               onClick={() => navigate(`/orders/search?type=incoming&product_ids=${productId}`)}
@@ -418,8 +418,64 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
+          {/* ========== CHILD PRODUCTS / CREATE CHILD PRODUCT ========== */}
+        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden col-span-1">
+          <div className="bg-[#363b4c] text-white px-4 py-2">
+            <h3 className="font-semibold">Child Products</h3>
+          </div>
+          <div className="p-4">
+            {product.child_products && product.child_products.length > 0 ? (
+              <div className="space-y-2">
+                {product.child_products.map((child) => {
+                  const childPartNumber = child.details.part_number || child.details.name || "N/A";
+                  return (
+                    <div
+                      key={child.id}
+                      className="border border-gray-200 rounded p-3 hover:bg-gray-50 cursor-pointer transition-colors"
+                      onClick={() => navigate(`/child-products/${child.id}`)}
+                      title="Click to view child product details"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-medium text-gray-800">{childPartNumber}</p>
+                        </div>
+                        <svg
+                          className="w-5 h-5 text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-6">
+                <p className="text-gray-500 mb-4">No child products</p>
+                <button
+                  className="bg-[#363b4c] text-white px-6 py-2 rounded hover:bg-[#4a5063] transition-colors"
+                  onClick={() => {
+                    // TODO: Navigate to create child product page/modal
+                    alert("Create Child Product functionality coming soon!");
+                  }}
+                >
+                  Create Child Product
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
           {/* Outgoing Orders */}
-          <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+          <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden col-span-3">
             <div 
               className="bg-[#363b4c] text-white px-4 py-3 cursor-pointer hover:bg-[#4a5063] transition-colors"
               onClick={() => navigate(`/orders/search?type=outgoing&product_ids=${productId}`)}
@@ -491,69 +547,6 @@ export default function ProductDetailPage() {
                 </p>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* ========== CHILD PRODUCTS / CREATE CHILD PRODUCT ========== */}
-        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-          <div className="bg-[#363b4c] text-white px-4 py-3">
-            <h3 className="font-semibold">Child Products</h3>
-          </div>
-          <div className="p-4">
-            {product.child_products && product.child_products.length > 0 ? (
-              <div className="space-y-2">
-                {product.child_products.map((child) => {
-                  const childPartNumber = child.details.part_number || child.details.name || "N/A";
-                  const childDescription = child.details.filter_category
-                    ? `${child.details.height}x${child.details.width}x${child.details.depth} MERV ${child.details.merv_rating} Filter`
-                    : child.details.description || "No description";
-                  return (
-                    <div
-                      key={child.id}
-                      className="border border-gray-200 rounded p-3 hover:bg-gray-50 cursor-pointer transition-colors"
-                      onClick={() => navigate(`/child-products/${child.id}`)}
-                      title="Click to view child product details"
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-medium text-gray-800">{childPartNumber}</p>
-                          <p className="text-sm text-gray-600">{childDescription}</p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            Supplier: {child.details.supplier_name || "N/A"}
-                          </p>
-                        </div>
-                        <svg
-                          className="w-5 h-5 text-gray-400"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 5l7 7-7 7"
-                          />
-                        </svg>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-6">
-                <p className="text-gray-500 mb-4">No child products</p>
-                <button
-                  className="bg-[#363b4c] text-white px-6 py-2 rounded hover:bg-[#4a5063] transition-colors"
-                  onClick={() => {
-                    // TODO: Navigate to create child product page/modal
-                    alert("Create Child Product functionality coming soon!");
-                  }}
-                >
-                  Create Child Product
-                </button>
-              </div>
-            )}
           </div>
         </div>
 
