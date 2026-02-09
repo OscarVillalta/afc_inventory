@@ -50,14 +50,36 @@ export default function ProductDetailPage() {
     const loadData = async () => {
       try {
         setLoading(true);
+        const numericProductId = Number(productId);
         const [productData, txnData, incomingData, outgoingData] = await Promise.all([
-          fetchProductDetail(Number(productId)),
-          fetchProductTransactions(Number(productId), 1, 20),
-          fetchProductOrders(Number(productId), 'incoming', 5),
-          fetchProductOrders(Number(productId), 'outgoing', 5),
+          fetchProductDetail(numericProductId),
+          fetchProductTransactions(numericProductId, 1, 20),
+          fetchProductOrders(numericProductId, 'incoming', 5),
+          fetchProductOrders(numericProductId, 'outgoing', 5),
         ]);
         setProduct(productData);
-        setTransactions(txnData.results);
+        
+        let allTransactions = txnData.results || [];
+
+        if (productData.child_products?.length) {
+          const childTxnResponses = await Promise.allSettled(
+            productData.child_products.map((child) =>
+              fetchProductTransactions(undefined, 1, 20, child.id)
+            )
+          );
+
+          childTxnResponses.forEach((result) => {
+            if (result.status === "fulfilled" && result.value?.results) {
+              allTransactions = allTransactions.concat(result.value.results);
+            }
+          });
+        }
+
+        allTransactions = allTransactions.sort(
+          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+
+        setTransactions(allTransactions);
         setIncomingOrders(incomingData);
         setOutgoingOrders(outgoingData);
       } catch (error) {
@@ -121,6 +143,7 @@ export default function ProductDetailPage() {
           {
             id: 1,
             product_id: Number(productId),
+            order_id: null,
             quantity_delta: 50,
             reason: "receive",
             state: "committed",
@@ -130,6 +153,7 @@ export default function ProductDetailPage() {
           {
             id: 2,
             product_id: Number(productId),
+            order_id: 5678,
             quantity_delta: -15,
             reason: "shipment",
             state: "committed",
@@ -139,12 +163,28 @@ export default function ProductDetailPage() {
           {
             id: 3,
             product_id: Number(productId),
+            order_id: null,
             quantity_delta: 5,
             reason: "adjustment",
             state: "committed",
             note: "Physical count correction",
             created_at: "2026-02-04T09:15:00Z",
           },
+          ...(hasChildren
+            ? [
+                {
+                  id: 4,
+                  product_id: null,
+                  child_product_id: 101,
+                  order_id: 7890,
+                  quantity_delta: -3,
+                  reason: "shipment",
+                  state: "committed",
+                  note: "Child product shipment",
+                  created_at: "2026-02-05T11:00:00Z",
+                },
+              ]
+            : []),
         ]);
         setIncomingOrders([
           {
@@ -254,6 +294,29 @@ export default function ProductDetailPage() {
   const vendor = product.details.supplier_name || "N/A";
 
   const { on_hand, reserved, ordered, available, backordered } = product.quantity;
+
+  const childProductLookup = new Map(
+    (product.child_products ?? []).map((child) => [
+      child.id,
+      child.details.part_number || child.details.name || `Child #${child.id}`,
+    ])
+  );
+
+  const getTxnProductLabel = (txn: TransactionItem) => {
+    if (txn.child_product_id && childProductLookup.has(txn.child_product_id)) {
+      return childProductLookup.get(txn.child_product_id);
+    }
+    if (txn.product_id === product.id) {
+      return partNumber;
+    }
+    if (txn.product_id) {
+      return `#${txn.product_id}`;
+    }
+    return "—";
+  };
+
+  const getOrderLabel = (txn: TransactionItem) =>
+    txn.order_id ? `Order #${txn.order_id}` : "—";
 
   return (
     <MainLayout>
@@ -560,23 +623,28 @@ export default function ProductDetailPage() {
               <thead>
                 <tr className="text-left text-gray-600 border-b bg-gray-50">
                   <th className="px-4 py-3">Date</th>
+                  <th className="px-4 py-3">Product</th>
                   <th className="px-4 py-3">Type</th>
                   <th className="px-4 py-3">Quantity</th>
+                  <th className="px-4 py-3">Order</th>
                   <th className="px-4 py-3">Note</th>
                 </tr>
               </thead>
-              <tbody>
-                {transactions.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="px-4 py-6 text-center text-gray-500">
-                      No recent transactions
-                    </td>
-                  </tr>
+                <tbody>
+                  {transactions.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-4 py-6 text-center text-gray-500">
+                        No recent transactions
+                      </td>
+                    </tr>
                 ) : (
                   transactions.map((txn) => (
                     <tr key={txn.id} className="border-b hover:bg-gray-50">
                       <td className="px-4 py-3 text-gray-700">
                         {new Date(txn.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-3 text-gray-700">
+                        {getTxnProductLabel(txn)}
                       </td>
                       <td className="px-4 py-3 capitalize text-gray-700">
                         {txn.reason}
@@ -592,6 +660,9 @@ export default function ProductDetailPage() {
                           {txn.quantity_delta > 0 ? "+" : ""}
                           {txn.quantity_delta}
                         </span>
+                      </td>
+                      <td className="px-4 py-3 text-gray-700">
+                        {getOrderLabel(txn)}
                       </td>
                       <td className="px-4 py-3 text-gray-600">
                         {txn.note || "—"}

@@ -1,5 +1,3 @@
-import React from "react";
-
 type OrderType = "incoming" | "outgoing";
 type OrderStatus = "Pending" | "Partially Fulfilled" | "Completed";
 
