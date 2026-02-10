@@ -1,6 +1,19 @@
 from flask import abort, g, jsonify, request, Blueprint
 from sqlalchemy import select, func, or_
-from database.models import Quantity, Transaction, Product, ChildProduct, TransactionState, OrderType, Order, OrderItem, AirFilter
+from database.models import (
+    Quantity,
+    Transaction,
+    Product,
+    ChildProduct,
+    TransactionState,
+    OrderType,
+    Order,
+    OrderItem,
+    AirFilter,
+    Conversion,
+    ConversionBatch,
+    ConversionState,
+)
 from datetime import datetime, timezone
 from app.api.Schemas.transaction_schema import TransactionSchema
 
@@ -316,6 +329,12 @@ def produce_product():
     if source_qty <= 0 or target_qty <= 0:
         return jsonify({"error": "Quantities must be greater than zero"}), 400
 
+    batch_id = data.get("batch_id")
+    batch_payload = data.get("batch")
+
+    if batch_id and batch_payload:
+        return jsonify({"error": "Provide either batch_id or batch details, not both"}), 400
+
     source_entity, source_quantity, err, status = _get_entity_and_quantity(
         db,
         product_id=data.get("source_product_id"),
@@ -338,40 +357,91 @@ def produce_product():
             "available": source_quantity.on_hand,
             "requested": source_qty,
         }), 409
-
     reason = data.get("reason", "adjustment")
     note = data.get("note")
 
-    consume_txn = Transaction(
-        product_id=source_entity.id if isinstance(source_entity, Product) else None,
-        child_product_id=source_entity.id if isinstance(source_entity, ChildProduct) else None,
-        quantity_delta=-source_qty,
-        reason=reason,
-        note=note,
-        state=TransactionState.COMMITTED.value,
-    )
+    conversion_batch = None
+    if batch_id:
+        conversion_batch = db.get(ConversionBatch, batch_id)
+        if not conversion_batch:
+            return jsonify({"error": "Conversion batch not found"}), 404
+    elif batch_payload:
+        batch_order_id = batch_payload.get("order_id")
+        if batch_order_id:
+            order_for_batch = db.get(Order, batch_order_id)
+            if not order_for_batch:
+                return jsonify({"error": "Order not found for conversion batch"}), 404
+        conversion_batch = ConversionBatch(
+            order_id=batch_order_id,
+            created_by=batch_payload.get("created_by"),
+            note=batch_payload.get("note"),
+            external_ref=batch_payload.get("external_ref"),
+        )
+        db.add(conversion_batch)
 
-    produce_txn = Transaction(
-        product_id=target_entity.id if isinstance(target_entity, Product) else None,
-        child_product_id=target_entity.id if isinstance(target_entity, ChildProduct) else None,
-        quantity_delta=target_qty,
-        reason=reason,
-        note=note,
-        state=TransactionState.COMMITTED.value,
-    )
+    try:
+        timestamp = datetime.now(timezone.utc)
 
-    # Apply inventory changes atomically
-    source_quantity.on_hand -= source_qty
-    target_quantity.on_hand += target_qty
+        consume_txn = Transaction(
+            product_id=source_entity.id if isinstance(source_entity, Product) else None,
+            child_product_id=source_entity.id if isinstance(source_entity, ChildProduct) else None,
+            quantity_delta=-source_qty,
+            reason=reason,
+            note=note,
+            state=TransactionState.COMMITTED.value,
+            created_at=timestamp,
+        )
 
-    db.add(consume_txn)
-    db.add(produce_txn)
-    db.commit()
+        produce_txn = Transaction(
+            product_id=target_entity.id if isinstance(target_entity, Product) else None,
+            child_product_id=target_entity.id if isinstance(target_entity, ChildProduct) else None,
+            quantity_delta=target_qty,
+            reason=reason,
+            note=note,
+            state=TransactionState.COMMITTED.value,
+            created_at=timestamp,
+        )
+
+        # Apply inventory changes atomically
+        source_quantity.on_hand -= source_qty
+        target_quantity.on_hand += target_qty
+
+        db.add(consume_txn)
+        db.add(produce_txn)
+        db.flush()
+
+        conversion = Conversion(
+            batch_id=conversion_batch.id if conversion_batch else None,
+            decrease_txn_id=consume_txn.id,
+            increase_txn_id=produce_txn.id,
+            state=ConversionState.COMPLETED.value,
+            created_at=timestamp,
+            note=data.get("conversion_note", note),
+        )
+        db.add(conversion)
+
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        return jsonify({
+            "error": "Failed to record conversion",
+            "details": str(e)
+        }), 400
 
     return jsonify({
         "message": "Production transaction completed",
         "consumed_transaction": txn_schema.dump(consume_txn),
         "produced_transaction": txn_schema.dump(produce_txn),
+        "conversion": {
+            "id": conversion.id,
+            "batch_id": conversion.batch_id,
+            "decrease_txn_id": conversion.decrease_txn_id,
+            "increase_txn_id": conversion.increase_txn_id,
+            "state": conversion.state,
+            "created_at": conversion.created_at.isoformat(),
+            "note": conversion.note,
+        },
+        "batch_id": conversion.batch_id,
         "source_on_hand": source_quantity.on_hand,
         "target_on_hand": target_quantity.on_hand,
     }), 201
