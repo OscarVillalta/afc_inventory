@@ -418,32 +418,36 @@ def commit_single_order_item_txn(item_id: int) -> Tuple[Any, int]:
 @order_item_bp.route("/order_items/<int:item_id>/commit_all", methods=["PATCH"])
 def commit_all_order_item_txns(item_id):
     db = g.db
-    item = db.get(OrderItem, item_id)
-    if not item:
-        return jsonify({"error": "Order item not found"}), 404
 
-    order = item.order
-    if not order:
-        return jsonify({"error": "Order not associated"}), 400
-
-    # 🔹 Gather all pending transactions for this line item
-    pending_txns = db.scalars(
-        select(Transaction)
-        .where(Transaction.order_item_id == item.id)
-        .where(Transaction.state == "pending")
-    ).all()
-
-    if not pending_txns:
-        return jsonify({"message": "No pending transactions to commit."}), 200
-
-    committed = 0
     try:
+        item = db.get(OrderItem, item_id)
+        if not item:
+            return jsonify({"error": "Order item not found"}), 404
+
+        order = item.order
+        if not order:
+            return jsonify({"error": "Order not associated"}), 400
+
+        # 🔹 Gather all pending transactions for this line item
+        pending_txns = db.scalars(
+            select(Transaction)
+            .where(Transaction.order_item_id == item.id)
+            .where(Transaction.state == "pending")
+        ).all()
+
+        if not pending_txns:
+            return jsonify({"message": "No pending transactions to commit."}), 200
+
+        committed = 0
+
         for txn in pending_txns:
+            
             txn.commit()
             committed += 1
 
-        db.commit()
         order.update_status()
+        db.commit()
+        
 
         return jsonify({
             "message": f"Committed {committed} pending transaction(s) for order item {item_id}.",
@@ -452,9 +456,17 @@ def commit_all_order_item_txns(item_id):
             "order_status": order.status
         }), 200
 
+    except (ResourceNotFoundError, InvalidInputError, CustomValidationError) as e:
+        return jsonify(e.to_dict()), e.status_code
     except ValueError as e:
         db.rollback()
         return jsonify({"error": f"Validation error: {str(e)}"}), 400
+    except IntegrityError as e:
+        db.rollback()
+        return handle_database_error(e, "committing transaction")
+    except DatabaseError as e:
+        db.rollback()
+        return handle_database_error(e, "committing transaction")
     except Exception as e:
         db.rollback()
         return jsonify({"error": f"Unexpected error: {str(e)}"}), 500

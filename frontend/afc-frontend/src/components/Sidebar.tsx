@@ -6,10 +6,9 @@ export default function Sidebar() {
   const links = [
     { name: "Dashboard", to: "/", icon: "📊" },
     { name: "Inventory", to: "/inventory", icon: "📦" },
-    { name: "Orders", to: "/order", icon: "🧾" },
-    { name: "Search Orders", to: "/orders/search", icon: "🔍" },
+    { name: "Orders", to: "/orders/search", icon: "🧾" },
     { name: "Transactions", to: "/transactions", icon: "💱" },
-    { name: "Contracts", to: "/order", icon: "🧾" },
+    { name: "Packing Slip Tracker", to: "/", icon: "📊" },
   ];
 
   return (
@@ -23,8 +22,7 @@ export default function Sidebar() {
       "
     >
       {/* Logo */}
-      <div className="flex items-center gap-3 text-lg font-bold px-4 py-6">
-        <span className="text-3xl">Ⓐ</span>
+      <div className="flex gap-3 text-xl font-bold px-4 py-6 items-center">
         <span>AFC Inventory System</span>
       </div>
 

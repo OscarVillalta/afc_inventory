@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect} from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import { fetchOrders, type OrderRowItemPayload } from "../api/ordersTable";
@@ -139,6 +139,11 @@ export default function OrdersSearchPage() {
   const handleSearch = async (page = 1) => {
     await performSearch(page);
   };
+
+  //Perform initial search if URL has relevant params
+  useEffect(() => {
+    handleSearch(1);
+  }, []);
 
   const handleClearSearch = () => {
     setFilter("searchId", "");

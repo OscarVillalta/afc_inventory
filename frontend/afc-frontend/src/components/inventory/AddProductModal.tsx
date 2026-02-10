@@ -126,7 +126,7 @@ export default function AddProductModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex justify-center items-center z-50">
+    <div className="fixed inset-0 bg-black/30 flex justify-center items-center z-50">
       <div className="bg-white w-[640px] max-h-[90vh] overflow-y-auto rounded-xl shadow-xl p-6 space-y-4">
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-semibold text-gray-800">Add Product</h2>
