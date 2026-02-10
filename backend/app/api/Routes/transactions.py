@@ -12,6 +12,7 @@ from database.models import (
     AirFilter,
     Conversion,
     ConversionBatch,
+    ConversionDecrease,
     ConversionState,
 )
 from datetime import datetime, timezone
@@ -412,12 +413,12 @@ def produce_product():
 
         conversion = Conversion(
             batch_id=conversion_batch.id if conversion_batch else None,
-            decrease_txn_id=consume_txn.id,
             increase_txn_id=produce_txn.id,
             state=ConversionState.COMPLETED.value,
             created_at=timestamp,
             note=data.get("conversion_note"),
         )
+        conversion.decreases.append(ConversionDecrease(transaction_id=consume_txn.id))
         db.add(conversion)
 
         db.commit()
@@ -435,7 +436,14 @@ def produce_product():
         "conversion": {
             "id": conversion.id,
             "batch_id": conversion.batch_id,
-            "decrease_txn_id": conversion.decrease_txn_id,
+            "decreases": [
+                {
+                    "transaction_id": dec.transaction_id,
+                    "product_id": dec.transaction.product_id,
+                    "child_product_id": dec.transaction.child_product_id,
+                }
+                for dec in conversion.decreases
+            ],
             "increase_txn_id": conversion.increase_txn_id,
             "state": conversion.state,
             "created_at": conversion.created_at.isoformat(),

@@ -33,7 +33,7 @@ export default function Inventory() {
               className="btn btn-outline"
               onClick={() => setShowProduceProduct(true)}
             >
-              Produce Product
+              Create Conversion Batch
             </button>
             <button
               className="btn btn-primary"

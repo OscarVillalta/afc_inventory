@@ -626,15 +626,29 @@ class Conversion(Base, SerializerMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     batch_id: Mapped[Optional[int]] = mapped_column(ForeignKey("conversion_batches.id", ondelete="SET NULL"), nullable=True)
-    decrease_txn_id: Mapped[int] = mapped_column(ForeignKey("transactions.id"), unique=True, nullable=False)
     increase_txn_id: Mapped[int] = mapped_column(ForeignKey("transactions.id"), unique=True, nullable=False)
     state: Mapped[str] = mapped_column(String, default=ConversionState.COMPLETED.value, nullable=False)
     created_at: Mapped[datetime] = mapped_column(default=datetime.now(timezone.utc))
     note: Mapped[Optional[str]] = mapped_column(nullable=True)
 
     batch: Mapped[Optional["ConversionBatch"]] = relationship("ConversionBatch", back_populates="conversions")
-    decrease_txn: Mapped["Transaction"] = relationship("Transaction", foreign_keys=[decrease_txn_id])
     increase_txn: Mapped["Transaction"] = relationship("Transaction", foreign_keys=[increase_txn_id])
+    decreases: Mapped[List["ConversionDecrease"]] = relationship(
+        "ConversionDecrease", back_populates="conversion", cascade="all, delete-orphan"
+    )
+
+
+class ConversionDecrease(Base, SerializerMixin):
+    __tablename__ = "conversion_decreases"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    conversion_id: Mapped[int] = mapped_column(
+        ForeignKey("conversions.id", ondelete="CASCADE"), nullable=False
+    )
+    transaction_id: Mapped[int] = mapped_column(ForeignKey("transactions.id"), unique=True, nullable=False)
+
+    conversion: Mapped["Conversion"] = relationship("Conversion", back_populates="decreases")
+    transaction: Mapped["Transaction"] = relationship("Transaction")
 
 
 # =====================================================
@@ -652,3 +666,4 @@ Index("ix_conversion_batches_created_at", ConversionBatch.created_at)
 Index("ix_conversions_batch_id", Conversion.batch_id)
 Index("ix_conversions_state", Conversion.state)
 Index("ix_conversions_created_at", Conversion.created_at)
+Index("ix_conversion_decreases_conversion_id", ConversionDecrease.conversion_id)
