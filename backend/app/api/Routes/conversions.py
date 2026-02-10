@@ -5,9 +5,11 @@ from sqlalchemy import func, or_, select
 from database.models import (
     Conversion,
     ConversionBatch,
+    ConversionDecrease,
     ConversionState,
     Order,
     Product,
+    ChildProduct,
     Transaction,
     TransactionReason,
     TransactionState,
@@ -27,24 +29,21 @@ class InsufficientStockError(Exception):
 
 
 def _derive_state(conversion: Conversion) -> str:
-    decrease_state = conversion.decrease_txn.state
+    decrease_states = [dec.transaction.state for dec in conversion.decreases]
     increase_state = conversion.increase_txn.state
 
-    if (
-        decrease_state == TransactionState.COMMITTED.value
-        and increase_state == TransactionState.COMMITTED.value
-    ):
-        return "committed"
-    if (
-        decrease_state == TransactionState.ROLLED_BACK.value
-        and increase_state == TransactionState.ROLLED_BACK.value
-    ):
-        return "rolled_back"
+    if decrease_states and all(
+        state == TransactionState.COMMITTED.value for state in decrease_states
+    ) and increase_state == TransactionState.COMMITTED.value:
+        return ConversionState.COMPLETED.value
+    if decrease_states and all(
+        state == TransactionState.ROLLED_BACK.value for state in decrease_states
+    ) and increase_state == TransactionState.ROLLED_BACK.value:
+        return ConversionState.ROLLED_BACK.value
     return "partial"
 
 
 def _serialize_conversion(conversion: Conversion) -> dict:
-    decrease_txn = conversion.decrease_txn
     increase_txn = conversion.increase_txn
 
     return {
@@ -53,13 +52,18 @@ def _serialize_conversion(conversion: Conversion) -> dict:
         "note": conversion.note,
         "created_at": conversion.created_at.isoformat(),
         "state": _derive_state(conversion),
-        "decrease": {
-            "product_id": decrease_txn.product_id,
-            "quantity": abs(decrease_txn.quantity_delta),
-            "transaction_id": decrease_txn.id,
-        },
+        "decreases": [
+            {
+                "product_id": dec_txn.transaction.product_id,
+                "child_product_id": dec_txn.transaction.child_product_id,
+                "quantity": abs(dec_txn.transaction.quantity_delta),
+                "transaction_id": dec_txn.transaction.id,
+            }
+            for dec_txn in conversion.decreases
+        ],
         "increase": {
             "product_id": increase_txn.product_id,
+            "child_product_id": increase_txn.child_product_id,
             "quantity": abs(increase_txn.quantity_delta),
             "transaction_id": increase_txn.id,
         },
@@ -79,13 +83,24 @@ def _serialize_batch(batch: ConversionBatch, conversions_total: int | None = Non
     return payload
 
 
-def _validate_and_get_product_with_quantity(db, product_id: int):
-    product = db.get(Product, product_id)
-    if not product:
-        raise ValueError("Product not found.")
-    if product.quantity is None:
-        raise ValueError("Quantity record not found for product.")
-    return product, product.quantity
+def _validate_and_get_product_with_quantity(db, product_id: int | None = None, child_product_id: int | None = None):
+    if product_id is not None:
+        product = db.get(Product, product_id)
+        if not product:
+            raise ValueError("Product not found.")
+        if product.quantity is None:
+            raise ValueError("Quantity record not found for product.")
+        return product, product.quantity
+
+    if child_product_id is not None:
+        child = db.get(ChildProduct, child_product_id)
+        if not child:
+            raise ValueError("Child product not found.")
+        if child.quantity is None:
+            raise ValueError("Quantity record not found for child product.")
+        return child, child.quantity
+
+    raise ValueError("product_id or child_product_id is required.")
 
 
 def _get_quantity_record_from_transaction(txn: Transaction):
@@ -100,55 +115,111 @@ def _validate_conversion_payload(payload: dict):
     if not isinstance(payload, dict):
         raise ValueError("Conversion payload is required.")
 
-    decrease = payload.get("decrease") or {}
+    decrease_payload = payload.get("decreases") or payload.get("decrease")
+    if not decrease_payload:
+        raise ValueError("At least one decrease entry is required.")
+
+    if isinstance(decrease_payload, dict):
+        decrease_entries = [decrease_payload]
+    elif isinstance(decrease_payload, list):
+        decrease_entries = decrease_payload
+    else:
+        raise ValueError("Invalid decreases payload.")
+
     increase = payload.get("increase") or {}
 
+    validated_decreases = []
+    for dec in decrease_entries:
+        product_id = dec.get("product_id")
+        child_product_id = dec.get("child_product_id")
+
+        if product_id is None and child_product_id is None:
+            raise ValueError("product_id or child_product_id is required for decreases.")
+        if product_id is not None and child_product_id is not None:
+            raise ValueError("Provide either product_id or child_product_id, not both.")
+
+        try:
+            qty = int(dec.get("quantity"))
+            product_id = int(product_id) if product_id is not None else None
+            child_product_id = int(child_product_id) if child_product_id is not None else None
+        except (TypeError, ValueError):
+            raise ValueError("product_id/child_product_id and quantity must be integers.")
+        if qty <= 0:
+            raise ValueError("Quantities must be greater than zero.")
+        validated_decreases.append(
+            {"product_id": product_id, "child_product_id": child_product_id, "quantity": qty}
+        )
+
+    increase_product_id = increase.get("product_id")
+    increase_child_product_id = increase.get("child_product_id")
+    if increase_product_id is None and increase_child_product_id is None:
+        raise ValueError("increase.product_id or increase.child_product_id is required.")
+    if increase_product_id is not None and increase_child_product_id is not None:
+        raise ValueError("Provide either product_id or child_product_id for increase, not both.")
+
     try:
-        decrease_product_id = int(decrease.get("product_id"))
-        decrease_qty = int(decrease.get("quantity"))
-        increase_product_id = int(increase.get("product_id"))
+        increase_product_id = int(increase_product_id) if increase_product_id is not None else None
+        increase_child_product_id = (
+            int(increase_child_product_id) if increase_child_product_id is not None else None
+        )
         increase_qty = int(increase.get("quantity"))
     except (TypeError, ValueError):
-        raise ValueError("product_id and quantity must be integers.")
+        raise ValueError("product_id/child_product_id and quantity must be integers.")
 
-    if decrease_qty <= 0 or increase_qty <= 0:
+    if increase_qty <= 0:
         raise ValueError("Quantities must be greater than zero.")
 
-    if decrease_product_id == increase_product_id:
-        raise ValueError("Decrease and increase products must be different.")
+    for dec in validated_decreases:
+        if dec["product_id"] and dec["product_id"] == increase_product_id:
+            raise ValueError("Decrease and increase products must be different.")
+        if dec["child_product_id"] and dec["child_product_id"] == increase_child_product_id:
+            raise ValueError("Decrease and increase products must be different.")
 
-    return decrease_product_id, decrease_qty, increase_product_id, increase_qty
+    return validated_decreases, increase_product_id, increase_child_product_id, increase_qty
 
 
 def _create_conversion(db, batch: ConversionBatch, payload: dict) -> Conversion:
-    decrease_product_id, decrease_qty, increase_product_id, increase_qty = (
-        _validate_conversion_payload(payload)
-    )
+    decreases, increase_product_id, increase_child_product_id, increase_qty = _validate_conversion_payload(payload)
 
-    decrease_product, decrease_quantity = _validate_and_get_product_with_quantity(db, decrease_product_id)
-    increase_product, increase_quantity = _validate_and_get_product_with_quantity(db, increase_product_id)
-
-    if decrease_quantity.on_hand < decrease_qty:
-        raise InsufficientStockError(
-            product_id=decrease_product_id,
-            on_hand=decrease_quantity.on_hand,
-            required=decrease_qty,
+    decrease_products = []
+    for dec in decreases:
+        product, quantity = _validate_and_get_product_with_quantity(
+            db, dec.get("product_id"), dec.get("child_product_id")
         )
+        if quantity.on_hand < dec["quantity"]:
+            raise InsufficientStockError(
+                product_id=dec.get("product_id") or dec.get("child_product_id"),
+                on_hand=quantity.on_hand,
+                required=dec["quantity"],
+            )
+        decrease_products.append((product, quantity, dec["quantity"]))
+
+    increase_product, increase_quantity = _validate_and_get_product_with_quantity(
+        db, increase_product_id, increase_child_product_id
+    )
 
     timestamp = datetime.now(timezone.utc)
     note = payload.get("note")
 
-    consume_txn = Transaction(
-        product_id=decrease_product.id,
-        quantity_delta=-decrease_qty,
-        reason=TransactionReason.ADJUSTMENT.value,
-        note=note,
-        state=TransactionState.COMMITTED.value,
-        created_at=timestamp,
-        order_id=batch.order_id,
-    )
+    decrease_txns: list[Transaction] = []
+    for product, quantity, decrease_qty in decrease_products:
+        consume_txn = Transaction(
+            product_id=product.id if isinstance(product, Product) else None,
+            child_product_id=product.id if isinstance(product, ChildProduct) else None,
+            quantity_delta=-decrease_qty,
+            reason=TransactionReason.ADJUSTMENT.value,
+            note=note,
+            state=TransactionState.COMMITTED.value,
+            created_at=timestamp,
+            order_id=batch.order_id,
+        )
+        quantity.on_hand -= decrease_qty
+        db.add(consume_txn)
+        decrease_txns.append(consume_txn)
+
     produce_txn = Transaction(
-        product_id=increase_product.id,
+        product_id=increase_product.id if isinstance(increase_product, Product) else None,
+        child_product_id=increase_product.id if isinstance(increase_product, ChildProduct) else None,
         quantity_delta=increase_qty,
         reason=TransactionReason.ADJUSTMENT.value,
         note=note,
@@ -157,21 +228,20 @@ def _create_conversion(db, batch: ConversionBatch, payload: dict) -> Conversion:
         order_id=batch.order_id,
     )
 
-    decrease_quantity.on_hand -= decrease_qty
     increase_quantity.on_hand += increase_qty
 
-    db.add(consume_txn)
     db.add(produce_txn)
     db.flush()
 
     conversion = Conversion(
         batch_id=batch.id,
-        decrease_txn_id=consume_txn.id,
         increase_txn_id=produce_txn.id,
         created_at=timestamp,
-        state="committed",
+        state=ConversionState.COMPLETED.value,
         note=note,
     )
+    for txn in decrease_txns:
+        conversion.decreases.append(ConversionDecrease(transaction_id=txn.id))
     batch.conversions.append(conversion)
     db.add(conversion)
     db.flush()
@@ -439,11 +509,12 @@ def rollback_conversion(conversion_id: int):
         )
 
     try:
-        decrease_rb = conversion.decrease_txn.rollback(db)
+        decrease_rbs = [dec.transaction.rollback(db) for dec in conversion.decreases]
         increase_rb = conversion.increase_txn.rollback(db)
 
         if payload.get("note"):
-            decrease_rb.note = payload["note"]
+            for rb in decrease_rbs:
+                rb.note = payload["note"]
             increase_rb.note = payload["note"]
 
         conversion.state = ConversionState.ROLLED_BACK.value
@@ -464,10 +535,10 @@ def rollback_conversion(conversion_id: int):
                     "id": conversion.id,
                     "batch_id": conversion.batch_id,
                     "state": "rolled_back",
-                    "rollback": {
-                        "decrease_rollback_transaction_id": decrease_rb.id,
-                        "increase_rollback_transaction_id": increase_rb.id,
-                    },
+                        "rollback": {
+                            "decrease_rollback_transaction_ids": [rb.id for rb in decrease_rbs],
+                            "increase_rollback_transaction_id": increase_rb.id,
+                        },
                 },
             }
         ),
@@ -517,7 +588,8 @@ def rollback_conversion_batch(batch_id: int):
     rolled_back_ids = []
     try:
         for conv in to_rollback:
-            conv.decrease_txn.rollback(db)
+            for dec in conv.decreases:
+                dec.transaction.rollback(db)
             conv.increase_txn.rollback(db)
             conv.state = ConversionState.ROLLED_BACK.value
             rolled_back_ids.append(conv.id)
@@ -565,8 +637,20 @@ def search_conversions():
     if product_id:
         filters.append(
             or_(
-                Conversion.decrease_txn.has(Transaction.product_id == product_id),
-                Conversion.increase_txn.has(Transaction.product_id == product_id),
+                Conversion.decreases.any(
+                    ConversionDecrease.transaction.has(
+                        or_(
+                            Transaction.product_id == product_id,
+                            Transaction.child_product_id == product_id,
+                        )
+                    )
+                ),
+                Conversion.increase_txn.has(
+                    or_(
+                        Transaction.product_id == product_id,
+                        Transaction.child_product_id == product_id,
+                    )
+                ),
             )
         )
 
