@@ -224,7 +224,7 @@ def create_conversion_batch():
         return jsonify({"error": str(e)}), 400
     except Exception as e:
         db.rollback()
-        return jsonify({"error": "Failed to create conversion batch", "details": str(e)}), 400
+        return jsonify({"error": "Unexpected error while creating conversion batch", "details": str(e)}), 400
 
     return (
         jsonify(
@@ -368,7 +368,7 @@ def add_conversion_to_batch(batch_id: int):
         return jsonify({"error": str(e)}), 400
     except Exception as e:
         db.rollback()
-        return jsonify({"error": "Failed to add conversion", "details": str(e)}), 400
+        return jsonify({"error": "Unexpected error while adding conversion", "details": str(e)}), 400
 
     return jsonify({"conversion": _serialize_conversion(conversion)}), 201
 
@@ -516,7 +516,7 @@ def rollback_conversion_batch(batch_id: int):
         db.commit()
     except Exception as e:
         db.rollback()
-        return jsonify({"error": "Failed to roll back batch", "details": str(e)}), 400
+        return jsonify({"error": "Unexpected error while rolling back batch", "details": str(e)}), 400
 
     return (
         jsonify(
