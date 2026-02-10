@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import MainLayout from "../layouts/MainLayout";
 import {
   addConversionToBatch,
@@ -112,12 +112,12 @@ function ConversionBuilder({
       .filter((s) => s.parsed);
 
     if (!parsedSources.length || !targetSelection) {
-      alert("Select at least one source and a target.");
+      alert("Please select at least one product to decrease from and one product to increase to.");
       return;
     }
 
     if (parsedSources.some((s) => !s.quantity || s.quantity <= 0) || targetQty <= 0) {
-      alert("Quantities must be greater than zero.");
+      alert("All quantities must be greater than zero.");
       return;
     }
 
@@ -308,14 +308,14 @@ export default function ConversionsPage() {
 
   const { resolve } = useProductLookups(products, childProducts);
 
-  const loadCatalog = () => {
+  const loadCatalog = useCallback(() => {
     Promise.allSettled([fetchProducts(), fetchChildProducts()]).then(([prod, child]) => {
       if (prod.status === "fulfilled") setProducts(prod.value ?? []);
       if (child.status === "fulfilled") setChildProducts(child.value ?? []);
     });
-  };
+  }, []);
 
-  const loadBatches = () => {
+  const loadBatches = useCallback(() => {
     setLoadingList(true);
     setError(null);
     fetchConversionBatches(batchPage, 10)
@@ -328,15 +328,15 @@ export default function ConversionsPage() {
       })
       .catch(() => setError("Failed to load conversion batches."))
       .finally(() => setLoadingList(false));
-  };
+  }, [batchPage, creationMode]);
 
   useEffect(() => {
     loadCatalog();
-  }, []);
+  }, [loadCatalog]);
 
   useEffect(() => {
     loadBatches();
-  }, [batchPage, creationMode]);
+  }, [loadBatches]);
 
   useEffect(() => {
     if (!selectedBatchId) {
@@ -367,7 +367,7 @@ export default function ConversionsPage() {
       }
     } catch (e) {
       console.error(e);
-      alert("Failed to create conversion batch.");
+      alert("Failed to create conversion batch. Please check your inputs and try again.");
     }
   };
 
@@ -379,7 +379,7 @@ export default function ConversionsPage() {
       fetchConversionBatch(selectedBatchId).then(setDetail);
     } catch (e) {
       console.error(e);
-      alert("Failed to add conversion to batch.");
+      alert("Failed to add conversion to batch. Please verify your inputs and try again.");
     }
   };
 
@@ -390,7 +390,7 @@ export default function ConversionsPage() {
       fetchConversionBatch(selectedBatchId).then(setDetail);
     } catch (e) {
       console.error(e);
-      alert("Rollback failed.");
+      alert("Failed to rollback conversion. Please try again or contact support.");
     }
   };
 
