@@ -416,7 +416,7 @@ def produce_product():
             increase_txn_id=produce_txn.id,
             state=ConversionState.COMPLETED.value,
             created_at=timestamp,
-            note=data.get("conversion_note", note),
+            note=data.get("conversion_note"),
         )
         db.add(conversion)
 
@@ -441,7 +441,6 @@ def produce_product():
             "created_at": conversion.created_at.isoformat(),
             "note": conversion.note,
         },
-        "batch_id": conversion.batch_id,
         "source_on_hand": source_quantity.on_hand,
         "target_on_hand": target_quantity.on_hand,
     }), 201
