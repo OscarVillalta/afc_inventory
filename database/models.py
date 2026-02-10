@@ -41,6 +41,12 @@ class TransactionReason(str, Enum):
     ALLOCATION = "allocation"
 
 
+class ConversionState(str, Enum):
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+    ROLLED_BACK = "rolled_back"
+
+
 # =====================================================
 # 🔹 Base Serializer
 # =====================================================
@@ -597,6 +603,41 @@ class Transaction(Base, SerializerMixin):
 
 
 # =====================================================
+# 🔹 Conversions
+# =====================================================
+
+
+class ConversionBatch(Base, SerializerMixin):
+    __tablename__ = "conversion_batches"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    order_id: Mapped[Optional[int]] = mapped_column(ForeignKey("orders.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(default=datetime.now(timezone.utc))
+    created_by: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    note: Mapped[Optional[str]] = mapped_column(nullable=True)
+    external_ref: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+
+    order: Mapped[Optional["Order"]] = relationship("Order")
+    conversions: Mapped[List["Conversion"]] = relationship("Conversion", back_populates="batch")
+
+
+class Conversion(Base, SerializerMixin):
+    __tablename__ = "conversions"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    batch_id: Mapped[Optional[int]] = mapped_column(ForeignKey("conversion_batches.id", ondelete="SET NULL"), nullable=True)
+    decrease_txn_id: Mapped[int] = mapped_column(ForeignKey("transactions.id"), unique=True, nullable=False)
+    increase_txn_id: Mapped[int] = mapped_column(ForeignKey("transactions.id"), unique=True, nullable=False)
+    state: Mapped[str] = mapped_column(String, default=ConversionState.COMPLETED.value, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(default=datetime.now(timezone.utc))
+    note: Mapped[Optional[str]] = mapped_column(nullable=True)
+
+    batch: Mapped[Optional["ConversionBatch"]] = relationship("ConversionBatch", back_populates="conversions")
+    decrease_txn: Mapped["Transaction"] = relationship("Transaction", foreign_keys=[decrease_txn_id])
+    increase_txn: Mapped["Transaction"] = relationship("Transaction", foreign_keys=[increase_txn_id])
+
+
+# =====================================================
 # 🔹 Indexes
 # =====================================================
 
@@ -606,3 +647,8 @@ Index("ix_transactions_product_id", Transaction.product_id)
 Index("ix_transactions_child_product_id", Transaction.child_product_id)
 Index("ix_transactions_state", Transaction.state)
 Index("ix_transactions_created_at", Transaction.created_at)
+Index("ix_conversion_batches_order_id", ConversionBatch.order_id)
+Index("ix_conversion_batches_created_at", ConversionBatch.created_at)
+Index("ix_conversions_batch_id", Conversion.batch_id)
+Index("ix_conversions_state", Conversion.state)
+Index("ix_conversions_created_at", Conversion.created_at)
