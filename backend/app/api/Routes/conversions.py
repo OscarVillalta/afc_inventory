@@ -224,7 +224,7 @@ def create_conversion_batch():
         return jsonify({"error": str(e)}), 400
     except Exception as e:
         db.rollback()
-        return jsonify({"error": "Failed to create conversion batch due to an internal error"}), 400
+        return jsonify({"error": "Internal server error while creating conversion batch"}), 500
 
     return (
         jsonify(
@@ -368,7 +368,7 @@ def add_conversion_to_batch(batch_id: int):
         return jsonify({"error": str(e)}), 400
     except Exception as e:
         db.rollback()
-        return jsonify({"error": "Failed to add conversion due to an internal error"}), 400
+        return jsonify({"error": "Internal server error while adding conversion"}), 500
 
     return jsonify({"conversion": _serialize_conversion(conversion)}), 201
 
@@ -516,7 +516,7 @@ def rollback_conversion_batch(batch_id: int):
         db.commit()
     except Exception as e:
         db.rollback()
-        return jsonify({"error": "Failed to roll back conversion batch due to an internal error"}), 400
+        return jsonify({"error": "Internal server error while rolling back conversion batch"}), 500
 
     return (
         jsonify(
