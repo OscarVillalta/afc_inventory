@@ -12,7 +12,7 @@ from database.models import (
     TransactionReason,
     TransactionState,
 )
-from app.api.validation import validate_pagination
+from app.api.validation import validate_pagination, ValidationError, sanitize_search_string
 
 
 conversion_bp = Blueprint("conversions", __name__)
@@ -169,7 +169,7 @@ def _create_conversion(db, batch: ConversionBatch, payload: dict) -> Conversion:
         decrease_txn_id=consume_txn.id,
         increase_txn_id=produce_txn.id,
         created_at=timestamp,
-        state=ConversionState.COMPLETED.value,
+        state="committed",
         note=note,
     )
     batch.conversions.append(conversion)
@@ -245,7 +245,7 @@ def search_conversion_batches():
         page, limit = validate_pagination(
             request.args.get("page"), request.args.get("limit"), default_limit=25
         )
-    except Exception as e:
+    except ValidationError as e:
         return jsonify({"error": str(e)}), 400
 
     offset = (page - 1) * limit
@@ -262,7 +262,8 @@ def search_conversion_batches():
     if created_by:
         filters.append(ConversionBatch.created_by == created_by)
     if query_str:
-        filters.append(ConversionBatch.note.ilike(f"%{query_str}%"))
+        safe_query = sanitize_search_string(query_str)
+        filters.append(ConversionBatch.note.ilike(f"%{safe_query}%"))
 
     if date_from:
         try:
@@ -545,7 +546,7 @@ def search_conversions():
         page, limit = validate_pagination(
             request.args.get("page"), request.args.get("limit"), default_limit=25
         )
-    except Exception as e:
+    except ValidationError as e:
         return jsonify({"error": str(e)}), 400
 
     offset = (page - 1) * limit
