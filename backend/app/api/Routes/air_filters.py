@@ -3,9 +3,11 @@ from sqlalchemy import func, select, and_, or_
 from database.models import AirFilter, AirFilterCategory, Supplier, Product, ProductCategory, Quantity, ChildProduct
 from marshmallow import ValidationError
 from app.api.Schemas.air_filters_schema import AirFilterSchema
+from app.api.Schemas.air_filter_category_schema import AirFilterCategorySchema
 
 air_filter_bp = Blueprint("air_filters", __name__)
 air_filter_schema = AirFilterSchema()
+air_filter_category_schema = AirFilterCategorySchema(many=True)
 
 ProductCategory_id = 1
 
@@ -15,6 +17,14 @@ def get_air_filters():
     db = g.db
     results = db.execute(select(AirFilter)).scalars().all()
     return jsonify([flt.to_dict(include_relationships=True) for flt in results]), 200
+
+
+# --- GET air filter categories (id + name) ---
+@air_filter_bp.route("/air_filter_categories", methods=["GET"])
+def get_air_filter_categories():
+    db = g.db
+    categories = db.execute(select(AirFilterCategory)).scalars().all()
+    return jsonify(air_filter_category_schema.dump(categories)), 200
 
 
 # --- GET single Air Filter ---

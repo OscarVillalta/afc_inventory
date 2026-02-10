@@ -76,7 +76,7 @@ function groupProducts(products: MiscItemPayload[]): GroupedProduct[] {
    COMPONENT
 ============================================================ */
 
-export default function MiscItemsTable() {
+export default function MiscItemsTable({ refreshToken }: { refreshToken?: number }) {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const pageSize = 12;
@@ -140,7 +140,7 @@ export default function MiscItemsTable() {
 
   useEffect(() => {
     loadData();
-  }, [loadData]);
+  }, [loadData, refreshToken]);
 
   const rows: MiscItemPayload[] = data?.results ?? [];
   const groupedProducts = useMemo(() => groupProducts(rows), [rows]);
