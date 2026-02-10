@@ -88,6 +88,14 @@ def _get_product_and_quantity(db, product_id: int):
     return product, product.quantity
 
 
+def _get_transaction_quantity_record(txn: Transaction):
+    if txn.child_product:
+        return txn.child_product.quantity
+    if txn.product:
+        return txn.product.quantity
+    return None
+
+
 def _validate_conversion_payload(payload: dict):
     if not isinstance(payload, dict):
         raise ValueError("Conversion payload is required.")
@@ -403,7 +411,7 @@ def rollback_conversion(conversion_id: int):
         return jsonify({"error": "Conversion already rolled back"}), 400
 
     increase_txn = conversion.increase_txn
-    qty_record = increase_txn._get_quantity_record()
+    qty_record = _get_transaction_quantity_record(increase_txn)
     required = abs(increase_txn.quantity_delta)
 
     if qty_record and qty_record.on_hand < required:
@@ -479,7 +487,7 @@ def rollback_conversion_batch(batch_id: int):
             continue
 
         increase_txn = conv.increase_txn
-        qty_record = increase_txn._get_quantity_record()
+        qty_record = _get_transaction_quantity_record(increase_txn)
         required = abs(increase_txn.quantity_delta)
         if qty_record and qty_record.on_hand < required:
             return (
