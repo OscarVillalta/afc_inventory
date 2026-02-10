@@ -24,7 +24,7 @@ export default function Inventory() {
           <div>
             <h1 className="text-3xl font-bold text-gray-800">Inventory Management</h1>
             <p className="text-gray-500 mt-1">
-              View, analyze, and manage your filter and misc inventory.
+              View, analyze, and manage your inventory.
             </p>
           </div>
 
@@ -33,7 +33,7 @@ export default function Inventory() {
               className="btn btn-outline"
               onClick={() => setShowProduceProduct(true)}
             >
-              Create Conversion Batch
+              Convert Product
             </button>
             <button
               className="btn btn-primary"
