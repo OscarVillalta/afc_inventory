@@ -88,7 +88,7 @@ def _validate_and_get_product_with_quantity(db, product_id: int):
     return product, product.quantity
 
 
-def _get_product_quantity_from_transaction(txn: Transaction):
+def _get_quantity_record_from_transaction(txn: Transaction):
     if txn.child_product:
         return txn.child_product.quantity
     if txn.product:
@@ -169,7 +169,7 @@ def _create_conversion(db, batch: ConversionBatch, payload: dict) -> Conversion:
         decrease_txn_id=consume_txn.id,
         increase_txn_id=produce_txn.id,
         created_at=timestamp,
-        state=ConversionState.COMPLETED.value,
+        state="committed",
         note=note,
     )
     batch.conversions.append(conversion)
@@ -225,7 +225,7 @@ def create_conversion_batch():
     except Exception as e:
         db.rollback()
         current_app.logger.exception("Error creating conversion batch")
-        return jsonify({"error": "Internal server error while creating conversion batch"}), 500
+        return jsonify({"error": "Internal server error while creating conversion batch. See server logs for details."}), 500
 
     return (
         jsonify(
@@ -370,7 +370,7 @@ def add_conversion_to_batch(batch_id: int):
     except Exception as e:
         db.rollback()
         current_app.logger.exception("Error adding conversion to batch %s", batch_id)
-        return jsonify({"error": "Internal server error while adding conversion"}), 500
+        return jsonify({"error": "Internal server error while adding conversion. See server logs for details."}), 500
 
     return jsonify({"conversion": _serialize_conversion(conversion)}), 201
 
@@ -413,7 +413,7 @@ def rollback_conversion(conversion_id: int):
         return jsonify({"error": "Conversion already rolled back"}), 400
 
     increase_txn = conversion.increase_txn
-    qty_record = _get_product_quantity_from_transaction(increase_txn)
+    qty_record = _get_quantity_record_from_transaction(increase_txn)
     required = abs(increase_txn.quantity_delta)
 
     if qty_record and qty_record.on_hand < required:
@@ -447,7 +447,7 @@ def rollback_conversion(conversion_id: int):
     except Exception:
         db.rollback()
         current_app.logger.exception("Error rolling back conversion %s", conversion_id)
-        return jsonify({"error": "Unexpected error while rolling back conversion"}), 500
+        return jsonify({"error": "Unexpected error while rolling back conversion. See server logs for details."}), 500
 
     return (
         jsonify(
@@ -488,7 +488,7 @@ def rollback_conversion_batch(batch_id: int):
             continue
 
         increase_txn = conv.increase_txn
-        qty_record = _get_product_quantity_from_transaction(increase_txn)
+        qty_record = _get_quantity_record_from_transaction(increase_txn)
         required = abs(increase_txn.quantity_delta)
         if qty_record and qty_record.on_hand < required:
             return (
@@ -518,7 +518,7 @@ def rollback_conversion_batch(batch_id: int):
     except Exception as e:
         db.rollback()
         current_app.logger.exception("Error rolling back conversion batch %s", batch_id)
-        return jsonify({"error": "Internal server error while rolling back conversion batch"}), 500
+        return jsonify({"error": "Internal server error while rolling back conversion batch. See server logs for details."}), 500
 
     return (
         jsonify(
