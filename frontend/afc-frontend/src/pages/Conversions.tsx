@@ -109,7 +109,10 @@ function ConversionBuilder({
         parsed: parseSelection(source.selection),
         quantity: Number(source.quantity),
       }))
-      .filter((s) => s.parsed);
+      .filter(
+        (s): s is { parsed: { kind: string; id: number }; quantity: number } =>
+          Boolean(s.parsed),
+      );
 
     if (!parsedSources.length) {
       alert("Please select at least one source product.");
@@ -134,9 +137,9 @@ function ConversionBuilder({
 
     const conversion: ConversionInput = {
       decreases: parsedSources.map((source) =>
-        source.parsed!.kind === "child"
-          ? { child_product_id: source.parsed!.id, quantity: source.quantity }
-          : { product_id: source.parsed!.id, quantity: source.quantity }
+        source.parsed.kind === "child"
+          ? { child_product_id: source.parsed.id, quantity: source.quantity }
+          : { product_id: source.parsed.id, quantity: source.quantity }
       ),
       increase:
         target.kind === "child"
@@ -382,7 +385,9 @@ export default function ConversionsPage() {
     try {
       await addConversionToBatch(selectedBatchId, conversion);
       setAddMode(false);
-      fetchConversionBatch(selectedBatchId).then(setDetail);
+      fetchConversionBatch(selectedBatchId)
+        .then(setDetail)
+        .catch(() => setError("Failed to load conversion details."));
     } catch (e) {
       console.error(e);
       const msg = e instanceof Error ? e.message : "Please verify your inputs and try again.";
@@ -394,7 +399,9 @@ export default function ConversionsPage() {
     if (!selectedBatchId) return;
     try {
       await rollbackConversion(conversionId);
-      fetchConversionBatch(selectedBatchId).then(setDetail);
+      fetchConversionBatch(selectedBatchId)
+        .then(setDetail)
+        .catch(() => setError("Failed to load conversion details."));
     } catch (e) {
       console.error(e);
       const msg = e instanceof Error ? e.message : "Please try again or contact support.";
