@@ -83,7 +83,7 @@ def _validate_and_get_product_with_quantity(db, product_id: int):
     product = db.get(Product, product_id)
     if not product:
         raise ValueError("Product not found.")
-    if not product.quantity:
+    if product.quantity is None:
         raise ValueError("Quantity record not found for product.")
     return product, product.quantity
 
@@ -266,12 +266,18 @@ def search_conversion_batches():
 
     if date_from:
         try:
-            filters.append(ConversionBatch.created_at >= datetime.fromisoformat(date_from))
+            parsed_from = datetime.fromisoformat(date_from)
+            if parsed_from.tzinfo is None:
+                parsed_from = parsed_from.replace(tzinfo=timezone.utc)
+            filters.append(ConversionBatch.created_at >= parsed_from)
         except ValueError:
             return jsonify({"error": "Invalid date_from format."}), 400
     if date_to:
         try:
-            filters.append(ConversionBatch.created_at <= datetime.fromisoformat(date_to))
+            parsed_to = datetime.fromisoformat(date_to)
+            if parsed_to.tzinfo is None:
+                parsed_to = parsed_to.replace(tzinfo=timezone.utc)
+            filters.append(ConversionBatch.created_at <= parsed_to)
         except ValueError:
             return jsonify({"error": "Invalid date_to format."}), 400
 
@@ -515,7 +521,7 @@ def rollback_conversion_batch(batch_id: int):
             conv.state = ConversionState.ROLLED_BACK.value
             rolled_back_ids.append(conv.id)
         db.commit()
-    except Exception as e:
+    except Exception:
         db.rollback()
         current_app.logger.exception("Error rolling back conversion batch %s", batch_id)
         return jsonify({"error": "Failed to roll back conversion batch. See server logs for details."}), 500
