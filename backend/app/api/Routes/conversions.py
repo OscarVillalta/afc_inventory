@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from flask import Blueprint, jsonify, request, g
+from flask import Blueprint, jsonify, request, g, current_app
 from sqlalchemy import func, or_, select
 
 from database.models import (
@@ -224,6 +224,7 @@ def create_conversion_batch():
         return jsonify({"error": str(e)}), 400
     except Exception as e:
         db.rollback()
+        current_app.logger.exception("Error creating conversion batch")
         return jsonify({"error": "Internal server error while creating conversion batch"}), 500
 
     return (
@@ -368,6 +369,7 @@ def add_conversion_to_batch(batch_id: int):
         return jsonify({"error": str(e)}), 400
     except Exception as e:
         db.rollback()
+        current_app.logger.exception("Error adding conversion to batch %s", batch_id)
         return jsonify({"error": "Internal server error while adding conversion"}), 500
 
     return jsonify({"conversion": _serialize_conversion(conversion)}), 201
@@ -441,11 +443,10 @@ def rollback_conversion(conversion_id: int):
         db.commit()
     except ValueError as e:
         db.rollback()
-        message = str(e)
-        status = 409 if "Cannot rollback transaction" in message else 400
-        return jsonify({"error": message}), status
+        return jsonify({"error": str(e)}), 400
     except Exception:
         db.rollback()
+        current_app.logger.exception("Error rolling back conversion %s", conversion_id)
         return jsonify({"error": "Unexpected error while rolling back conversion"}), 500
 
     return (
@@ -516,6 +517,7 @@ def rollback_conversion_batch(batch_id: int):
         db.commit()
     except Exception as e:
         db.rollback()
+        current_app.logger.exception("Error rolling back conversion batch %s", batch_id)
         return jsonify({"error": "Internal server error while rolling back conversion batch"}), 500
 
     return (
