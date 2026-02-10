@@ -79,7 +79,7 @@ def _serialize_batch(batch: ConversionBatch, conversions_total: int | None = Non
     return payload
 
 
-def _get_product_and_quantity(db, product_id: int):
+def _validate_and_get_product_with_quantity(db, product_id: int):
     product = db.get(Product, product_id)
     if not product:
         raise ValueError("Product not found.")
@@ -88,7 +88,7 @@ def _get_product_and_quantity(db, product_id: int):
     return product, product.quantity
 
 
-def _get_transaction_quantity_record(txn: Transaction):
+def _get_product_quantity_from_transaction(txn: Transaction):
     if txn.child_product:
         return txn.child_product.quantity
     if txn.product:
@@ -125,8 +125,8 @@ def _create_conversion(db, batch: ConversionBatch, payload: dict) -> Conversion:
         _validate_conversion_payload(payload)
     )
 
-    decrease_product, decrease_quantity = _get_product_and_quantity(db, decrease_product_id)
-    increase_product, increase_quantity = _get_product_and_quantity(db, increase_product_id)
+    decrease_product, decrease_quantity = _validate_and_get_product_with_quantity(db, decrease_product_id)
+    increase_product, increase_quantity = _validate_and_get_product_with_quantity(db, increase_product_id)
 
     if decrease_quantity.on_hand < decrease_qty:
         raise InsufficientStockError(
@@ -224,7 +224,7 @@ def create_conversion_batch():
         return jsonify({"error": str(e)}), 400
     except Exception as e:
         db.rollback()
-        return jsonify({"error": "Unexpected error while creating conversion batch", "details": str(e)}), 400
+        return jsonify({"error": "Failed to create conversion batch due to an internal error", "details": str(e)}), 400
 
     return (
         jsonify(
@@ -368,7 +368,7 @@ def add_conversion_to_batch(batch_id: int):
         return jsonify({"error": str(e)}), 400
     except Exception as e:
         db.rollback()
-        return jsonify({"error": "Unexpected error while adding conversion", "details": str(e)}), 400
+        return jsonify({"error": "Failed to add conversion due to an internal error", "details": str(e)}), 400
 
     return jsonify({"conversion": _serialize_conversion(conversion)}), 201
 
@@ -411,7 +411,7 @@ def rollback_conversion(conversion_id: int):
         return jsonify({"error": "Conversion already rolled back"}), 400
 
     increase_txn = conversion.increase_txn
-    qty_record = _get_transaction_quantity_record(increase_txn)
+    qty_record = _get_product_quantity_from_transaction(increase_txn)
     required = abs(increase_txn.quantity_delta)
 
     if qty_record and qty_record.on_hand < required:
@@ -487,7 +487,7 @@ def rollback_conversion_batch(batch_id: int):
             continue
 
         increase_txn = conv.increase_txn
-        qty_record = _get_transaction_quantity_record(increase_txn)
+        qty_record = _get_product_quantity_from_transaction(increase_txn)
         required = abs(increase_txn.quantity_delta)
         if qty_record and qty_record.on_hand < required:
             return (
@@ -516,7 +516,7 @@ def rollback_conversion_batch(batch_id: int):
         db.commit()
     except Exception as e:
         db.rollback()
-        return jsonify({"error": "Unexpected error while rolling back batch", "details": str(e)}), 400
+        return jsonify({"error": "Failed to roll back conversion batch due to an internal error", "details": str(e)}), 400
 
     return (
         jsonify(
