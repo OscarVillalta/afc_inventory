@@ -169,7 +169,7 @@ def _create_conversion(db, batch: ConversionBatch, payload: dict) -> Conversion:
         decrease_txn_id=consume_txn.id,
         increase_txn_id=produce_txn.id,
         created_at=timestamp,
-        state="committed",
+        state=ConversionState.COMPLETED.value,
         note=note,
     )
     batch.conversions.append(conversion)
@@ -225,7 +225,7 @@ def create_conversion_batch():
     except Exception as e:
         db.rollback()
         current_app.logger.exception("Error creating conversion batch")
-        return jsonify({"error": "Internal server error while creating conversion batch. See server logs for details."}), 500
+        return jsonify({"error": "Failed to create conversion batch. See server logs for details."}), 500
 
     return (
         jsonify(
@@ -370,7 +370,7 @@ def add_conversion_to_batch(batch_id: int):
     except Exception as e:
         db.rollback()
         current_app.logger.exception("Error adding conversion to batch %s", batch_id)
-        return jsonify({"error": "Internal server error while adding conversion. See server logs for details."}), 500
+        return jsonify({"error": "Failed to add conversion. See server logs for details."}), 500
 
     return jsonify({"conversion": _serialize_conversion(conversion)}), 201
 
@@ -447,7 +447,7 @@ def rollback_conversion(conversion_id: int):
     except Exception:
         db.rollback()
         current_app.logger.exception("Error rolling back conversion %s", conversion_id)
-        return jsonify({"error": "Unexpected error while rolling back conversion. See server logs for details."}), 500
+        return jsonify({"error": "Failed to roll back conversion. See server logs for details."}), 500
 
     return (
         jsonify(
@@ -518,7 +518,7 @@ def rollback_conversion_batch(batch_id: int):
     except Exception as e:
         db.rollback()
         current_app.logger.exception("Error rolling back conversion batch %s", batch_id)
-        return jsonify({"error": "Internal server error while rolling back conversion batch. See server logs for details."}), 500
+        return jsonify({"error": "Failed to roll back conversion batch. See server logs for details."}), 500
 
     return (
         jsonify(
