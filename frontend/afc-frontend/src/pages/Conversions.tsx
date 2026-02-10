@@ -98,7 +98,7 @@ function ConversionBuilder({
     setSources((prev) => prev.map((s, i) => (i === index ? { ...s, [field]: value } : s)));
   };
 
-  const handleAddSource = () => setSources((prev) => [...prev, { selection: "", quantity: 0 }]);
+  const handleAddSource = () => setSources((prev) => [...prev, { selection: "", quantity: 1 }]);
   const handleRemoveSource = (index: number) => {
     setSources((prev) => (prev.length === 1 ? prev : prev.filter((_, i) => i !== index)));
   };
@@ -163,7 +163,7 @@ function ConversionBuilder({
               className="input input-bordered w-full mt-1"
               value={orderId}
               onChange={(e) => setOrderId(e.target.value)}
-              min={0}
+              min={1}
             />
           </div>
           <div>
