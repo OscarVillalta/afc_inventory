@@ -65,9 +65,9 @@ function ConversionBuilder({
   includeBatchFields = false,
   submitLabel,
 }: ConversionBuilderProps) {
-  const [sources, setSources] = useState<SourceInput[]>([{ selection: "", quantity: 0 }]);
+  const [sources, setSources] = useState<SourceInput[]>([{ selection: "", quantity: 1 }]);
   const [targetSelection, setTargetSelection] = useState("");
-  const [targetQty, setTargetQty] = useState(0);
+  const [targetQty, setTargetQty] = useState(1);
   const [conversionNote, setConversionNote] = useState("");
   const [batchNote, setBatchNote] = useState("");
   const [orderId, setOrderId] = useState("");
@@ -112,11 +112,11 @@ function ConversionBuilder({
       .filter((s) => s.parsed);
 
     if (!parsedSources.length || !targetSelection) {
-      alert("Please select at least one product to decrease from and one product to increase to.");
+      alert("Please select at least one source product and a target product.");
       return;
     }
 
-    if (parsedSources.some((s) => !s.quantity || s.quantity <= 0) || targetQty <= 0) {
+    if (parsedSources.some((s) => s.quantity <= 0) || targetQty <= 0) {
       alert("All quantities must be greater than zero.");
       return;
     }
