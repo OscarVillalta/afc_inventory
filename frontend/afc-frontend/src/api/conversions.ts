@@ -70,7 +70,7 @@ export function createConversionBatch(payload: ConversionBatchRequest) {
   return apiRequest("/conversion_batches", {
     method: "POST",
     body: JSON.stringify(payload),
-  });
+  }) as Promise<{ batch: ConversionBatchSummary; conversions?: ConversionRecord[] }>;
 }
 
 export function fetchConversionBatches(page = 1, limit = 10) {

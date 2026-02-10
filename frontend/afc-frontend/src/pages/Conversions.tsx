@@ -112,7 +112,7 @@ function ConversionBuilder({
       .filter((s) => s.parsed);
 
     if (!parsedSources.length || !targetSelection) {
-      alert("Select at least one source and a target product.");
+      alert("Select at least one source and a target.");
       return;
     }
 
@@ -336,7 +336,7 @@ export default function ConversionsPage() {
 
   useEffect(() => {
     loadBatches();
-  }, [batchPage]);
+  }, [batchPage, creationMode]);
 
   useEffect(() => {
     if (!selectedBatchId) {
@@ -358,7 +358,7 @@ export default function ConversionsPage() {
         order_id: extras?.orderId,
         created_by: extras?.createdBy,
         conversions: [conversion],
-      }) as { batch: ConversionBatchSummary };
+      });
       setCreationMode(false);
       setAddMode(false);
       loadBatches();
