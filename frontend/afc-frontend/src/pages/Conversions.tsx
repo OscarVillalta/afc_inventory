@@ -115,12 +115,12 @@ function ConversionBuilder({
       );
 
     if (!parsedSources.length) {
-      alert("Please select at least one source product.");
+      alert("Please select at least one source product from the dropdown.");
       return;
     }
 
     if (!targetSelection) {
-      alert("Please select a target product.");
+      alert("Please select a target product from the dropdown.");
       return;
     }
 
@@ -131,7 +131,7 @@ function ConversionBuilder({
 
     const target = parseSelection(targetSelection);
     if (!target) {
-      alert("Invalid target selection.");
+      alert("Invalid target selection. Please choose a valid product option.");
       return;
     }
 
