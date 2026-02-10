@@ -80,7 +80,7 @@ function groupProducts(products: AirFilterPayload[]): GroupedProduct[] {
    COMPONENT
 ============================================================ */
 
-export default function AirFiltersTable() {
+export default function AirFiltersTable({ refreshToken }: { refreshToken?: number }) {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const pageSize = 12;
@@ -153,7 +153,7 @@ export default function AirFiltersTable() {
 
   useEffect(() => {
     loadData();
-  }, [page, filters.searchPart, filters.filterSupplier, filters.filterCategory, filters.filterMerv, filters.filterHeight, filters.filterWidth, filters.filterDepth]);
+  }, [page, filters.searchPart, filters.filterSupplier, filters.filterCategory, filters.filterMerv, filters.filterHeight, filters.filterWidth, filters.filterDepth, refreshToken]);
 
   const rows: AirFilterPayload[] = data?.results ?? [];
   const groupedProducts = useMemo(() => groupProducts(rows), [rows]);

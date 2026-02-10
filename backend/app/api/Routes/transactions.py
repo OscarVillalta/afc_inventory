@@ -26,6 +26,30 @@ def validate_product_or_child_product_exclusive(data):
     return None
 
 
+def _get_entity_and_quantity(db, product_id=None, child_product_id=None):
+    """
+    Helper to fetch a product/child_product and its quantity record.
+    """
+    if product_id:
+        product = db.get(Product, product_id)
+        if not product:
+            return None, None, {"error": "Product not found"}, 404
+        if not product.quantity:
+            return None, None, {"error": "Quantity record not found for product"}, 404
+        return product, product.quantity, None, None
+
+    if child_product_id:
+        child_product = db.get(ChildProduct, child_product_id)
+        if not child_product:
+            return None, None, {"error": "Child product not found"}, 404
+        qty = child_product.quantity
+        if not qty:
+            return None, None, {"error": "Parent product's quantity record not found"}, 404
+        return child_product, qty, None, None
+
+    return None, None, {"error": "Either product_id or child_product_id is required"}, 400
+
+
 @transaction_bp.route("/transactions", methods=["GET"])
 def get_transactions():
     db = g.db
@@ -269,6 +293,90 @@ def create_transaction():
     }), 201
 
 
+@transaction_bp.route("/transactions/produce", methods=["POST"])
+def produce_product():
+    """
+    Atomically decrease inventory from a source product and increase another.
+    """
+    db = g.db
+    data = request.get_json() or {}
+
+    source_qty = data.get("source_quantity")
+    target_qty = data.get("target_quantity")
+
+    if source_qty is None or target_qty is None:
+        return jsonify({"error": "source_quantity and target_quantity are required"}), 400
+
+    try:
+        source_qty = int(source_qty)
+        target_qty = int(target_qty)
+    except (TypeError, ValueError):
+        return jsonify({"error": "Quantities must be integers"}), 400
+
+    if source_qty <= 0 or target_qty <= 0:
+        return jsonify({"error": "Quantities must be greater than zero"}), 400
+
+    source_entity, source_quantity, err, status = _get_entity_and_quantity(
+        db,
+        product_id=data.get("source_product_id"),
+        child_product_id=data.get("source_child_product_id"),
+    )
+    if err:
+        return jsonify(err), status
+
+    target_entity, target_quantity, err, status = _get_entity_and_quantity(
+        db,
+        product_id=data.get("target_product_id"),
+        child_product_id=data.get("target_child_product_id"),
+    )
+    if err:
+        return jsonify(err), status
+
+    if source_quantity.on_hand < source_qty:
+        return jsonify({
+            "error": "Not enough inventory to produce",
+            "available": source_quantity.on_hand,
+            "requested": source_qty,
+        }), 409
+
+    reason = data.get("reason", "adjustment")
+    note = data.get("note")
+
+    consume_txn = Transaction(
+        product_id=source_entity.id if isinstance(source_entity, Product) else None,
+        child_product_id=source_entity.id if isinstance(source_entity, ChildProduct) else None,
+        quantity_delta=-source_qty,
+        reason=reason,
+        note=note,
+        state=TransactionState.COMMITTED.value,
+    )
+
+    produce_txn = Transaction(
+        product_id=target_entity.id if isinstance(target_entity, Product) else None,
+        child_product_id=target_entity.id if isinstance(target_entity, ChildProduct) else None,
+        quantity_delta=target_qty,
+        reason=reason,
+        note=note,
+        state=TransactionState.COMMITTED.value,
+    )
+
+    # Apply inventory changes atomically
+    source_quantity.on_hand -= source_qty
+    target_quantity.on_hand += target_qty
+
+    db.add(consume_txn)
+    db.add(produce_txn)
+    db.commit()
+
+    return jsonify({
+        "message": "Production transaction completed",
+        "consumed_transaction": txn_schema.dump(consume_txn),
+        "produced_transaction": txn_schema.dump(produce_txn),
+        "source_on_hand": source_quantity.on_hand,
+        "target_on_hand": target_quantity.on_hand,
+    }), 201
+
+
 @transaction_bp.route("/transactions/<int:txn_id>/commit", methods=["PATCH"])
 def commit_transaction(txn_id):
     db = g.db
@@ -480,5 +588,3 @@ def get_child_product_transaction_ledger(child_product_id):
 
     result, status = _get_transaction_ledger(db, child_product_id=child_product_id)
     return jsonify(result), status
-
-

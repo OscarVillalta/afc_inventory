@@ -42,6 +42,17 @@ export interface TransactionFilters {
   after_date?: string;
 }
 
+export interface ProduceRequest {
+  source_product_id?: number;
+  source_child_product_id?: number;
+  target_product_id?: number;
+  target_child_product_id?: number;
+  source_quantity: number;
+  target_quantity: number;
+  reason?: string;
+  note?: string;
+}
+
 export function fetchTransactions(
   page = 1,
   limit = 10,
@@ -114,5 +125,12 @@ export function createItemFulfillmentTxn(payload: {
     body: JSON.stringify({
       ...payload,
     }),
+  });
+}
+
+export function produceInventory(data: ProduceRequest) {
+  return apiRequest("/transactions/produce", {
+    method: "POST",
+    body: JSON.stringify(data),
   });
 }

@@ -26,12 +26,26 @@ export interface AirFilterPayload {
   backordered: number;
 }
 
+export type CreateAirFilterPayload = Partial<AirFilterPayload> & {
+  supplier_id: number;
+  category_id: number;
+  merv_rating?: number;
+  height?: number;
+  width?: number;
+  depth?: number;
+};
+
 export interface AirFilterResponse {
   page: number;
   limit: number;
   count: number;
   total: number;
   results: AirFilterPayload[];
+}
+
+export interface AirFilterCategory {
+  id: number;
+  name: string;
 }
 
 /* ============================================================
@@ -80,6 +94,10 @@ export function fetchAirFilters(
   });
 }
 
+export function fetchAirFilterCategories(): Promise<AirFilterCategory[]> {
+  return apiRequest("/air_filter_categories");
+}
+
 /* ============================================================
    CRUD (unchanged)
 ============================================================ */
@@ -88,7 +106,7 @@ export function fetchAirFilterById(id: string | number) {
   return apiRequest(`/air_filters/${id}`);
 }
 
-export function createAirFilter(data: AirFilterPayload) {
+export function createAirFilter(data: CreateAirFilterPayload) {
   return apiRequest("/air_filters", {
     method: "POST",
     body: JSON.stringify(data),

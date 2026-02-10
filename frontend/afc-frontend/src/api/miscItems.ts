@@ -20,6 +20,11 @@ export interface MiscItemPayload {
   backordered: number;
 }
 
+export type CreateMiscItemPayload = Partial<MiscItemPayload> & {
+  supplier_id: number;
+  description?: string | null;
+};
+
 export interface MiscItemResponse {
   page: number;
   limit: number;
@@ -72,7 +77,7 @@ export function fetchMiscItemById(id: string | number) {
   return apiRequest(`/misc_items/${id}`);
 }
 
-export function createMiscItem(data: Partial<MiscItemPayload>) {
+export function createMiscItem(data: CreateMiscItemPayload) {
   return apiRequest("/misc_items", {
     method: "POST",
     body: JSON.stringify(data),
