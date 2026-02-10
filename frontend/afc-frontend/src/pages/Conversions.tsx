@@ -111,8 +111,13 @@ function ConversionBuilder({
       }))
       .filter((s) => s.parsed);
 
-    if (!parsedSources.length || !targetSelection) {
-      alert("Please select at least one source product and a target product.");
+    if (!parsedSources.length) {
+      alert("Please select at least one source product.");
+      return;
+    }
+
+    if (!targetSelection) {
+      alert("Please select a target product.");
       return;
     }
 
@@ -367,7 +372,8 @@ export default function ConversionsPage() {
       }
     } catch (e) {
       console.error(e);
-      alert("Failed to create conversion batch. Please check your inputs and try again.");
+      const msg = e instanceof Error ? e.message : "Please check your inputs and try again.";
+      alert(`Failed to create conversion batch: ${msg}`);
     }
   };
 
@@ -379,7 +385,8 @@ export default function ConversionsPage() {
       fetchConversionBatch(selectedBatchId).then(setDetail);
     } catch (e) {
       console.error(e);
-      alert("Failed to add conversion to batch. Please verify your inputs and try again.");
+      const msg = e instanceof Error ? e.message : "Please verify your inputs and try again.";
+      alert(`Failed to add conversion to batch: ${msg}`);
     }
   };
 
@@ -390,7 +397,8 @@ export default function ConversionsPage() {
       fetchConversionBatch(selectedBatchId).then(setDetail);
     } catch (e) {
       console.error(e);
-      alert("Failed to rollback conversion. Please try again or contact support.");
+      const msg = e instanceof Error ? e.message : "Please try again or contact support.";
+      alert(`Failed to rollback conversion: ${msg}`);
     }
   };
 
