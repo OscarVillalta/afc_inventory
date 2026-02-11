@@ -572,9 +572,10 @@ export default function ConversionsPage() {
         const failedConversions = conversionsToAdd.filter((_, idx) => results[idx]?.status === "rejected");
         const reasons = failed
           .map((r) => (r.status === "rejected" && r.reason?.message ? r.reason.message : "Unknown error"))
-          .join("; ");
+          .slice(0, 3);
         const count = failedConversions.length;
-        alert(`${count} of ${conversionsToAdd.length} conversions failed to add. Reasons: ${reasons}`);
+        const more = failed.length > reasons.length ? `, and ${failed.length - reasons.length} more.` : "";
+        alert(`${count} of ${conversionsToAdd.length} conversions failed to add. Reasons: ${reasons.join("; ")}${more}`);
         setPendingConversions(failedConversions.map((conv) => makeQueuedConversion(conv)));
         setAddMode(true);
       } else {
@@ -587,7 +588,7 @@ export default function ConversionsPage() {
     } catch (e) {
       console.error(e);
       const msg = e instanceof Error ? e.message : "Please verify your inputs and try again.";
-      alert(`Unexpected error while adding conversions: ${msg}`);
+      alert(`Unexpected system error while adding conversions: ${msg}`);
       setPendingConversions(conversionsToAdd.map((conv) => makeQueuedConversion(conv)));
       setAddMode(true);
     }
