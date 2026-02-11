@@ -74,15 +74,19 @@ interface ConversionBuilderProps {
   onCancel: () => void;
   products: Product[];
   childProducts: ChildProductName[];
+  onAddLineItem?: (conversion: ConversionInput) => void;
   includeBatchFields?: boolean;
   submitLabel: string;
 }
+
+type QueuedConversion = { id: string; conversion: ConversionInput };
 
 function ConversionBuilder({
   onSubmit,
   onCancel,
   products,
   childProducts,
+  onAddLineItem,
   includeBatchFields = false,
   submitLabel,
 }: ConversionBuilderProps) {
@@ -127,7 +131,7 @@ function ConversionBuilder({
     setSources((prev) => (prev.length === 1 ? prev : prev.filter((_, i) => i !== index)));
   };
 
-  const handleSubmit = async () => {
+  const buildConversion = () => {
     const parsedSources = sources
       .map((source) => ({
         parsed: parseSelection(source.selection),
@@ -140,12 +144,12 @@ function ConversionBuilder({
 
     if (!parsedSources.length) {
       alert("Please select at least one material product from the dropdown.");
-      return;
+      return null;
     }
 
     if (!targetSelection) {
       alert("Please select a finished product from the dropdown.");
-      return;
+      return null;
     }
 
     const targetQuantity = Number(targetQty);
@@ -156,16 +160,16 @@ function ConversionBuilder({
       targetQuantity <= 0
     ) {
       alert("All quantities must be positive whole numbers.");
-      return;
+      return null;
     }
 
     const target = parseSelection(targetSelection);
     if (!target) {
       alert("Invalid finished product selection. Please choose a valid product option.");
-      return;
+      return null;
     }
 
-    const conversion: ConversionInput = {
+    return {
       decreases: parsedSources.map((source) =>
         source.parsed.kind === "child"
           ? { child_product_id: source.parsed.id, quantity: source.quantity }
@@ -176,15 +180,35 @@ function ConversionBuilder({
           ? { child_product_id: target.id, quantity: targetQuantity }
           : { product_id: target.id, quantity: targetQuantity },
       note: conversionNote || undefined,
-    };
+    } satisfies ConversionInput;
+  };
+
+  const resetConversionFields = () => {
+    setSources([
+      { selection: "", quantity: 1 },
+      { selection: "", quantity: 1 },
+    ]);
+    setTargetSelection("");
+    setTargetQty(1);
+    setConversionNote("");
+  };
+
+  const handleSubmit = async () => {
+    const conversion = buildConversion();
+    if (!conversion) return;
 
     setSubmitting(true);
     try {
-      await onSubmit(conversion, includeBatchFields ? {
-        batchNote: batchNote || undefined,
-        orderId: orderId ? Number(orderId) : undefined,
-        createdBy: createdBy || undefined,
-      } : undefined);
+      await onSubmit(
+        conversion,
+        includeBatchFields
+          ? {
+              batchNote: batchNote || undefined,
+              orderId: orderId ? Number(orderId) : undefined,
+              createdBy: createdBy || undefined,
+            }
+          : undefined,
+      );
     } finally {
       setSubmitting(false);
     }
@@ -361,9 +385,20 @@ function ConversionBuilder({
         </div>
       </div>
 
-      <button className="btn btn-outline btn-sm w-fit" onClick={handleAddSource} disabled={submitting}>
-            + Add Another Line Item
-      </button>
+      {onAddLineItem && (
+        <button
+          className="btn btn-outline btn-sm w-fit"
+          onClick={() => {
+            const conversion = buildConversion();
+            if (!conversion) return;
+            onAddLineItem(conversion);
+            resetConversionFields();
+          }}
+          disabled={submitting}
+        >
+          + Add New Line Item
+        </button>
+      )}
 
       <div className="flex justify-end gap-2 pt-1">
         <button className="btn btn-ghost btn-sm" onClick={onCancel} disabled={submitting}>Cancel</button>
@@ -386,11 +421,22 @@ export default function ConversionsPage() {
   const [error, setError] = useState<string | null>(null);
   const [creationMode, setCreationMode] = useState(false);
   const [addMode, setAddMode] = useState(false);
+  const [pendingConversions, setPendingConversions] = useState<QueuedConversion[]>([]);
 
   const [products, setProducts] = useState<Product[]>([]);
   const [childProducts, setChildProducts] = useState<ChildProductName[]>([]);
 
   const { resolve } = useProductLookups(products, childProducts);
+
+  const makeQueuedConversion = useCallback(
+    (conversion: ConversionInput): QueuedConversion => ({
+      id: typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random()}`,
+      conversion,
+    }),
+    [],
+  );
 
   const loadCatalog = useCallback(() => {
     Promise.allSettled([fetchProducts(), fetchChildProducts()]).then(([prod, child]) => {
@@ -435,16 +481,20 @@ export default function ConversionsPage() {
       .finally(() => setLoadingDetail(false));
   }, [selectedBatchId]);
 
-  const handleCreate = async (conversion: ConversionInput, extras?: { batchNote?: string; orderId?: number; createdBy?: string }) => {
+  const handleCreate = async (
+    conversion: ConversionInput,
+    extras?: { batchNote?: string; orderId?: number; createdBy?: string },
+  ) => {
     try {
       const response = await createConversionBatch({
         note: extras?.batchNote,
         order_id: extras?.orderId,
         created_by: extras?.createdBy,
-        conversions: [conversion],
+        conversions: [...pendingConversions.map((item) => item.conversion), conversion],
       });
       setCreationMode(false);
       setAddMode(false);
+      setPendingConversions([]);
       loadBatches();
       if (response?.batch?.id) {
         setSelectedBatchId(response.batch.id);
@@ -499,6 +549,7 @@ export default function ConversionsPage() {
             <button
               className="btn btn-primary"
               onClick={() => {
+                setPendingConversions([]);
                 setCreationMode(true);
                 setAddMode(false);
                 setSelectedBatchId(null);
@@ -607,11 +658,28 @@ export default function ConversionsPage() {
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="text-lg font-semibold text-gray-800">Create Production Batch</h2>
                 </div>
+                {pendingConversions.length > 0 && (
+                  <div className="mb-3 rounded-lg border bg-slate-50 p-3 space-y-1 text-sm text-gray-700">
+                    <p className="font-semibold text-gray-800">Queued line items</p>
+                    {pendingConversions.map((item, idx) => (
+                      <div key={item.id} className="flex items-center justify-between">
+                        <span>Line {idx + 1}: {resolve(item.conversion.increase.product_id, item.conversion.increase.child_product_id)}</span>
+                        <span className="text-gray-600">+{item.conversion.increase.quantity}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <ConversionBuilder
                   onSubmit={handleCreate}
-                  onCancel={() => setCreationMode(false)}
+                  onCancel={() => {
+                    setCreationMode(false);
+                    setPendingConversions([]);
+                  }}
                   products={products}
                   childProducts={childProducts}
+                  onAddLineItem={(conversion) =>
+                    setPendingConversions((prev) => [...prev, makeQueuedConversion(conversion)])
+                  }
                   includeBatchFields
                   submitLabel="Create batch"
                 />
