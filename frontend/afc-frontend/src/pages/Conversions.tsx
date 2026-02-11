@@ -563,9 +563,13 @@ export default function ConversionsPage() {
 
   const handleAddConversion = async (conversion: ConversionInput) => {
     if (!selectedBatchId) return;
+    const conversionsToAdd = [...pendingConversions.map((item) => item.conversion), conversion];
     try {
-      await addConversionToBatch(selectedBatchId, conversion);
+      for (const conv of conversionsToAdd) {
+        await addConversionToBatch(selectedBatchId, conv);
+      }
       setAddMode(false);
+      setPendingConversions([]);
       fetchConversionBatch(selectedBatchId)
         .then(setDetail)
         .catch(() => setError("Failed to load conversion details."));
@@ -613,7 +617,13 @@ export default function ConversionsPage() {
               Create Production Batch
             </button>
             {selectedBatchId && !creationMode && (
-              <button className="btn" onClick={() => setAddMode(true)}>
+              <button
+                className="btn"
+                onClick={() => {
+                  setPendingConversions([]);
+                  setAddMode(true);
+                }}
+              >
                 Add to Batch
               </button>
             )}
@@ -757,7 +767,13 @@ export default function ConversionsPage() {
                     {detail.batch.note && <p className="text-sm text-gray-700">Note: {detail.batch.note}</p>}
                   </div>
                   {!addMode && (
-                    <button className="btn btn-outline btn-sm" onClick={() => setAddMode(true)}>
+                    <button
+                      className="btn btn-outline btn-sm"
+                      onClick={() => {
+                        setPendingConversions([]);
+                        setAddMode(true);
+                      }}
+                    >
                       Add Conversion
                     </button>
                   )}
@@ -766,9 +782,19 @@ export default function ConversionsPage() {
                 {addMode ? (
                   <ConversionBuilder
                     onSubmit={handleAddConversion}
-                    onCancel={() => setAddMode(false)}
+                    onCancel={() => {
+                      setAddMode(false);
+                      setPendingConversions([]);
+                    }}
                     products={products}
                     childProducts={childProducts}
+                    onAddLineItem={(conversion) =>
+                      setPendingConversions((prev) => [...prev, makeQueuedConversion(conversion)])
+                    }
+                    queuedConversions={pendingConversions}
+                    onRemoveQueuedConversion={(id) =>
+                      setPendingConversions((prev) => prev.filter((item) => item.id !== id))
+                    }
                     submitLabel="Add conversion"
                   />
                 ) : (
