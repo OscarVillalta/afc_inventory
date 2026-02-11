@@ -86,7 +86,10 @@ function ConversionBuilder({
   includeBatchFields = false,
   submitLabel,
 }: ConversionBuilderProps) {
-  const [sources, setSources] = useState<SourceInput[]>([{ selection: "", quantity: 1 }]);
+  const [sources, setSources] = useState<SourceInput[]>([
+    { selection: "", quantity: 1 },
+    { selection: "", quantity: 1 },
+  ]);
   const [targetSelection, setTargetSelection] = useState("");
   const [targetQty, setTargetQty] = useState(1);
   const [conversionNote, setConversionNote] = useState("");
@@ -136,23 +139,29 @@ function ConversionBuilder({
       );
 
     if (!parsedSources.length) {
-      alert("Please select at least one source product from the dropdown.");
+      alert("Please select at least one material product from the dropdown.");
       return;
     }
 
     if (!targetSelection) {
-      alert("Please select a target product from the dropdown.");
+      alert("Please select a finished product from the dropdown.");
       return;
     }
 
-    if (parsedSources.some((s) => s.quantity <= 0) || targetQty <= 0) {
-      alert("All quantities must be greater than zero.");
+    const targetQuantity = Number(targetQty);
+
+    if (
+      parsedSources.some((s) => !Number.isInteger(s.quantity) || s.quantity <= 0) ||
+      !Number.isInteger(targetQuantity) ||
+      targetQuantity <= 0
+    ) {
+      alert("All quantities must be positive whole numbers.");
       return;
     }
 
     const target = parseSelection(targetSelection);
     if (!target) {
-      alert("Invalid target selection. Please choose a valid product option.");
+      alert("Invalid finished product selection. Please choose a valid product option.");
       return;
     }
 
@@ -164,8 +173,8 @@ function ConversionBuilder({
       ),
       increase:
         target.kind === "child"
-          ? { child_product_id: target.id, quantity: Number(targetQty) }
-          : { product_id: target.id, quantity: Number(targetQty) },
+          ? { child_product_id: target.id, quantity: targetQuantity }
+          : { product_id: target.id, quantity: targetQuantity },
       note: conversionNote || undefined,
     };
 
@@ -182,31 +191,37 @@ function ConversionBuilder({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="rounded-lg border shadow-sm bg-white p-4 space-y-4">
       {includeBatchFields && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div>
-            <label className="text-sm font-medium text-gray-600">Order ID (optional)</label>
+          <div className="space-y-1">
+            <label className="text-xs font-semibold uppercase tracking-wide text-base-content/60">
+              Order ID (optional)
+            </label>
             <input
               type="number"
-              className="input input-bordered w-full mt-1"
+              className="input input-bordered input-sm w-full"
               value={orderId}
               onChange={(e) => setOrderId(e.target.value)}
               min={1}
             />
           </div>
-          <div>
-            <label className="text-sm font-medium text-gray-600">Created By (optional)</label>
+          <div className="space-y-1">
+            <label className="text-xs font-semibold uppercase tracking-wide text-base-content/60">
+              Created By (optional)
+            </label>
             <input
-              className="input input-bordered w-full mt-1"
+              className="input input-bordered input-sm w-full"
               value={createdBy}
               onChange={(e) => setCreatedBy(e.target.value)}
             />
           </div>
-          <div>
-            <label className="text-sm font-medium text-gray-600">Batch Note (optional)</label>
+          <div className="space-y-1">
+            <label className="text-xs font-semibold uppercase tracking-wide text-base-content/60">
+              Batch Note (optional)
+            </label>
             <input
-              className="input input-bordered w-full mt-1"
+              className="input input-bordered input-sm w-full"
               value={batchNote}
               onChange={(e) => setBatchNote(e.target.value)}
             />
@@ -214,105 +229,138 @@ function ConversionBuilder({
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="border rounded-lg p-4 bg-gray-50 space-y-3">
+      <div className="flex flex-col lg:flex-row gap-4">
+        <div className="flex-1 rounded-lg border bg-white shadow-sm p-3 space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-gray-700">Decrease From</h3>
-            <button className="btn btn-ghost btn-xs" onClick={handleAddSource} disabled={submitting}>
-              + Add source
-            </button>
+            <div>
+              <p className="text-[11px] uppercase tracking-wide text-base-content/60 font-semibold">
+                Materials Used
+              </p>
+              <p className="text-sm text-base-content/70">Add material line items and quantities.</p>
+            </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="divide-y divide-base-200 border border-base-200 rounded-md bg-base-100">
             {sources.map((source, idx) => (
-              <div key={idx} className="border rounded-lg p-3 bg-white shadow-sm space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium text-gray-600">Product</label>
-                  {sources.length > 1 && (
-                    <button
-                      className="btn btn-ghost btn-xs text-red-500"
-                      onClick={() => handleRemoveSource(idx)}
-                      disabled={submitting}
-                    >
-                      Remove
-                    </button>
-                  )}
+              <div key={idx} className="flex items-start gap-3 px-3 py-3">
+                <div className="flex-1">
+                  <label className="text-[11px] uppercase tracking-wide text-base-content/60 font-semibold">
+                    Product
+                  </label>
+                  <select
+                    className="select select-bordered select-sm w-full mt-1"
+                    value={source.selection}
+                    onChange={(e) => updateSource(idx, "selection", e.target.value)}
+                    disabled={submitting}
+                  >
+                    <option value="">Select product...</option>
+                    {options.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
-                <select
-                  className="select select-bordered w-full"
-                  value={source.selection}
-                  onChange={(e) => updateSource(idx, "selection", e.target.value)}
-                  disabled={submitting}
-                >
-                  <option value="">Select source...</option>
-                  {options.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-
-                <div>
-                  <label className="text-sm font-medium text-gray-600">Quantity to decrease</label>
+                <div className="w-28">
+                  <label className="text-[11px] uppercase tracking-wide text-base-content/60 font-semibold">
+                    Quantity Used
+                  </label>
                   <input
                     type="number"
-                    className="input input-bordered w-full mt-1"
+                    className="input input-bordered input-sm w-full mt-1"
                     value={source.quantity}
                     onChange={(e) => updateSource(idx, "quantity", Number(e.target.value))}
                     min={1}
                     disabled={submitting}
                   />
                 </div>
+
+                {sources.length > 1 && (
+                  <button
+                    className="btn btn-ghost btn-xs btn-square text-error mt-[22px]"
+                    onClick={() => handleRemoveSource(idx)}
+                    disabled={submitting}
+                    aria-label="Remove line item"
+                  >
+                    ✕
+                  </button>
+                )}
               </div>
             ))}
           </div>
+
+          <button className="btn btn-outline btn-sm w-fit" onClick={handleAddSource} disabled={submitting}>
+            + Add Another Line Item
+          </button>
         </div>
 
-        <div className="border rounded-lg p-4 bg-gray-50">
-          <h3 className="font-semibold text-gray-700 mb-3">Increase To</h3>
-          <label className="text-sm font-medium text-gray-600">Product</label>
-          <select
-            className="select select-bordered w-full mt-1"
-            value={targetSelection}
-            onChange={(e) => setTargetSelection(e.target.value)}
-            disabled={submitting}
-          >
-            <option value="">Select target...</option>
-            {options.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+        <div className="flex items-center justify-center text-base-content/60 lg:px-2">
+          <span className="hidden lg:inline text-2xl">→</span>
+          <span className="lg:hidden text-lg">→</span>
+        </div>
 
-          <label className="text-sm font-medium text-gray-600 mt-3 block">
-            Quantity to increase
-          </label>
-          <input
-            type="number"
-            className="input input-bordered w-full mt-1"
-            value={targetQty}
-            onChange={(e) => setTargetQty(Number(e.target.value))}
-            min={1}
-            disabled={submitting}
-          />
+        <div className="flex-1 rounded-lg border bg-white shadow-sm p-3 space-y-3">
+          <div>
+            <p className="text-[11px] uppercase tracking-wide text-base-content/60 font-semibold">
+              Finished Product
+            </p>
+          </div>
 
-          <label className="text-sm font-medium text-gray-600 mt-3 block">
-            Conversion Note (optional)
-          </label>
-          <input
-            className="input input-bordered w-full mt-1"
-            value={conversionNote}
-            onChange={(e) => setConversionNote(e.target.value)}
-            disabled={submitting}
-          />
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
+              <div className="flex-1">
+                <label className="text-[11px] uppercase tracking-wide text-base-content/60 font-semibold">
+                  Product
+                </label>
+                <select
+                  className="select select-bordered select-sm w-full mt-1"
+                  value={targetSelection}
+                  onChange={(e) => setTargetSelection(e.target.value)}
+                  disabled={submitting}
+                >
+                  <option value="">Select product...</option>
+                  {options.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="w-32">
+                <label className="text-[11px] uppercase tracking-wide text-base-content/60 font-semibold">
+                  Quantity Produced
+                </label>
+                <input
+                  type="number"
+                  className="input input-bordered input-sm w-full mt-1"
+                  value={targetQty}
+                  onChange={(e) => setTargetQty(Number(e.target.value))}
+                  min={1}
+                  disabled={submitting}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[11px] uppercase tracking-wide text-base-content/60 font-semibold">
+                Note (optional)
+              </label>
+              <input
+                className="input input-bordered input-sm w-full mt-1"
+                value={conversionNote}
+                onChange={(e) => setConversionNote(e.target.value)}
+                disabled={submitting}
+              />
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="flex justify-end gap-3">
-        <button className="btn" onClick={onCancel} disabled={submitting}>Cancel</button>
-        <button className="btn btn-primary" onClick={handleSubmit} disabled={submitting}>
+      <div className="flex justify-end gap-2 pt-1">
+        <button className="btn btn-ghost btn-sm" onClick={onCancel} disabled={submitting}>Cancel</button>
+        <button className="btn btn-primary btn-sm" onClick={handleSubmit} disabled={submitting}>
           {submitting ? "Saving..." : submitLabel}
         </button>
       </div>
@@ -355,7 +403,7 @@ export default function ConversionsPage() {
           setSelectedBatchId((prev) => prev ?? res.results?.[0]?.id ?? null);
         }
       })
-      .catch(() => setError("Failed to load conversion batches."))
+      .catch(() => setError("Failed to load production batches."))
       .finally(() => setLoadingList(false));
   }, [batchPage, creationMode]);
 
@@ -397,7 +445,7 @@ export default function ConversionsPage() {
     } catch (e) {
       console.error(e);
       const msg = e instanceof Error ? e.message : "Please check your inputs and try again.";
-      alert(`Failed to create conversion batch: ${msg}`);
+      alert(`Failed to create production batch: ${msg}`);
     }
   };
 
@@ -437,8 +485,8 @@ export default function ConversionsPage() {
       <div className="w-full space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Conversions</h1>
-            <p className="text-sm text-gray-500">Manage conversion batches and their conversions.</p>
+            <h1 className="text-2xl font-bold text-gray-800">Production Batches</h1>
+            <p className="text-sm text-gray-500">Manage production batches and their conversions.</p>
           </div>
           <div className="flex gap-2">
             <button
@@ -449,7 +497,7 @@ export default function ConversionsPage() {
                 setSelectedBatchId(null);
               }}
             >
-              Create Conversion
+              Create Production Batch
             </button>
             {selectedBatchId && !creationMode && (
               <button className="btn" onClick={() => setAddMode(true)}>
@@ -464,13 +512,13 @@ export default function ConversionsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="bg-white rounded-xl shadow-md border overflow-hidden h-[70vh] flex flex-col">
             <div className="bg-[#363b4c] text-white px-5 py-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Conversion</h2>
+              <h2 className="text-lg font-semibold">Production Batches</h2>
               <span className="text-sm text-gray-200">Total: {totalBatches}</span>
             </div>
 
             <div className="flex-1 overflow-auto">
               <div className="overflow-x-auto">
-                <table className="min-w-full table-fixed" role="table" aria-label="Conversion batches">
+                <table className="min-w-full table-fixed" role="table" aria-label="Production batches">
                   <thead className="bg-gray-50">
                     <tr className="text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                       <th scope="col" className="px-4 py-3">ID</th>
@@ -492,7 +540,7 @@ export default function ConversionsPage() {
                     {!loadingList && batches.length === 0 && (
                       <tr>
                         <td className="px-4 py-4 text-sm text-gray-500" colSpan={5}>
-                          No conversion batches found.
+                          No production batches found.
                         </td>
                       </tr>
                     )}
@@ -550,7 +598,7 @@ export default function ConversionsPage() {
             {creationMode ? (
               <>
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-lg font-semibold text-gray-800">Create Conversion Batch</h2>
+                  <h2 className="text-lg font-semibold text-gray-800">Create Production Batch</h2>
                 </div>
                 <ConversionBuilder
                   onSubmit={handleCreate}
@@ -569,7 +617,7 @@ export default function ConversionsPage() {
               <>
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <h2 className="text-lg font-semibold text-gray-800">Batch #{detail.batch.id}</h2>
+                    <h2 className="text-lg font-semibold text-gray-800">Production Batch #{detail.batch.id}</h2>
                     <p className="text-sm text-gray-600">Order: {detail.batch.order_id ?? "—"} · Created {formatDate(detail.batch.created_at)}</p>
                     <p className="text-sm text-gray-600">Created by: {detail.batch.created_by || "—"}</p>
                     {detail.batch.note && <p className="text-sm text-gray-700">Note: {detail.batch.note}</p>}
@@ -625,7 +673,7 @@ export default function ConversionsPage() {
 
                         <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2">
                           <div className="bg-gray-50 rounded-lg p-3">
-                            <p className="text-sm font-semibold text-gray-700 mb-1">Decrease</p>
+                            <p className="text-sm font-semibold text-gray-700 mb-1">Materials Used</p>
                             {conv.decreases.map((dec, idx) => (
                               <div key={idx} className="text-sm text-gray-700 flex justify-between">
                                 <span>{resolve(dec.product_id, dec.child_product_id)}</span>
@@ -634,7 +682,7 @@ export default function ConversionsPage() {
                             ))}
                           </div>
                           <div className="bg-gray-50 rounded-lg p-3">
-                            <p className="text-sm font-semibold text-gray-700 mb-1">Increase</p>
+                            <p className="text-sm font-semibold text-gray-700 mb-1">Finished Product</p>
                             <div className="text-sm text-gray-700 flex justify-between">
                               <span>{resolve(conv.increase.product_id, conv.increase.child_product_id)}</span>
                               <span>+{conv.increase.quantity}</span>
