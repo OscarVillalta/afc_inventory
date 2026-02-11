@@ -569,16 +569,15 @@ export default function ConversionsPage() {
       const failed = results.filter((r) => r.status === "rejected");
 
       if (failed.length) {
-        const firstError = failed[0];
-        const msg =
-          firstError.status === "rejected" && firstError.reason instanceof Error
-            ? firstError.reason.message
-            : "One or more conversions failed to add.";
-        alert(msg);
+        const failedConversions = conversionsToAdd.filter((_, idx) => results[idx]?.status === "rejected");
+        const count = failedConversions.length;
+        alert(`${count} of ${conversionsToAdd.length} conversions failed to add. Please review and try again.`);
+        setPendingConversions(failedConversions.map((conv) => makeQueuedConversion(conv)));
+        setAddMode(true);
+      } else {
+        setAddMode(false);
+        setPendingConversions([]);
       }
-
-      setAddMode(false);
-      setPendingConversions([]);
       fetchConversionBatch(selectedBatchId)
         .then(setDetail)
         .catch(() => setError("Failed to load conversion details."));
@@ -586,8 +585,8 @@ export default function ConversionsPage() {
       console.error(e);
       const msg = e instanceof Error ? e.message : "Please verify your inputs and try again.";
       alert(`Failed to add conversion to batch: ${msg}`);
-      setAddMode(false);
-      setPendingConversions([]);
+      setPendingConversions((prev) => [...prev, makeQueuedConversion(conversion)]);
+      setAddMode(true);
     }
   };
 
