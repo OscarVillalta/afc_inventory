@@ -563,16 +563,37 @@ export default function ConversionsPage() {
 
   const handleAddConversion = async (conversion: ConversionInput) => {
     if (!selectedBatchId) return;
+    const conversionsToAdd = [...pendingConversions.map((item) => item.conversion), conversion];
     try {
-      await addConversionToBatch(selectedBatchId, conversion);
-      setAddMode(false);
+      const results = await Promise.allSettled(conversionsToAdd.map((conv) => addConversionToBatch(selectedBatchId, conv)));
+      const failed = results.filter((r) => r.status === "rejected");
+
+      if (failed.length) {
+        const failedConversions = conversionsToAdd.filter((_, idx) => results[idx]?.status === "rejected");
+        const reasons = failed
+          .slice(0, 3)
+          .map((r) => (r.reason instanceof Error ? r.reason.message : String(r.reason ?? "Unknown error")));
+        const count = failedConversions.length;
+        const hiddenCount = count - reasons.length;
+        const reasonsText = reasons.map((r) => `- ${r}`).join("\n");
+        const noun = count === 1 ? "conversion" : "conversions";
+        const moreText = hiddenCount > 0 ? ` (${hiddenCount} additional errors not shown)` : "";
+        alert(`Failed to add ${count} ${noun} of ${conversionsToAdd.length}${moreText}:\n${reasonsText}`);
+        setPendingConversions(failedConversions.map((conv) => makeQueuedConversion(conv)));
+        setAddMode(true);
+      } else {
+        setAddMode(false);
+        setPendingConversions([]);
+      }
       fetchConversionBatch(selectedBatchId)
         .then(setDetail)
         .catch(() => setError("Failed to load conversion details."));
     } catch (e) {
       console.error(e);
       const msg = e instanceof Error ? e.message : "Please verify your inputs and try again.";
-      alert(`Failed to add conversion to batch: ${msg}`);
+      alert(`An error occurred while adding conversions: ${msg}`);
+      setPendingConversions(conversionsToAdd.map((conv) => makeQueuedConversion(conv)));
+      setAddMode(true);
     }
   };
 
@@ -613,7 +634,13 @@ export default function ConversionsPage() {
               Create Production Batch
             </button>
             {selectedBatchId && !creationMode && (
-              <button className="btn" onClick={() => setAddMode(true)}>
+              <button
+                className="btn"
+                onClick={() => {
+                  setPendingConversions([]);
+                  setAddMode(true);
+                }}
+              >
                 Add to Batch
               </button>
             )}
@@ -757,7 +784,13 @@ export default function ConversionsPage() {
                     {detail.batch.note && <p className="text-sm text-gray-700">Note: {detail.batch.note}</p>}
                   </div>
                   {!addMode && (
-                    <button className="btn btn-outline btn-sm" onClick={() => setAddMode(true)}>
+                    <button
+                      className="btn btn-outline btn-sm"
+                      onClick={() => {
+                        setPendingConversions([]);
+                        setAddMode(true);
+                      }}
+                    >
                       Add Conversion
                     </button>
                   )}
@@ -766,9 +799,19 @@ export default function ConversionsPage() {
                 {addMode ? (
                   <ConversionBuilder
                     onSubmit={handleAddConversion}
-                    onCancel={() => setAddMode(false)}
+                    onCancel={() => {
+                      setAddMode(false);
+                      setPendingConversions([]);
+                    }}
                     products={products}
                     childProducts={childProducts}
+                    onAddLineItem={(conversion) =>
+                      setPendingConversions((prev) => [...prev, makeQueuedConversion(conversion)])
+                    }
+                    queuedConversions={pendingConversions}
+                    onRemoveQueuedConversion={(id) =>
+                      setPendingConversions((prev) => prev.filter((item) => item.id !== id))
+                    }
                     submitLabel="Add conversion"
                   />
                 ) : (
