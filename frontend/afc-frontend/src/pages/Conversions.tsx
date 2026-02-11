@@ -229,70 +229,72 @@ function ConversionBuilder({
         </div>
       )}
 
-      <div className="flex flex-col lg:flex-row gap-4">
-        <div className="flex-1 rounded-lg border bg-white shadow-sm p-3 space-y-3">
-          <div className="flex items-center justify-between">
+      <div className="flex flex-col lg:flex-row gap-4 border-b">
+        <div className="flex-1 rounded-lg bg-white p-3 space-y-3">
             <div>
-              <p className="text-[11px] uppercase tracking-wide text-base-content/60 font-semibold">
+              <p className="text-[14px] uppercase tracking-wide text-base-content/60 font-semibold text-black">
                 Materials Used
               </p>
-              <p className="text-sm text-base-content/70">Add material line items and quantities.</p>
             </div>
-          </div>
+          
 
-          <div className="divide-y divide-base-200 border border-base-200 rounded-md bg-base-100">
-            {sources.map((source, idx) => (
-              <div key={idx} className="flex items-start gap-3 px-3 py-3">
-                <div className="flex-1">
-                  <label className="text-[11px] uppercase tracking-wide text-base-content/60 font-semibold">
-                    Product
-                  </label>
-                  <select
-                    className="select select-bordered select-sm w-full mt-1"
-                    value={source.selection}
-                    onChange={(e) => updateSource(idx, "selection", e.target.value)}
-                    disabled={submitting}
-                  >
-                    <option value="">Select product...</option>
-                    {options.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+          <div className="grid grid-cols-1 px-3 ">
 
-                <div className="w-28">
-                  <label className="text-[11px] uppercase tracking-wide text-base-content/60 font-semibold">
+            <label className="text-[11px] uppercase tracking-wide text-base-content/60 font-semibold flex-1">
+                  Product
+            </label>
+
+            <label className="text-[11px] uppercase tracking-wide text-base-content/60 font-semibold w-28">
                     Quantity Used
-                  </label>
-                  <input
-                    type="number"
-                    className="input input-bordered input-sm w-full mt-1"
-                    value={source.quantity}
-                    onChange={(e) => updateSource(idx, "quantity", Number(e.target.value))}
-                    min={1}
-                    disabled={submitting}
-                  />
+            </label>
+            
+
+            {sources.map((source, idx) => (
+              <div key={idx} className="col-span-2 py-2 relative">
+                <div className="flex gap-3">
+                  <div className="flex-1">
+                    <select
+                      className="select select-bordered select-sm w-full mt-1"
+                      value={source.selection}
+                      onChange={(e) => updateSource(idx, "selection", e.target.value)}
+                      disabled={submitting}
+                    >
+                      <option value="">Select product...</option>
+                      {options.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="w-28">
+                    <input
+                      type="number"
+                      className="input input-bordered input-sm w-full mt-1"
+                      value={source.quantity}
+                      onChange={(e) => updateSource(idx, "quantity", Number(e.target.value))}
+                      min={1}
+                      disabled={submitting}
+                    />
+
+                    {sources.length > 1 && (
+                    <button
+                      className="btn btn-ghost btn-xs btn-square text-error absolute top-5 -right-6"
+                      onClick={() => handleRemoveSource(idx)}
+                      disabled={submitting}
+                      aria-label="Remove line item"
+                    >
+                      ✕
+                    </button>
+                  )}
+                  </div>
                 </div>
 
-                {sources.length > 1 && (
-                  <button
-                    className="btn btn-ghost btn-xs btn-square text-error mt-[22px]"
-                    onClick={() => handleRemoveSource(idx)}
-                    disabled={submitting}
-                    aria-label="Remove line item"
-                  >
-                    ✕
-                  </button>
-                )}
+                
               </div>
             ))}
           </div>
-
-          <button className="btn btn-outline btn-sm w-fit" onClick={handleAddSource} disabled={submitting}>
-            + Add Another Line Item
-          </button>
         </div>
 
         <div className="flex items-center justify-center text-base-content/60 lg:px-2">
@@ -300,9 +302,9 @@ function ConversionBuilder({
           <span className="lg:hidden text-lg">→</span>
         </div>
 
-        <div className="flex-1 rounded-lg border bg-white shadow-sm p-3 space-y-3">
+        <div className="flex-1 bg-white p-3 space-y-3">
           <div>
-            <p className="text-[11px] uppercase tracking-wide text-base-content/60 font-semibold">
+            <p className="text-[14px] uppercase tracking-wide text-base-content/60 font-semibold text-black">
               Finished Product
             </p>
           </div>
@@ -357,6 +359,10 @@ function ConversionBuilder({
           </div>
         </div>
       </div>
+
+      <button className="btn btn-outline btn-sm w-fit" onClick={handleAddSource} disabled={submitting}>
+            + Add Another Line Item
+      </button>
 
       <div className="flex justify-end gap-2 pt-1">
         <button className="btn btn-ghost btn-sm" onClick={onCancel} disabled={submitting}>Cancel</button>
