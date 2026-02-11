@@ -75,6 +75,8 @@ interface ConversionBuilderProps {
   products: Product[];
   childProducts: ChildProductName[];
   onAddLineItem?: (conversion: ConversionInput) => void;
+  queuedConversions?: QueuedConversion[];
+  onRemoveQueuedConversion?: (id: string) => void;
   includeBatchFields?: boolean;
   submitLabel: string;
 }
@@ -87,6 +89,8 @@ function ConversionBuilder({
   products,
   childProducts,
   onAddLineItem,
+  queuedConversions,
+  onRemoveQueuedConversion,
   includeBatchFields = false,
   submitLabel,
 }: ConversionBuilderProps) {
@@ -192,6 +196,8 @@ function ConversionBuilder({
     setTargetQty(1);
     setConversionNote("");
   };
+
+  const { resolve: resolveName } = useProductLookups(products, childProducts);
 
   const handleSubmit = async () => {
     const conversion = buildConversion();
@@ -384,6 +390,55 @@ function ConversionBuilder({
           </div>
         </div>
       </div>
+
+      {onAddLineItem && queuedConversions?.length ? (
+        <div className="space-y-3 border-b pb-3">
+          {queuedConversions.map((item, idx) => (
+            <div key={item.id} className="flex flex-col lg:flex-row gap-4">
+              <div className="flex-1 rounded-lg bg-white p-3 space-y-2 border">
+                <div className="flex items-center justify-between">
+                  <p className="text-[14px] uppercase tracking-wide text-base-content/60 font-semibold text-black">
+                    Materials Used
+                  </p>
+                  <span className="text-xs text-base-content/60">Line {idx + 1}</span>
+                </div>
+                <div className="space-y-1 text-sm text-gray-700">
+                  {item.conversion.decreases.map((dec, i) => (
+                    <div key={i} className="flex justify-between">
+                      <span>{resolveName(dec.product_id, dec.child_product_id)}</span>
+                      <span className="text-xs text-gray-600">-{dec.quantity}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-center text-base-content/60 lg:px-2">
+                <span className="hidden lg:inline text-2xl">→</span>
+                <span className="lg:hidden text-lg">→</span>
+              </div>
+
+              <div className="flex-1 bg-white p-3 space-y-2 border rounded-lg relative">
+                <p className="text-[14px] uppercase tracking-wide text-base-content/60 font-semibold text-black">
+                  Finished Product
+                </p>
+                <div className="flex justify-between text-sm text-gray-700">
+                  <span>{resolveName(item.conversion.increase.product_id, item.conversion.increase.child_product_id)}</span>
+                  <span className="text-xs text-gray-600">+{item.conversion.increase.quantity}</span>
+                </div>
+                {onRemoveQueuedConversion && (
+                  <button
+                    className="btn btn-ghost btn-xs text-error absolute top-2 right-2"
+                    onClick={() => onRemoveQueuedConversion(item.id)}
+                    aria-label={`Remove line item ${idx + 1}`}
+                  >
+                    Delete
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
 
       {onAddLineItem && (
         <button
@@ -679,6 +734,10 @@ export default function ConversionsPage() {
                   childProducts={childProducts}
                   onAddLineItem={(conversion) =>
                     setPendingConversions((prev) => [...prev, makeQueuedConversion(conversion)])
+                  }
+                  queuedConversions={pendingConversions}
+                  onRemoveQueuedConversion={(id) =>
+                    setPendingConversions((prev) => prev.filter((item) => item.id !== id))
                   }
                   includeBatchFields
                   submitLabel="Create batch"
