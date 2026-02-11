@@ -574,7 +574,8 @@ export default function ConversionsPage() {
           .map((r) => (r.status === "rejected" && r.reason?.message ? r.reason.message : "Unknown error"))
           .slice(0, 3);
         const count = failedConversions.length;
-        const more = count > 3 ? `, and ${count - 3} more.` : "";
+        const hiddenCount = failed.length - reasons.length;
+        const more = hiddenCount > 0 ? ` (${hiddenCount} additional errors not shown)` : "";
         const reasonsText = reasons.map((r) => `- ${r}`).join("\n");
         const noun = count === 1 ? "conversion" : "conversions";
         alert(`Failed to add ${count} ${noun} of ${conversionsToAdd.length}${more}:\n${reasonsText}`);
