@@ -575,7 +575,8 @@ export default function ConversionsPage() {
           .slice(0, 3);
         const count = failedConversions.length;
         const more = failed.length > 3 ? `, and ${failed.length - 3} more.` : "";
-        alert(`Failed to add ${count} of ${conversionsToAdd.length} conversions. Reasons: ${reasons.join("; ")}${more}`);
+        const reasonsText = reasons.map((r) => `- ${r}`).join("\n");
+        alert(`Failed to add ${count} of ${conversionsToAdd.length} conversions${more}:\n${reasonsText}`);
         setPendingConversions(failedConversions.map((conv) => makeQueuedConversion(conv)));
         setAddMode(true);
       } else {
@@ -588,7 +589,7 @@ export default function ConversionsPage() {
     } catch (e) {
       console.error(e);
       const msg = e instanceof Error ? e.message : "Please verify your inputs and try again.";
-      alert(`Unexpected system error while adding conversions: ${msg}`);
+      alert(`An error occurred while adding conversions: ${msg}`);
       setPendingConversions(conversionsToAdd.map((conv) => makeQueuedConversion(conv)));
       setAddMode(true);
     }
