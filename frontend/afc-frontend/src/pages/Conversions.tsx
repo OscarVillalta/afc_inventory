@@ -24,6 +24,27 @@ function formatDate(iso?: string) {
   return date.toISOString().split("T")[0];
 }
 
+const dateFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+const timeFormatter = new Intl.DateTimeFormat("en-US", {
+  hour: "numeric",
+  minute: "2-digit",
+  timeZone: "UTC",
+});
+
+function formatDateTime(iso?: string) {
+  if (!iso) return "—";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "—";
+
+  return `${dateFormatter.format(date)} – ${timeFormatter.format(date)}`;
+}
+
 function getChildLabel(child: ChildProductName) {
   return (
     child.part_number ||
@@ -441,51 +462,84 @@ export default function ConversionsPage() {
         {error && <div className="alert alert-error shadow-sm">{error}</div>}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="bg-white rounded-xl shadow-sm border p-4 space-y-3 h-[70vh] overflow-y-auto">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-800">Conversion Batches</h2>
-              <span className="text-sm text-gray-500">Total: {totalBatches}</span>
+          <div className="bg-white rounded-xl shadow-md border overflow-hidden h-[70vh] flex flex-col">
+            <div className="bg-[#363b4c] text-white px-5 py-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Conversion</h2>
+              <span className="text-sm text-gray-200">Total: {totalBatches}</span>
             </div>
 
-            {loadingList && <div className="text-gray-500">Loading batches...</div>}
-
-            {!loadingList && batches.length === 0 && (
-              <div className="text-gray-500">No conversion batches found.</div>
-            )}
-
-            <div className="space-y-2">
-              {batches.map((batch) => {
-                const active = batch.id === selectedBatchId && !creationMode;
-                return (
-                  <button
-                    key={batch.id}
-                    className={`w-full text-left p-3 rounded-lg border transition ${active ? "border-primary bg-blue-50" : "hover:bg-gray-50"}`}
-                    onClick={() => {
-                      setCreationMode(false);
-                      setAddMode(false);
-                      setSelectedBatchId(batch.id);
-                    }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-gray-800">Batch #{batch.id}</span>
-                      <span className="text-xs text-gray-500">{formatDate(batch.created_at)}</span>
-                    </div>
-                    <div className="text-sm text-gray-600">Order: {batch.order_id ?? "—"}</div>
-                    <div className="text-sm text-gray-600 line-clamp-1">Note: {batch.note || "—"}</div>
-                    <div className="text-xs text-gray-500">Created by: {batch.created_by || "—"}</div>
-                    {batch.totals?.conversions != null && (
-                      <div className="text-xs text-gray-500">Conversions: {batch.totals.conversions}</div>
+            <div className="flex-1 overflow-auto">
+              <div className="overflow-x-auto">
+                <table className="min-w-full table-fixed" role="table" aria-label="Conversion batches">
+                  <thead className="bg-gray-50">
+                    <tr className="text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      <th scope="col" className="px-4 py-3">ID</th>
+                      <th scope="col" className="px-4 py-3">Order ID</th>
+                      <th scope="col" className="px-4 py-3">Note</th>
+                      <th scope="col" className="px-4 py-3">Created By</th>
+                      <th scope="col" className="px-4 py-3">Created At</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 bg-white">
+                    {loadingList && (
+                      <tr>
+                        <td className="px-4 py-4 text-sm text-gray-500" colSpan={5}>
+                          Loading batches...
+                        </td>
+                      </tr>
                     )}
-                  </button>
-                );
-              })}
+
+                    {!loadingList && batches.length === 0 && (
+                      <tr>
+                        <td className="px-4 py-4 text-sm text-gray-500" colSpan={5}>
+                          No conversion batches found.
+                        </td>
+                      </tr>
+                    )}
+
+                    {!loadingList &&
+                      batches.map((batch) => {
+                        const active = batch.id === selectedBatchId && !creationMode;
+                        return (
+                          <tr
+                            key={batch.id}
+                            className={`cursor-pointer transition-colors ${active ? "bg-slate-50" : "hover:bg-slate-50"}`}
+                            onClick={() => {
+                              setCreationMode(false);
+                              setAddMode(false);
+                              setSelectedBatchId(batch.id);
+                            }}
+                          >
+                            <td className="px-4 py-3 text-sm font-semibold text-gray-900 align-middle">
+                              <span className="text-[#363b4c]">#{batch.id}</span>
+                            </td>
+                            <td className="px-4 py-3 text-sm font-medium text-[#363b4c] align-middle">
+                              {batch.order_id ?? "—"}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-700 align-middle">
+                              <div className="truncate" title={batch.note || undefined}>
+                                {batch.note || "—"}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-500 align-middle">
+                              {batch.created_by || "—"}
+                            </td>
+                            <td className="px-4 py-3 text-xs text-gray-500 align-middle">
+                              {formatDateTime(batch.created_at)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
-            <div className="flex items-center justify-center gap-2 pt-2">
+            <div className="border-t border-gray-200 px-5 py-3 bg-white flex items-center justify-center gap-2">
               <button className="btn btn-sm" disabled={batchPage === 1} onClick={() => setBatchPage((p) => Math.max(1, p - 1))}>
                 Prev
               </button>
-              <span className="text-sm text-gray-600">Page {batchPage} / {totalPages}</span>
+              <span className="text-sm text-gray-700">Page {batchPage} / {totalPages}</span>
               <button className="btn btn-sm" disabled={batchPage >= totalPages} onClick={() => setBatchPage((p) => p + 1)}>
                 Next
               </button>
