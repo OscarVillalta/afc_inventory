@@ -570,8 +570,11 @@ export default function ConversionsPage() {
 
       if (failed.length) {
         const failedConversions = conversionsToAdd.filter((_, idx) => results[idx]?.status === "rejected");
+        const reasons = failed
+          .map((r) => (r.status === "rejected" && r.reason?.message ? r.reason.message : "Unknown error"))
+          .join("; ");
         const count = failedConversions.length;
-        alert(`${count} of ${conversionsToAdd.length} conversions failed to add. Please review and try again.`);
+        alert(`${count} of ${conversionsToAdd.length} conversions failed to add. Reasons: ${reasons}`);
         setPendingConversions(failedConversions.map((conv) => makeQueuedConversion(conv)));
         setAddMode(true);
       } else {
@@ -584,8 +587,8 @@ export default function ConversionsPage() {
     } catch (e) {
       console.error(e);
       const msg = e instanceof Error ? e.message : "Please verify your inputs and try again.";
-      alert(`Failed to add conversion to batch: ${msg}`);
-      setPendingConversions((prev) => [...prev, makeQueuedConversion(conversion)]);
+      alert(`Unexpected error while adding conversions: ${msg}`);
+      setPendingConversions(conversionsToAdd.map((conv) => makeQueuedConversion(conv)));
       setAddMode(true);
     }
   };
