@@ -290,11 +290,12 @@ function ConversionBuilder({
                   )}
                   </div>
                 </div>
-
-                
               </div>
             ))}
           </div>
+          <button className="btn btn-outline btn-xs w-fit" onClick={handleAddSource} disabled={submitting}>
+            Add material
+          </button>
         </div>
 
         <div className="flex items-center justify-center text-base-content/60 lg:px-2">
