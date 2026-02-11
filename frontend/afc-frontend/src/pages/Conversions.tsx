@@ -565,9 +565,7 @@ export default function ConversionsPage() {
     if (!selectedBatchId) return;
     const conversionsToAdd = [...pendingConversions.map((item) => item.conversion), conversion];
     try {
-      for (const conv of conversionsToAdd) {
-        await addConversionToBatch(selectedBatchId, conv);
-      }
+      await Promise.all(conversionsToAdd.map((conv) => addConversionToBatch(selectedBatchId, conv)));
       setAddMode(false);
       setPendingConversions([]);
       fetchConversionBatch(selectedBatchId)
@@ -577,6 +575,7 @@ export default function ConversionsPage() {
       console.error(e);
       const msg = e instanceof Error ? e.message : "Please verify your inputs and try again.";
       alert(`Failed to add conversion to batch: ${msg}`);
+      setAddMode(false);
     }
   };
 
