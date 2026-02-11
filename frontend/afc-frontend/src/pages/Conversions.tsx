@@ -17,6 +17,14 @@ interface SourceInput {
   quantity: number;
 }
 
+interface ConversionDraft {
+  id: string;
+  sources: SourceInput[];
+  targetSelection: string;
+  targetQty: number;
+  conversionNote: string;
+}
+
 function formatDate(iso?: string) {
   if (!iso) return "";
   const date = new Date(iso);
@@ -70,41 +78,48 @@ function useProductLookups(products: Product[], childProducts: ChildProductName[
 }
 
 interface ConversionBuilderProps {
-  onSubmit: (conversion: ConversionInput, extras?: { batchNote?: string; orderId?: number; createdBy?: string }) => Promise<void>;
+  onSubmit: (conversions: ConversionInput[], extras?: { batchNote?: string; orderId?: number; createdBy?: string }) => Promise<void>;
   onCancel: () => void;
   products: Product[];
   childProducts: ChildProductName[];
-  onAddLineItem?: (conversion: ConversionInput) => void;
-  queuedConversions?: QueuedConversion[];
-  onRemoveQueuedConversion?: (id: string) => void;
   includeBatchFields?: boolean;
   submitLabel: string;
 }
-
-type QueuedConversion = { id: string; conversion: ConversionInput };
 
 function ConversionBuilder({
   onSubmit,
   onCancel,
   products,
   childProducts,
-  onAddLineItem,
-  queuedConversions,
-  onRemoveQueuedConversion,
   includeBatchFields = false,
   submitLabel,
 }: ConversionBuilderProps) {
-  const [sources, setSources] = useState<SourceInput[]>([
-    { selection: "", quantity: 1 },
-    { selection: "", quantity: 1 },
-  ]);
-  const [targetSelection, setTargetSelection] = useState("");
-  const [targetQty, setTargetQty] = useState(1);
-  const [conversionNote, setConversionNote] = useState("");
+  const createEmptyDraft = useCallback(
+    (): ConversionDraft => ({
+      id:
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random()}`,
+      sources: [
+        { selection: "", quantity: 1 },
+        { selection: "", quantity: 1 },
+      ],
+      targetSelection: "",
+      targetQty: 1,
+      conversionNote: "",
+    }),
+    [],
+  );
+
+  const [drafts, setDrafts] = useState<ConversionDraft[]>([createEmptyDraft()]);
   const [batchNote, setBatchNote] = useState("");
   const [orderId, setOrderId] = useState("");
   const [createdBy, setCreatedBy] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const handleAddDraft = () => setDrafts((prev) => [...prev, createEmptyDraft()]);
+  const handleRemoveDraft = (id: string) => {
+    setDrafts((prev) => (prev.length === 1 ? prev : prev.filter((draft) => draft.id !== id)));
+  };
 
   const options = useMemo(() => {
     const base = products.map((p) => ({
@@ -126,17 +141,32 @@ function ConversionBuilder({
     return { kind, id: parsedId as number };
   };
 
-  const updateSource = (index: number, field: keyof SourceInput, value: string | number) => {
-    setSources((prev) => prev.map((s, i) => (i === index ? { ...s, [field]: value } : s)));
+  const updateDraft = (id: string, updater: (draft: ConversionDraft) => ConversionDraft) => {
+    setDrafts((prev) => prev.map((d) => (d.id === id ? updater(d) : d)));
   };
 
-  const handleAddSource = () => setSources((prev) => [...prev, { selection: "", quantity: 1 }]);
-  const handleRemoveSource = (index: number) => {
-    setSources((prev) => (prev.length === 1 ? prev : prev.filter((_, i) => i !== index)));
+  const updateSource = (draftId: string, index: number, field: keyof SourceInput, value: string | number) => {
+    updateDraft(draftId, (draft) => ({
+      ...draft,
+      sources: draft.sources.map((s, i) => (i === index ? { ...s, [field]: value } : s)),
+    }));
   };
 
-  const buildConversion = () => {
-    const parsedSources = sources
+  const handleAddSource = (draftId: string) =>
+    updateDraft(draftId, (draft) => ({
+      ...draft,
+      sources: [...draft.sources, { selection: "", quantity: 1 }],
+    }));
+
+  const handleRemoveSource = (draftId: string, index: number) => {
+    updateDraft(draftId, (draft) => ({
+      ...draft,
+      sources: draft.sources.length === 1 ? draft.sources : draft.sources.filter((_, i) => i !== index),
+    }));
+  };
+
+  const buildConversion = (draft: ConversionDraft) => {
+    const parsedSources = draft.sources
       .map((source) => ({
         parsed: parseSelection(source.selection),
         quantity: Number(source.quantity),
@@ -151,12 +181,12 @@ function ConversionBuilder({
       return null;
     }
 
-    if (!targetSelection) {
+    if (!draft.targetSelection) {
       alert("Please select a finished product from the dropdown.");
       return null;
     }
 
-    const targetQuantity = Number(targetQty);
+    const targetQuantity = Number(draft.targetQty);
 
     if (
       parsedSources.some((s) => !Number.isInteger(s.quantity) || s.quantity <= 0) ||
@@ -167,7 +197,7 @@ function ConversionBuilder({
       return null;
     }
 
-    const target = parseSelection(targetSelection);
+    const target = parseSelection(draft.targetSelection);
     if (!target) {
       alert("Invalid finished product selection. Please choose a valid product option.");
       return null;
@@ -183,30 +213,26 @@ function ConversionBuilder({
         target.kind === "child"
           ? { child_product_id: target.id, quantity: targetQuantity }
           : { product_id: target.id, quantity: targetQuantity },
-      note: conversionNote || undefined,
+      note: draft.conversionNote || undefined,
     } satisfies ConversionInput;
   };
 
   const resetConversionFields = () => {
-    setSources([
-      { selection: "", quantity: 1 },
-      { selection: "", quantity: 1 },
-    ]);
-    setTargetSelection("");
-    setTargetQty(1);
-    setConversionNote("");
+    setDrafts([createEmptyDraft()]);
   };
 
-  const { resolve: resolveName } = useProductLookups(products, childProducts);
-
   const handleSubmit = async () => {
-    const conversion = buildConversion();
-    if (!conversion) return;
+    const conversions: ConversionInput[] = [];
+    for (const draft of drafts) {
+      const built = buildConversion(draft);
+      if (!built) return;
+      conversions.push(built);
+    }
 
     setSubmitting(true);
     try {
       await onSubmit(
-        conversion,
+        conversions,
         includeBatchFields
           ? {
               batchNote: batchNote || undefined,
@@ -215,6 +241,7 @@ function ConversionBuilder({
             }
           : undefined,
       );
+      resetConversionFields();
     } finally {
       setSubmitting(false);
     }
@@ -259,201 +286,170 @@ function ConversionBuilder({
         </div>
       )}
 
-      <div className="flex flex-col lg:flex-row gap-4 border-b">
-        <div className="flex-1 rounded-lg bg-white p-3 space-y-3">
-            <div>
-              <p className="text-[14px] uppercase tracking-wide text-base-content/60 font-semibold text-black">
-                Materials Used
-              </p>
-            </div>
-          
-
-          <div className="grid grid-cols-1 px-3 ">
-
-            <label className="text-[11px] uppercase tracking-wide text-base-content/60 font-semibold flex-1">
-                  Product
-            </label>
-
-            <label className="text-[11px] uppercase tracking-wide text-base-content/60 font-semibold w-28">
-                    Quantity Used
-            </label>
+      {drafts.map((draft, draftIdx) => (
+        <div
+          key={draft.id}
+          className={`flex flex-col lg:flex-row gap-4 ${draftIdx !== drafts.length - 1 ? "border-b pb-4 mb-4" : "border-b pb-4"}`}
+        >
+          <div className="flex-1 rounded-lg bg-white p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-[14px] uppercase tracking-wide text-base-content/60 font-semibold text-black">
+                  Materials Used
+                </p>
+                {drafts.length > 1 && (
+                  <button
+                    className="btn btn-ghost btn-xs text-error"
+                    onClick={() => handleRemoveDraft(draft.id)}
+                    disabled={submitting}
+                  >
+                    Remove line
+                  </button>
+                )}
+              </div>
             
 
-            {sources.map((source, idx) => (
-              <div key={idx} className="col-span-2 py-2 relative">
-                <div className="flex gap-3">
-                  <div className="flex-1">
-                    <select
-                      className="select select-bordered select-sm w-full mt-1"
-                      value={source.selection}
-                      onChange={(e) => updateSource(idx, "selection", e.target.value)}
-                      disabled={submitting}
-                    >
-                      <option value="">Select product...</option>
-                      {options.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+            <div className="grid grid-cols-1 px-3 ">
 
-                  <div className="w-28">
-                    <input
-                      type="number"
-                      className="input input-bordered input-sm w-full mt-1"
-                      value={source.quantity}
-                      onChange={(e) => updateSource(idx, "quantity", Number(e.target.value))}
-                      min={1}
-                      disabled={submitting}
-                    />
+              <label className="text-[11px] uppercase tracking-wide text-base-content/60 font-semibold flex-1">
+                    Product
+              </label>
 
-                    {sources.length > 1 && (
-                    <button
-                      className="btn btn-ghost btn-xs btn-square text-error absolute top-5 -right-6"
-                      onClick={() => handleRemoveSource(idx)}
-                      disabled={submitting}
-                      aria-label="Remove line item"
-                    >
-                      ✕
-                    </button>
-                  )}
+              <label className="text-[11px] uppercase tracking-wide text-base-content/60 font-semibold w-28">
+                      Quantity Used
+              </label>
+              
+
+              {draft.sources.map((source, idx) => (
+                <div key={idx} className="col-span-2 py-2 relative">
+                  <div className="flex gap-3">
+                    <div className="flex-1">
+                      <select
+                        className="select select-bordered select-sm w-full mt-1"
+                        value={source.selection}
+                        onChange={(e) => updateSource(draft.id, idx, "selection", e.target.value)}
+                        disabled={submitting}
+                      >
+                        <option value="">Select product...</option>
+                        {options.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="w-28">
+                      <input
+                        type="number"
+                        className="input input-bordered input-sm w-full mt-1"
+                        value={source.quantity}
+                        onChange={(e) => updateSource(draft.id, idx, "quantity", Number(e.target.value))}
+                        min={1}
+                        disabled={submitting}
+                      />
+
+                      {draft.sources.length > 1 && (
+                      <button
+                        className="btn btn-ghost btn-xs btn-square text-error absolute top-5 -right-6"
+                        onClick={() => handleRemoveSource(draft.id, idx)}
+                        disabled={submitting}
+                        aria-label="Remove line item"
+                      >
+                        ✕
+                      </button>
+                    )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-          <button className="btn btn-outline btn-xs w-fit" onClick={handleAddSource} disabled={submitting}>
-            Add material
-          </button>
-        </div>
-
-        <div className="flex items-center justify-center text-base-content/60 lg:px-2">
-          <span className="hidden lg:inline text-2xl">→</span>
-          <span className="lg:hidden text-lg">→</span>
-        </div>
-
-        <div className="flex-1 bg-white p-3 space-y-3">
-          <div>
-            <p className="text-[14px] uppercase tracking-wide text-base-content/60 font-semibold text-black">
-              Finished Product
-            </p>
+              ))}
+            </div>
+            <button className="btn btn-outline btn-xs w-fit" onClick={() => handleAddSource(draft.id)} disabled={submitting}>
+              Add material
+            </button>
           </div>
 
-          <div className="flex flex-col gap-3">
-            <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
-              <div className="flex-1">
-                <label className="text-[11px] uppercase tracking-wide text-base-content/60 font-semibold">
-                  Product
-                </label>
-                <select
-                  className="select select-bordered select-sm w-full mt-1"
-                  value={targetSelection}
-                  onChange={(e) => setTargetSelection(e.target.value)}
-                  disabled={submitting}
-                >
-                  <option value="">Select product...</option>
-                  {options.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
+          <div className="flex items-center justify-center text-base-content/60 lg:px-2">
+            <span className="hidden lg:inline text-2xl">→</span>
+            <span className="lg:hidden text-lg">→</span>
+          </div>
+
+          <div className="flex-1 bg-white p-3 space-y-3">
+            <div>
+              <p className="text-[14px] uppercase tracking-wide text-base-content/60 font-semibold text-black">
+                Finished Product
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
+                <div className="flex-1">
+                  <label className="text-[11px] uppercase tracking-wide text-base-content/60 font-semibold">
+                    Product
+                  </label>
+                  <select
+                    className="select select-bordered select-sm w-full mt-1"
+                    value={draft.targetSelection}
+                    onChange={(e) =>
+                      updateDraft(draft.id, (prev) => ({
+                        ...prev,
+                        targetSelection: e.target.value,
+                      }))
+                    }
+                    disabled={submitting}
+                  >
+                    <option value="">Select product...</option>
+                    {options.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="w-32">
+                  <label className="text-[11px] uppercase tracking-wide text-base-content/60 font-semibold">
+                    Quantity Produced
+                  </label>
+                  <input
+                    type="number"
+                    className="input input-bordered input-sm w-full mt-1"
+                    value={draft.targetQty}
+                    onChange={(e) =>
+                      updateDraft(draft.id, (prev) => ({
+                        ...prev,
+                        targetQty: Number(e.target.value),
+                      }))
+                    }
+                    min={1}
+                    disabled={submitting}
+                  />
+                </div>
               </div>
 
-              <div className="w-32">
+              <div>
                 <label className="text-[11px] uppercase tracking-wide text-base-content/60 font-semibold">
-                  Quantity Produced
+                  Note (optional)
                 </label>
                 <input
-                  type="number"
                   className="input input-bordered input-sm w-full mt-1"
-                  value={targetQty}
-                  onChange={(e) => setTargetQty(Number(e.target.value))}
-                  min={1}
+                  value={draft.conversionNote}
+                  onChange={(e) =>
+                    updateDraft(draft.id, (prev) => ({
+                      ...prev,
+                      conversionNote: e.target.value,
+                    }))
+                  }
                   disabled={submitting}
                 />
               </div>
             </div>
-
-            <div>
-              <label className="text-[11px] uppercase tracking-wide text-base-content/60 font-semibold">
-                Note (optional)
-              </label>
-              <input
-                className="input input-bordered input-sm w-full mt-1"
-                value={conversionNote}
-                onChange={(e) => setConversionNote(e.target.value)}
-                disabled={submitting}
-              />
-            </div>
           </div>
         </div>
-      </div>
+      ))}
 
-      {onAddLineItem && queuedConversions?.length ? (
-        <div className="space-y-3 border-b pb-3">
-          {queuedConversions.map((item, idx) => (
-            <div key={item.id} className="flex flex-col lg:flex-row gap-4">
-              <div className="flex-1 rounded-lg bg-white p-3 space-y-2 border">
-                <div className="flex items-center justify-between">
-                  <p className="text-[14px] uppercase tracking-wide text-base-content/60 font-semibold text-black">
-                    Materials Used
-                  </p>
-                  <span className="text-xs text-base-content/60">Line {idx + 1}</span>
-                </div>
-                <div className="space-y-1 text-sm text-gray-700">
-                  {item.conversion.decreases.map((dec, i) => (
-                    <div key={i} className="flex justify-between">
-                      <span>{resolveName(dec.product_id, dec.child_product_id)}</span>
-                      <span className="text-xs text-gray-600">-{dec.quantity}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex items-center justify-center text-base-content/60 lg:px-2">
-                <span className="hidden lg:inline text-2xl">→</span>
-                <span className="lg:hidden text-lg">→</span>
-              </div>
-
-              <div className="flex-1 bg-white p-3 space-y-2 border rounded-lg relative">
-                <p className="text-[14px] uppercase tracking-wide text-base-content/60 font-semibold text-black">
-                  Finished Product
-                </p>
-                <div className="flex justify-between text-sm text-gray-700">
-                  <span>{resolveName(item.conversion.increase.product_id, item.conversion.increase.child_product_id)}</span>
-                  <span className="text-xs text-gray-600">+{item.conversion.increase.quantity}</span>
-                </div>
-                {onRemoveQueuedConversion && (
-                  <button
-                    className="btn btn-ghost btn-xs text-error absolute top-2 right-2"
-                    onClick={() => onRemoveQueuedConversion(item.id)}
-                    aria-label={`Remove line item ${idx + 1}`}
-                  >
-                    Delete
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : null}
-
-      {onAddLineItem && (
-        <button
-          className="btn btn-outline btn-sm w-fit"
-          onClick={() => {
-            const conversion = buildConversion();
-            if (!conversion) return;
-            onAddLineItem(conversion);
-            resetConversionFields();
-          }}
-          disabled={submitting}
-        >
-          + Add New Line Item
-        </button>
-      )}
+      <button className="btn btn-outline btn-sm w-fit" onClick={handleAddDraft} disabled={submitting}>
+        + Add New Line Item
+      </button>
 
       <div className="flex justify-end gap-2 pt-1">
         <button className="btn btn-ghost btn-sm" onClick={onCancel} disabled={submitting}>Cancel</button>
@@ -476,22 +472,11 @@ export default function ConversionsPage() {
   const [error, setError] = useState<string | null>(null);
   const [creationMode, setCreationMode] = useState(false);
   const [addMode, setAddMode] = useState(false);
-  const [pendingConversions, setPendingConversions] = useState<QueuedConversion[]>([]);
 
   const [products, setProducts] = useState<Product[]>([]);
   const [childProducts, setChildProducts] = useState<ChildProductName[]>([]);
 
   const { resolve } = useProductLookups(products, childProducts);
-
-  const makeQueuedConversion = useCallback(
-    (conversion: ConversionInput): QueuedConversion => ({
-      id: typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID()
-        : `${Date.now()}-${Math.random()}`,
-      conversion,
-    }),
-    [],
-  );
 
   const loadCatalog = useCallback(() => {
     Promise.allSettled([fetchProducts(), fetchChildProducts()]).then(([prod, child]) => {
@@ -537,7 +522,7 @@ export default function ConversionsPage() {
   }, [selectedBatchId]);
 
   const handleCreate = async (
-    conversion: ConversionInput,
+    conversions: ConversionInput[],
     extras?: { batchNote?: string; orderId?: number; createdBy?: string },
   ) => {
     try {
@@ -545,11 +530,10 @@ export default function ConversionsPage() {
         note: extras?.batchNote,
         order_id: extras?.orderId,
         created_by: extras?.createdBy,
-        conversions: [...pendingConversions.map((item) => item.conversion), conversion],
+        conversions,
       });
       setCreationMode(false);
       setAddMode(false);
-      setPendingConversions([]);
       loadBatches();
       if (response?.batch?.id) {
         setSelectedBatchId(response.batch.id);
@@ -561,15 +545,14 @@ export default function ConversionsPage() {
     }
   };
 
-  const handleAddConversion = async (conversion: ConversionInput) => {
+  const handleAddConversion = async (conversions: ConversionInput[]) => {
     if (!selectedBatchId) return;
-    const conversionsToAdd = [...pendingConversions.map((item) => item.conversion), conversion];
     try {
-      const results = await Promise.allSettled(conversionsToAdd.map((conv) => addConversionToBatch(selectedBatchId, conv)));
+      const results = await Promise.allSettled(conversions.map((conv) => addConversionToBatch(selectedBatchId, conv)));
       const failed = results.filter((r) => r.status === "rejected");
 
       if (failed.length) {
-        const failedConversions = conversionsToAdd.filter((_, idx) => results[idx]?.status === "rejected");
+        const failedConversions = conversions.filter((_, idx) => results[idx]?.status === "rejected");
         const reasons = failed
           .slice(0, 3)
           .map((r) => (r.reason instanceof Error ? r.reason.message : String(r.reason ?? "Unknown error")));
@@ -578,12 +561,9 @@ export default function ConversionsPage() {
         const reasonsText = reasons.map((r) => `- ${r}`).join("\n");
         const noun = count === 1 ? "conversion" : "conversions";
         const moreText = hiddenCount > 0 ? ` (${hiddenCount} additional errors not shown)` : "";
-        alert(`Failed to add ${count} ${noun} of ${conversionsToAdd.length}${moreText}:\n${reasonsText}`);
-        setPendingConversions(failedConversions.map((conv) => makeQueuedConversion(conv)));
-        setAddMode(true);
+        alert(`Failed to add ${count} ${noun} of ${conversions.length}${moreText}:\n${reasonsText}`);
       } else {
         setAddMode(false);
-        setPendingConversions([]);
       }
       fetchConversionBatch(selectedBatchId)
         .then(setDetail)
@@ -592,7 +572,6 @@ export default function ConversionsPage() {
       console.error(e);
       const msg = e instanceof Error ? e.message : "Please verify your inputs and try again.";
       alert(`An error occurred while adding conversions: ${msg}`);
-      setPendingConversions(conversionsToAdd.map((conv) => makeQueuedConversion(conv)));
       setAddMode(true);
     }
   };
@@ -625,7 +604,6 @@ export default function ConversionsPage() {
             <button
               className="btn btn-primary"
               onClick={() => {
-                setPendingConversions([]);
                 setCreationMode(true);
                 setAddMode(false);
                 setSelectedBatchId(null);
@@ -637,7 +615,6 @@ export default function ConversionsPage() {
               <button
                 className="btn"
                 onClick={() => {
-                  setPendingConversions([]);
                   setAddMode(true);
                 }}
               >
@@ -740,32 +717,13 @@ export default function ConversionsPage() {
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="text-lg font-semibold text-gray-800">Create Production Batch</h2>
                 </div>
-                {pendingConversions.length > 0 && (
-                  <div className="mb-3 rounded-lg border bg-slate-50 p-3 space-y-1 text-sm text-gray-700">
-                    <p className="font-semibold text-gray-800">Queued line items</p>
-                    {pendingConversions.map((item, idx) => (
-                      <div key={item.id} className="flex items-center justify-between">
-                        <span>Line {idx + 1}: {resolve(item.conversion.increase.product_id, item.conversion.increase.child_product_id)}</span>
-                        <span className="text-gray-600">+{item.conversion.increase.quantity}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
                 <ConversionBuilder
                   onSubmit={handleCreate}
                   onCancel={() => {
                     setCreationMode(false);
-                    setPendingConversions([]);
                   }}
                   products={products}
                   childProducts={childProducts}
-                  onAddLineItem={(conversion) =>
-                    setPendingConversions((prev) => [...prev, makeQueuedConversion(conversion)])
-                  }
-                  queuedConversions={pendingConversions}
-                  onRemoveQueuedConversion={(id) =>
-                    setPendingConversions((prev) => prev.filter((item) => item.id !== id))
-                  }
                   includeBatchFields
                   submitLabel="Create batch"
                 />
@@ -787,7 +745,6 @@ export default function ConversionsPage() {
                     <button
                       className="btn btn-outline btn-sm"
                       onClick={() => {
-                        setPendingConversions([]);
                         setAddMode(true);
                       }}
                     >
@@ -801,17 +758,9 @@ export default function ConversionsPage() {
                     onSubmit={handleAddConversion}
                     onCancel={() => {
                       setAddMode(false);
-                      setPendingConversions([]);
                     }}
                     products={products}
                     childProducts={childProducts}
-                    onAddLineItem={(conversion) =>
-                      setPendingConversions((prev) => [...prev, makeQueuedConversion(conversion)])
-                    }
-                    queuedConversions={pendingConversions}
-                    onRemoveQueuedConversion={(id) =>
-                      setPendingConversions((prev) => prev.filter((item) => item.id !== id))
-                    }
                     submitLabel="Add conversion"
                   />
                 ) : (
