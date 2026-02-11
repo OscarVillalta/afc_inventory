@@ -575,10 +575,10 @@ export default function ConversionsPage() {
           .slice(0, 3);
         const count = failedConversions.length;
         const hiddenCount = count - reasons.length;
-        const more = hiddenCount > 0 ? `\n(${hiddenCount} additional errors not shown)` : "";
         const reasonsText = reasons.map((r) => `- ${r}`).join("\n");
         const noun = count === 1 ? "conversion" : "conversions";
-        alert(`Failed to add ${count} ${noun} of ${conversionsToAdd.length}:\n${reasonsText}${more}`);
+        const moreText = hiddenCount > 0 ? `\n(${hiddenCount} additional errors not shown)` : "";
+        alert(`Failed to add ${count} ${noun} of ${conversionsToAdd.length}:\n${reasonsText}${moreText}`);
         setPendingConversions(failedConversions.map((conv) => makeQueuedConversion(conv)));
         setAddMode(true);
       } else {
