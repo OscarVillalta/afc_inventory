@@ -574,11 +574,11 @@ export default function ConversionsPage() {
           .map((r) => (r.status === "rejected" && r.reason?.message ? r.reason.message : "Unknown error"))
           .slice(0, 3);
         const count = failedConversions.length;
-        const hiddenCount = failed.length - reasons.length;
-        const more = hiddenCount > 0 ? ` (${hiddenCount} additional errors not shown)` : "";
+        const hiddenCount = count - reasons.length;
+        const more = hiddenCount > 0 ? `\n(${hiddenCount} additional errors not shown)` : "";
         const reasonsText = reasons.map((r) => `- ${r}`).join("\n");
         const noun = count === 1 ? "conversion" : "conversions";
-        alert(`Failed to add ${count} ${noun} of ${conversionsToAdd.length}${more}:\n${reasonsText}`);
+        alert(`Failed to add ${count} ${noun} of ${conversionsToAdd.length}:\n${reasonsText}${more}`);
         setPendingConversions(failedConversions.map((conv) => makeQueuedConversion(conv)));
         setAddMode(true);
       } else {
