@@ -565,7 +565,18 @@ export default function ConversionsPage() {
     if (!selectedBatchId) return;
     const conversionsToAdd = [...pendingConversions.map((item) => item.conversion), conversion];
     try {
-      await Promise.all(conversionsToAdd.map((conv) => addConversionToBatch(selectedBatchId, conv)));
+      const results = await Promise.allSettled(conversionsToAdd.map((conv) => addConversionToBatch(selectedBatchId, conv)));
+      const failed = results.filter((r) => r.status === "rejected");
+
+      if (failed.length) {
+        const firstError = failed[0];
+        const msg =
+          firstError.status === "rejected" && firstError.reason instanceof Error
+            ? firstError.reason.message
+            : "One or more conversions failed to add.";
+        alert(msg);
+      }
+
       setAddMode(false);
       setPendingConversions([]);
       fetchConversionBatch(selectedBatchId)
@@ -576,6 +587,7 @@ export default function ConversionsPage() {
       const msg = e instanceof Error ? e.message : "Please verify your inputs and try again.";
       alert(`Failed to add conversion to batch: ${msg}`);
       setAddMode(false);
+      setPendingConversions([]);
     }
   };
 
