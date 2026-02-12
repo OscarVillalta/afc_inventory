@@ -333,7 +333,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
               aria-label={`Select section: ${item.note}`}
             />
           </td>
-          <td colSpan={5} className="px-3 py-3 text-wrap break-all">
+          <td colSpan={5} className="px-3 py-1 text-wrap break-all">
             <div className="flex items-center gap-2">
               {isEditingNote ? (
                 <div className="flex items-center gap-2 flex-1">
