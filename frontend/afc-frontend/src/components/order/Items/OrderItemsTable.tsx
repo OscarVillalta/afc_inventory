@@ -90,7 +90,7 @@ export default function OrderItemsTable({
         while (i < filtered.length) {
           const item = filtered[i];
           
-          if (item.is_separator) {
+          if (item.type === "Unit_Separator" || item.type === "Section_Separator") {
             // Check if section matches
             const sectionName = item.note || "";
             if (sectionName.toLowerCase().includes(sectionFilter.toLowerCase())) {
@@ -99,7 +99,7 @@ export default function OrderItemsTable({
               i++;
               
               // Add all items under this section (until next separator)
-              while (i < filtered.length && !filtered[i].is_separator) {
+              while (i < filtered.length && filtered[i].type !== "Unit_Separator" && filtered[i].type !== "Section_Separator") {
                 matchingSections.push(filtered[i]);
                 i++;
               }
@@ -113,7 +113,7 @@ export default function OrderItemsTable({
 
         filtered = matchingSections.filter((item) => {
           // Separators are included if they pass the filters or if any filter is active
-          if (item.is_separator) {
+          if (item.type === "Unit_Separator" || item.type === "Section_Separator") {
             return true; // Keep separators to maintain structure
           }
 
@@ -133,7 +133,7 @@ export default function OrderItemsTable({
         // Regular filtering for non-section searches
         filtered = filtered.filter((item) => {
           // Separators are included if they pass the filters or if any filter is active
-          if (item.is_separator) {
+          if (item.type === "Unit_Separator" || item.type === "Section_Separator") {
             return true; // Keep separators to maintain structure
           }
 
@@ -190,7 +190,7 @@ export default function OrderItemsTable({
     const item = displayedItems.find(i => i.id === itemId);
     const currentIndex = displayedItems.findIndex(i => i.id === itemId);
     
-    if (item && item.is_separator) {
+    if (item && (item.type === "Unit_Separator" || item.type === "Section_Separator")) {
       // When selecting a separator, select all items in its section
       const itemIndex = displayedItems.findIndex(i => i.id === itemId);
       const sectionItems: number[] = [];
@@ -200,7 +200,7 @@ export default function OrderItemsTable({
       
       // Find all items until the next separator or end of list
       for (let i = itemIndex + 1; i < displayedItems.length; i++) {
-        if (displayedItems[i].is_separator) {
+        if (displayedItems[i].type === "Unit_Separator" || displayedItems[i].type === "Section_Separator") {
           break; // Stop at next separator
         }
         sectionItems.push(displayedItems[i].id);

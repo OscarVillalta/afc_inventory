@@ -68,7 +68,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
   const [error, setError] = useState<string | null>(null);
 
   // Separator items don't need transactions
-  const isSeparator = item.is_separator;
+  const isSeparator = item.type === "Unit_Separator" || item.type === "Section_Separator";
 
   async function loadTransactions(force = false) {
     if (loaded && !force) return;

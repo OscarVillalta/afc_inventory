@@ -25,6 +25,13 @@ class OrderStatus(str, Enum):
     COMPLETED = "Completed"
 
 
+class OrderItemType(str, Enum):
+    UNIT_SEPARATOR = "Unit_Separator"
+    SECTION_SEPARATOR = "Section_Separator"
+    PRODUCT_ITEM = "Product_Item"
+    SALES_ITEM = "Sales_Item"
+
+
 class TransactionState(str, Enum):
     PENDING = "pending"
     COMMITTED = "committed"
@@ -396,7 +403,7 @@ class Order(Base, SerializerMixin):
             return
 
         # Filter out separator items for status calculation
-        non_separator_items = [item for item in self.items if not item.is_separator]
+        non_separator_items = [item for item in self.items if item.type not in (OrderItemType.UNIT_SEPARATOR.value, OrderItemType.SECTION_SEPARATOR.value)]
         
         if not non_separator_items:
             self.status = OrderStatus.PENDING.value
@@ -440,7 +447,7 @@ class OrderItem(Base, SerializerMixin):
     product_id: Mapped[Optional[int]] = mapped_column(ForeignKey("products.id"), nullable=True)
     child_product_id: Mapped[Optional[int]] = mapped_column(ForeignKey("child_products.id"), nullable=True)
 
-    is_separator: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    type: Mapped[str] = mapped_column(String, default=OrderItemType.PRODUCT_ITEM.value, nullable=False)
     quantity_ordered: Mapped[int] = mapped_column(default=0, nullable=False)
     quantity_fulfilled: Mapped[int] = mapped_column(default=0)
     note: Mapped[Optional[str]] = mapped_column(nullable=True)

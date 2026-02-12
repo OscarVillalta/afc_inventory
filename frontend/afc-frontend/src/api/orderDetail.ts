@@ -1,10 +1,12 @@
 import { apiRequest } from "./apiClient";
 
+export type OrderItemType = "Unit_Separator" | "Section_Separator" | "Product_Item" | "Sales_Item";
+
 export interface OrderItemPayload {
   id: number;
   order_id: number;
   product_id: number | null;
-  is_separator: boolean;
+  type: OrderItemType;
   part_number: string;
   quantity_ordered: number;
   quantity_fulfilled: number;
@@ -86,7 +88,7 @@ export function commitAllOrderItemTransactions(itemId: number) {
 export function createOrderItem(payload: {
   order_id: number;
   product_id?: number | null;
-  is_separator?: boolean;
+  type?: OrderItemType;
   quantity_ordered?: number;
   note?: string;
   position?: number;
