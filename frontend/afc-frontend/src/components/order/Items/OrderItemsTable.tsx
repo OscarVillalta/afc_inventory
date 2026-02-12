@@ -249,8 +249,13 @@ export default function OrderItemsTable({
       return;
     }
 
-    const oldIndex = localItems.findIndex((item) => item.id === active.id);
-    const newIndex = localItems.findIndex((item) => item.id === over.id);
+    const activeId = Number(active.id);
+    const overId = Number(over.id);
+
+    const oldIndex = localItems.findIndex((item) => item.id === activeId);
+    const newIndex = localItems.findIndex((item) => item.id === overId);
+
+    if (oldIndex === -1 || newIndex === -1) return;
 
     // Optimistically update local state
     const newItems = arrayMove(localItems, oldIndex, newIndex);

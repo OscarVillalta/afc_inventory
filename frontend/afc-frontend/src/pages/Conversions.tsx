@@ -248,7 +248,7 @@ function ConversionBuilder({
   };
 
   return (
-    <div className="rounded-lg border shadow-sm bg-white p-4 space-y-4">
+    <div className="shadow-md bg-white px-4 py-2 space-y-4">
       {includeBatchFields && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="space-y-1">
@@ -715,7 +715,7 @@ export default function ConversionsPage() {
             {creationMode ? (
               <>
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-lg font-semibold text-gray-800">Create Production Batch</h2>
+                  <h2 className="text-lg font-semibold">Create Production Batch</h2>
                 </div>
                 <ConversionBuilder
                   onSubmit={handleCreate}
