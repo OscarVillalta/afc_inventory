@@ -21,6 +21,8 @@ class QBJobSchema(Schema):
             "sales_order",
             "salesorder",
             "invoice",
+            "purchase_order",
+            "purchaseorder",
             "agent",
             "quickbooks",
             "qb",

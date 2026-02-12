@@ -718,14 +718,14 @@ def create_order_from_qb():
         raise DuplicateResourceError("Order", "external_order_number", reference_number)
     
     # Validate qb_doc_type
-    valid_types = ["sales_order", "salesorder", "estimate", "invoice"]
+    valid_types = ["sales_order", "salesorder", "estimate", "invoice", "purchase_order", "purchaseorder"]
     if qb_doc_type not in valid_types:
         raise CustomValidationError(
             f"qb_doc_type must be one of: {', '.join(valid_types)}"
         )
     
-    # Normalize qb_doc_type (salesorder -> sales_order)
-    entity_type = qb_doc_type.replace("salesorder", "sales_order")
+    # Normalize qb_doc_type (salesorder -> sales_order, purchaseorder -> purchase_order)
+    entity_type = qb_doc_type.replace("salesorder", "sales_order").replace("purchaseorder", "purchase_order")
     
     # Query QuickBooks via the QB agent
     try:
