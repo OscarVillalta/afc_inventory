@@ -20,6 +20,13 @@ export default function PullFromQBModal({ open, onClose, onCreated }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  function handleClose() {
+    setReferenceNumber("");
+    setDocType("sales_order");
+    setError(null);
+    onClose();
+  }
+
   if (!open) return null;
 
   async function handlePull() {
@@ -39,7 +46,7 @@ export default function PullFromQBModal({ open, onClose, onCreated }: Props) {
 
       const orderId = response.order_id;
       onCreated(orderId);
-      onClose();
+      handleClose();
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Failed to pull from QuickBooks.";
@@ -90,7 +97,7 @@ export default function PullFromQBModal({ open, onClose, onCreated }: Props) {
         <div className="flex justify-end gap-2 pt-2">
           <button
             className="btn btn-sm btn-outline"
-            onClick={onClose}
+            onClick={handleClose}
             disabled={loading}
           >
             Cancel
