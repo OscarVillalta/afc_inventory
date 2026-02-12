@@ -381,13 +381,13 @@ export default function OrdersSearchPage() {
                           </h3>
                           {order.external_order_number && (
                             <span className="px-3 py-1 rounded-full text-sm font-semibold bg-yellow-100 text-yellow-800 border border-yellow-300">
-                              Ref# {order.external_order_number}
+                              QB# {order.external_order_number}
                             </span>
                           )}
                           <span
                             className={`px-3 py-1 rounded-full text-xs font-medium ${
                               order.type === "outgoing"
-                                ? "bg-red-100 text-red-700"
+                                ? "bg-blue-100 text-blue-700"
                                 : "bg-green-100 text-green-700"
                             }`}
                           >
