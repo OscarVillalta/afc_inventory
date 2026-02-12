@@ -188,7 +188,7 @@ export default function OrderDetailPage() {
     }
 
     const nonSeparatorItems = items.filter(
-      item => selectedItems.has(item.id) && item.type === "Product_Item"
+      item => selectedItems.has(item.id) && item.type !== "Unit_Separator" && item.type !== "Section_Separator"
     );
 
     if (nonSeparatorItems.length === 0) {
@@ -217,7 +217,7 @@ export default function OrderDetailPage() {
     }
 
     const nonSeparatorItems = items.filter(
-      item => selectedItems.has(item.id) && item.type === "Product_Item"
+      item => selectedItems.has(item.id) && item.type !== "Unit_Separator" && item.type !== "Section_Separator"
     );
 
     if (nonSeparatorItems.length === 0) {
@@ -244,7 +244,7 @@ export default function OrderDetailPage() {
     }
 
     const nonSeparatorItems = items.filter(
-      item => selectedItems.has(item.id) && item.type === "Product_Item"
+      item => selectedItems.has(item.id) && item.type !== "Unit_Separator" && item.type !== "Section_Separator"
     );
 
     if (nonSeparatorItems.length === 0) {
@@ -285,7 +285,7 @@ export default function OrderDetailPage() {
     }
 
     const nonSeparatorItems = items.filter(
-      item => selectedItems.has(item.id) && item.type === "Product_Item"
+      item => selectedItems.has(item.id) && item.type !== "Unit_Separator" && item.type !== "Section_Separator"
     );
 
     if (nonSeparatorItems.length === 0) {

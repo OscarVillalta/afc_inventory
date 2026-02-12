@@ -62,7 +62,9 @@ def create_order_item() -> Tuple[Any, int]:
         order_id (int): ID of the parent order
         product_id (int): ID of the product (not required for separators)
         child_product_id (int): ID of the child product (alternative to product_id)
-        type (str): Item type - Unit_Separator, Section_Separator, Product_Item, or Sales_Item
+        type (str): Item type - Unit_Separator (visual unit separator), Section_Separator
+            (section header), Product_Item (regular product line item), or Sales_Item
+            (non-inventory sales line item, reserved for future use)
         quantity_ordered (int): Quantity ordered
         note (str): Optional note
         position (int): Optional position in the order
