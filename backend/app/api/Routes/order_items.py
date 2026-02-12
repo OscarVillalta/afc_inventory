@@ -2,7 +2,7 @@ from flask import Blueprint, g, jsonify, request
 from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError, DatabaseError
 from app.api.Schemas.order_item_schema import OrderItemSchema
-from database.models import OrderItem, Order, Product, ChildProduct, Transaction, TransactionState, OrderType
+from database.models import OrderItem, Order, Product, ChildProduct, Transaction, TransactionState, OrderType, OrderItemType
 from marshmallow import ValidationError
 from typing import Tuple, Any
 
@@ -62,7 +62,7 @@ def create_order_item() -> Tuple[Any, int]:
         order_id (int): ID of the parent order
         product_id (int): ID of the product (not required for separators)
         child_product_id (int): ID of the child product (alternative to product_id)
-        is_separator (bool): Whether this is a separator item
+        type (str): Item type - Unit_Separator, Section_Separator, Product_Item, or Sales_Item
         quantity_ordered (int): Quantity ordered
         note (str): Optional note
         position (int): Optional position in the order
@@ -82,7 +82,8 @@ def create_order_item() -> Tuple[Any, int]:
         if not order:
             raise ResourceNotFoundError("Order", data["order_id"])
         
-        is_separator = data.get("is_separator", False)
+        item_type = data.get("type", OrderItemType.PRODUCT_ITEM.value)
+        is_separator = item_type in (OrderItemType.UNIT_SEPARATOR.value, OrderItemType.SECTION_SEPARATOR.value)
         
         # Separator items don't need a product
         if is_separator:
@@ -147,7 +148,7 @@ def create_order_item() -> Tuple[Any, int]:
             order_id=order.id,
             product_id=product_id,
             child_product_id=child_product_id,
-            is_separator=is_separator,
+            type=item_type,
             quantity_ordered=quantity_ordered,
             quantity_fulfilled=0,
             note=data.get("note"),

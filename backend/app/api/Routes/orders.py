@@ -3,7 +3,7 @@ from sqlalchemy import select, func
 from sqlalchemy import and_, or_
 from sqlalchemy.exc import IntegrityError, DatabaseError
 from app.api.Schemas.order_schema import OrderSchema
-from database.models import Customer, Supplier, OrderType, OrderStatus, Transaction, TransactionState
+from database.models import Customer, Supplier, OrderType, OrderStatus, OrderItemType, Transaction, TransactionState
 from database.models import Order, OrderItem, Product, AirFilter, MiscItem, Quantity
 from marshmallow import ValidationError
 from datetime import datetime, timedelta
@@ -177,7 +177,7 @@ def get_order_items(order_id):
     
     items = []
     for item in sorted_items:
-        if item.is_separator:
+        if item.type in ("Unit_Separator", "Section_Separator"):
             # Separator items don't have a product
             part_number = ""
         else:
@@ -196,7 +196,7 @@ def get_order_items(order_id):
             "id": item.id,
             "order_id": item.order_id,
             "product_id": item.product_id,
-            "is_separator": item.is_separator,
+            "type": item.type,
             "part_number": part_number,
             "quantity_ordered": item.quantity_ordered,
             "quantity_fulfilled": item.quantity_fulfilled,
@@ -841,20 +841,28 @@ def create_order_from_qb():
     try:
         for qb_line in line_items:
             if qb_line.get("is_separator"):
+                # Determine separator type based on description
+                description = qb_line.get("description", "")
+                separator_type = OrderItemType.UNIT_SEPARATOR.value
+                if description:
+                    desc_lower = description.lower()
+                    if "building" in desc_lower or "bldg" in desc_lower or "•" in description:
+                        separator_type = OrderItemType.SECTION_SEPARATOR.value
+
                 # Create separator item
                 separator = OrderItem(
                     order_id=order.id,
                     product_id=None,
-                    is_separator=True,
+                    type=separator_type,
                     quantity_ordered=0,
                     quantity_fulfilled=0,
-                    note=qb_line.get("description", ""),
+                    note=description,
                     position=position
                 )
                 db.add(separator)
                 created_items.append({
-                    "type": "separator",
-                    "description": qb_line.get("description", "")
+                    "type": separator_type,
+                    "description": description
                 })
                 position += 1
             else:
@@ -930,7 +938,7 @@ def create_order_from_qb():
                 order_item = OrderItem(
                     order_id=order.id,
                     product_id=product.id,
-                    is_separator=False,
+                    type=OrderItemType.PRODUCT_ITEM.value,
                     quantity_ordered=int(quantity),
                     quantity_fulfilled=0,
                     note=qb_line.get("description"),

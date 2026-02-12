@@ -60,7 +60,7 @@ export default function AddOrderItemForm({
       try {
         await createOrderItem({
           order_id: orderId,
-          is_separator: true,
+          type: "Unit_Separator",
           note: note,
           position: position ?? undefined,
         });
@@ -233,7 +233,7 @@ export default function AddOrderItemForm({
           <option value="">Add at end</option>
           {items.map((item, index) => (
             <option key={item.id} value={index}>
-              {index + 1}. {item.is_separator ? `[${item.note}]` : item.part_number}
+              {index + 1}. {(item.type === "Unit_Separator" || item.type === "Section_Separator") ? `[${item.note}]` : item.part_number}
             </option>
           ))}
           {items.length > 0 && (
