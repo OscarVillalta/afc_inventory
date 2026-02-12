@@ -22,6 +22,8 @@ export interface OrderResponse {
 export interface OrderSearchParams {
   id?: number;
   order_number?: string;
+  external_order_number?: string;
+  description?: string;
   type?: string;
   status?: string;
   cs_name?: string;

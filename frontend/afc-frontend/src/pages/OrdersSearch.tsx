@@ -35,6 +35,8 @@ export default function OrdersSearchPage() {
   // Search filters (PERSISTED)
   const [filters, setFilter] = usePersistedFilters("filters_orders_search", {
     searchId: "",
+    searchQBId: "",
+    searchDescription: "",
     searchCustomer: "",
     searchSupplier: "",
     filterType: "All",
@@ -100,6 +102,8 @@ export default function OrdersSearchPage() {
       const activeFilters = { ...filters, ...additionalFilters };
       
       if (activeFilters.searchId) apiFilters.order_number = activeFilters.searchId as string;
+      if (activeFilters.searchQBId) apiFilters.external_order_number = activeFilters.searchQBId as string;
+      if (activeFilters.searchDescription) apiFilters.description = activeFilters.searchDescription as string;
       if (activeFilters.searchCustomer) apiFilters.customer_name = activeFilters.searchCustomer as string;
       if (activeFilters.searchSupplier) apiFilters.supplier_name = activeFilters.searchSupplier as string;
       if (activeFilters.filterType && activeFilters.filterType !== "All") apiFilters.type = activeFilters.filterType as string;
@@ -149,6 +153,8 @@ export default function OrdersSearchPage() {
 
   const handleClearSearch = () => {
     setFilter("searchId", "");
+    setFilter("searchQBId", "");
+    setFilter("searchDescription", "");
     setFilter("searchCustomer", "");
     setFilter("searchSupplier", "");
     setFilter("filterType", "All");
@@ -247,18 +253,53 @@ export default function OrdersSearchPage() {
               </div>
             </div>
             
-            <div className="flex gap-4 items-end">
-              {/* ID Input */}
-              <div className="flex-1">
+            <div className="flex gap-4 items-end flex-wrap">
+              {/* ID Input with AFC- prefix */}
+              <div className="flex-1 min-w-[140px]">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Order ID
                 </label>
+                <div className="flex">
+                  <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 bg-gray-100 text-gray-600 text-sm font-medium">
+                    AFC-
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="123"
+                    className="input input-bordered w-full rounded-l-none"
+                    value={filters.searchId}
+                    onChange={(e) => setFilter("searchId", e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  />
+                </div>
+              </div>
+
+              {/* QuickBooks ID Input */}
+              <div className="flex-1 min-w-[140px]">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Quick Books ID
+                </label>
                 <input
                   type="text"
-                  placeholder="AFC-000123"
+                  placeholder="Search QB reference..."
                   className="input input-bordered w-full"
-                  value={filters.searchId}
-                  onChange={(e) => setFilter("searchId", e.target.value)}
+                  value={filters.searchQBId}
+                  onChange={(e) => setFilter("searchQBId", e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                />
+              </div>
+
+              {/* Description Input */}
+              <div className="flex-1 min-w-[140px]">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description
+                </label>
+                <input
+                  type="text"
+                  placeholder="Search description..."
+                  className="input input-bordered w-full"
+                  value={filters.searchDescription}
+                  onChange={(e) => setFilter("searchDescription", e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 />
               </div>
@@ -270,7 +311,7 @@ export default function OrdersSearchPage() {
                 options={customers}
                 value={filters.searchCustomer}
                 onChange={(value) => setFilter("searchCustomer", value)}
-                className="flex-1"
+                className="flex-1 min-w-[140px]"
               />
 
               {/* Supplier Autocomplete */}
@@ -280,7 +321,7 @@ export default function OrdersSearchPage() {
                 options={suppliers}
                 value={filters.searchSupplier}
                 onChange={(value) => setFilter("searchSupplier", value)}
-                className="flex-1"
+                className="flex-1 min-w-[140px]"
               />
 
               {/* Type Autocomplete */}
@@ -290,7 +331,7 @@ export default function OrdersSearchPage() {
                 options={typeOptions}
                 value={filters.filterType}
                 onChange={(value) => setFilter("filterType", value)}
-                className="flex-1"
+                className="flex-1 min-w-[140px]"
               />
 
               {/* Search Button */}

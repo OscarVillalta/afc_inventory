@@ -407,6 +407,9 @@ def search_orders():
     db = g.db
 
     search = request.args.get("search")
+    order_number = request.args.get("order_number")
+    external_order_number = request.args.get("external_order_number")
+    description = request.args.get("description")
     customer_name = request.args.get("customer_name")
     supplier_name = request.args.get("supplier_name")
     order_type = request.args.get("type")
@@ -461,7 +464,21 @@ def search_orders():
                 Supplier.name.ilike(f"%{search}%"),
             )
         )
-    
+
+    if order_number:
+        # User provides only the significant digits (e.g. "123")
+        # Pad to 6 digits and prepend AFC- to match format "AFC-000123"
+        digits = order_number.strip()
+        padded = digits.lstrip("0") or "0"
+        padded = padded.zfill(6)
+        filters.append(Order.order_number.ilike(f"%AFC-{padded}%"))
+
+    if external_order_number:
+        filters.append(Order.external_order_number.ilike(f"%{external_order_number}%"))
+
+    if description:
+        filters.append(Order.description.ilike(f"%{description}%"))
+
     # Separate customer and supplier name filters
     if customer_name:
         filters.append(Customer.name.ilike(f"%{customer_name}%"))
