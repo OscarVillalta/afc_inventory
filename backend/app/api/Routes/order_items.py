@@ -189,6 +189,17 @@ def update_order_item(item_id):
         item.quantity_ordered = data["quantity_ordered"]
     if "note" in data:
         item.note = data["note"]
+    if "type" in data:
+        new_type = data["type"]
+        valid_types = [t.value for t in OrderItemType]
+        if new_type not in valid_types:
+            return jsonify({"error": f"Invalid type. Must be one of: {valid_types}"}), 400
+        # Only allow toggling between separator types
+        separator_types = [OrderItemType.UNIT_SEPARATOR.value, OrderItemType.SECTION_SEPARATOR.value]
+        if item.type in separator_types and new_type in separator_types:
+            item.type = new_type
+        else:
+            return jsonify({"error": "Type change is only allowed between separator types"}), 400
 
     db.commit()
     return jsonify({

@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type {
   OrderItemPayload,
   OrderItemTransaction,
+  OrderItemType,
 } from "../../../api/orderDetail";
 import {
   fetchOrderItemTransactions,
@@ -70,6 +71,36 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
   // Separator items don't need transactions
   const isSeparator = item.type === "Unit_Separator" || item.type === "Section_Separator";
   const isSectionSeparator = item.type === "Section_Separator";
+
+  // Separator type toggle menu
+  const [showTypeMenu, setShowTypeMenu] = useState(false);
+  const typeMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (typeMenuRef.current && !typeMenuRef.current.contains(e.target as Node)) {
+        setShowTypeMenu(false);
+      }
+    }
+    if (showTypeMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showTypeMenu]);
+
+  async function handleToggleSeparatorType() {
+    const newType: OrderItemType = isSectionSeparator ? "Unit_Separator" : "Section_Separator";
+    setSaving(true);
+    try {
+      await updateOrderItem(item.id, { type: newType });
+      setShowTypeMenu(false);
+      await onRefresh();
+    } catch {
+      setError("Failed to change separator type.");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function loadTransactions(force = false) {
     if (loaded && !force) return;
@@ -378,6 +409,26 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
             </div>
           </td>
           <td className="px-3 py-3 text-right">
+            <div className="relative inline-block" ref={typeMenuRef}>
+              <button
+                className={`btn btn-xs btn-ghost ${isSectionSeparator ? "text-gray-300 hover:text-white" : "text-gray-500 hover:text-gray-700"}`}
+                onClick={() => setShowTypeMenu((v) => !v)}
+                title="Change separator type"
+              >
+                ⋯
+              </button>
+              {showTypeMenu && (
+                <div className="absolute right-0 z-30 mt-1 w-52 rounded-md border bg-white shadow-lg">
+                  <button
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-blue-50"
+                    onClick={handleToggleSeparatorType}
+                    disabled={saving}
+                  >
+                    {isSectionSeparator ? "Change to Unit Separator" : "Change to Section Separator"}
+                  </button>
+                </div>
+              )}
+            </div>
             <button
               className={`btn btn-xs btn-ghost ${isSectionSeparator ? "text-red-300" : "text-red-500"}`}
               onClick={handleDeleteItem}
