@@ -10,6 +10,7 @@ import { fetchSuppliers } from "../api/suppliers";
 import AutocompleteInput from "../components/AutocompleteInput";
 import { usePersistedFilters } from "../hooks/usePersistedFilters";
 import CreateOrderModal from "../components/order/Table/CreateOrderModal";
+import PullFromQBModal from "../components/order/Table/PullFromQBModal";
 
 export default function OrdersSearchPage() {
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ export default function OrdersSearchPage() {
   
   // Create Order Modal state
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showPullQBModal, setShowPullQBModal] = useState(false);
   
   // Type options for autocomplete
   const typeOptions = [
@@ -207,23 +209,42 @@ export default function OrdersSearchPage() {
               <h1 className="text-2xl font-bold text-gray-800">
                 Search Orders
               </h1>
-              <button
-                className="
-                  px-5 py-2.5 rounded-lg
-                  text-sm font-semibold text-white
-                  shadow-md transition
-                  cursor-pointer
-                  hover:shadow-lg hover:-translate-y-0.5
-                  active:translate-y-0
-                "
-                style={{
-                  background:
-                    "linear-gradient(90deg, #3A7BD5 0%, #2B60C8 100%)",
-                }}
-                onClick={() => setShowCreateModal(true)}
-              >
-                + Create Order
-              </button>
+              <div className="flex gap-3">
+                <button
+                  className="
+                    px-5 py-2.5 rounded-lg
+                    text-sm font-semibold text-white
+                    shadow-md transition
+                    cursor-pointer
+                    hover:shadow-lg hover:-translate-y-0.5
+                    active:translate-y-0
+                  "
+                  style={{
+                    background:
+                      "linear-gradient(90deg, #2B8A3E 0%, #237032 100%)",
+                  }}
+                  onClick={() => setShowPullQBModal(true)}
+                >
+                  Pull From QB
+                </button>
+                <button
+                  className="
+                    px-5 py-2.5 rounded-lg
+                    text-sm font-semibold text-white
+                    shadow-md transition
+                    cursor-pointer
+                    hover:shadow-lg hover:-translate-y-0.5
+                    active:translate-y-0
+                  "
+                  style={{
+                    background:
+                      "linear-gradient(90deg, #3A7BD5 0%, #2B60C8 100%)",
+                  }}
+                  onClick={() => setShowCreateModal(true)}
+                >
+                  + Create Order
+                </button>
+              </div>
             </div>
             
             <div className="flex gap-4 items-end">
@@ -358,6 +379,11 @@ export default function OrdersSearchPage() {
                           <h3 className="text-lg font-semibold text-gray-900">
                             Order #{order.id}
                           </h3>
+                          {order.external_order_number && (
+                            <span className="px-3 py-1 rounded-full text-sm font-semibold bg-yellow-100 text-yellow-800 border border-yellow-300">
+                              Ref# {order.external_order_number}
+                            </span>
+                          )}
                           <span
                             className={`px-3 py-1 rounded-full text-xs font-medium ${
                               order.type === "outgoing"
@@ -595,6 +621,18 @@ export default function OrdersSearchPage() {
         onCreated={(orderId?: number) => {
           setShowCreateModal(false);
           // If backend returns ID → go straight to detail
+          if (orderId) {
+            navigate(`/orders/${orderId}`);
+          }
+        }}
+      />
+
+      {/* ===================== PULL FROM QB MODAL ===================== */}
+      <PullFromQBModal
+        open={showPullQBModal}
+        onClose={() => setShowPullQBModal(false)}
+        onCreated={(orderId?: number) => {
+          setShowPullQBModal(false);
           if (orderId) {
             navigate(`/orders/${orderId}`);
           }

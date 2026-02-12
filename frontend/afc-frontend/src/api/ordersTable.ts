@@ -8,6 +8,7 @@ export interface OrderRowItemPayload {
   status: string;
   created_at: string;
   completed_at?: string | null;
+  external_order_number?: string | null;
 }
 
 export interface OrderResponse {
@@ -103,5 +104,15 @@ export function createOrder(payload: {
 export function allocateAll(orderId: number) {
   return apiRequest(`/orders/${orderId}/allocate-all`, {
     method: "POST",
+  });
+}
+
+export function createOrderFromQB(payload: {
+  reference_number: string;
+  qb_doc_type: string;
+}) {
+  return apiRequest("/orders/from-qb", {
+    method: "POST",
+    body: JSON.stringify(payload),
   });
 }
