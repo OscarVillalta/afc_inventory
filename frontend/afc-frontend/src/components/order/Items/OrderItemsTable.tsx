@@ -54,6 +54,7 @@ export default function OrderItemsTable({
   // Search and filter states
   const [partNumberFilter, setPartNumberFilter] = useState("");
   const [sectionFilter, setSectionFilter] = useState("");
+  const [sectionSeparatorFilter, setSectionSeparatorFilter] = useState("");
   const [descriptionFilter, setDescriptionFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
@@ -76,8 +77,37 @@ export default function OrderItemsTable({
   );
 
   // Filter and paginate items (memoized for performance)
-  const { items: displayedItems, totalItems, totalPages } = useMemo(() => {
+  const { filteredItems, items: displayedItems, totalItems, totalPages } = useMemo(() => {
     let filtered = [...localItems];
+
+    // Apply Section_Separator filter first (shows all items between matching Section_Separator and next one)
+    if (sectionSeparatorFilter) {
+      const matchingSections: OrderItemPayload[] = [];
+      let i = 0;
+      
+      while (i < filtered.length) {
+        const item = filtered[i];
+        
+        if (item.type === "Section_Separator") {
+          const sectionName = item.note || "";
+          if (sectionName.toLowerCase().includes(sectionSeparatorFilter.toLowerCase())) {
+            // Add the matching Section_Separator
+            matchingSections.push(item);
+            i++;
+            
+            // Add all items until next Section_Separator (including Unit_Separators)
+            while (i < filtered.length && filtered[i].type !== "Section_Separator") {
+              matchingSections.push(filtered[i]);
+              i++;
+            }
+            continue;
+          }
+        }
+        i++;
+      }
+      
+      filtered = matchingSections;
+    }
 
     // Apply filters
     if (partNumberFilter || descriptionFilter || statusFilter || sectionFilter) {
@@ -159,11 +189,12 @@ export default function OrderItemsTable({
     const paginatedItems = filtered.slice(startIndex, endIndex);
 
     return {
+      filteredItems: filtered,
       items: paginatedItems,
       totalItems,
       totalPages,
     };
-  }, [localItems, partNumberFilter, sectionFilter, descriptionFilter, statusFilter, currentPage, itemsPerPage]);
+  }, [localItems, partNumberFilter, sectionFilter, sectionSeparatorFilter, descriptionFilter, statusFilter, currentPage, itemsPerPage]);
 
   // Update local items when props change
   useEffect(() => {
@@ -179,31 +210,47 @@ export default function OrderItemsTable({
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      // Select all displayed items on the current page
-      onSelectedItemsChange(new Set(displayedItems.map(item => item.id)));
+      // Select all filtered items across all pages
+      onSelectedItemsChange(new Set(filteredItems.map(item => item.id)));
     } else {
       onSelectedItemsChange(new Set());
     }
   };
 
   const handleSelectItem = (itemId: number, checked: boolean, shiftKey: boolean = false) => {
-    const item = displayedItems.find(i => i.id === itemId);
+    const item = filteredItems.find(i => i.id === itemId);
     const currentIndex = displayedItems.findIndex(i => i.id === itemId);
     
-    if (item && (item.type === "Unit_Separator" || item.type === "Section_Separator")) {
-      // When selecting a separator, select all items in its section
-      const itemIndex = displayedItems.findIndex(i => i.id === itemId);
-      const sectionItems: number[] = [];
+    if (item && item.type === "Section_Separator") {
+      // Section_Separator: select all items (regardless of type) until next Section_Separator
+      const itemIndex = filteredItems.findIndex(i => i.id === itemId);
+      const sectionItems: number[] = [itemId];
       
-      // Add the separator itself
-      sectionItems.push(itemId);
-      
-      // Find all items until the next separator or end of list
-      for (let i = itemIndex + 1; i < displayedItems.length; i++) {
-        if (displayedItems[i].type === "Unit_Separator" || displayedItems[i].type === "Section_Separator") {
-          break; // Stop at next separator
+      for (let i = itemIndex + 1; i < filteredItems.length; i++) {
+        if (filteredItems[i].type === "Section_Separator") {
+          break;
         }
-        sectionItems.push(displayedItems[i].id);
+        sectionItems.push(filteredItems[i].id);
+      }
+      
+      const newSelected = new Set(selectedItems);
+      if (checked) {
+        sectionItems.forEach(id => newSelected.add(id));
+      } else {
+        sectionItems.forEach(id => newSelected.delete(id));
+      }
+      onSelectedItemsChange(newSelected);
+      lastSelectedIndexRef.current = currentIndex;
+    } else if (item && item.type === "Unit_Separator") {
+      // Unit_Separator: select items until next separator of any type
+      const itemIndex = filteredItems.findIndex(i => i.id === itemId);
+      const sectionItems: number[] = [itemId];
+      
+      for (let i = itemIndex + 1; i < filteredItems.length; i++) {
+        if (filteredItems[i].type === "Unit_Separator" || filteredItems[i].type === "Section_Separator") {
+          break;
+        }
+        sectionItems.push(filteredItems[i].id);
       }
       
       const newSelected = new Set(selectedItems);
@@ -238,8 +285,8 @@ export default function OrderItemsTable({
     }
   };
 
-  const allSelected = displayedItems.length > 0 && displayedItems.every(item => selectedItems.has(item.id));
-  const someSelected = displayedItems.some(item => selectedItems.has(item.id)) && !allSelected;
+  const allSelected = filteredItems.length > 0 && filteredItems.every(item => selectedItems.has(item.id));
+  const someSelected = filteredItems.some(item => selectedItems.has(item.id)) && !allSelected;
 
   // Handle drag end
   async function handleDragEnd(event: DragEndEvent) {
@@ -304,6 +351,8 @@ export default function OrderItemsTable({
         setPartNumberFilter={setPartNumberFilter}
         sectionFilter={sectionFilter}
         setSectionFilter={setSectionFilter}
+        sectionSeparatorFilter={sectionSeparatorFilter}
+        setSectionSeparatorFilter={setSectionSeparatorFilter}
         descriptionFilter={descriptionFilter}
         setDescriptionFilter={setDescriptionFilter}
         statusFilter={statusFilter}
