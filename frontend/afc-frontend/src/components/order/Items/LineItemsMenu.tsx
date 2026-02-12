@@ -3,6 +3,8 @@ interface LineItemsMenuProps {
   setPartNumberFilter: (value: string) => void;
   sectionFilter: string;
   setSectionFilter: (value: string) => void;
+  sectionSeparatorFilter: string;
+  setSectionSeparatorFilter: (value: string) => void;
   descriptionFilter: string;
   setDescriptionFilter: (value: string) => void;
   statusFilter: string;
@@ -20,6 +22,8 @@ export default function LineItemsMenu({
   setPartNumberFilter,
   sectionFilter,
   setSectionFilter,
+  sectionSeparatorFilter,
+  setSectionSeparatorFilter,
   descriptionFilter,
   setDescriptionFilter,
   statusFilter,
@@ -34,7 +38,7 @@ export default function LineItemsMenu({
   return (
     <div className="bg-white border rounded-lg p-4 mb-4 space-y-3">
       {/* Search and Filter Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
         {/* Part Number Search */}
         <div>
           <label htmlFor="part-number-filter" className="text-xs text-gray-500 mb-1 block">Part Number</label>
@@ -49,6 +53,23 @@ export default function LineItemsMenu({
               setCurrentPage(1); // Reset to first page on filter change
             }}
             aria-label="Search by part number"
+          />
+        </div>
+
+        {/* Section Separator Search */}
+        <div>
+          <label htmlFor="section-separator-filter" className="text-xs text-gray-500 mb-1 block">Section Separator</label>
+          <input
+            id="section-separator-filter"
+            type="text"
+            placeholder="Search section separator..."
+            className="input input-sm input-bordered w-full"
+            value={sectionSeparatorFilter}
+            onChange={(e) => {
+              setSectionSeparatorFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+            aria-label="Search by section separator"
           />
         </div>
 

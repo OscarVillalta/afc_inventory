@@ -69,6 +69,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
 
   // Separator items don't need transactions
   const isSeparator = item.type === "Unit_Separator" || item.type === "Section_Separator";
+  const isSectionSeparator = item.type === "Section_Separator";
 
   async function loadTransactions(force = false) {
     if (loaded && !force) return;
@@ -312,14 +313,17 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
         <tr 
           ref={setNodeRef} 
           style={style}
-          className="bg-blue-50 border-t-2 border-b-2 border-blue-300"
+          className={isSectionSeparator
+            ? "bg-[#313545] border-t-3 border-b-3 border-[#232636]"
+            : "bg-blue-50 border-t-2 border-b-2 border-blue-300"
+          }
         >
           <td className="w-8 px-2">
             <div 
               ref={setActivatorNodeRef}
               {...attributes} 
               {...listeners}
-              className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600"
+              className={`cursor-grab active:cursor-grabbing ${isSectionSeparator ? "text-gray-400 hover:text-gray-200" : "text-gray-400 hover:text-gray-600"}`}
             >
               ⋮⋮
             </div>
@@ -360,18 +364,22 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
                 </div>
               ) : (
                 <span 
-                  className="font-bold text-blue-900 text-base cursor-pointer hover:bg-blue-100 px-2 py-1 rounded flex-1"
+                  className={`font-bold text-base cursor-pointer px-2 py-1 rounded flex-1 ${
+                    isSectionSeparator
+                      ? "text-white hover:bg-gray-600"
+                      : "text-blue-900 hover:bg-blue-100"
+                  }`}
                   onClick={() => setIsEditingNote(true)}
                   title="Click to edit"
                 >
-                  {item.note || "Section Separator"}
+                  {item.note || (isSectionSeparator ? "Section Separator" : "Separator")}
                 </span>
               )}
             </div>
           </td>
           <td className="px-3 py-3 text-right">
             <button
-              className="btn btn-xs btn-ghost text-red-500"
+              className={`btn btn-xs btn-ghost ${isSectionSeparator ? "text-red-300" : "text-red-500"}`}
               onClick={handleDeleteItem}
               title="Delete separator"
             >
