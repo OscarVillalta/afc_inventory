@@ -314,7 +314,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
           ref={setNodeRef} 
           style={style}
           className={isSectionSeparator
-            ? "bg-[#313545] border-t-3 border-b-3 border-[#232636]"
+            ? "bg-[#313545] border-t-4 border-b-4 border-[#232636]"
             : "bg-blue-50 border-t-2 border-b-2 border-blue-300"
           }
         >
