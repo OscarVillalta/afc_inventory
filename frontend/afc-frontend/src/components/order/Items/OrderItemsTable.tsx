@@ -50,6 +50,7 @@ export default function OrderItemsTable({
   const [localItems, setLocalItems] = useState<OrderItemPayload[]>([]);
   const selectAllRef = useRef<HTMLInputElement>(null);
   const lastSelectedIndexRef = useRef<number | null>(null);
+  const [activeTab, setActiveTab] = useState<"lineItems" | "totals">("lineItems");
 
   // Search and filter states
   const [partNumberFilter, setPartNumberFilter] = useState("");
@@ -113,24 +114,40 @@ export default function OrderItemsTable({
     if (partNumberFilter || descriptionFilter || statusFilter || sectionFilter) {
       if (sectionFilter) {
         // Special logic for section search
-        // Find matching sections and include them plus their items
+        // Find matching Unit_Separator sections and include them plus their items
+        // Always include Section_Separators for structural context
         const matchingSections: OrderItemPayload[] = [];
+        const addedIds = new Set<number>();
         let i = 0;
         
         while (i < filtered.length) {
           const item = filtered[i];
           
-          if (item.type === "Unit_Separator" || item.type === "Section_Separator") {
+          // Always include Section_Separators for structural context
+          if (item.type === "Section_Separator" && !addedIds.has(item.id)) {
+            matchingSections.push(item);
+            addedIds.add(item.id);
+            i++;
+            continue;
+          }
+
+          if (item.type === "Unit_Separator") {
             // Check if section matches
             const sectionName = item.note || "";
             if (sectionName.toLowerCase().includes(sectionFilter.toLowerCase())) {
               // Add the matching section
-              matchingSections.push(item);
+              if (!addedIds.has(item.id)) {
+                matchingSections.push(item);
+                addedIds.add(item.id);
+              }
               i++;
               
               // Add all items under this section (until next separator)
               while (i < filtered.length && filtered[i].type !== "Unit_Separator" && filtered[i].type !== "Section_Separator") {
-                matchingSections.push(filtered[i]);
+                if (!addedIds.has(filtered[i].id)) {
+                  matchingSections.push(filtered[i]);
+                  addedIds.add(filtered[i].id);
+                }
                 i++;
               }
               
@@ -366,9 +383,30 @@ export default function OrderItemsTable({
       />
 
       <div className="rounded-xl bg-white shadow-sm border overflow-hidden">
-        <div className="px-4 py-3 border-b text-sm font-semibold text-white bg-[#313545]">
-          Line Items
+        <div className="flex bg-[#313545]">
+          <button
+            className={`px-4 py-3 text-sm font-semibold transition-colors ${
+              activeTab === "lineItems"
+                ? "text-white border-b-2 border-white"
+                : "text-gray-400 hover:text-gray-200"
+            }`}
+            onClick={() => setActiveTab("lineItems")}
+          >
+            Line Items
+          </button>
+          <button
+            className={`px-4 py-3 text-sm font-semibold transition-colors ${
+              activeTab === "totals"
+                ? "text-white border-b-2 border-white"
+                : "text-gray-400 hover:text-gray-200"
+            }`}
+            onClick={() => setActiveTab("totals")}
+          >
+            Totals
+          </button>
         </div>
+
+        {activeTab === "lineItems" ? (
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -430,9 +468,14 @@ export default function OrderItemsTable({
             </SortableContext>
           </table>
         </DndContext>
+        ) : (
+          <div className="p-8 text-center text-gray-400 italic">
+            Totals coming soon
+          </div>
+        )}
       </div>
 
-      {!isCompleted && !showAddForm && (
+      {!isCompleted && !showAddForm && activeTab === "lineItems" && (
         <button
           className="btn btn-sm btn-primary"
           onClick={() => setShowAddForm(true)}
@@ -442,13 +485,26 @@ export default function OrderItemsTable({
       )}
 
       {!isCompleted && showAddForm && (
-        <AddOrderItemForm
-          orderId={orderId}
-          products={products}
-          items={localItems}
-          onCreated={handleFormCreated}
-          onCancel={() => setShowAddForm(false)}
-        />
+        <dialog className="modal modal-open">
+          <div className="modal-box w-11/12 max-w-2xl">
+            <button
+              className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+              onClick={() => setShowAddForm(false)}
+            >
+              ✕
+            </button>
+            <AddOrderItemForm
+              orderId={orderId}
+              products={products}
+              items={localItems}
+              onCreated={handleFormCreated}
+              onCancel={() => setShowAddForm(false)}
+            />
+          </div>
+          <form method="dialog" className="modal-backdrop">
+            <button onClick={() => setShowAddForm(false)}>close</button>
+          </form>
+        </dialog>
       )}
     </div>
   );
