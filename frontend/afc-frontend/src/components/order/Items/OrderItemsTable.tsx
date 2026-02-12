@@ -475,7 +475,7 @@ export default function OrderItemsTable({
         )}
       </div>
 
-      {!isCompleted && activeTab === "lineItems" && (
+      {!isCompleted && !showAddForm && activeTab === "lineItems" && (
         <button
           className="btn btn-sm btn-primary"
           onClick={() => setShowAddForm(true)}
@@ -484,7 +484,7 @@ export default function OrderItemsTable({
         </button>
       )}
 
-      {showAddForm && (
+      {!isCompleted && showAddForm && (
         <dialog className="modal modal-open">
           <div className="modal-box w-11/12 max-w-2xl">
             <button
