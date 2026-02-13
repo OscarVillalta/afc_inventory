@@ -14,7 +14,7 @@ export default function OrderHeader({
 }: Props) {
 
   return (
-    <div className="bg-[#3A3F51] text-white px-6 py-4 flex justify-between items-center rounded-xl shadow-sm">
+    <div className="bg-[#3A3F51] text-white px-4 sm:px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 rounded-xl shadow-sm">
       {/* LEFT: Order Number */}
       <div>
         <h1 className="text-lg font-semibold tracking-widest">

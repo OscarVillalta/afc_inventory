@@ -382,7 +382,7 @@ export default function OrderItemsTable({
         totalItems={totalItems}
       />
 
-      <div className="rounded-xl bg-white shadow-sm border overflow-hidden">
+      <div className="rounded-xl bg-white shadow-sm border overflow-x-auto">
         <div className="flex bg-[#313545]">
           <button
             className={`px-4 py-3 text-sm font-semibold transition-colors ${

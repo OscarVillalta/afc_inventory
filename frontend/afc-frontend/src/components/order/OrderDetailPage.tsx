@@ -324,9 +324,9 @@ export default function OrderDetailPage() {
 
   return (
     <MainLayout>
-      <div className="flex justify-start flex-grow gap-x-4">
+      <div className="flex flex-col lg:flex-row justify-start flex-grow gap-4">
         {/* LEFT COLUMN */}
-        <div className="max-w-7xl space-y-4 flex-3 bg-slate-100 ">
+        <div className="max-w-7xl space-y-4 lg:flex-3 w-full bg-slate-100 ">
             <OrderHeader
             orderNumber={order.order_number}
             type={order.type}
@@ -369,7 +369,7 @@ export default function OrderDetailPage() {
         </div>
 
         {/* RIGHT COLUMN */}
-        <div className="flex-1 sticky top-1 self-start">
+        <div className="lg:flex-1 w-full lg:w-auto lg:sticky lg:top-1 lg:self-start">
           <OrderDescription
             value={order.description}
             onChange={(v) =>
