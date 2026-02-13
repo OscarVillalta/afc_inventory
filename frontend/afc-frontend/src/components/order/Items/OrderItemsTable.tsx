@@ -412,7 +412,7 @@ export default function OrderItemsTable({
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
         >
-          <table className="table w-full">
+          <table className="table w-full min-w-[700px]">
             <thead>
               <tr className="text-xs text-gray-500">
                 <th className="w-8"></th>

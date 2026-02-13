@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 interface LineItemsMenuProps {
   partNumberFilter: string;
   setPartNumberFilter: (value: string) => void;
@@ -35,10 +37,28 @@ export default function LineItemsMenu({
   setItemsPerPage,
   totalItems,
 }: LineItemsMenuProps) {
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const hasActiveFilters = !!(partNumberFilter || sectionFilter || sectionSeparatorFilter || descriptionFilter || statusFilter);
+
   return (
     <div className="bg-white border rounded-lg p-4 mb-4 space-y-3">
-      {/* Search and Filter Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+      {/* Collapsible toggle for filters - only visible below lg (1024px) */}
+      <button
+        onClick={() => setFiltersOpen(!filtersOpen)}
+        className="lg:hidden w-full flex justify-between items-center text-sm font-semibold"
+      >
+        <span>
+          Filters
+          {hasActiveFilters && (
+            <span className="ml-2 badge badge-sm badge-primary">Active</span>
+          )}
+        </span>
+        <span className="text-gray-400">{filtersOpen ? "▲" : "▼"}</span>
+      </button>
+
+      {/* Search and Filter Row - always visible on lg+, collapsible on smaller */}
+      <div className={`grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 ${filtersOpen ? "grid" : "hidden"} lg:grid`}>
         {/* Part Number Search */}
         <div>
           <label htmlFor="part-number-filter" className="text-xs text-gray-500 mb-1 block">Part Number</label>

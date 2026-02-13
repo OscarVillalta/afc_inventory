@@ -20,7 +20,7 @@ export default function Inventory() {
       <div className="p-6 w-full space-y-8">
 
         {/* PAGE HEADER */}
-        <div className="flex justify-between items-start gap-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-800">Inventory Management</h1>
             <p className="text-gray-500 mt-1">
@@ -28,7 +28,7 @@ export default function Inventory() {
             </p>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap">
             <button
               className="btn btn-outline"
               onClick={() => setShowProduceProduct(true)}
@@ -45,7 +45,7 @@ export default function Inventory() {
         </div>
 
         {/* TABS */}
-        <div className="bg-white border border-gray-200 rounded-xl shadow-sm w-fit p-2 flex gap-2">
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm w-fit max-w-full p-2 flex gap-2 overflow-x-auto">
           <button
             onClick={() => setTab("filters")}
             className={`
