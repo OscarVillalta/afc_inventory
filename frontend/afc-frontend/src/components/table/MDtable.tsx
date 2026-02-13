@@ -39,8 +39,8 @@ export default function MDTable({
       </div>
 
       {/* Main Table Container */}
-      <div className="bg-white rounded-2xl shadow-md p-6 border border-gray-100 pt-12">
-        <table className="w-full border-separate border-spacing-y-2 border-separate">
+      <div className="bg-white rounded-2xl shadow-md p-6 border border-gray-100 pt-12 overflow-x-auto">
+        <table className="w-full border-separate border-spacing-y-2 border-separate min-w-[700px]">
           <thead>
             <tr>
               {columns.map((col) => (
