@@ -62,7 +62,7 @@ export default function OrderMetaCard({
 
       {/* Content */}
       {open && (
-        <div className="px-6 pb-4 text-sm text-gray-600 grid grid-cols-2 gap-4">
+        <div className="px-6 pb-4 text-sm text-gray-600 grid grid-cols-1 sm:grid-cols-2 gap-4">
 
           {/* Type (READ-ONLY) */}
           <div>

@@ -601,7 +601,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
           <td colSpan={8} className="bg-gray-50 px-6 py-4 space-y-3" style={{ pointerEvents: isDragging ? 'none' : 'auto' }}>
             {/* ===== CREATE PENDING ===== */}
             {remainingSafe > 0 && (
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <span className="text-sm text-gray-500">
                   {orderType === "outgoing"
                     ? "Reserve Qty:"

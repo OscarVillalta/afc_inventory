@@ -129,10 +129,10 @@ export default function LineItemsMenu({
       </div>
 
       {/* Pagination Row */}
-      <div className="flex items-end justify-between border-t pt-3">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t pt-3">
 
         {/* Pagination Controls */}
-        <div className="flex grow-32 justify-center gap-2">
+        <div className="flex grow-32 justify-center gap-2 flex-wrap">
           <button
             className="btn btn-sm btn-outline"
             disabled={currentPage === 1}

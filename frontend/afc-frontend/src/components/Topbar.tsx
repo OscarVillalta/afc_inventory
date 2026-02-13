@@ -1,6 +1,10 @@
 import { Link, useLocation } from "react-router-dom";
 
-export default function Topbar() {
+interface Props {
+  onMenuToggle?: () => void;
+}
+
+export default function Topbar({ onMenuToggle }: Props) {
   const { pathname } = useLocation();
 
   type Breadcrumb = { label: string; to?: string };
@@ -40,10 +44,19 @@ export default function Topbar() {
   })();
 
   return (
-    <div className="w-full flex items-center justify-between px-6 py-3 bg-base-200 shadow-sm">
+    <div className="w-full flex items-center justify-between px-4 sm:px-6 py-3 bg-base-200 shadow-sm">
       
-      {/* LEFT SIDE - BREADCRUMBS */}
+      {/* LEFT SIDE - MENU TOGGLE + BREADCRUMBS */}
       <div className="flex items-center gap-2 text-sm font-medium text-[#7B809A]">
+        {onMenuToggle && (
+          <button
+            className="btn btn-sm btn-ghost lg:hidden"
+            onClick={onMenuToggle}
+            aria-label="Toggle sidebar"
+          >
+            ☰
+          </button>
+        )}
         {breadcrumbs.map((crumb, idx) => (
           <span key={idx} className="flex items-center gap-2">
             {idx > 0 && <span>/</span>}
@@ -59,10 +72,10 @@ export default function Topbar() {
       </div>
 
       {/* RIGHT SIDE - SEARCH & ICONS */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4">
         
         {/* Search Input */}
-        <div className="relative">
+        <div className="relative hidden sm:block">
           <input
             type="text"
             placeholder="Search here"
