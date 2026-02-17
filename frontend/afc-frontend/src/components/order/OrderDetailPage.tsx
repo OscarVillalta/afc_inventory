@@ -252,7 +252,7 @@ export default function OrderDetailPage() {
       await refreshOrder();
       setSelectedItems(new Set());
     } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : "Failed to commit selected items";
+      const errorMsg = err instanceof Error ? err.message : (order?.type === "outgoing" ? "Failed to fulfill selected items" : "Failed to receive selected items");
       alert(errorMsg);
     }
   }
@@ -272,7 +272,9 @@ export default function OrderDetailPage() {
       return;
     }
 
-    if (!confirm("Cancel all pending transactions for selected items?")) {
+    if (!confirm(order?.type === "outgoing"
+      ? "Release all reservations for selected items?"
+      : "Cancel all orders for selected items?")) {
       return;
     }
 
@@ -293,7 +295,7 @@ export default function OrderDetailPage() {
       await refreshOrder();
       setSelectedItems(new Set());
     } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : "Failed to cancel selected items";
+      const errorMsg = err instanceof Error ? err.message : (order?.type === "outgoing" ? "Failed to release reservations" : "Failed to cancel orders");
       alert(errorMsg);
     }
   }
@@ -313,7 +315,7 @@ export default function OrderDetailPage() {
       return;
     }
 
-    if (!confirm("Rollback all committed transactions for selected items? This will create reversal transactions.")) {
+    if (!confirm("Reverse all committed transactions for selected items? This will create reversal transactions.")) {
       return;
     }
 
@@ -334,7 +336,7 @@ export default function OrderDetailPage() {
       await refreshOrder();
       setSelectedItems(new Set());
     } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : "Failed to rollback selected items";
+      const errorMsg = err instanceof Error ? err.message : "Failed to reverse selected items";
       alert(errorMsg);
     }
   }
@@ -404,6 +406,7 @@ export default function OrderDetailPage() {
             onCancelSelected={handleCancelSelected}
             onRollbackSelected={handleRollbackSelected}
             disabled={order.status === "Completed"}
+            orderType={order.type}
           />
 
           <div className="flex justify-end gap-2 mb-3">

@@ -586,7 +586,7 @@ export default function ConversionsPage() {
     } catch (e) {
       console.error(e);
       const msg = e instanceof Error ? e.message : "Please try again or contact support.";
-      alert(`Failed to rollback conversion: ${msg}`);
+      alert(`Failed to reverse conversion: ${msg}`);
     }
   };
 
@@ -785,11 +785,11 @@ export default function ConversionsPage() {
                                   : "bg-amber-100 text-amber-700"
                               }`}
                             >
-                              {conv.state}
+                              {conv.state === "rolled_back" ? "Reversed" : conv.state}
                             </span>
                             {conv.state !== "rolled_back" && (
                               <button className="btn btn-xs" onClick={() => handleRollbackConversion(conv.id)}>
-                                Rollback
+                                Reverse
                               </button>
                             )}
                           </div>
