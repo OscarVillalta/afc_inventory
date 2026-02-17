@@ -6,6 +6,8 @@ interface Props {
   type: OrderType;
   status: OrderStatus;
   onCopyOrder?: () => void;
+  copyStatus?: "idle" | "copied" | "error";
+  selectedCount?: number;
 }
 
 export default function OrderHeader({
@@ -13,7 +15,18 @@ export default function OrderHeader({
   type,
   status,
   onCopyOrder,
+  copyStatus = "idle",
+  selectedCount = 0,
 }: Props) {
+
+  const copyLabel =
+    copyStatus === "copied"
+      ? "✅ Copied!"
+      : copyStatus === "error"
+      ? "❌ Failed"
+      : selectedCount > 0
+      ? `📋 Copy Selected (${selectedCount})`
+      : "📋 Copy Order";
 
   return (
     <div className="bg-[#3A3F51] text-white px-4 sm:px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 rounded-xl shadow-sm">
@@ -30,8 +43,9 @@ export default function OrderHeader({
           <button
             className="btn btn-xs btn-outline text-white border-white hover:bg-white hover:text-[#3A3F51]"
             onClick={onCopyOrder}
+            disabled={copyStatus !== "idle"}
           >
-            📋 Copy Order
+            {copyLabel}
           </button>
         )}
 

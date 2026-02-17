@@ -218,6 +218,16 @@ def serialize_order(order_id):
         return jsonify({"error": "Order not found"}), 404
 
     sorted_items = sorted(order.items, key=lambda x: x.position)
+
+    # Optional: filter to specific item IDs (comma-separated query param)
+    item_ids_param = request.args.get("item_ids")
+    if item_ids_param:
+        try:
+            item_ids = set(int(x) for x in item_ids_param.split(","))
+        except ValueError:
+            return jsonify({"error": "Invalid item_ids parameter: must be comma-separated integers"}), 400
+        sorted_items = [i for i in sorted_items if i.id in item_ids]
+
     blank_row = "||||||||||||"
     lines = []
 
@@ -245,7 +255,7 @@ def serialize_order(order_id):
             qty = item.quantity_ordered
             lines.append(f"{qty}||{part_number}||||||||||")
 
-    serialized = "".join(lines)
+    serialized = "\n".join(lines)
     return jsonify({"serialized": serialized}), 200
 
 
