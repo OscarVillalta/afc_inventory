@@ -70,21 +70,46 @@ export default function OrderDetailPage() {
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">("idle");
 
   async function handleCopySerializedOrder() {
-    if (!orderId) return;
-    try {
-      const itemIds = selectedItems.size > 0
+  if (!orderId) return;
+
+  try {
+    const itemIds =
+      selectedItems.size > 0
         ? Array.from(selectedItems)
         : undefined;
-      const { serialized } = await fetchOrderSerialized(orderId, itemIds);
-      await navigator.clipboard.writeText(serialized);
-      setCopyStatus("copied");
-      setTimeout(() => setCopyStatus("idle"), 2000);
-    } catch (err) {
-      console.error("Failed to copy order to clipboard:", err);
-      setCopyStatus("error");
-      setTimeout(() => setCopyStatus("idle"), 2000);
+
+    const { serialized } = await fetchOrderSerialized(orderId, itemIds);
+
+    // Create temporary textarea
+    const textArea = document.createElement("textarea");
+    textArea.value = serialized;
+
+    // Avoid scrolling to bottom
+    textArea.style.position = "fixed";
+    textArea.style.left = "-9999px";
+    textArea.style.top = "0";
+
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+
+    const successful = document.execCommand("copy");
+
+    document.body.removeChild(textArea);
+
+    if (!successful) {
+      throw new Error("Copy command was unsuccessful");
     }
+
+    setCopyStatus("copied");
+    setTimeout(() => setCopyStatus("idle"), 2000);
+
+  } catch (err) {
+    console.error("Failed to copy order to clipboard:", err);
+    setCopyStatus("error");
+    setTimeout(() => setCopyStatus("idle"), 2000);
   }
+}
 
   async function handleSave() {
     if (!order || !orderId) return;

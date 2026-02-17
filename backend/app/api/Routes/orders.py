@@ -236,7 +236,6 @@ def serialize_order(order_id):
             description = item.note or ""
             lines.append(blank_row)
             lines.append(f"||||{description}||")
-            lines.append(blank_row)
         elif item.type == OrderItemType.UNIT_SEPARATOR.value:
             description = item.note or ""
             lines.append(f"||||{description}||")
@@ -255,7 +254,7 @@ def serialize_order(order_id):
             qty = item.quantity_ordered
             lines.append(f"{qty}||{part_number}||||||||||")
 
-    serialized = "\n".join(lines)
+    serialized = "".join(lines)
     return jsonify({"serialized": serialized}), 200
 
 
