@@ -67,14 +67,21 @@ export default function OrderDetailPage() {
 
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
 
+  const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">("idle");
+
   async function handleCopySerializedOrder() {
     if (!orderId) return;
     try {
-      const { serialized } = await fetchOrderSerialized(orderId);
+      const itemIds = selectedItems.size > 0
+        ? Array.from(selectedItems)
+        : undefined;
+      const { serialized } = await fetchOrderSerialized(orderId, itemIds);
       await navigator.clipboard.writeText(serialized);
-      alert("Order copied to clipboard!");
+      setCopyStatus("copied");
+      setTimeout(() => setCopyStatus("idle"), 2000);
     } catch {
-      alert("Failed to copy order to clipboard.");
+      setCopyStatus("error");
+      setTimeout(() => setCopyStatus("idle"), 2000);
     }
   }
 
@@ -344,6 +351,8 @@ export default function OrderDetailPage() {
             type={order.type}
             status={order.status}
             onCopyOrder={handleCopySerializedOrder}
+            copyStatus={copyStatus}
+            selectedCount={selectedItems.size}
           />
           
 
