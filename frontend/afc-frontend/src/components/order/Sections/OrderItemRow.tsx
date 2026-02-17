@@ -605,7 +605,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
                 <span className="text-sm text-gray-500">
                   {orderType === "outgoing"
                     ? "Reserve Qty:"
-                    : "Mark Ordered:"}
+                    : "Order Qty:"}
                 </span>
 
                 <input
