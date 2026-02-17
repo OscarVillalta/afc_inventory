@@ -79,7 +79,8 @@ export default function OrderDetailPage() {
       await navigator.clipboard.writeText(serialized);
       setCopyStatus("copied");
       setTimeout(() => setCopyStatus("idle"), 2000);
-    } catch {
+    } catch (err) {
+      console.error("Failed to copy order to clipboard:", err);
       setCopyStatus("error");
       setTimeout(() => setCopyStatus("idle"), 2000);
     }

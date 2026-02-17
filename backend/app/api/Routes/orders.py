@@ -225,7 +225,7 @@ def serialize_order(order_id):
         try:
             item_ids = set(int(x) for x in item_ids_param.split(","))
         except ValueError:
-            return jsonify({"error": "Invalid item_ids parameter"}), 400
+            return jsonify({"error": "Invalid item_ids parameter: must be comma-separated integers"}), 400
         sorted_items = [i for i in sorted_items if i.id in item_ids]
 
     blank_row = "||||||||||||"
