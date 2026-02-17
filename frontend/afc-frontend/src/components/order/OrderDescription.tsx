@@ -7,6 +7,7 @@ interface Props {
   onCancelSelected: () => void;
   onRollbackSelected: () => void;
   disabled?: boolean;
+  orderType: "incoming" | "outgoing";
 }
 
 export default function OrderDescription({ 
@@ -18,6 +19,7 @@ export default function OrderDescription({
   onCancelSelected,
   onRollbackSelected,
   disabled = false,
+  orderType,
 }: Props) {
   return (
     <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 text-sm text-slate-700">
@@ -43,28 +45,28 @@ export default function OrderDescription({
               onClick={onAllocateSelected}
               disabled={disabled}
             >
-              Allocate Selected
+              {orderType === "outgoing" ? "Reserve Selected" : "Order Selected"}
             </button>
             <button
               className="btn btn-xs btn-success"
               onClick={onCommitSelected}
               disabled={disabled}
             >
-              Commit Selected
+              {orderType === "outgoing" ? "Fulfill Selected" : "Receive Selected"}
             </button>
             <button
               className="btn btn-xs btn-error"
               onClick={onCancelSelected}
               disabled={disabled}
             >
-              Cancel Selected
+              {orderType === "outgoing" ? "Release Reservation" : "Cancel Order"}
             </button>
             <button
               className="btn btn-xs btn-warning"
               onClick={onRollbackSelected}
               disabled={disabled}
             >
-              Rollback Selected
+              Reverse Selected
             </button>
           </div>
         </div>

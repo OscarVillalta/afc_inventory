@@ -259,7 +259,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
 
       const msg =
         error["error"]||
-        "Unable to commit transaction.";
+        "Unable to fulfill/receive transaction.";
 
       setError(msg);
     }
@@ -282,7 +282,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
       await loadTransactions(true);
     } catch (err: unknown) {
       const error = JSON.parse((err as Error)?.message || '{}')
-      const msg = error["error"] || "Unable to cancel transaction.";
+      const msg = error["error"] || "Unable to cancel/release transaction.";
       setError(msg);
     }
   }
@@ -294,7 +294,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
   ) {
     e.stopPropagation();
 
-    if (!confirm("Are you sure you want to rollback this transaction? This will create a reversal transaction.")) {
+    if (!confirm("Are you sure you want to reverse this transaction? This will create a reversal transaction.")) {
       return;
     }
 
@@ -306,7 +306,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
       await loadTransactions(true);
     } catch (err: unknown) {
       const error = JSON.parse((err as Error)?.message || '{}')
-      const msg = error["error"] || "Unable to rollback transaction.";
+      const msg = error["error"] || "Unable to reverse transaction.";
       setError(msg);
     }
   }
@@ -605,7 +605,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
                 <span className="text-sm text-gray-500">
                   {orderType === "outgoing"
                     ? "Reserve Qty:"
-                    : "Mark Ordered:"}
+                    : "Order Qty:"}
                 </span>
 
                 <input
@@ -636,7 +636,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
                   onClick={handleCreatePendingTxn}
                   disabled={submitting}
                 >
-                  {submitting ? "Saving…" : "Create Pending"}
+                  {submitting ? "Saving…" : orderType === "outgoing" ? "Reserve" : "Order"}
                 </button>
 
         
@@ -703,13 +703,21 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
                                 : "badge-ghost"
                             }`}
                           >
-                            {tx.state}
+                            {tx.state === "pending"
+                              ? orderType === "outgoing" ? "Reserved" : "Ordered"
+                              : tx.state === "committed"
+                              ? orderType === "outgoing" ? "Fulfilled" : "Received"
+                              : tx.state === "rolled_back"
+                              ? "Reversed"
+                              : tx.state === "cancelled"
+                              ? orderType === "outgoing" ? "Released" : "Cancelled"
+                              : tx.state}
                           </span>
                         </td>
 
                         <td>
                           <span className={tx.reason === "rollback" ? "text-orange-600 font-medium" : ""}>
-                            {tx.reason}
+                            {tx.reason === "rollback" ? "reversal" : tx.reason}
                           </span>
                         </td>
 
@@ -727,7 +735,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
                                     handleCommit(e, tx.id)
                                   }
                                 >
-                                  Commit
+                                  {orderType === "outgoing" ? "Fulfill" : "Receive"}
                                 </button>
                                 <button
                                   className="btn btn-xs btn-error"
@@ -736,7 +744,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
                                     handleCancel(e, tx.id)
                                   }
                                 >
-                                  Cancel
+                                  {orderType === "outgoing" ? "Release" : "Cancel"}
                                 </button>
                               </>
                             )}
@@ -748,7 +756,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
                                   handleRollback(e, tx.id)
                                 }
                               >
-                                Rollback
+                                Reverse
                               </button>
                             )}
                           </div>
