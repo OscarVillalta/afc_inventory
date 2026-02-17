@@ -208,6 +208,47 @@ def get_order_items(order_id):
     return jsonify(items), 200
 
 
+# GET serialized order items string
+@order_bp.route("/orders/<int:order_id>/serialize", methods=["GET"])
+def serialize_order(order_id):
+    db = g.db
+    order = db.get(Order, order_id)
+
+    if not order:
+        return jsonify({"error": "Order not found"}), 404
+
+    sorted_items = sorted(order.items, key=lambda x: x.position)
+    blank_row = "||||||"
+    lines = []
+
+    for item in sorted_items:
+        if item.type == OrderItemType.SECTION_SEPARATOR.value:
+            description = item.note or ""
+            lines.append(blank_row)
+            lines.append(f"||||{description}||||")
+            lines.append(blank_row)
+        elif item.type == OrderItemType.UNIT_SEPARATOR.value:
+            description = item.note or ""
+            lines.append(f"||||{description}||||")
+        else:
+            # Product_Item or Sales_Item
+            product = item.product
+            if product and product.category.name == "Air Filters":
+                part_number = product.air_filter.part_number
+            elif product and product.category.name == "Miscelaneous Items":
+                part_number = product.misc_item.name
+            elif product:
+                part_number = f"Product #{product.id}"
+            else:
+                part_number = "Unknown product"
+
+            qty = item.quantity_ordered
+            lines.append(f"{qty}||{part_number}||||")
+
+    serialized = "\n".join(lines)
+    return jsonify({"serialized": serialized}), 200
+
+
 # Create new order
 @order_bp.route("/orders", methods=["POST"])
 def create_order():
