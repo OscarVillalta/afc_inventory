@@ -5,12 +5,14 @@ interface Props {
   orderNumber: string;
   type: OrderType;
   status: OrderStatus;
+  onCopyOrder?: () => void;
 }
 
 export default function OrderHeader({
   orderNumber,
   type,
   status,
+  onCopyOrder,
 }: Props) {
 
   return (
@@ -22,8 +24,17 @@ export default function OrderHeader({
         </h1>
       </div>
 
-      {/* RIGHT: Type + Status */}
+      {/* RIGHT: Type + Status + Copy */}
       <div className="flex items-center gap-x-3">
+        {onCopyOrder && (
+          <button
+            className="btn btn-xs btn-outline text-white border-white hover:bg-white hover:text-[#3A3F51]"
+            onClick={onCopyOrder}
+          >
+            📋 Copy Order
+          </button>
+        )}
+
         {/* Type */}
         <span
           className={`px-3 py-1 rounded-full text-sm font-medium border ${

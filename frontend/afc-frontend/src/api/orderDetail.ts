@@ -30,6 +30,12 @@ export function fetchOrderItems(orderId: string) {
   ) as Promise<OrderItemPayload[]>;
 }
 
+export function fetchOrderSerialized(orderId: string | number) {
+  return apiRequest(
+    `/orders/${orderId}/serialize`
+  ) as Promise<{ serialized: string }>;
+}
+
 export function fetchOrderItemTransactions(itemId: number) {
   return apiRequest(
     `/order_items/${itemId}/transactions`

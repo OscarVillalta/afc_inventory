@@ -17,6 +17,7 @@ import { patchOrder } from "../../api/ordersTable";
 import type { OrderItemPayload } from "../../api/orderDetail";
 import { 
   fetchOrderItems,
+  fetchOrderSerialized,
   allocateOrderItem,
   commitAllOrderItemTransactions,
   cancelTransaction,
@@ -65,6 +66,17 @@ export default function OrderDetailPage() {
   const [txnRefreshKey, setTxnRefreshKey] = useState(0);
 
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
+
+  async function handleCopySerializedOrder() {
+    if (!orderId) return;
+    try {
+      const { serialized } = await fetchOrderSerialized(orderId);
+      await navigator.clipboard.writeText(serialized);
+      alert("Order copied to clipboard!");
+    } catch {
+      alert("Failed to copy order to clipboard.");
+    }
+  }
 
   async function handleSave() {
     if (!order || !orderId) return;
@@ -331,6 +343,7 @@ export default function OrderDetailPage() {
             orderNumber={order.order_number}
             type={order.type}
             status={order.status}
+            onCopyOrder={handleCopySerializedOrder}
           />
           
 
