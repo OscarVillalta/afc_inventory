@@ -33,6 +33,26 @@ function getChildPartNumber(cp: ChildProductName) {
   );
 }
 
+function getStateDisplayLabel(state: string, qtyDelta: number) {
+  switch (state) {
+    case "pending":
+      return qtyDelta < 0 ? "Reserved" : "Ordered";
+    case "committed":
+      return qtyDelta < 0 ? "Fulfilled" : "Received";
+    case "rolled_back":
+      return "Reversed";
+    case "cancelled":
+      return qtyDelta < 0 ? "Released" : "Cancelled";
+    default:
+      return state;
+  }
+}
+
+function getReasonDisplayLabel(reason: string) {
+  if (reason === "rollback") return "reversal";
+  return reason;
+}
+
 export default function TransactionsTable() {
   const [page, setPage] = useState(1);
   const pageSize = 10;
@@ -160,7 +180,13 @@ export default function TransactionsTable() {
     }));
   }, [childProductLookup, productLookup, transactions]);
 
-  const stateFilterOptions = ["All", "Committed", "Pending", "Rolled_Back", "Cancelled"];
+  const stateFilterOptions = [
+    { label: "All", value: "All" },
+    { label: "Fulfilled/Received", value: "Committed" },
+    { label: "Reserved/Ordered", value: "Pending" },
+    { label: "Reversed", value: "Rolled_Back" },
+    { label: "Released/Cancelled", value: "Cancelled" },
+  ];
 
   return (
     <MDTable
@@ -210,7 +236,7 @@ export default function TransactionsTable() {
             onChange={(e) => setFilter("filterState", e.target.value)}
           >
             {stateFilterOptions.map((t) => (
-              <option key={t}>{t}</option>
+              <option key={t.value} value={t.value}>{t.label}</option>
             ))}
           </select>
         </th>
@@ -343,7 +369,7 @@ export default function TransactionsTable() {
                   }
                 `}
               >
-                {row.state}
+                {getStateDisplayLabel(row.state, row.qty)}
               </span>
             </td>
 
@@ -363,7 +389,7 @@ export default function TransactionsTable() {
             </td>
 
 
-            <td className="py-3 px-2">{row.source}</td>
+            <td className="py-3 px-2">{getReasonDisplayLabel(row.source)}</td>
             <td className="py-3 px-2">{row.note}</td>
             <td className="py-3 px-2 text-gray-500">{row.date}</td>
           </tr>
