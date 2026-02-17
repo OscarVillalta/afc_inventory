@@ -218,18 +218,18 @@ def serialize_order(order_id):
         return jsonify({"error": "Order not found"}), 404
 
     sorted_items = sorted(order.items, key=lambda x: x.position)
-    blank_row = "||||||"
+    blank_row = "||||||||||||"
     lines = []
 
     for item in sorted_items:
         if item.type == OrderItemType.SECTION_SEPARATOR.value:
             description = item.note or ""
             lines.append(blank_row)
-            lines.append(f"||||{description}||||")
+            lines.append(f"||||{description}||")
             lines.append(blank_row)
         elif item.type == OrderItemType.UNIT_SEPARATOR.value:
             description = item.note or ""
-            lines.append(f"||||{description}||||")
+            lines.append(f"||||{description}||")
         else:
             # Product_Item or Sales_Item
             product = item.product
@@ -243,9 +243,9 @@ def serialize_order(order_id):
                 part_number = "Unknown product"
 
             qty = item.quantity_ordered
-            lines.append(f"{qty}||{part_number}||||")
+            lines.append(f"{qty}||{part_number}||||||||||")
 
-    serialized = "\n".join(lines)
+    serialized = "".join(lines)
     return jsonify({"serialized": serialized}), 200
 
 
