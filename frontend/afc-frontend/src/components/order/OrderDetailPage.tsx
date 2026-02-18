@@ -298,7 +298,7 @@ export default function OrderDetailPage() {
     }
 
     if (!confirm(order?.type === "outgoing"
-      ? "Release all reservations for selected items?"
+      ? "Cancel all reservations for selected items?"
       : "Cancel all orders for selected items?")) {
       return;
     }
@@ -320,7 +320,7 @@ export default function OrderDetailPage() {
       await refreshOrder();
       setSelectedItems(new Set());
     } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : (order?.type === "outgoing" ? "Failed to release reservations" : "Failed to cancel orders");
+      const errorMsg = err instanceof Error ? err.message : (order?.type === "outgoing" ? "Failed to cancel reservations" : "Failed to cancel orders");
       alert(errorMsg);
     }
   }

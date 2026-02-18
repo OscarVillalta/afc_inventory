@@ -1,4 +1,5 @@
 import type { TransactionPayload } from "../../api/transactions";
+import { Link } from "react-router-dom";
 
 const ROLLBACK_NOTE_PREFIX = "Reversal of transaction #";
 
@@ -24,7 +25,7 @@ function getStateDisplayLabel(state: string, qtyDelta: number) {
     case "rolled_back":
       return "Reversed";
     case "cancelled":
-      return qtyDelta < 0 ? "Released" : "Cancelled";
+      return "Cancelled";
     default:
       return state;
   }
@@ -150,9 +151,9 @@ export default function TransactionDetailDrawer({
               <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
                 Order
               </h3>
-              <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+              <Link to={`/orders/${transaction.order_id}`} className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors">
                 Order #{transaction.order_id}
-              </span>
+              </Link>
             </section>
           )}
 
@@ -165,6 +166,66 @@ export default function TransactionDetailDrawer({
               {transaction.note || "No notes"}
             </p>
           </section>
+
+          {/* Stock Before & After — Committed (Fulfilled/Received) */}
+          {transaction.state === "committed" &&
+            transaction.on_hand_before != null &&
+            transaction.on_hand_after != null && (
+              <section>
+                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                  On Hand Stock
+                </h3>
+                <div className="flex items-center gap-3 text-sm">
+                  <span className="px-3 py-1 rounded-lg bg-gray-100 text-gray-700 font-medium">
+                    {transaction.on_hand_before}
+                  </span>
+                  <span className="text-gray-400">→</span>
+                  <span className="px-3 py-1 rounded-lg bg-green-50 text-green-700 font-medium">
+                    {transaction.on_hand_after}
+                  </span>
+                </div>
+              </section>
+            )}
+
+          {/* Stock Before & After — Pending/Cancelled with negative delta (outgoing → Reserved) */}
+          {(transaction.state === "pending" || transaction.state === "cancelled") &&
+            transaction.reserved_before != null &&
+            transaction.reserved_after != null && (
+              <section>
+                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                  Reserved Stock
+                </h3>
+                <div className="flex items-center gap-3 text-sm">
+                  <span className="px-3 py-1 rounded-lg bg-gray-100 text-gray-700 font-medium">
+                    {transaction.reserved_before}
+                  </span>
+                  <span className="text-gray-400">→</span>
+                  <span className="px-3 py-1 rounded-lg bg-amber-50 text-amber-700 font-medium">
+                    {transaction.reserved_after}
+                  </span>
+                </div>
+              </section>
+            )}
+
+          {/* Stock Before & After — Pending/Cancelled with positive delta (incoming → Ordered) */}
+          {(transaction.state === "pending" || transaction.state === "cancelled") &&
+            transaction.ordered_before != null &&
+            transaction.ordered_after != null && (
+              <section>
+                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                  Ordered Stock
+                </h3>
+                <div className="flex items-center gap-3 text-sm">
+                  <span className="px-3 py-1 rounded-lg bg-gray-100 text-gray-700 font-medium">
+                    {transaction.ordered_before}
+                  </span>
+                  <span className="text-gray-400">→</span>
+                  <span className="px-3 py-1 rounded-lg bg-blue-50 text-blue-700 font-medium">
+                    {transaction.ordered_after}
+                  </span>
+                </div>
+              </section>
+            )}
 
           {/* Related Transaction */}
           {isRollback && relatedTxnId && (

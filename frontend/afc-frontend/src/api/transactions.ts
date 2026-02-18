@@ -20,6 +20,12 @@ export interface TransactionPayload {
   state: "pending" | "committed" | "cancelled" | "rolled_back";
   note?: string | null;
   created_at: string;
+  on_hand_before?: number | null;
+  on_hand_after?: number | null;
+  reserved_before?: number | null;
+  reserved_after?: number | null;
+  ordered_before?: number | null;
+  ordered_after?: number | null;
 }
 
 export interface TransactionListResponse {

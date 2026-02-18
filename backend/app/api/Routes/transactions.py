@@ -371,9 +371,13 @@ def create_transaction():
     # Apply PENDING inventory effect
     # ===============================
     if qty_delta < 0 :
+        txn.reserved_before = qty_record.reserved
         qty_record.reserved += abs_qty
+        txn.reserved_after = qty_record.reserved
     else :
-       qty_record.ordered += abs_qty 
+        txn.ordered_before = qty_record.ordered
+        qty_record.ordered += abs_qty
+        txn.ordered_after = qty_record.ordered
 
 
     db.add(txn)
