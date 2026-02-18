@@ -48,7 +48,7 @@ function getStateDisplayLabel(state: string, qtyDelta: number) {
     case "rolled_back":
       return "Reversed";
     case "cancelled":
-      return qtyDelta < 0 ? "Released" : "Cancelled";
+      return "Cancelled";
     default:
       return state;
   }
@@ -263,7 +263,7 @@ export default function TransactionsTable() {
     { label: "Fulfilled/Received", value: "Committed" },
     { label: "Reserved/Ordered", value: "Pending" },
     { label: "Reversed", value: "Rolled_Back" },
-    { label: "Released/Cancelled", value: "Cancelled" },
+    { label: "Cancelled", value: "Cancelled" },
   ];
 
   /** Apply a preset filter */
