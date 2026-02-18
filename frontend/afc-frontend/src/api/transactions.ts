@@ -53,6 +53,35 @@ export interface ProduceRequest {
   note?: string;
 }
 
+export interface TransactionSummary {
+  total: number;
+  net_quantity_change: number;
+  committed_count: number;
+  pending_count: number;
+}
+
+export function fetchTransactionSummary(
+  filters?: TransactionFilters,
+): Promise<TransactionSummary> {
+  const params = new URLSearchParams();
+
+  if (filters) {
+    if (filters.product_name) params.set("product_name", filters.product_name);
+    if (typeof filters.order_id === "number") params.set("order_id", String(filters.order_id));
+    if (filters.state && filters.state !== "All") params.set("state", filters.state.toLowerCase());
+    if (filters.reason) params.set("reason", filters.reason);
+    if (filters.note) params.set("note", filters.note);
+    if (filters.start_date) params.set("start_date", filters.start_date);
+    if (filters.end_date) params.set("end_date", filters.end_date);
+    if (filters.before_date) params.set("before_date", filters.before_date);
+    if (filters.after_date) params.set("after_date", filters.after_date);
+  }
+
+  return apiRequest(`/transactions/summary?${params.toString()}`, {
+    method: "GET",
+  });
+}
+
 export function fetchTransactions(
   page = 1,
   limit = 10,

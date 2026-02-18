@@ -5,10 +5,13 @@ export default function TransactionsPage() {
   return (
     <MainLayout>
       <div className="p-6 w-full">
-        {/* Page Title */}
-        <h1 className="text-2xl font-bold mb-6 text-gray-800 pb-5">
-          Transactions
+        {/* 🔟 Page Title Context */}
+        <h1 className="text-2xl font-bold text-gray-800">
+          Transactions Ledger
         </h1>
+        <p className="text-sm text-gray-400 mb-6">
+          Immutable record of all inventory movement
+        </p>
 
         <TransactionsTable />
       </div>

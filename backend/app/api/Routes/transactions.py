@@ -93,6 +93,97 @@ def get_transaction(txn_id):
         return jsonify({"error": "Transaction not found"}), 404
     return jsonify(txn_schema.dump(txn)), 200
 
+@transaction_bp.route("/transactions/summary", methods=["GET"])
+def get_transaction_summary():
+    """Return summary stats for filtered transactions (used by summary bar)."""
+    db = g.db
+
+    # Reuse same filter logic as search
+    product_name = request.args.get("product_name", type=str)
+    order_id = request.args.get("order_id", type=int)
+    state = request.args.get("state")
+    reason = request.args.get("reason", type=str)
+    note = request.args.get("note", type=str)
+    start_date = request.args.get("start_date", type=str)
+    end_date = request.args.get("end_date", type=str)
+    before_date = request.args.get("before_date", type=str)
+    after_date = request.args.get("after_date", type=str)
+
+    filters = []
+
+    if product_name:
+        AirFilter_subquery = select(AirFilter.id).where(
+            AirFilter.part_number.ilike(f"%{product_name}%")
+        )
+        product_subquery = select(Product.id).where(
+            Product.reference_id.in_(AirFilter_subquery)
+        )
+        child_product_subquery = select(ChildProduct.id).where(
+            ChildProduct.reference_id.in_(AirFilter_subquery)
+        )
+        filters.append(
+            or_(
+                Transaction.product_id.in_(product_subquery),
+                Transaction.child_product_id.in_(child_product_subquery)
+            )
+        )
+
+    if order_id:
+        filters.append(Transaction.order_id == order_id)
+    if state:
+        filters.append(Transaction.state == state)
+    if reason:
+        filters.append(Transaction.reason.ilike(f"%{reason}%"))
+    if note:
+        filters.append(Transaction.note.ilike(f"%{note}%"))
+
+    try:
+        if start_date and end_date:
+            filters.append(Transaction.created_at >= datetime.fromisoformat(start_date))
+            filters.append(Transaction.created_at <= datetime.fromisoformat(end_date))
+        elif before_date:
+            filters.append(Transaction.created_at <= datetime.fromisoformat(before_date))
+        elif after_date:
+            filters.append(Transaction.created_at >= datetime.fromisoformat(after_date))
+    except ValueError:
+        return jsonify({"error": "Invalid date format. Use ISO format (YYYY-MM-DD)."}), 400
+
+    # Total count
+    total_q = select(func.count()).select_from(Transaction)
+    if filters:
+        total_q = total_q.where(*filters)
+    total = db.execute(total_q).scalar() or 0
+
+    # Net quantity change
+    net_q = select(func.coalesce(func.sum(Transaction.quantity_delta), 0))
+    if filters:
+        net_q = net_q.where(*filters)
+    net_qty = db.execute(net_q).scalar()
+
+    # Committed count
+    committed_q = select(func.count()).select_from(Transaction).where(
+        Transaction.state == "committed"
+    )
+    if filters:
+        committed_q = committed_q.where(*filters)
+    committed = db.execute(committed_q).scalar() or 0
+
+    # Pending count
+    pending_q = select(func.count()).select_from(Transaction).where(
+        Transaction.state == "pending"
+    )
+    if filters:
+        pending_q = pending_q.where(*filters)
+    pending = db.execute(pending_q).scalar() or 0
+
+    return jsonify({
+        "total": total,
+        "net_quantity_change": net_qty,
+        "committed_count": committed,
+        "pending_count": pending,
+    }), 200
+
+
 @transaction_bp.route("/transactions/search", methods=["GET"])
 def filter_transactions():
     db = g.db
