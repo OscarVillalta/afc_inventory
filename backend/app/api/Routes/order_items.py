@@ -402,7 +402,7 @@ def commit_single_order_item_txn(item_id: int) -> Tuple[Any, int]:
             }), 200
         
         # Perform the commit
-        txn.commit()
+        txn.commit(db)
         order.update_status()
         safe_commit(db, "committing transaction")
         
@@ -456,7 +456,7 @@ def commit_all_order_item_txns(item_id):
 
         for txn in pending_txns:
             
-            txn.commit()
+            txn.commit(db)
             committed += 1
 
         order.update_status()

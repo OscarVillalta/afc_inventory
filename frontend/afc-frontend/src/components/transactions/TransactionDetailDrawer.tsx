@@ -24,7 +24,7 @@ function getStateDisplayLabel(state: string, qtyDelta: number) {
     case "rolled_back":
       return "Reversed";
     case "cancelled":
-      return qtyDelta < 0 ? "Released" : "Cancelled";
+      return "Cancelled";
     default:
       return state;
   }

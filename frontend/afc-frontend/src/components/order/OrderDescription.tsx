@@ -59,7 +59,7 @@ export default function OrderDescription({
               onClick={onCancelSelected}
               disabled={disabled}
             >
-              {orderType === "outgoing" ? "Release Reservation" : "Cancel Order"}
+              Cancel Order
             </button>
             <button
               className="btn btn-xs btn-warning"
