@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import MDTable from "../table/MDtable";
 import { fetchTransactions, fetchTransactionSummary, type TransactionFilters } from "../../api/transactions";
 import type { TransactionPayload, TransactionSummary } from "../../api/transactions";
@@ -49,7 +48,7 @@ function getStateDisplayLabel(state: string, qtyDelta: number) {
     case "rolled_back":
       return "Reversed";
     case "cancelled":
-      return "Cancelled";
+      return qtyDelta < 0 ? "Released" : "Cancelled";
     default:
       return state;
   }
@@ -264,7 +263,7 @@ export default function TransactionsTable() {
     { label: "Fulfilled/Received", value: "Committed" },
     { label: "Reserved/Ordered", value: "Pending" },
     { label: "Reversed", value: "Rolled_Back" },
-    { label: "Cancelled", value: "Cancelled" },
+    { label: "Released/Cancelled", value: "Cancelled" },
   ];
 
   /** Apply a preset filter */
@@ -516,11 +515,11 @@ export default function TransactionsTable() {
               <td className="py-3 px-2 font-medium text-gray-900">{row.product}</td>
 
               {/* 6️⃣ Order as chip */}
-              <td className="py-3 px-2" onClick={(e) => e.stopPropagation()}>
+              <td className="py-3 px-2">
                 {row.orderId ? (
-                  <Link to={`/orders/${row.orderId}`} className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors">
+                  <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
                     Order #{row.orderId}
-                  </Link>
+                  </span>
                 ) : (
                   <span className="text-gray-300">—</span>
                 )}

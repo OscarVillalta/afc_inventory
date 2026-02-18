@@ -499,14 +499,6 @@ class Transaction(Base, SerializerMixin):
     note: Mapped[Optional[str]] = mapped_column()
     created_at: Mapped[datetime] = mapped_column(default=datetime.now(timezone.utc))
 
-    # Stock snapshots captured at transaction lifecycle events
-    on_hand_before: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    on_hand_after: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    reserved_before: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    reserved_after: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    ordered_before: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    ordered_after: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-
     order: Mapped[Optional["Order"]] = relationship("Order", back_populates="transactions", passive_deletes=True)
     order_item: Mapped[Optional["OrderItem"]] = relationship("OrderItem", back_populates="transactions", passive_deletes=True)
     product: Mapped[Optional["Product"]] = relationship("Product", back_populates="transactions", passive_deletes=True)
@@ -532,14 +524,8 @@ class Transaction(Base, SerializerMixin):
         if not qty_record:
             raise ValueError("Quantity record missing.")
 
-        # Capture on_hand snapshot before commit
-        self.on_hand_before = qty_record.on_hand
-
         # Apply physical change
         qty_record.on_hand += self.quantity_delta
-
-        # Capture on_hand snapshot after commit
-        self.on_hand_after = qty_record.on_hand
 
         # Remove pending planning effect
         if self.quantity_delta > 0:
@@ -614,13 +600,9 @@ class Transaction(Base, SerializerMixin):
             qty_record = self._get_quantity_record()
             if qty_record:
                 if self.quantity_delta > 0:
-                    self.ordered_before = qty_record.ordered
                     qty_record.ordered -= abs(self.quantity_delta)
-                    self.ordered_after = qty_record.ordered
                 else:
-                    self.reserved_before = qty_record.reserved
                     qty_record.reserved -= abs(self.quantity_delta)
-                    self.reserved_after = qty_record.reserved
 
             self.state = TransactionState.CANCELLED.value
         else:

@@ -282,7 +282,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
       await loadTransactions(true);
     } catch (err: unknown) {
       const error = JSON.parse((err as Error)?.message || '{}')
-      const msg = error["error"] || "Unable to cancel transaction.";
+      const msg = error["error"] || "Unable to cancel/release transaction.";
       setError(msg);
     }
   }
@@ -710,7 +710,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
                               : tx.state === "rolled_back"
                               ? "Reversed"
                               : tx.state === "cancelled"
-                              ? "Cancelled"
+                              ? orderType === "outgoing" ? "Released" : "Cancelled"
                               : tx.state}
                           </span>
                         </td>
@@ -744,7 +744,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
                                     handleCancel(e, tx.id)
                                   }
                                 >
-                                  Cancel
+                                  {orderType === "outgoing" ? "Release" : "Cancel"}
                                 </button>
                               </>
                             )}
