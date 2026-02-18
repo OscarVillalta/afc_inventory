@@ -394,8 +394,8 @@ def create_transaction():
         "quantity_delta": txn.quantity_delta,
         "reason": txn.reason,
         "note": txn.note,
-        "created_at": txn.created_at.isoformat() if txn.created_at else None,
-        "last_updated_at": txn.last_updated_at.isoformat() if txn.last_updated_at else None,
+        "created_at": txn.created_at.isoformat(),
+        "last_updated_at": txn.last_updated_at.isoformat(),
         "ledger_sequence": txn.ledger_sequence,
     }), 201
 
