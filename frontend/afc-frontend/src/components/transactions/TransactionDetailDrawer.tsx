@@ -1,4 +1,7 @@
+import { useEffect, useState } from "react";
 import type { TransactionPayload } from "../../api/transactions";
+import { fetchTransactionOnHand } from "../../api/transactions";
+import type { TransactionOnHand } from "../../api/transactions";
 
 const ROLLBACK_NOTE_PREFIX = "Reversal of transaction #";
 
@@ -47,6 +50,26 @@ export default function TransactionDetailDrawer({
   productLabel,
   onClose,
 }: TransactionDetailDrawerProps) {
+  const [onHandData, setOnHandData] = useState<TransactionOnHand | null>(null);
+  const [onHandLoading, setOnHandLoading] = useState(false);
+
+  useEffect(() => {
+    if (!transaction) {
+      setOnHandData(null);
+      return;
+    }
+
+    if (transaction.state === "committed" && transaction.ledger_sequence != null) {
+      setOnHandLoading(true);
+      fetchTransactionOnHand(transaction.id)
+        .then((data) => setOnHandData(data))
+        .catch(() => setOnHandData(null))
+        .finally(() => setOnHandLoading(false));
+    } else {
+      setOnHandData(null);
+    }
+  }, [transaction]);
+
   if (!transaction) return null;
 
   const isRollback =
@@ -144,6 +167,33 @@ export default function TransactionDetailDrawer({
             </section>
           </div>
 
+          {/* On-Hand Stock Before/After (committed transactions only) */}
+          {transaction.state === "committed" && transaction.ledger_sequence != null && (
+            <section>
+              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                On-Hand Stock
+              </h3>
+              {onHandLoading ? (
+                <p className="text-sm text-gray-400">Loading...</p>
+              ) : onHandData ? (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gray-50 rounded-lg px-4 py-3 text-center">
+                    <p className="text-xs text-gray-400 mb-1">Before</p>
+                    <p className="text-lg font-semibold text-gray-700">{onHandData.on_hand_before}</p>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg px-4 py-3 text-center">
+                    <p className="text-xs text-gray-400 mb-1">After</p>
+                    <p className={`text-lg font-semibold ${
+                      transaction.quantity_delta > 0 ? "text-green-700" : "text-red-700"
+                    }`}>{onHandData.on_hand_after}</p>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-400">Not available</p>
+              )}
+            </section>
+          )}
+
           {/* Order Link */}
           {transaction.order_id && (
             <section>
@@ -188,6 +238,10 @@ export default function TransactionDetailDrawer({
               <div className="flex justify-between">
                 <span className="text-gray-400">Created</span>
                 <span>{formatDateTime(transaction.created_at)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Last Updated</span>
+                <span>{formatDateTime(transaction.last_updated_at)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400">Transaction ID</span>

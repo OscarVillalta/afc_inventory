@@ -18,6 +18,7 @@ interface TransactionRow {
   source: string;      // vendor or customer
   note: string;
   date: string;        // formatted date
+  lastUpdated: string; // formatted last_updated_at
   isRollback: boolean;
   relatedTxnId: string | null;
   rawTxn: TransactionPayload;
@@ -251,6 +252,7 @@ export default function TransactionsTable() {
         source: txn.reason ?? "",
         note: txn.note ?? "",
         date: formatDate(txn.created_at),
+        lastUpdated: formatDate(txn.last_updated_at),
         isRollback,
         relatedTxnId,
         rawTxn: txn,
@@ -298,7 +300,7 @@ export default function TransactionsTable() {
     filters.filterNote ||
     filters.dateFilterMode !== "none";
 
-  const colCount = 7;
+  const colCount = 8;
 
   return (
     <>
@@ -337,7 +339,8 @@ export default function TransactionsTable() {
           "Quantity",
           "Reason",
           "Note",
-          "Date",
+          "Date Created",
+          "Last Updated",
         ]}
         page={page}
         pageSize={pageSize}
@@ -451,6 +454,9 @@ export default function TransactionsTable() {
               )}
             </div>
           </th>
+
+          {/* Last Updated - No filter */}
+          <th className="py-2 pr-2"></th>
     
         </tr>
 
@@ -584,6 +590,7 @@ export default function TransactionsTable() {
               </td>
 
               <td className="py-3 px-2 text-gray-400 text-sm">{row.date}</td>
+              <td className="py-3 px-2 text-gray-400 text-sm">{row.lastUpdated}</td>
             </tr>
           ))}
       </MDTable>

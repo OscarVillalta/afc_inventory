@@ -93,6 +93,49 @@ def get_transaction(txn_id):
         return jsonify({"error": "Transaction not found"}), 404
     return jsonify(txn_schema.dump(txn)), 200
 
+
+@transaction_bp.route("/transactions/<int:txn_id>/on_hand", methods=["GET"])
+def get_transaction_on_hand(txn_id):
+    """
+    For a committed transaction with a ledger_sequence, compute the on_hand
+    stock before and after this transaction was applied by summing all
+    committed quantity_deltas for the same product up to this ledger_sequence.
+    """
+    db = g.db
+    txn = db.get(Transaction, txn_id)
+    if not txn:
+        return jsonify({"error": "Transaction not found"}), 404
+
+    if txn.state != "committed" or txn.ledger_sequence is None:
+        return jsonify({"error": "On-hand data is only available for committed transactions with a ledger sequence"}), 400
+
+    # Determine the product filter
+    if txn.product_id is not None:
+        product_filter = Transaction.product_id == txn.product_id
+    elif txn.child_product_id is not None:
+        product_filter = Transaction.child_product_id == txn.child_product_id
+    else:
+        return jsonify({"error": "Transaction has no associated product"}), 400
+
+    # Sum all committed deltas for the same product with ledger_sequence <= this transaction's sequence
+    on_hand_after_query = (
+        select(func.coalesce(func.sum(Transaction.quantity_delta), 0))
+        .where(
+            product_filter,
+            Transaction.state == "committed",
+            Transaction.ledger_sequence.isnot(None),
+            Transaction.ledger_sequence <= txn.ledger_sequence,
+        )
+    )
+    on_hand_after = db.execute(on_hand_after_query).scalar()
+    on_hand_before = on_hand_after - txn.quantity_delta
+
+    return jsonify({
+        "transaction_id": txn.id,
+        "on_hand_before": on_hand_before,
+        "on_hand_after": on_hand_after,
+    }), 200
+
 @transaction_bp.route("/transactions/summary", methods=["GET"])
 def get_transaction_summary():
     """Return summary stats for filtered transactions (used by summary bar)."""
