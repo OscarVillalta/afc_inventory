@@ -59,12 +59,12 @@ export default function TransactionDetailDrawer({
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/30 z-40 transition-opacity"
+        className="h-screen fixed inset-0 bg-black/30 z-40 transition-opacity pb-4"
         onClick={onClose}
       />
 
       {/* Drawer */}
-      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-white shadow-2xl transform transition-transform duration-200 ease-out flex flex-col">
+      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-white shadow-2xl transform transition-transform duration-200 ease-out">
         {/* Header */}
         <div
           className="px-6 py-4 text-white flex items-center justify-between"
@@ -78,14 +78,14 @@ export default function TransactionDetailDrawer({
           </div>
           <button
             onClick={onClose}
-            className="text-white/80 hover:text-white text-2xl leading-none p-1"
+            className="text-white/80 hover:text-white cursor-pointer text-2xl leading-none p-1"
           >
             ✕
           </button>
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="h-full flex flex-col overflow-y-auto space-y-6 px-6 pt-6 pb-25">
           {/* Product Details */}
           <section>
             <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
@@ -180,7 +180,7 @@ export default function TransactionDetailDrawer({
           )}
 
           {/* Audit Info */}
-          <section>
+          <section className="">
             <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
               Audit Info
             </h3>

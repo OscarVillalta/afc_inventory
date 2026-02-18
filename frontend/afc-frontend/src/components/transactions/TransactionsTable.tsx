@@ -312,7 +312,7 @@ export default function TransactionsTable() {
       />
 
       {/* ── 7️⃣ Preset Filters ── */}
-      <div className="flex flex-wrap gap-2 mb-4">
+      <div className="flex flex-wrap gap-2 mb-4 pl-10 h-9">
         {PRESET_FILTERS.map((p) => (
           <button
             key={p.key}
