@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useLayoutEffect, useRef } from "react";
 
 interface MDTableProps {
   title: string;
@@ -20,6 +20,41 @@ export default function MDTable({
   onPageChange,
 }: MDTableProps) {
   const totalPages = Math.ceil(total / pageSize);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const savedScrollLeft = useRef(0);
+  const savedScrollTop = useRef<number | null>(null);
+
+  // Restore scroll positions after re-render
+  useLayoutEffect(() => {
+    const el = scrollContainerRef.current;
+    if (el) {
+      el.scrollLeft = savedScrollLeft.current;
+    }
+    // Restore the parent scrollable container's vertical scroll position
+    if (savedScrollTop.current !== null) {
+      const scrollParent = scrollContainerRef.current?.closest("main");
+      if (scrollParent) {
+        scrollParent.scrollTop = savedScrollTop.current;
+        savedScrollTop.current = null;
+      }
+    }
+  });
+
+  const handleScroll = () => {
+    const el = scrollContainerRef.current;
+    if (el) {
+      savedScrollLeft.current = el.scrollLeft;
+    }
+  };
+
+  const handlePageChange = (newPage: number) => {
+    // Save the parent's vertical scroll position before page change triggers re-render
+    const scrollParent = scrollContainerRef.current?.closest("main");
+    if (scrollParent) {
+      savedScrollTop.current = scrollParent.scrollTop;
+    }
+    onPageChange(newPage);
+  };
 
   return (
     <div className="relative w-full mb-12">
@@ -39,7 +74,11 @@ export default function MDTable({
       </div>
 
       {/* Main Table Container */}
-      <div className="bg-white rounded-2xl shadow-md p-6 border border-gray-100 pt-12 overflow-x-auto">
+      <div
+        ref={scrollContainerRef}
+        onScroll={handleScroll}
+        className="bg-white rounded-2xl shadow-md p-6 border border-gray-100 pt-12 overflow-x-auto"
+      >
         <table className="w-full border-separate border-spacing-y-2 border-separate min-w-[700px]">
           <thead>
             <tr>
@@ -63,7 +102,7 @@ export default function MDTable({
           <button
             className="px-3 py-2 rounded-lg text-sm font-medium bg-gray-200 hover:bg-gray-300 disabled:opacity-40"
             disabled={page === 1}
-            onClick={() => onPageChange(page - 1)}
+            onClick={() => handlePageChange(page - 1)}
           >
             Prev
           </button>
@@ -82,7 +121,7 @@ export default function MDTable({
                       ? "bg-[#3A7BD5] text-white shadow-md"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                   }`}
-                onClick={() => onPageChange(p)}
+                onClick={() => handlePageChange(p)}
               >
                 {p}
               </button>
@@ -93,7 +132,7 @@ export default function MDTable({
           <button
             className="px-3 py-2 rounded-lg text-sm font-medium bg-gray-200 hover:bg-gray-300 disabled:opacity-40"
             disabled={page === totalPages}
-            onClick={() => onPageChange(page + 1)}
+            onClick={() => handlePageChange(page + 1)}
           >
             Next
           </button>

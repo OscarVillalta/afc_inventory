@@ -165,3 +165,15 @@ export function produceInventory(data: ProduceRequest) {
     body: JSON.stringify(data),
   });
 }
+
+export interface TransactionOnHand {
+  transaction_id: number;
+  on_hand_before: number;
+  on_hand_after: number;
+}
+
+export function fetchTransactionOnHand(txnId: number): Promise<TransactionOnHand> {
+  return apiRequest(`/transactions/${txnId}/on_hand`, {
+    method: "GET",
+  });
+}
