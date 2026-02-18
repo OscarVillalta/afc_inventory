@@ -22,3 +22,11 @@ class TransactionSchema(Schema):
     note = fields.Str(load_default=None)
     created_at = fields.DateTime(dump_only=True)
 
+    # Stock snapshots
+    on_hand_before = fields.Int(dump_only=True, allow_none=True)
+    on_hand_after = fields.Int(dump_only=True, allow_none=True)
+    reserved_before = fields.Int(dump_only=True, allow_none=True)
+    reserved_after = fields.Int(dump_only=True, allow_none=True)
+    ordered_before = fields.Int(dump_only=True, allow_none=True)
+    ordered_after = fields.Int(dump_only=True, allow_none=True)
+
