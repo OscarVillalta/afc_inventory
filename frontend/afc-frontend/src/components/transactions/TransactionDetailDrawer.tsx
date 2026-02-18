@@ -184,7 +184,7 @@ export default function TransactionDetailDrawer({
                   <div className="bg-gray-50 rounded-lg px-4 py-3 text-center">
                     <p className="text-xs text-gray-400 mb-1">After</p>
                     <p className={`text-lg font-semibold ${
-                      transaction.quantity_delta > 0 ? "text-green-700" : "text-red-700"
+                      transaction.quantity_delta > 0 ? "text-green-700" : transaction.quantity_delta < 0 ? "text-red-700" : "text-gray-700"
                     }`}>{onHandData.on_hand_after}</p>
                   </div>
                 </div>
