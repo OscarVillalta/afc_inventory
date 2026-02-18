@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from flask import Blueprint, jsonify, request, g, current_app
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, or_, select, text
 
 from database.models import (
     Conversion,
@@ -211,6 +211,7 @@ def _create_conversion(db, batch: ConversionBatch, payload: dict) -> Conversion:
             note=note,
             state=TransactionState.COMMITTED.value,
             created_at=timestamp,
+            last_updated_at=timestamp,
             order_id=batch.order_id,
         )
         quantity.on_hand -= decrease_qty
@@ -225,6 +226,7 @@ def _create_conversion(db, batch: ConversionBatch, payload: dict) -> Conversion:
         note=note,
         state=TransactionState.COMMITTED.value,
         created_at=timestamp,
+        last_updated_at=timestamp,
         order_id=batch.order_id,
     )
 
@@ -232,6 +234,13 @@ def _create_conversion(db, batch: ConversionBatch, payload: dict) -> Conversion:
 
     db.add(produce_txn)
     db.flush()
+
+    # Assign ledger sequences for directly-committed transactions
+    for txn in decrease_txns:
+        seq_val = db.execute(text("SELECT nextval('txn_ledger_seq')")).scalar()
+        txn.ledger_sequence = seq_val
+    produce_seq = db.execute(text("SELECT nextval('txn_ledger_seq')")).scalar()
+    produce_txn.ledger_sequence = produce_seq
 
     conversion = Conversion(
         batch_id=batch.id,

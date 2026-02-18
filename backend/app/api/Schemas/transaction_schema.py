@@ -21,4 +21,6 @@ class TransactionSchema(Schema):
 
     note = fields.Str(load_default=None)
     created_at = fields.DateTime(dump_only=True)
+    last_updated_at = fields.DateTime(dump_only=True)
+    ledger_sequence = fields.Int(dump_only=True, allow_none=True)
 

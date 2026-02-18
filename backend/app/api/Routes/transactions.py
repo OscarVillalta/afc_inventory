@@ -1,5 +1,5 @@
 from flask import abort, g, jsonify, request, Blueprint
-from sqlalchemy import select, func, or_
+from sqlalchemy import select, func, or_, text
 from database.models import (
     Quantity,
     Transaction,
@@ -384,7 +384,7 @@ def create_transaction():
     auto_commit_flag = request.args.get("auto_commit") == "true"
 
     if auto_commit_flag:
-        txn.commit()
+        txn.commit(db)
 
     db.commit()
 
@@ -394,7 +394,9 @@ def create_transaction():
         "quantity_delta": txn.quantity_delta,
         "reason": txn.reason,
         "note": txn.note,
-        "created_at": txn.created_at.isoformat(),
+        "created_at": txn.created_at.isoformat() if txn.created_at else None,
+        "last_updated_at": txn.last_updated_at.isoformat() if txn.last_updated_at else None,
+        "ledger_sequence": txn.ledger_sequence,
     }), 201
 
 
@@ -482,6 +484,7 @@ def produce_product():
             note=note,
             state=TransactionState.COMMITTED.value,
             created_at=timestamp,
+            last_updated_at=timestamp,
         )
 
         produce_txn = Transaction(
@@ -492,6 +495,7 @@ def produce_product():
             note=note,
             state=TransactionState.COMMITTED.value,
             created_at=timestamp,
+            last_updated_at=timestamp,
         )
 
         # Apply inventory changes atomically
@@ -501,6 +505,12 @@ def produce_product():
         db.add(consume_txn)
         db.add(produce_txn)
         db.flush()
+
+        # Assign ledger sequences for directly-committed transactions
+        consume_seq = db.execute(text("SELECT nextval('txn_ledger_seq')")).scalar()
+        produce_seq = db.execute(text("SELECT nextval('txn_ledger_seq')")).scalar()
+        consume_txn.ledger_sequence = consume_seq
+        produce_txn.ledger_sequence = produce_seq
 
         conversion = Conversion(
             batch_id=conversion_batch.id if conversion_batch else None,
@@ -566,7 +576,7 @@ def commit_transaction(txn_id):
             if qty > qty_record.on_hand:
                 return jsonify({ "error": f"Not enough inventory. On hand: {qty_record.on_hand}, required: {qty}"}), 409
    
-        txn.commit()
+        txn.commit(db)
         db.commit()
         return jsonify({
             "message": "Transaction committed successfully.",
@@ -681,10 +691,12 @@ def _get_transaction_ledger(db, product_id=None, child_product_id=None):
         select(
             Transaction.id,
             Transaction.created_at,
+            Transaction.last_updated_at,
             Transaction.reason,
             Transaction.quantity_delta,
             Transaction.state,
             Transaction.note,
+            Transaction.ledger_sequence,
             running_balance,
         )
         .where(*filters)

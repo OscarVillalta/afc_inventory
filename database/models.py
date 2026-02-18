@@ -3,7 +3,7 @@ from typing import List, Optional
 from datetime import datetime, timezone
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship, foreign
-from sqlalchemy import ForeignKey, String, Integer, Boolean, Index, func, text
+from sqlalchemy import ForeignKey, String, Integer, BigInteger, Boolean, Index, Sequence, func, text
 from sqlalchemy.inspection import inspect
 from sqlalchemy.ext.hybrid import hybrid_property
 
@@ -497,7 +497,9 @@ class Transaction(Base, SerializerMixin):
     state: Mapped[str] = mapped_column(String, default=TransactionState.PENDING.value, nullable=False)
     reason: Mapped[str] = mapped_column(String, nullable=False)
     note: Mapped[Optional[str]] = mapped_column()
-    created_at: Mapped[datetime] = mapped_column(default=datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(default=func.now(), nullable=False)
+    last_updated_at: Mapped[datetime] = mapped_column(default=func.now(), nullable=False)
+    ledger_sequence: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
 
     order: Mapped[Optional["Order"]] = relationship("Order", back_populates="transactions", passive_deletes=True)
     order_item: Mapped[Optional["OrderItem"]] = relationship("OrderItem", back_populates="transactions", passive_deletes=True)
@@ -516,7 +518,7 @@ class Transaction(Base, SerializerMixin):
             return self.product.quantity
         return None
 
-    def commit(self):
+    def commit(self, db=None):
         if self.state != TransactionState.PENDING.value:
             return
 
@@ -534,6 +536,12 @@ class Transaction(Base, SerializerMixin):
             qty_record.reserved -= abs(self.quantity_delta)
 
         self.state = TransactionState.COMMITTED.value
+        self.last_updated_at = datetime.now(timezone.utc)
+
+        # Assign ledger sequence from PostgreSQL sequence
+        if db is not None:
+            seq_val = db.execute(text("SELECT nextval('txn_ledger_seq')")).scalar()
+            self.ledger_sequence = seq_val
 
         # Fulfillment progression
         if self.order_item:
@@ -577,6 +585,11 @@ class Transaction(Base, SerializerMixin):
             note=f"Reversal of transaction #{self.id}",
         )
 
+        # Assign ledger sequence for the reversal transaction
+        seq_val = db.execute(text("SELECT nextval('txn_ledger_seq')")).scalar()
+        reversed_txn.ledger_sequence = seq_val
+        reversed_txn.last_updated_at = datetime.now(timezone.utc)
+
         # Apply the reversal to physical inventory
         qty_record.on_hand += reversed_txn.quantity_delta
 
@@ -589,6 +602,7 @@ class Transaction(Base, SerializerMixin):
                 item.order.update_status()
 
         self.state = TransactionState.ROLLED_BACK.value
+        self.last_updated_at = datetime.now(timezone.utc)
 
         db.add(reversed_txn)
         return reversed_txn
@@ -605,6 +619,7 @@ class Transaction(Base, SerializerMixin):
                     qty_record.reserved -= abs(self.quantity_delta)
 
             self.state = TransactionState.CANCELLED.value
+            self.last_updated_at = datetime.now(timezone.utc)
         else:
             raise ValueError("Only pending transactions can be cancelled.")
 
@@ -668,6 +683,7 @@ Index("ix_transactions_product_id", Transaction.product_id)
 Index("ix_transactions_child_product_id", Transaction.child_product_id)
 Index("ix_transactions_state", Transaction.state)
 Index("ix_transactions_created_at", Transaction.created_at)
+Index("ix_transactions_ledger_sequence", Transaction.ledger_sequence)
 Index("ix_conversion_batches_order_id", ConversionBatch.order_id)
 Index("ix_conversion_batches_created_at", ConversionBatch.created_at)
 Index("ix_conversions_batch_id", Conversion.batch_id)
