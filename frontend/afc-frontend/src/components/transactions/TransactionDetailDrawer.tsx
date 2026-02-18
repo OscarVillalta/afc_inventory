@@ -189,6 +189,7 @@ export default function TransactionDetailDrawer({
 
           {/* Stock Before & After — Pending/Cancelled with negative delta (outgoing → Reserved) */}
           {(transaction.state === "pending" || transaction.state === "cancelled") &&
+            transaction.quantity_delta < 0 &&
             transaction.reserved_before != null &&
             transaction.reserved_after != null && (
               <section>
@@ -209,6 +210,7 @@ export default function TransactionDetailDrawer({
 
           {/* Stock Before & After — Pending/Cancelled with positive delta (incoming → Ordered) */}
           {(transaction.state === "pending" || transaction.state === "cancelled") &&
+            transaction.quantity_delta > 0 &&
             transaction.ordered_before != null &&
             transaction.ordered_after != null && (
               <section>
