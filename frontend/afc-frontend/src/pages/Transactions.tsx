@@ -10,7 +10,7 @@ export default function TransactionsPage() {
           Transactions Ledger
         </h1>
         <p className="text-sm text-gray-400 mb-6">
-          Immutable record of all inventory movement
+          Immutable record of all inventory movement f
         </p>
 
         <TransactionsTable />
