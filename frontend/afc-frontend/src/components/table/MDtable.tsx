@@ -8,6 +8,7 @@ interface MDTableProps {
   pageSize: number;
   total: number;
   onPageChange: (page: number) => void;
+  sortLabel?: string;
 }
 
 export default function MDTable({
@@ -18,8 +19,11 @@ export default function MDTable({
   pageSize,
   total,
   onPageChange,
+  sortLabel,
 }: MDTableProps) {
   const totalPages = Math.ceil(total / pageSize);
+  const rangeStart = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const rangeEnd = Math.min(page * pageSize, total);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const savedScrollLeft = useRef(0);
   const savedScrollTop = useRef<number | null>(null);
@@ -137,6 +141,14 @@ export default function MDTable({
             Next
           </button>
         </div>
+
+        {/* Audit Footer */}
+        {total > 0 && (
+          <div className="flex justify-between items-center mt-4 px-2 text-xs text-gray-400">
+            <span>Showing {rangeStart}–{rangeEnd} of {total}</span>
+            {sortLabel && <span>Sorted by: {sortLabel}</span>}
+          </div>
+        )}
       </div>
     </div>
   );

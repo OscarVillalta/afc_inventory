@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import MDTable from "../table/MDtable";
 import { fetchTransactions, fetchTransactionSummary, type TransactionFilters } from "../../api/transactions";
 import type { TransactionPayload, TransactionSummary } from "../../api/transactions";
@@ -78,6 +79,7 @@ const PRESET_FILTERS = [
   { label: "Shipments", key: "shipments" },
   { label: "Adjustments", key: "adjustments" },
   { label: "Reversals", key: "reversals" },
+  { label: "Arrival", key: "arrival" },
 ] as const;
 
 function getPresetDates(preset: string) {
@@ -311,6 +313,10 @@ export default function TransactionsTable() {
     if (key === "shipments") setFilter("filterReason", "shipment");
     if (key === "adjustments") setFilter("filterReason", "adjustment");
     if (key === "reversals") setFilter("filterReason", "rollback");
+    if (key === "arrival") {
+      setFilter("filterState", "Committed");
+      setFilter("filterReason", "receive");
+    }
   };
 
   /** Check if any filter is active (for empty-state messaging) */
@@ -548,6 +554,7 @@ export default function TransactionsTable() {
             pageSize={pageSize}
             total={total}
             onPageChange={setPage}
+            sortLabel="last_updated_at (desc)"
           >
             {/* TABLE ROWS */}
             {loading && (
@@ -607,13 +614,37 @@ export default function TransactionsTable() {
                     ${idx % 2 === 0 ? "bg-white" : "bg-gray-50/50"}
                   `}
                 >
-                  <td className="py-3 px-2 font-medium text-gray-900">{row.product}</td>
+                  <td className="py-3 px-2 font-medium text-gray-900">
+                    {row.rawTxn.child_product_id ? (
+                      <Link
+                        to={`/child-products/${row.rawTxn.child_product_id}`}
+                        className="hover:text-[#3A7BD5] hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {row.product}
+                      </Link>
+                    ) : row.rawTxn.product_id !== null ? (
+                      <Link
+                        to={`/products/${row.rawTxn.product_id}`}
+                        className="hover:text-[#3A7BD5] hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {row.product}
+                      </Link>
+                    ) : (
+                      row.product
+                    )}
+                  </td>
 
                   <td className="py-3 px-2">
                     {row.orderId ? (
-                      <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+                      <Link
+                        to={`/orders/${row.orderId}`}
+                        className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         Order #{row.orderId}
-                      </span>
+                      </Link>
                     ) : (
                       <span className="text-gray-300">—</span>
                     )}
