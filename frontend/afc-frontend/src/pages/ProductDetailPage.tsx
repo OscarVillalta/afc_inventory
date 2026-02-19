@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   XAxis,
@@ -20,6 +20,7 @@ import {
   type TransactionItem,
   type ProductOrderSummary,
 } from "../api/productDetail";
+import { autocommitTxn } from "../api/transactions";
 
 /* ============================================================
    TYPES
@@ -43,6 +44,17 @@ export default function ProductDetailPage() {
   const [incomingOrders, setIncomingOrders] = useState<ProductOrderSummary[]>([]);
   const [outgoingOrders, setOutgoingOrders] = useState<ProductOrderSummary[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Adjust Stock modal state
+  const [adjustStockOpen, setAdjustStockOpen] = useState(false);
+  const [adjustOnHand, setAdjustOnHand] = useState(0);
+  const [adjustReason, setAdjustReason] = useState("");
+  const [adjustNotes, setAdjustNotes] = useState("");
+  const [adjustSaving, setAdjustSaving] = useState(false);
+
+  // Transaction filter state
+  const [txnTypeFilter, setTxnTypeFilter] = useState<"all" | "planned" | "executed" | "reversed" | "adjustments">("all");
+  const [txnDateRange, setTxnDateRange] = useState<7 | 30 | 90 | null>(null);
 
   useEffect(() => {
     if (!productId) return;
@@ -195,6 +207,7 @@ export default function ProductDetailPage() {
             status: "Pending",
             created_at: "2026-01-15T10:00:00Z",
             eta: "2026-03-15",
+            quantity: 100,
           },
           {
             id: 2,
@@ -204,6 +217,7 @@ export default function ProductDetailPage() {
             status: "Committed",
             created_at: "2026-01-20T10:00:00Z",
             eta: "2026-03-22",
+            quantity: 50,
           },
         ]);
         setOutgoingOrders([
@@ -214,6 +228,8 @@ export default function ProductDetailPage() {
             cs_name: "ABC Corp",
             status: "Pending",
             created_at: "2026-02-01T10:00:00Z",
+            need_by: "2026-03-01",
+            quantity: 20,
           },
           {
             id: 4,
@@ -222,6 +238,7 @@ export default function ProductDetailPage() {
             cs_name: "XYZ Inc",
             status: "Completed",
             created_at: "2026-02-03T10:00:00Z",
+            quantity: 10,
           },
         ]);
       } finally {
@@ -252,33 +269,61 @@ export default function ProductDetailPage() {
     );
   }
 
-  // Generate mock projection data (in real app, this would come from backend)
+  // Generate stock projection from real incoming/outgoing order data
   const generateStockProjection = (): StockProjection[] => {
     const data: StockProjection[] = [];
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Collect future events from real order data
+    const events: { date: Date; delta: number; label: string }[] = [];
+
+    outgoingOrders.forEach((order) => {
+      const qty = order.quantity;
+      const dateStr = order.need_by || order.eta;
+      if (qty && dateStr) {
+        const date = new Date(dateStr);
+        if (date > today) {
+          events.push({ date, delta: -qty, label: order.order_number || `Order #${order.id}` });
+        }
+      }
+    });
+
+    incomingOrders.forEach((order) => {
+      const qty = order.quantity;
+      if (qty && order.eta) {
+        const date = new Date(order.eta);
+        if (date > today) {
+          events.push({ date, delta: qty, label: order.order_number || `PO #${order.id}` });
+        }
+      }
+    });
+
+    events.sort((a, b) => a.date.getTime() - b.date.getTime());
+
     let level = product.quantity.on_hand;
+    let eventIdx = 0;
 
     for (let i = 0; i <= 90; i += 10) {
-      const date = new Date(today);
-      date.setDate(date.getDate() + i);
-      const dateStr = date.toLocaleDateString("en-US", {
+      const checkDate = new Date(today);
+      checkDate.setDate(checkDate.getDate() + i);
+      const prevDate = new Date(today);
+      prevDate.setDate(prevDate.getDate() + i - 10);
+
+      let annotation: string | undefined;
+      while (eventIdx < events.length && events[eventIdx].date <= checkDate) {
+        if (i > 0 && events[eventIdx].date > prevDate) {
+          level += events[eventIdx].delta;
+          annotation = events[eventIdx].label;
+        }
+        eventIdx++;
+      }
+
+      const dateStr = checkDate.toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
       });
-
-      // Simulate stock depletion and restocking
-      if (i === 0) {
-        data.push({ date: dateStr, level });
-      } else if (i === 30) {
-        level -= 15;
-        data.push({ date: dateStr, level, annotation: "Backorder" });
-      } else if (i === 50) {
-        level += 25;
-        data.push({ date: dateStr, level, annotation: "Restock ETA" });
-      } else {
-        level -= Math.floor(Math.random() * 5);
-        data.push({ date: dateStr, level });
-      }
+      data.push({ date: dateStr, level: Math.max(0, level), annotation });
     }
 
     return data;
@@ -318,6 +363,74 @@ export default function ProductDetailPage() {
   const getOrderLabel = (txn: TransactionItem) =>
     txn.order_id ? `Order #${txn.order_id}` : "—";
 
+  // Status badge helper (consistent across order tables)
+  const getOrderStatusBadge = (status: string) => {
+    if (status === "Completed") return "bg-green-100 text-green-700";
+    if (status === "Committed") return "bg-blue-100 text-blue-700";
+    if (status.includes("Partial")) return "bg-blue-100 text-blue-700";
+    if (status === "Cancelled") return "bg-gray-100 text-gray-600";
+    return "bg-yellow-100 text-yellow-700";
+  };
+
+  // Transaction filter helpers
+  const ADJUST_REASONS = ["adjustment", "correction", "lost_damage", "customer_return"];
+  const ADJUST_REASON_LABELS: Record<string, string> = {
+    adjustment: "Adjustment",
+    correction: "Inventory Correction",
+    lost_damage: "Lost / Damaged",
+    customer_return: "Customer Return",
+  };
+
+  const filteredTxns = useMemo(() => {
+    let result = transactions;
+    switch (txnTypeFilter) {
+      case "planned":
+        result = result.filter((t) => t.state === "pending");
+        break;
+      case "executed":
+        result = result.filter((t) => t.state === "committed");
+        break;
+      case "reversed":
+        result = result.filter((t) => t.state === "rolled_back");
+        break;
+      case "adjustments":
+        result = result.filter((t) => ADJUST_REASONS.includes(t.reason));
+        break;
+    }
+    if (txnDateRange) {
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - txnDateRange);
+      result = result.filter((t) => new Date(t.created_at) >= cutoff);
+    }
+    return result;
+  }, [transactions, txnTypeFilter, txnDateRange]);
+
+  const groupedTxns = useMemo(() => {
+    const groups: { label: string; txns: TransactionItem[] }[] = [];
+    const seen = new Map<string, TransactionItem[]>();
+    filteredTxns.forEach((txn) => {
+      const key = new Date(txn.created_at).toDateString();
+      if (!seen.has(key)) seen.set(key, []);
+      seen.get(key)!.push(txn);
+    });
+    const todayStr = new Date().toDateString();
+    const yesterdayStr = new Date(Date.now() - 86400000).toDateString();
+    seen.forEach((txns, key) => {
+      const label =
+        key === todayStr
+          ? "Today"
+          : key === yesterdayStr
+          ? "Yesterday"
+          : new Date(key).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            });
+      groups.push({ label, txns });
+    });
+    return groups;
+  }, [filteredTxns]);
+
   return (
     <MainLayout>
       <div className="p-6  mx-auto space-y-6 bg-white">
@@ -344,16 +457,31 @@ export default function ProductDetailPage() {
             </div>
 
             <div className="flex-1">
-              <h1 className="text-3xl font-bold text-[#363b4c]">{partNumber}</h1>
-              <p className="text-lg text-gray-600 mt-1">{description}</p>
+              <div className="flex items-start justify-between">
+                <div>
+                  <h1 className="text-3xl font-bold text-[#363b4c]">{partNumber}</h1>
+                  <p className="text-lg text-gray-600 mt-1">{description}</p>
 
-              <div className="flex gap-6 mt-4 text-sm text-gray-600">
-                <div>
-                  <span className="font-medium">Part #:</span> {partNumber}
+                  <div className="flex gap-6 mt-4 text-sm text-gray-600">
+                    <div>
+                      <span className="font-medium">Part #:</span> {partNumber}
+                    </div>
+                    <div>
+                      <span className="font-medium">Vendor:</span> {vendor}
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <span className="font-medium">Vendor:</span> {vendor}
-                </div>
+                <button
+                  className="btn btn-sm bg-[#363b4c] text-white hover:bg-[#4a5063] border-0 flex-shrink-0"
+                  onClick={() => {
+                    setAdjustOnHand(on_hand);
+                    setAdjustReason("");
+                    setAdjustNotes("");
+                    setAdjustStockOpen(true);
+                  }}
+                >
+                  Adjust Stock
+                </button>
               </div>
             </div>
           </div>
@@ -439,6 +567,8 @@ export default function ProductDetailPage() {
                     <tr className="text-left text-gray-600 border-b">
                       <th className="pb-2">Order #</th>
                       <th className="pb-2">Supplier</th>
+                      <th className="pb-2">Qty</th>
+                      <th className="pb-2">ETA</th>
                       <th className="pb-2">Status</th>
                     </tr>
                   </thead>
@@ -454,14 +584,16 @@ export default function ProductDetailPage() {
                         <td className="py-2 truncate max-w-[120px]" title={order.cs_name}>
                           {order.cs_name}
                         </td>
+                        <td className="py-2 font-medium">
+                          {order.quantity != null ? order.quantity : "—"}
+                        </td>
+                        <td className="py-2 text-gray-500">
+                          {order.eta
+                            ? new Date(order.eta).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                            : <span className="text-yellow-600 text-xs">No ETA</span>}
+                        </td>
                         <td className="py-2">
-                          <span className={`text-xs px-2 py-1 rounded ${
-                            order.status === 'Completed' 
-                              ? 'bg-green-100 text-green-700'
-                              : order.status.includes('Partial')
-                              ? 'bg-blue-100 text-blue-700'
-                              : 'bg-yellow-100 text-yellow-700'
-                          }`}>
+                          <span className={`text-xs px-2 py-1 rounded ${getOrderStatusBadge(order.status)}`}>
                             {order.status}
                           </span>
                         </td>
@@ -547,6 +679,8 @@ export default function ProductDetailPage() {
                     <tr className="text-left text-gray-600 border-b">
                       <th className="pb-2">Order #</th>
                       <th className="pb-2">Customer</th>
+                      <th className="pb-2">Qty</th>
+                      <th className="pb-2">Need By</th>
                       <th className="pb-2">Status</th>
                     </tr>
                   </thead>
@@ -562,14 +696,16 @@ export default function ProductDetailPage() {
                         <td className="py-2 truncate max-w-[120px]" title={order.cs_name}>
                           {order.cs_name}
                         </td>
+                        <td className="py-2 font-medium">
+                          {order.quantity != null ? order.quantity : "—"}
+                        </td>
+                        <td className="py-2 text-gray-500">
+                          {order.need_by
+                            ? new Date(order.need_by).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                            : "—"}
+                        </td>
                         <td className="py-2">
-                          <span className={`text-xs px-2 py-1 rounded ${
-                            order.status === 'Completed' 
-                              ? 'bg-green-100 text-green-700'
-                              : order.status.includes('Partial')
-                              ? 'bg-blue-100 text-blue-700'
-                              : 'bg-yellow-100 text-yellow-700'
-                          }`}>
+                          <span className={`text-xs px-2 py-1 rounded ${getOrderStatusBadge(order.status)}`}>
                             {order.status}
                           </span>
                         </td>
@@ -607,65 +743,192 @@ export default function ProductDetailPage() {
 
         {/* ========== RECENT ACTIVITY ========== */}
         <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+          {/* Header + filters */}
           <div className="bg-[#363b4c] text-white px-4 py-3">
             <h3 className="font-semibold">Recent Activity / Transactions</h3>
           </div>
+          <div className="px-4 pt-3 pb-2 border-b flex flex-wrap items-center gap-3">
+            {/* Type filter chips */}
+            <div className="flex gap-2 flex-wrap">
+              {(["all", "planned", "executed", "reversed", "adjustments"] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setTxnTypeFilter(f)}
+                  className={`text-xs px-3 py-1 rounded-full border transition-colors capitalize ${
+                    txnTypeFilter === f
+                      ? "bg-[#363b4c] text-white border-[#363b4c]"
+                      : "bg-white text-gray-600 border-gray-300 hover:border-[#363b4c]"
+                  }`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+            {/* Date range chips */}
+            <div className="flex gap-2 flex-wrap ml-auto">
+              {([7, 30, 90] as const).map((days) => (
+                <button
+                  key={days}
+                  onClick={() => setTxnDateRange(txnDateRange === days ? null : days)}
+                  className={`text-xs px-3 py-1 rounded-full border transition-colors ${
+                    txnDateRange === days
+                      ? "bg-[#363b4c] text-white border-[#363b4c]"
+                      : "bg-white text-gray-600 border-gray-300 hover:border-[#363b4c]"
+                  }`}
+                >
+                  Last {days}d
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-gray-600 border-b bg-gray-50">
-                  <th className="px-4 py-3">Date</th>
-                  <th className="px-4 py-3">Product</th>
-                  <th className="px-4 py-3">Type</th>
-                  <th className="px-4 py-3">Quantity</th>
-                  <th className="px-4 py-3">Order</th>
-                  <th className="px-4 py-3">Note</th>
-                </tr>
-              </thead>
-                <tbody>
-                  {transactions.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="px-4 py-6 text-center text-gray-500">
-                        No recent transactions
-                      </td>
-                    </tr>
-                ) : (
-                  transactions.map((txn) => (
-                    <tr key={txn.id} className="border-b hover:bg-gray-50">
-                      <td className="px-4 py-3 text-gray-700">
-                        {new Date(txn.created_at).toLocaleDateString()}
-                      </td>
-                      <td className="px-4 py-3 text-gray-700">
-                        {getTxnProductLabel(txn)}
-                      </td>
-                      <td className="px-4 py-3 capitalize text-gray-700">
-                        {txn.reason}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`font-medium ${
-                            txn.quantity_delta > 0
-                              ? "text-green-600"
-                              : "text-red-600"
-                          }`}
-                        >
-                          {txn.quantity_delta > 0 ? "+" : ""}
-                          {txn.quantity_delta}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-gray-700">
-                        {getOrderLabel(txn)}
-                      </td>
-                      <td className="px-4 py-3 text-gray-600">
-                        {txn.note || "—"}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+            {groupedTxns.length === 0 ? (
+              <p className="px-4 py-6 text-center text-gray-500 text-sm">No transactions match the selected filters</p>
+            ) : (
+              groupedTxns.map(({ label, txns }) => (
+                <div key={label}>
+                  {/* Day group header */}
+                  <div className="px-4 py-2 bg-gray-50 border-b border-t text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    {label}
+                  </div>
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-gray-600 border-b bg-white">
+                        <th className="px-4 py-2">Time</th>
+                        <th className="px-4 py-2">Product</th>
+                        <th className="px-4 py-2">Type</th>
+                        <th className="px-4 py-2">Quantity</th>
+                        <th className="px-4 py-2">Order</th>
+                        <th className="px-4 py-2">Note</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {txns.map((txn) => (
+                        <tr key={txn.id} className="border-b hover:bg-gray-50">
+                          <td className="px-4 py-3 text-gray-500 text-xs">
+                            {new Date(txn.created_at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+                          </td>
+                          <td className="px-4 py-3 text-gray-700">
+                            {getTxnProductLabel(txn)}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`text-xs px-2 py-1 rounded capitalize ${
+                              txn.reason === "adjustment" ? "bg-gray-100 text-gray-600"
+                              : txn.reason === "receive" ? "bg-green-50 text-green-700"
+                              : txn.reason === "shipment" ? "bg-red-50 text-red-700"
+                              : txn.reason === "rollback" ? "bg-amber-50 text-amber-700"
+                              : "bg-blue-50 text-blue-700"
+                            }`}>
+                              {txn.reason}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`font-medium ${txn.quantity_delta > 0 ? "text-green-600" : "text-red-600"}`}>
+                              {txn.quantity_delta > 0 ? "+" : ""}{txn.quantity_delta}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-gray-700">
+                            {getOrderLabel(txn)}
+                          </td>
+                          <td className="px-4 py-3 text-gray-600">
+                            {txn.note || "—"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ))
+            )}
           </div>
         </div>
+
+        {/* ========== ADJUST STOCK MODAL ========== */}
+        {adjustStockOpen && (
+          <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+            <div className="bg-white w-[480px] rounded-xl shadow-xl p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-gray-800">Adjust Stock</h2>
+                <button
+                  className="cursor-pointer hover:scale-110 transition text-gray-500"
+                  onClick={() => setAdjustStockOpen(false)}
+                >✕</button>
+              </div>
+
+              <div className="mb-4">
+                <label className="font-medium text-sm text-gray-600">Part Number</label>
+                <div className="p-2 mt-1 border rounded-lg bg-gray-100 text-gray-700">{partNumber}</div>
+              </div>
+
+              <div className="mb-4">
+                <label className="font-medium text-sm text-gray-600">On Hand</label>
+                <input
+                  type="number"
+                  className="input input-bordered w-full mt-1"
+                  value={adjustOnHand}
+                  min={0}
+                  onChange={(e) => setAdjustOnHand(Number(e.target.value))}
+                />
+                <p className="text-xs text-gray-500 mt-1">Current: {on_hand}. Change will create an inventory transaction.</p>
+              </div>
+
+              <div className="mb-4">
+                <label className="font-medium text-sm text-gray-600">Reason</label>
+                <select
+                  className="select select-bordered w-full mt-1"
+                  value={adjustReason}
+                  onChange={(e) => setAdjustReason(e.target.value)}
+                >
+                  <option value="">Select a reason…</option>
+                  {ADJUST_REASONS.map((r) => (
+                    <option key={r} value={r}>{ADJUST_REASON_LABELS[r] ?? r}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="mb-6">
+                <label className="font-medium text-sm text-gray-600">Notes</label>
+                <textarea
+                  className="textarea textarea-bordered w-full mt-1"
+                  rows={3}
+                  value={adjustNotes}
+                  onChange={(e) => setAdjustNotes(e.target.value)}
+                />
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <button className="btn" onClick={() => setAdjustStockOpen(false)}>Cancel</button>
+                <button
+                  className="btn btn-primary"
+                  disabled={adjustSaving}
+                  onClick={async () => {
+                    const delta = adjustOnHand - on_hand;
+                    if (delta === 0) { alert("No quantity change detected."); return; }
+                    if (!adjustReason) { alert("Please select a reason."); return; }
+                    try {
+                      setAdjustSaving(true);
+                      await autocommitTxn({ product_id: product.id, quantity_delta: delta, reason: adjustReason, note: adjustNotes });
+                      setAdjustStockOpen(false);
+                      // Refresh product + transactions
+                      const [refreshedProduct, txnData] = await Promise.all([
+                        fetchProductDetail(product.id),
+                        fetchProductTransactions(product.id, 1, 20),
+                      ]);
+                      setProduct(refreshedProduct);
+                      setTransactions(txnData.results || []);
+                    } catch {
+                      alert("Failed to adjust stock.");
+                    } finally {
+                      setAdjustSaving(false);
+                    }
+                  }}
+                >
+                  {adjustSaving ? "Saving…" : "Save Changes"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </MainLayout>
   );
