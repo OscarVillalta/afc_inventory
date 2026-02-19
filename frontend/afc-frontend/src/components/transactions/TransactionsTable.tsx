@@ -684,7 +684,7 @@ export default function TransactionsTable() {
           </MDTable>
         </div>
 
-        {/* Right Column: Detail Drawer (sticky) */}
+        {/* Right Column: Detail Drawer (sticky, desktop only) */}
         <div className="hidden lg:block w-[380px] shrink-0">
           <TransactionDetailDrawer
             transaction={selectedTxn}
@@ -693,6 +693,23 @@ export default function TransactionsTable() {
           />
         </div>
       </div>
+
+      {/* Mobile Detail Drawer (overlay on small screens) */}
+      {selectedTxn && (
+        <div className="lg:hidden fixed inset-0 z-40">
+          <div
+            className="absolute inset-0 bg-black/30"
+            onClick={() => setSelectedTxn(null)}
+          />
+          <div className="absolute inset-y-0 right-0 w-full max-w-md z-50">
+            <TransactionDetailDrawer
+              transaction={selectedTxn}
+              productLabel={selectedProductLabel}
+              onClose={() => setSelectedTxn(null)}
+            />
+          </div>
+        </div>
+      )}
     </>
   );
 }
