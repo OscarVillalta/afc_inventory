@@ -95,6 +95,24 @@ function getPresetDates(preset: string) {
   return {};
 }
 
+/** Compute a human-readable date range label */
+function getDateRangeLabel(
+  mode: string,
+  startDate: string,
+  endDate: string
+): string {
+  if (mode === "between" && startDate && endDate) {
+    return `${startDate} – ${endDate}`;
+  }
+  if (mode === "before" && startDate) {
+    return `Before ${startDate}`;
+  }
+  if (mode === "after" && startDate) {
+    return `After ${startDate}`;
+  }
+  return "All time";
+}
+
 export default function TransactionsTable() {
   const [page, setPage] = useState(1);
   const pageSize = 10;
@@ -109,6 +127,9 @@ export default function TransactionsTable() {
     startDate: "",
     endDate: "",
     dateFilterMode: "none" as "between" | "before" | "after" | "none",
+    lastUpdatedStart: "",
+    lastUpdatedEnd: "",
+    lastUpdatedMode: "none" as "between" | "before" | "after" | "none",
   });
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -119,6 +140,7 @@ export default function TransactionsTable() {
   const [error, setError] = useState<string | null>(null);
   const [productWarning, setProductWarning] = useState<string | null>(null);
   const [activePreset, setActivePreset] = useState<string | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(true);
 
   // Summary bar state
   const [summary, setSummary] = useState<TransactionSummary>({
@@ -300,20 +322,28 @@ export default function TransactionsTable() {
     filters.filterNote ||
     filters.dateFilterMode !== "none";
 
+  const dateRangeLabel = getDateRangeLabel(
+    filters.dateFilterMode,
+    filters.startDate,
+    filters.endDate
+  );
+
   const colCount = 8;
 
   return (
     <>
-      {/* ── 1️⃣ Summary Bar ── */}
+      {/* ── Summary Bar ── */}
       <TransactionSummaryBar
         total={summary.total}
         netQuantityChange={summary.net_quantity_change}
         committedCount={summary.committed_count}
         pendingCount={summary.pending_count}
         loading={summaryLoading}
+        hasActiveFilters={!!hasActiveFilters}
+        dateRangeLabel={dateRangeLabel}
       />
 
-      {/* ── 7️⃣ Preset Filters ── */}
+      {/* ── Preset Filters ── */}
       <div className="flex flex-wrap gap-2 mb-4 pl-10 h-9">
         {PRESET_FILTERS.map((p) => (
           <button
@@ -330,279 +360,339 @@ export default function TransactionsTable() {
         ))}
       </div>
 
-      <MDTable
-        title="Transactions Ledger"
-        columns={[
-          "Product",
-          "Order",
-          "State",
-          "Quantity",
-          "Reason",
-          "Note",
-          "Date Created",
-          "Last Updated",
-        ]}
-        page={page}
-        pageSize={pageSize}
-        total={total}
-        onPageChange={setPage}
-      >
-        {/* FILTER BAR */}
-        <tr className="border-b">
-
-          {/* Product Search */}
-          <th className="py-2 pr-2">
-            <input
-              className="input input-bordered input-xs w-full"
-              placeholder="Search Product"
-              value={filters.searchProduct}
-              onChange={(e) => setFilter("searchProduct", e.target.value)}
-            />
-          </th>
-
-          {/* Order Filter */}
-          <th className="py-2 pr-2">
-            <input
-              className="input input-bordered input-xs w-full"
-              placeholder="Order #"
-              value={filters.orderId}
-              onChange={(e) => setFilter("orderId", e.target.value)}
-            />
-          </th>
-
-          {/* State Filter */}
-          <th className="py-2 pr-2">
-            <select
-              className="select select-bordered select-xs w-full"
-              value={filters.filterState}
-              onChange={(e) => setFilter("filterState", e.target.value)}
+      {/* ── 2-Column Workspace ── */}
+      <div className="flex gap-6">
+        {/* Left Column: Filters + Table */}
+        <div className="flex-1 min-w-0">
+          {/* ── Collapsible Filters Card ── */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
+            <button
+              onClick={() => setFiltersOpen(!filtersOpen)}
+              className="w-full flex items-center justify-between px-5 py-3 cursor-pointer"
             >
-              {stateFilterOptions.map((t) => (
-                <option key={t.value} value={t.value}>{t.label}</option>
-              ))}
-            </select>
-          </th>
-
-          {/* Quantity - No filter (display only) */}
-          <th className="py-2 pr-2"></th>
-
-          {/* Reason Filter */}
-          <th className="py-2 pr-2">
-            <input
-              className="input input-bordered input-xs w-full"
-              placeholder="Search Reason"
-              value={filters.filterReason}
-              onChange={(e) => setFilter("filterReason", e.target.value)}
-            />
-          </th>
-
-          {/* Note Filter */}
-          <th className="py-2 pr-2">
-            <input
-              className="input input-bordered input-xs w-full"
-              placeholder="Search Note"
-              value={filters.filterNote}
-              onChange={(e) => setFilter("filterNote", e.target.value)}
-            />
-          </th>
-
-          {/* Date Filter */}
-          <th className="py-2 pr-2">
-            <div className="flex flex-col gap-1">
-              <select
-                className="select select-bordered select-xs w-full"
-                value={filters.dateFilterMode}
-                onChange={(e) => {
-                  setFilter("dateFilterMode", e.target.value as typeof filters.dateFilterMode);
-                  setFilter("startDate", "");
-                  setFilter("endDate", "");
-                }}
+              <div className="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+                <span className="text-sm font-semibold text-gray-700">Filters</span>
+                {hasActiveFilters && (
+                  <span className="badge badge-sm badge-primary">Active</span>
+                )}
+              </div>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className={`h-4 w-4 text-gray-400 transition-transform ${filtersOpen ? "rotate-180" : ""}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
               >
-                <option value="none">All Dates</option>
-                <option value="between">Between</option>
-                <option value="before">Before</option>
-                <option value="after">After</option>
-              </select>
-              
-              {filters.dateFilterMode === "between" && (
-                <>
-                  <input
-                    type="date"
-                    className="input input-bordered input-xs w-full"
-                    placeholder="Start Date"
-                    value={filters.startDate}
-                    onChange={(e) => setFilter("startDate", e.target.value)}
-                  />
-                  <input
-                    type="date"
-                    className="input input-bordered input-xs w-full"
-                    placeholder="End Date"
-                    value={filters.endDate}
-                    onChange={(e) => setFilter("endDate", e.target.value)}
-                  />
-                </>
-              )}
-              
-              {(filters.dateFilterMode === "before" || filters.dateFilterMode === "after") && (
-                <input
-                  type="date"
-                  className="input input-bordered input-xs w-full"
-                  placeholder={filters.dateFilterMode === "before" ? "Before Date" : "After Date"}
-                  value={filters.startDate}
-                  onChange={(e) => setFilter("startDate", e.target.value)}
-                />
-              )}
-            </div>
-          </th>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
 
-          {/* Last Updated - No filter */}
-          <th className="py-2 pr-2"></th>
-    
-        </tr>
+            {filtersOpen && (
+              <div className="px-5 pb-4 border-t border-gray-100 pt-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {/* Search Product */}
+                  <div>
+                    <label className="text-xs font-medium text-gray-500 mb-1 block">Part Number / Product Name</label>
+                    <input
+                      className="input input-bordered input-sm w-full"
+                      placeholder="Search product..."
+                      value={filters.searchProduct}
+                      onChange={(e) => setFilter("searchProduct", e.target.value)}
+                    />
+                  </div>
 
-        {/* TABLE ROWS */}
-        {loading && (
-          <tr>
-            <td className="py-4 text-center text-gray-500" colSpan={colCount}>
-              Loading transactions...
-            </td>
-          </tr>
-        )}
+                  {/* State */}
+                  <div>
+                    <label className="text-xs font-medium text-gray-500 mb-1 block">State</label>
+                    <select
+                      className="select select-bordered select-sm w-full"
+                      value={filters.filterState}
+                      onChange={(e) => setFilter("filterState", e.target.value)}
+                    >
+                      {stateFilterOptions.map((t) => (
+                        <option key={t.value} value={t.value}>{t.label}</option>
+                      ))}
+                    </select>
+                  </div>
 
-        {!loading && error && (
-          <tr>
-            <td className="py-4 text-center text-red-600" colSpan={colCount}>
-              {error}
-            </td>
-          </tr>
-        )}
+                  {/* Reason */}
+                  <div>
+                    <label className="text-xs font-medium text-gray-500 mb-1 block">Reason</label>
+                    <input
+                      className="input input-bordered input-sm w-full"
+                      placeholder="e.g. shipment, adjustment..."
+                      value={filters.filterReason}
+                      onChange={(e) => setFilter("filterReason", e.target.value)}
+                    />
+                  </div>
 
-        {!loading && !error && productWarning && (
-          <tr>
-            <td className="py-2 text-center text-amber-600 text-sm" colSpan={colCount}>
-              {productWarning}
-            </td>
-          </tr>
-        )}
+                  {/* Created Date Range */}
+                  <div>
+                    <label className="text-xs font-medium text-gray-500 mb-1 block">Created Date Range</label>
+                    <select
+                      className="select select-bordered select-sm w-full"
+                      value={filters.dateFilterMode}
+                      onChange={(e) => {
+                        setFilter("dateFilterMode", e.target.value as typeof filters.dateFilterMode);
+                        setFilter("startDate", "");
+                        setFilter("endDate", "");
+                      }}
+                    >
+                      <option value="none">All Dates</option>
+                      <option value="between">Between</option>
+                      <option value="before">Before</option>
+                      <option value="after">After</option>
+                    </select>
+                    {filters.dateFilterMode === "between" && (
+                      <div className="flex gap-2 mt-1">
+                        <input
+                          type="date"
+                          className="input input-bordered input-sm w-full"
+                          value={filters.startDate}
+                          onChange={(e) => setFilter("startDate", e.target.value)}
+                        />
+                        <input
+                          type="date"
+                          className="input input-bordered input-sm w-full"
+                          value={filters.endDate}
+                          onChange={(e) => setFilter("endDate", e.target.value)}
+                        />
+                      </div>
+                    )}
+                    {(filters.dateFilterMode === "before" || filters.dateFilterMode === "after") && (
+                      <input
+                        type="date"
+                        className="input input-bordered input-sm w-full mt-1"
+                        value={filters.startDate}
+                        onChange={(e) => setFilter("startDate", e.target.value)}
+                      />
+                    )}
+                  </div>
 
-        {/* 8️⃣ Empty-State Messaging */}
-        {!loading && !error && rows.length === 0 && (
-          <tr>
-            <td className="py-8 text-center" colSpan={colCount}>
-              <p className="text-gray-500 mb-1">
-                {hasActiveFilters
-                  ? "No transactions match this filter."
-                  : "No transactions found."}
-              </p>
-              {hasActiveFilters && (
-                <p className="text-gray-400 text-sm">
-                  Try adjusting the date range or clearing some filters.
-                </p>
-              )}
-            </td>
-          </tr>
-        )}
+                  {/* Last Updated Date Range */}
+                  <div>
+                    <label className="text-xs font-medium text-gray-500 mb-1 block">Last Updated Date Range</label>
+                    <select
+                      className="select select-bordered select-sm w-full"
+                      value={filters.lastUpdatedMode}
+                      onChange={(e) => {
+                        setFilter("lastUpdatedMode", e.target.value as typeof filters.lastUpdatedMode);
+                        setFilter("lastUpdatedStart", "");
+                        setFilter("lastUpdatedEnd", "");
+                      }}
+                    >
+                      <option value="none">All Dates</option>
+                      <option value="between">Between</option>
+                      <option value="before">Before</option>
+                      <option value="after">After</option>
+                    </select>
+                    {filters.lastUpdatedMode === "between" && (
+                      <div className="flex gap-2 mt-1">
+                        <input
+                          type="date"
+                          className="input input-bordered input-sm w-full"
+                          value={filters.lastUpdatedStart}
+                          onChange={(e) => setFilter("lastUpdatedStart", e.target.value)}
+                        />
+                        <input
+                          type="date"
+                          className="input input-bordered input-sm w-full"
+                          value={filters.lastUpdatedEnd}
+                          onChange={(e) => setFilter("lastUpdatedEnd", e.target.value)}
+                        />
+                      </div>
+                    )}
+                    {(filters.lastUpdatedMode === "before" || filters.lastUpdatedMode === "after") && (
+                      <input
+                        type="date"
+                        className="input input-bordered input-sm w-full mt-1"
+                        value={filters.lastUpdatedStart}
+                        onChange={(e) => setFilter("lastUpdatedStart", e.target.value)}
+                      />
+                    )}
+                  </div>
+                </div>
 
-        {!loading &&
-          !error &&
-          rows.map((row, idx) => (
-            <tr
-              key={row.id}
-              onClick={() => {
-                setSelectedTxn(row.rawTxn);
-                setSelectedProductLabel(row.product);
-              }}
-              className={`
-                shadow-sm rounded-xl cursor-pointer transition-colors hover:bg-gray-50
-                ${idx % 2 === 0 ? "bg-white" : "bg-gray-50/50"}
-              `}
-            >
-              {/* 6️⃣ Larger product text */}
-              <td className="py-3 px-2 font-medium text-gray-900">{row.product}</td>
-
-              {/* 6️⃣ Order as chip */}
-              <td className="py-3 px-2">
-                {row.orderId ? (
-                  <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
-                    Order #{row.orderId}
-                  </span>
-                ) : (
-                  <span className="text-gray-300">—</span>
+                {/* Clear Filters Button */}
+                {hasActiveFilters && (
+                  <div className="mt-3 flex justify-end">
+                    <button
+                      onClick={() => { clearFilters(); setActivePreset(null); }}
+                      className="btn btn-ghost btn-sm text-xs text-gray-500"
+                    >
+                      Clear all filters
+                    </button>
+                  </div>
                 )}
-              </td>
+              </div>
+            )}
+          </div>
 
-              {/* State badge */}
-              <td className="py-3 px-2">
-                <span
+          {/* ── Table ── */}
+          <MDTable
+            title="Transactions Ledger"
+            columns={[
+              "Product",
+              "Order",
+              "State",
+              "Quantity",
+              "Reason",
+              "Note",
+              "Date Created",
+              "Last Updated",
+            ]}
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={setPage}
+          >
+            {/* TABLE ROWS */}
+            {loading && (
+              <tr>
+                <td className="py-4 text-center text-gray-500" colSpan={colCount}>
+                  Loading transactions...
+                </td>
+              </tr>
+            )}
+
+            {!loading && error && (
+              <tr>
+                <td className="py-4 text-center text-red-600" colSpan={colCount}>
+                  {error}
+                </td>
+              </tr>
+            )}
+
+            {!loading && !error && productWarning && (
+              <tr>
+                <td className="py-2 text-center text-amber-600 text-sm" colSpan={colCount}>
+                  {productWarning}
+                </td>
+              </tr>
+            )}
+
+            {/* Empty-State Messaging */}
+            {!loading && !error && rows.length === 0 && (
+              <tr>
+                <td className="py-8 text-center" colSpan={colCount}>
+                  <p className="text-gray-500 mb-1">
+                    {hasActiveFilters
+                      ? "No transactions match this filter."
+                      : "No transactions found."}
+                  </p>
+                  {hasActiveFilters && (
+                    <p className="text-gray-400 text-sm">
+                      Try adjusting the date range or clearing some filters.
+                    </p>
+                  )}
+                </td>
+              </tr>
+            )}
+
+            {!loading &&
+              !error &&
+              rows.map((row, idx) => (
+                <tr
+                  key={row.id}
+                  onClick={() => {
+                    setSelectedTxn(row.rawTxn);
+                    setSelectedProductLabel(row.product);
+                  }}
                   className={`
-                    px-3 py-1 rounded-full text-xs font-medium
-                    ${
-                      row.state === "committed"
-                        ? "bg-green-100 text-green-700"
-                        : row.state === "pending"
-                        ? "bg-[#feeab7] text-[#756334]"
-                        : "bg-red-100 text-red-700"
-                    }
+                    shadow-sm rounded-xl cursor-pointer transition-colors hover:bg-gray-50
+                    ${selectedTxn?.id === row.rawTxn.id ? "ring-2 ring-[#3A7BD5]/30 bg-blue-50/50" : ""}
+                    ${idx % 2 === 0 ? "bg-white" : "bg-gray-50/50"}
                   `}
                 >
-                  {getStateDisplayLabel(row.state, row.qty)}
-                </span>
-              </td>
+                  <td className="py-3 px-2 font-medium text-gray-900">{row.product}</td>
 
-              <td className="py-3 px-2">
-                <span
-                  className={`
-                    px-3 py-1 rounded-full text-xs font-medium
-                    ${
-                      row.qty > 0
-                        ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-700"
-                    }
-                  `}
-                >
-                  {row.qty > 0 ? "+" : ""}{row.qty}
-                </span>
-              </td>
+                  <td className="py-3 px-2">
+                    {row.orderId ? (
+                      <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+                        Order #{row.orderId}
+                      </span>
+                    ) : (
+                      <span className="text-gray-300">—</span>
+                    )}
+                  </td>
 
-              {/* 3️⃣ Reason badge with color coding */}
-              <td className="py-3 px-2">
-                <span
-                  className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
-                    REASON_BADGE_STYLES[row.source] ?? "bg-gray-100 text-gray-600"
-                  }`}
-                >
-                  {getReasonDisplayLabel(row.source)}
-                </span>
-              </td>
+                  {/* State badge */}
+                  <td className="py-3 px-2">
+                    <span
+                      className={`
+                        px-3 py-1 rounded-full text-xs font-medium
+                        ${
+                          row.state === "committed"
+                            ? "bg-green-100 text-green-700"
+                            : row.state === "pending"
+                            ? "bg-[#feeab7] text-[#756334]"
+                            : "bg-red-100 text-red-700"
+                        }
+                      `}
+                    >
+                      {getStateDisplayLabel(row.state, row.qty)}
+                    </span>
+                  </td>
 
-              {/* 6️⃣ Dim empty notes + 2️⃣ Related transaction indicator */}
-              <td className="py-3 px-2">
-                {row.isRollback && row.relatedTxnId ? (
-                  <span className="inline-flex items-center gap-1 text-xs text-amber-700 bg-amber-50 rounded-md px-2 py-0.5">
-                    <span>↔</span>
-                    <span>Reversal of #{row.relatedTxnId}</span>
-                  </span>
-                ) : row.note ? (
-                  <span className="text-gray-600 text-sm">{row.note}</span>
-                ) : (
-                  <span className="text-gray-300 text-sm">—</span>
-                )}
-              </td>
+                  <td className="py-3 px-2">
+                    <span
+                      className={`
+                        px-3 py-1 rounded-full text-xs font-medium
+                        ${
+                          row.qty > 0
+                            ? "bg-green-100 text-green-700"
+                            : "bg-red-100 text-red-700"
+                        }
+                      `}
+                    >
+                      {row.qty > 0 ? "+" : ""}{row.qty}
+                    </span>
+                  </td>
 
-              <td className="py-3 px-2 text-gray-400 text-sm">{row.date}</td>
-              <td className="py-3 px-2 text-gray-400 text-sm">{row.lastUpdated}</td>
-            </tr>
-          ))}
-      </MDTable>
+                  {/* Reason badge with color coding */}
+                  <td className="py-3 px-2">
+                    <span
+                      className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
+                        REASON_BADGE_STYLES[row.source] ?? "bg-gray-100 text-gray-600"
+                      }`}
+                    >
+                      {getReasonDisplayLabel(row.source)}
+                    </span>
+                  </td>
 
-      {/* ── 4️⃣ Detail Drawer ── */}
-      {selectedTxn && (
-        <TransactionDetailDrawer
-          transaction={selectedTxn}
-          productLabel={selectedProductLabel}
-          onClose={() => setSelectedTxn(null)}
-        />
-      )}
+                  {/* Notes / Related transaction indicator */}
+                  <td className="py-3 px-2">
+                    {row.isRollback && row.relatedTxnId ? (
+                      <span className="inline-flex items-center gap-1 text-xs text-amber-700 bg-amber-50 rounded-md px-2 py-0.5">
+                        <span>↔</span>
+                        <span>Reversal of #{row.relatedTxnId}</span>
+                      </span>
+                    ) : row.note ? (
+                      <span className="text-gray-600 text-sm">{row.note}</span>
+                    ) : (
+                      <span className="text-gray-300 text-sm">—</span>
+                    )}
+                  </td>
+
+                  <td className="py-3 px-2 text-gray-400 text-sm">{row.date}</td>
+                  <td className="py-3 px-2 text-gray-400 text-sm">{row.lastUpdated}</td>
+                </tr>
+              ))}
+          </MDTable>
+        </div>
+
+        {/* Right Column: Detail Drawer (sticky) */}
+        <div className="hidden lg:block w-[380px] shrink-0">
+          <TransactionDetailDrawer
+            transaction={selectedTxn}
+            productLabel={selectedProductLabel}
+            onClose={() => setSelectedTxn(null)}
+          />
+        </div>
+      </div>
     </>
   );
 }
