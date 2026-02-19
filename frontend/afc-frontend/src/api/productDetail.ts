@@ -157,6 +157,8 @@ export interface ProductOrderSummary {
   status: string;
   created_at: string;
   eta?: string;
+  quantity?: number;
+  need_by?: string;
 }
 
 export async function fetchProductOrders(
