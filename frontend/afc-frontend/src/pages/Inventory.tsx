@@ -3,6 +3,7 @@ import AirFiltersTable from "../components/inventory/AirFiltersTable";
 import MiscItemsTable from "../components/inventory/MiscItemsTable";
 import AddProductModal from "../components/inventory/AddProductModal";
 import ProduceProductModal from "../components/inventory/ProduceProductModal";
+import InventoryKpiRow from "../components/inventory/InventoryKpiRow";
 import MainLayout from "../layouts/MainLayout";
 
 export default function Inventory() {
@@ -43,6 +44,9 @@ export default function Inventory() {
             </button>
           </div>
         </div>
+
+        {/* KPI ROW */}
+        <InventoryKpiRow refreshToken={refreshToken} />
 
         {/* TABS */}
         <div className="bg-white border border-gray-200 rounded-xl shadow-sm w-fit max-w-full p-2 flex gap-2 overflow-x-auto">
