@@ -1,6 +1,6 @@
 from flask import g, jsonify, Blueprint
-from sqlalchemy import func, select, and_, or_
-from database.models import Product, Quantity, ChildProduct
+from sqlalchemy import func, select, case
+from database.models import Product, Quantity
 
 
 inventory_stats_bp = Blueprint("inventory_stats", __name__)
@@ -16,17 +16,21 @@ def get_inventory_stats():
             func.count(Quantity.id).label("total_skus"),
             func.coalesce(func.sum(Quantity.reserved), 0).label("reserved_total"),
             func.coalesce(func.sum(Quantity.ordered), 0).label("ordered_total"),
-            func.count()
-            .filter(Quantity.on_hand <= 0)
-            .label("low_stock_skus"),
-            func.count()
-            .filter(
-                and_(
-                    Quantity.reserved > 0,
-                    Quantity.on_hand < Quantity.reserved,
-                )
-            )
-            .label("backordered_skus"),
+            func.coalesce(
+                func.sum(case((Quantity.on_hand <= 0, 1), else_=0)), 0
+            ).label("low_stock_skus"),
+            func.coalesce(
+                func.sum(
+                    case(
+                        (
+                            (Quantity.reserved > 0) & (Quantity.on_hand < Quantity.reserved),
+                            1,
+                        ),
+                        else_=0,
+                    )
+                ),
+                0,
+            ).label("backordered_skus"),
         )
         .select_from(Quantity)
         .join(Product, Product.id == Quantity.product_id)

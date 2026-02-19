@@ -27,7 +27,10 @@ export default function InventoryKpiRow({ refreshToken }: { refreshToken?: numbe
   useEffect(() => {
     fetchInventoryStats()
       .then(setStats)
-      .catch(() => setStats(null));
+      .catch((err) => {
+        console.error("Failed to load inventory stats:", err);
+        setStats(null);
+      });
   }, [refreshToken]);
 
   if (!stats) return null;

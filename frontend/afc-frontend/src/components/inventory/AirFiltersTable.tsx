@@ -211,8 +211,6 @@ export default function AirFiltersTable({ refreshToken }: { refreshToken?: numbe
           return r.backordered > 0;
         case "has_orders":
           return r.ordered > 0;
-        case "recently_updated":
-          return true; // no updated_at field – show all
         default:
           return true;
       }
