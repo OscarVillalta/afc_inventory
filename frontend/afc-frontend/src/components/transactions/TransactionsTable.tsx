@@ -365,7 +365,7 @@ export default function TransactionsTable() {
         {/* Left Column: Filters + Table */}
         <div className="flex-1 min-w-0">
           {/* ── Collapsible Filters Card ── */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-10">
             <button
               onClick={() => setFiltersOpen(!filtersOpen)}
               className="w-full flex items-center justify-between px-5 py-3 cursor-pointer"
