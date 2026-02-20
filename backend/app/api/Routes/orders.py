@@ -1,5 +1,5 @@
 from flask import Blueprint, g, jsonify, request
-from sqlalchemy import select, func
+from sqlalchemy import select, func, null
 from sqlalchemy import and_, or_
 from sqlalchemy.exc import IntegrityError, DatabaseError
 from app.api.Schemas.order_schema import OrderSchema
@@ -476,9 +476,36 @@ def search_orders():
     # Product filtering - comma separated product IDs
     product_ids = request.args.get("product_ids")
 
+    # Parse product_id_list early so it can be used in both the SELECT subquery and the WHERE filter
+    product_id_list = []
+    if product_ids:
+        try:
+            product_id_list = [int(pid.strip()) for pid in product_ids.split(",") if pid.strip()]
+        except (ValueError, AttributeError):
+            pass
+
     page = request.args.get("page", default=1, type=int)
     limit = request.args.get("limit", default=25, type=int)
     offset = (page - 1) * limit
+
+    # Build quantity subquery: when product_ids are provided, sum the ordered quantity
+    # for those products within each order so the frontend can use it for stock projection
+    if product_id_list:
+        qty_subquery = (
+            select(func.sum(OrderItem.quantity_ordered))
+            .where(
+                OrderItem.order_id == Order.id,
+                or_(
+                    OrderItem.product_id.in_(product_id_list),
+                    OrderItem.child_product_id.in_(product_id_list),
+                ),
+            )
+            .correlate(Order)
+            .scalar_subquery()
+            .label("quantity")
+        )
+    else:
+        qty_subquery = null().label("quantity")
 
     query = (
         select(
@@ -490,8 +517,10 @@ def search_orders():
             Order.description,
             Order.created_at,
             Order.completed_at,
+            Order.eta,
             Customer.name.label("customer_name"),
             Supplier.name.label("supplier_name"),
+            qty_subquery,
         )
         .outerjoin(Customer, Order.customer_id == Customer.id)
         .outerjoin(Supplier, Order.supplier_id == Supplier.id)
@@ -571,26 +600,20 @@ def search_orders():
             pass
     
     # Product filtering - filter orders containing specific products or child products
-    if product_ids:
-        try:
-            # Parse comma-separated product IDs
-            product_id_list = [int(pid.strip()) for pid in product_ids.split(",") if pid.strip()]
-            if product_id_list:
-                # Use a subquery to find orders that contain any of the specified products
-                # Check both product_id and child_product_id
-                product_filter_subquery = (
-                    select(OrderItem.order_id)
-                    .where(
-                        or_(
-                            OrderItem.product_id.in_(product_id_list),
-                            OrderItem.child_product_id.in_(product_id_list)
-                        )
-                    )
-                    .distinct()
+    if product_id_list:
+        # Use a subquery to find orders that contain any of the specified products
+        # Check both product_id and child_product_id
+        product_filter_subquery = (
+            select(OrderItem.order_id)
+            .where(
+                or_(
+                    OrderItem.product_id.in_(product_id_list),
+                    OrderItem.child_product_id.in_(product_id_list)
                 )
-                filters.append(Order.id.in_(product_filter_subquery))
-        except (ValueError, AttributeError):
-            pass
+            )
+            .distinct()
+        )
+        filters.append(Order.id.in_(product_filter_subquery))
 
     if filters:
         query = query.where(and_(*filters))
@@ -614,6 +637,8 @@ def search_orders():
             row.pop("customer_name")
             or row.pop("supplier_name")
         )
+        if row.get("eta") is not None:
+            row["eta"] = row["eta"].strftime("%Y-%m-%d")
         output.append(row)
 
     return jsonify({
