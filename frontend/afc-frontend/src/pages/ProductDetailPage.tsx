@@ -33,6 +33,18 @@ interface StockProjection {
 }
 
 /* ============================================================
+   CONSTANTS
+============================================================ */
+
+const ADJUST_REASONS = ["adjustment", "correction", "lost_damage", "customer_return"];
+const ADJUST_REASON_LABELS: Record<string, string> = {
+  adjustment: "Adjustment",
+  correction: "Inventory Correction",
+  lost_damage: "Lost / Damaged",
+  customer_return: "Customer Return",
+};
+
+/* ============================================================
    COMPONENT
 ============================================================ */
 
@@ -249,6 +261,56 @@ export default function ProductDetailPage() {
     loadData();
   }, [productId]);
 
+  const filteredTxns = useMemo(() => {
+    let result = transactions;
+    switch (txnTypeFilter) {
+      case "planned":
+        result = result.filter((t) => t.state === "pending");
+        break;
+      case "executed":
+        result = result.filter((t) => t.state === "committed");
+        break;
+      case "reversed":
+        result = result.filter((t) => t.state === "rolled_back");
+        break;
+      case "adjustments":
+        result = result.filter((t) => ADJUST_REASONS.includes(t.reason));
+        break;
+    }
+    if (txnDateRange) {
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - txnDateRange);
+      result = result.filter((t) => new Date(t.created_at) >= cutoff);
+    }
+    return result;
+  }, [transactions, txnTypeFilter, txnDateRange]);
+
+  const groupedTxns = useMemo(() => {
+    const groups: { label: string; txns: TransactionItem[] }[] = [];
+    const seen = new Map<string, TransactionItem[]>();
+    filteredTxns.forEach((txn) => {
+      const key = new Date(txn.created_at).toDateString();
+      if (!seen.has(key)) seen.set(key, []);
+      seen.get(key)!.push(txn);
+    });
+    const todayStr = new Date().toDateString();
+    const yesterdayStr = new Date(Date.now() - 86400000).toDateString();
+    seen.forEach((txns, key) => {
+      const label =
+        key === todayStr
+          ? "Today"
+          : key === yesterdayStr
+          ? "Yesterday"
+          : new Date(key).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            });
+      groups.push({ label, txns });
+    });
+    return groups;
+  }, [filteredTxns]);
+
   if (loading) {
     return (
       <MainLayout>
@@ -371,65 +433,6 @@ export default function ProductDetailPage() {
     if (status === "Cancelled") return "bg-gray-100 text-gray-600";
     return "bg-yellow-100 text-yellow-700";
   };
-
-  // Transaction filter helpers
-  const ADJUST_REASONS = ["adjustment", "correction", "lost_damage", "customer_return"];
-  const ADJUST_REASON_LABELS: Record<string, string> = {
-    adjustment: "Adjustment",
-    correction: "Inventory Correction",
-    lost_damage: "Lost / Damaged",
-    customer_return: "Customer Return",
-  };
-
-  const filteredTxns = useMemo(() => {
-    let result = transactions;
-    switch (txnTypeFilter) {
-      case "planned":
-        result = result.filter((t) => t.state === "pending");
-        break;
-      case "executed":
-        result = result.filter((t) => t.state === "committed");
-        break;
-      case "reversed":
-        result = result.filter((t) => t.state === "rolled_back");
-        break;
-      case "adjustments":
-        result = result.filter((t) => ADJUST_REASONS.includes(t.reason));
-        break;
-    }
-    if (txnDateRange) {
-      const cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() - txnDateRange);
-      result = result.filter((t) => new Date(t.created_at) >= cutoff);
-    }
-    return result;
-  }, [transactions, txnTypeFilter, txnDateRange]);
-
-  const groupedTxns = useMemo(() => {
-    const groups: { label: string; txns: TransactionItem[] }[] = [];
-    const seen = new Map<string, TransactionItem[]>();
-    filteredTxns.forEach((txn) => {
-      const key = new Date(txn.created_at).toDateString();
-      if (!seen.has(key)) seen.set(key, []);
-      seen.get(key)!.push(txn);
-    });
-    const todayStr = new Date().toDateString();
-    const yesterdayStr = new Date(Date.now() - 86400000).toDateString();
-    seen.forEach((txns, key) => {
-      const label =
-        key === todayStr
-          ? "Today"
-          : key === yesterdayStr
-          ? "Yesterday"
-          : new Date(key).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            });
-      groups.push({ label, txns });
-    });
-    return groups;
-  }, [filteredTxns]);
 
   return (
     <MainLayout>
