@@ -594,15 +594,15 @@ export default function ConversionsPage() {
 
   return (
     <MainLayout>
-      <div className="w-full space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 space-y-6">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">Production Batches</h1>
             <p className="text-sm text-gray-500">Manage production batches and their conversions.</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <button
-              className="btn btn-primary"
+              className="btn btn-primary w-full md:w-auto"
               onClick={() => {
                 setCreationMode(true);
                 setAddMode(false);
@@ -613,7 +613,7 @@ export default function ConversionsPage() {
             </button>
             {selectedBatchId && !creationMode && (
               <button
-                className="btn"
+                className="btn w-full md:w-auto"
                 onClick={() => {
                   setAddMode(true);
                 }}
@@ -626,92 +626,159 @@ export default function ConversionsPage() {
 
         {error && <div className="alert alert-error shadow-sm">{error}</div>}
 
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <div className="bg-white rounded-lg shadow-sm border p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Total Batches</p>
+            <p className="text-2xl font-bold text-gray-800 mt-1">{totalBatches}</p>
+          </div>
+          <div className="bg-white rounded-lg shadow-sm border p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">This Page</p>
+            <p className="text-2xl font-bold text-gray-800 mt-1">{batches.length}</p>
+          </div>
+          <div className="bg-white rounded-lg shadow-sm border p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">With Order</p>
+            <p className="text-2xl font-bold text-gray-800 mt-1">{batches.filter((b) => b.order_id).length}</p>
+          </div>
+          <div className="bg-white rounded-lg shadow-sm border p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">With Note</p>
+            <p className="text-2xl font-bold text-gray-800 mt-1">{batches.filter((b) => b.note).length}</p>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="bg-white rounded-xl shadow-md border overflow-hidden h-[70vh] flex flex-col">
+          <div className="bg-white rounded-xl shadow-md border overflow-hidden flex flex-col lg:h-[70vh]">
             <div className="bg-[#363b4c] text-white px-5 py-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold">Production Batches</h2>
               <span className="text-sm text-gray-200">Total: {totalBatches}</span>
             </div>
 
-            <div className="flex-1 overflow-auto">
-              <div className="overflow-x-auto">
-                <table className="min-w-full table-fixed" role="table" aria-label="Production batches">
-                  <thead className="bg-gray-50">
-                    <tr className="text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                      <th scope="col" className="px-4 py-3">ID</th>
-                      <th scope="col" className="px-4 py-3">Order ID</th>
-                      <th scope="col" className="px-4 py-3">Note</th>
-                      <th scope="col" className="px-4 py-3">Created By</th>
-                      <th scope="col" className="px-4 py-3">Created At</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 bg-white">
-                    {loadingList && (
-                      <tr>
-                        <td className="px-4 py-4 text-sm text-gray-500" colSpan={5}>
-                          Loading batches...
-                        </td>
-                      </tr>
-                    )}
+            <div className="flex-1 lg:overflow-auto">
+              {loadingList && (
+                <div className="px-4 py-4 text-sm text-gray-500">Loading batches...</div>
+              )}
 
-                    {!loadingList && batches.length === 0 && (
-                      <tr>
-                        <td className="px-4 py-4 text-sm text-gray-500" colSpan={5}>
-                          No production batches found.
-                        </td>
-                      </tr>
-                    )}
+              {!loadingList && batches.length === 0 && (
+                <div className="flex flex-col items-center justify-center gap-4 py-12 px-6 text-center">
+                  <div className="text-4xl">📦</div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800">No conversions yet</h3>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Production batches track the conversion of raw materials into finished products.
+                    </p>
+                  </div>
+                  <button
+                    className="btn btn-primary btn-sm"
+                    onClick={() => {
+                      setCreationMode(true);
+                      setAddMode(false);
+                      setSelectedBatchId(null);
+                    }}
+                  >
+                    Create Production Batch
+                  </button>
+                </div>
+              )}
 
-                    {!loadingList &&
-                      batches.map((batch) => {
-                        const active = batch.id === selectedBatchId && !creationMode;
-                        return (
-                          <tr
-                            key={batch.id}
-                            className={`cursor-pointer transition-colors ${active ? "bg-slate-50" : "hover:bg-slate-50"}`}
-                            onClick={() => {
-                              setCreationMode(false);
-                              setAddMode(false);
-                              setSelectedBatchId(batch.id);
-                            }}
-                          >
-                            <td className="px-4 py-3 text-sm font-semibold text-gray-900 align-middle">
-                              <span className="text-[#363b4c]">#{batch.id}</span>
-                            </td>
-                            <td className="px-4 py-3 text-sm font-medium text-[#363b4c] align-middle">
-                              {batch.order_id ?? "—"}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-gray-700 align-middle">
-                              <div className="truncate" title={batch.note || undefined}>
-                                {batch.note || "—"}
-                              </div>
-                            </td>
-                            <td className="px-4 py-3 text-sm text-gray-500 align-middle">
-                              {batch.created_by || "—"}
-                            </td>
-                            <td className="px-4 py-3 text-xs text-gray-500 align-middle">
-                              {formatDateTime(batch.created_at)}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                  </tbody>
-                </table>
-              </div>
+              {!loadingList && batches.length > 0 && (
+                <>
+                  {/* Desktop table */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="min-w-full table-fixed" role="table" aria-label="Production batches">
+                      <thead className="bg-gray-50">
+                        <tr className="text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                          <th scope="col" className="px-4 py-3">ID</th>
+                          <th scope="col" className="px-4 py-3">Order ID</th>
+                          <th scope="col" className="px-4 py-3">Note</th>
+                          <th scope="col" className="px-4 py-3">Created By</th>
+                          <th scope="col" className="px-4 py-3">Created At</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 bg-white">
+                        {batches.map((batch) => {
+                          const active = batch.id === selectedBatchId && !creationMode;
+                          return (
+                            <tr
+                              key={batch.id}
+                              className={`cursor-pointer transition-colors ${active ? "bg-slate-50" : "hover:bg-slate-50"}`}
+                              onClick={() => {
+                                setCreationMode(false);
+                                setAddMode(false);
+                                setSelectedBatchId(batch.id);
+                              }}
+                            >
+                              <td className="px-4 py-3 text-sm font-semibold text-gray-900 align-middle">
+                                <span className="text-[#363b4c]">#{batch.id}</span>
+                              </td>
+                              <td className="px-4 py-3 text-sm font-medium text-[#363b4c] align-middle">
+                                {batch.order_id ?? "—"}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-gray-700 align-middle">
+                                <div className="truncate" title={batch.note || undefined}>
+                                  {batch.note || "—"}
+                                </div>
+                              </td>
+                              <td className="px-4 py-3 text-sm text-gray-500 align-middle">
+                                {batch.created_by || "—"}
+                              </td>
+                              <td className="px-4 py-3 text-xs text-gray-500 align-middle">
+                                {formatDateTime(batch.created_at)}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobile cards */}
+                  <div className="md:hidden flex flex-col gap-2 p-3">
+                    {batches.map((batch) => {
+                      const active = batch.id === selectedBatchId && !creationMode;
+                      return (
+                        <div
+                          key={batch.id}
+                          className={`rounded-lg border p-3 cursor-pointer transition-colors ${active ? "border-[#363b4c] bg-slate-50" : "border-gray-200 hover:bg-slate-50"}`}
+                          onClick={() => {
+                            setCreationMode(false);
+                            setAddMode(false);
+                            setSelectedBatchId(batch.id);
+                          }}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-semibold text-[#363b4c]">#{batch.id}</span>
+                            {batch.order_id && (
+                              <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                                Order #{batch.order_id}
+                              </span>
+                            )}
+                          </div>
+                          <div className="mt-1 text-sm text-gray-600 truncate">{batch.note || "—"}</div>
+                          <div className="mt-1 flex items-center justify-between text-xs text-gray-400">
+                            <span>{batch.created_by || "—"}</span>
+                            <span>{formatDateTime(batch.created_at)}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </div>
 
-            <div className="border-t border-gray-200 px-5 py-3 bg-white flex items-center justify-center gap-2">
-              <button className="btn btn-sm" disabled={batchPage === 1} onClick={() => setBatchPage((p) => Math.max(1, p - 1))}>
-                Prev
-              </button>
+            <div className="border-t border-gray-200 px-5 py-3 bg-white flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <span className="text-sm text-gray-700">Page {batchPage} / {totalPages}</span>
-              <button className="btn btn-sm" disabled={batchPage >= totalPages} onClick={() => setBatchPage((p) => p + 1)}>
-                Next
-              </button>
+              <div className="flex gap-2">
+                <button className="btn btn-sm w-full sm:w-auto" disabled={batchPage === 1} onClick={() => setBatchPage((p) => Math.max(1, p - 1))}>
+                  Prev
+                </button>
+                <button className="btn btn-sm w-full sm:w-auto" disabled={batchPage >= totalPages} onClick={() => setBatchPage((p) => Math.min(totalPages, p + 1))}>
+                  Next
+                </button>
+              </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border p-5 h-[70vh] overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4 md:p-5 lg:h-[70vh] lg:overflow-y-auto">
             {creationMode ? (
               <>
                 <div className="flex items-center justify-between mb-3">
