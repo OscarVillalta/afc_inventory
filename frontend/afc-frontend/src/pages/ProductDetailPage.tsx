@@ -9,6 +9,9 @@ import {
   Area,
   AreaChart,
   ReferenceLine,
+  Line,
+  ComposedChart,
+  type DotProps,
 } from "recharts";
 
 import MainLayout from "../layouts/MainLayout";
@@ -16,9 +19,12 @@ import {
   fetchProductDetail,
   fetchProductTransactions,
   fetchProductOrders,
+  fetchProductLedger,
+  fetchChildProductLedger,
   type ProductDetail,
   type TransactionItem,
   type ProductOrderSummary,
+  type LedgerItem,
 } from "../api/productDetail";
 import { autocommitTxn } from "../api/transactions";
 
@@ -30,6 +36,16 @@ interface StockProjection {
   date: string;
   level: number;
   annotation?: string;
+}
+
+interface HistoricalDataPoint {
+  date: string;
+  raw_date: string;
+  stock_level: number;
+  quantity_delta: number;
+  order_id: number | null;
+  transaction_id: number;
+  reason: string;
 }
 
 /* ============================================================
@@ -67,6 +83,15 @@ export default function ProductDetailPage() {
   // Transaction filter state
   const [txnTypeFilter, setTxnTypeFilter] = useState<"all" | "planned" | "executed" | "reversed" | "adjustments">("all");
   const [txnDateRange, setTxnDateRange] = useState<7 | 30 | 90 | null>(null);
+
+  // Graph tab state
+  const [graphTab, setGraphTab] = useState<"projected" | "historical">("projected");
+  const [histDays, setHistDays] = useState<30 | 60 | 90 | "custom">(30);
+  const [histCustomStart, setHistCustomStart] = useState("");
+  const [histCustomEnd, setHistCustomEnd] = useState("");
+  const [ledgerItems, setLedgerItems] = useState<LedgerItem[]>([]);
+  const [ledgerLoading, setLedgerLoading] = useState(false);
+  const [ledgerError, setLedgerError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!productId) return;
@@ -261,6 +286,47 @@ export default function ProductDetailPage() {
     loadData();
   }, [productId]);
 
+  // Load ledger data when switching to historical tab or changing timeframe
+  useEffect(() => {
+    if (graphTab !== "historical" || !productId) return;
+
+    const loadLedger = async () => {
+      setLedgerLoading(true);
+      setLedgerError(null);
+      try {
+        const numericProductId = Number(productId);
+        const [parentLedger, productData] = await Promise.all([
+          fetchProductLedger(numericProductId, 1, 500),
+          fetchProductDetail(numericProductId),
+        ]);
+
+        let allItems: LedgerItem[] = [...(parentLedger.results || [])];
+
+        if (productData.child_products?.length) {
+          const childLedgers = await Promise.allSettled(
+            productData.child_products.map((child) =>
+              fetchChildProductLedger(child.id, 1, 500)
+            )
+          );
+          childLedgers.forEach((result) => {
+            if (result.status === "fulfilled" && result.value?.results) {
+              allItems = allItems.concat(result.value.results);
+            }
+          });
+        }
+
+        setLedgerItems(allItems);
+      } catch (error) {
+        console.error("Failed to load ledger data:", error);
+        setLedgerError("Failed to load historical data. Please try again.");
+      } finally {
+        setLedgerLoading(false);
+      }
+    };
+
+    loadLedger();
+  }, [graphTab, productId]);
+
   const filteredTxns = useMemo(() => {
     let result = transactions;
     switch (txnTypeFilter) {
@@ -310,6 +376,64 @@ export default function ProductDetailPage() {
     });
     return groups;
   }, [filteredTxns]);
+
+  const historicalData = useMemo((): HistoricalDataPoint[] => {
+    // Sort all ledger items by date ascending
+    const sorted = [...ledgerItems].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+
+    // Apply timeframe filter
+    const now = new Date();
+    let cutoff: Date | null = null;
+    let endDate: Date | null = null;
+    if (histDays === "custom") {
+      if (histCustomStart) cutoff = new Date(histCustomStart);
+      if (histCustomEnd) endDate = new Date(histCustomEnd);
+    } else {
+      cutoff = new Date();
+      cutoff.setDate(now.getDate() - histDays);
+    }
+
+    // Compute running balance from scratch using all sorted items
+    // We need to figure out the starting balance before the cutoff
+    let startingBalance = 0;
+    if (cutoff) {
+      for (const item of sorted) {
+        if (new Date(item.created_at) < cutoff) {
+          startingBalance += item.quantity_delta;
+        }
+      }
+    }
+
+    // Build data points for items within the timeframe
+    let runningBalance = startingBalance;
+    const points: HistoricalDataPoint[] = [];
+
+    for (const item of sorted) {
+      const itemDate = new Date(item.created_at);
+      if (cutoff && itemDate < cutoff) continue;
+      if (endDate && itemDate > endDate) continue;
+
+      runningBalance += item.quantity_delta;
+
+      points.push({
+        date: itemDate.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        }),
+        raw_date: item.created_at,
+        stock_level: runningBalance,
+        quantity_delta: item.quantity_delta,
+        order_id: item.order_id,
+        transaction_id: item.id,
+        reason: item.reason,
+      });
+    }
+
+    return points;
+  }, [ledgerItems, histDays, histCustomStart, histCustomEnd]);
 
   if (loading) {
     return (
@@ -507,47 +631,242 @@ export default function ProductDetailPage() {
           />
         </div>
 
-        {/* ========== PROJECTED STOCK LEVEL ========== */}
-        <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
-          <h2 className="text-xl font-semibold text-[#363b4c] mb-4">
-            Projected Stock Level
-          </h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <AreaChart data={stockProjection}>
-              <defs>
-                <linearGradient id="colorStock" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.05} />
-                </linearGradient>
-                <linearGradient id="colorBackorder" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="#ef4444" stopOpacity={0.05} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis
-                dataKey="date"
-                style={{ fontSize: "12px" }}
-                stroke="#6b7280"
-              />
-              <YAxis style={{ fontSize: "12px" }} stroke="#6b7280" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "white",
-                  border: "1px solid #e5e7eb",
-                  borderRadius: "6px",
-                }}
-              />
-              <ReferenceLine y={0} stroke="#363b4c" strokeWidth={2} />
-              <Area
-                type="monotone"
-                dataKey="level"
-                stroke="#363b4c"
-                strokeWidth={2}
-                fill="url(#colorStock)"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+        {/* ========== GRAPH TABS ========== */}
+        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+          {/* Tab bar */}
+          <div className="flex border-b border-gray-200">
+            <button
+              className={`px-6 py-3 text-sm font-medium transition-colors ${
+                graphTab === "projected"
+                  ? "border-b-2 border-[#363b4c] text-[#363b4c]"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+              onClick={() => setGraphTab("projected")}
+            >
+              Projected Stock Level
+            </button>
+            <button
+              className={`px-6 py-3 text-sm font-medium transition-colors ${
+                graphTab === "historical"
+                  ? "border-b-2 border-[#363b4c] text-[#363b4c]"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+              onClick={() => setGraphTab("historical")}
+            >
+              Historical Stock Movements
+            </button>
+          </div>
+
+          <div className="p-6">
+            {graphTab === "projected" && (
+              <>
+                <h2 className="text-xl font-semibold text-[#363b4c] mb-4">
+                  Projected Stock Level
+                </h2>
+                <ResponsiveContainer width="100%" height={300}>
+                  <AreaChart data={stockProjection}>
+                    <defs>
+                      <linearGradient id="colorStock" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.05} />
+                      </linearGradient>
+                      <linearGradient id="colorBackorder" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2} />
+                        <stop offset="95%" stopColor="#ef4444" stopOpacity={0.05} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis dataKey="date" style={{ fontSize: "12px" }} stroke="#6b7280" />
+                    <YAxis style={{ fontSize: "12px" }} stroke="#6b7280" />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "white",
+                        border: "1px solid #e5e7eb",
+                        borderRadius: "6px",
+                      }}
+                    />
+                    <ReferenceLine y={0} stroke="#363b4c" strokeWidth={2} />
+                    <Area
+                      type="monotone"
+                      dataKey="level"
+                      stroke="#363b4c"
+                      strokeWidth={2}
+                      fill="url(#colorStock)"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </>
+            )}
+
+            {graphTab === "historical" && (
+              <>
+                <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+                  <h2 className="text-xl font-semibold text-[#363b4c]">
+                    Historical Stock Movements
+                  </h2>
+                  {/* Timeframe selector */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {([30, 60, 90] as const).map((days) => (
+                      <button
+                        key={days}
+                        onClick={() => setHistDays(days)}
+                        className={`text-xs px-3 py-1 rounded-full border transition-colors ${
+                          histDays === days
+                            ? "bg-[#363b4c] text-white border-[#363b4c]"
+                            : "bg-white text-gray-600 border-gray-300 hover:border-[#363b4c]"
+                        }`}
+                      >
+                        Last {days}d
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => setHistDays("custom")}
+                      className={`text-xs px-3 py-1 rounded-full border transition-colors ${
+                        histDays === "custom"
+                          ? "bg-[#363b4c] text-white border-[#363b4c]"
+                          : "bg-white text-gray-600 border-gray-300 hover:border-[#363b4c]"
+                      }`}
+                    >
+                      Custom
+                    </button>
+                    {histDays === "custom" && (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="date"
+                          className="text-xs border border-gray-300 rounded px-2 py-1"
+                          value={histCustomStart}
+                          onChange={(e) => setHistCustomStart(e.target.value)}
+                        />
+                        <span className="text-xs text-gray-500">to</span>
+                        <input
+                          type="date"
+                          className="text-xs border border-gray-300 rounded px-2 py-1"
+                          value={histCustomEnd}
+                          onChange={(e) => setHistCustomEnd(e.target.value)}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {ledgerLoading ? (
+                  <div className="flex items-center justify-center h-[300px] text-gray-500">
+                    Loading historical data…
+                  </div>
+                ) : ledgerError ? (
+                  <div className="flex items-center justify-center h-[300px] text-red-500">
+                    {ledgerError}
+                  </div>
+                ) : historicalData.length === 0 ? (
+                  <div className="flex items-center justify-center h-[300px] text-gray-500">
+                    No committed transactions found for the selected timeframe.
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <ComposedChart data={historicalData}>
+                      <defs>
+                        <linearGradient id="colorHistStock" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.05} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <XAxis dataKey="date" style={{ fontSize: "12px" }} stroke="#6b7280" />
+                      <YAxis style={{ fontSize: "12px" }} stroke="#6b7280" />
+                      <Tooltip
+                        content={({ active, payload }) => {
+                          if (!active || !payload?.length) return null;
+                          const d = payload[0].payload as HistoricalDataPoint;
+                          return (
+                            <div
+                              className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-sm"
+                              style={{ pointerEvents: "none" }}
+                            >
+                              <p className="font-semibold text-gray-800">
+                                {new Date(d.raw_date).toLocaleString("en-US", {
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </p>
+                              <p className={`font-medium mt-1 ${d.quantity_delta > 0 ? "text-green-600" : "text-red-600"}`}>
+                                {d.quantity_delta > 0 ? "+" : ""}{d.quantity_delta} units
+                              </p>
+                              <p className="text-gray-600">Stock level: {d.stock_level}</p>
+                              {d.order_id && (
+                                <p className="text-blue-600 mt-1">Order #{d.order_id} — click to open</p>
+                              )}
+                            </div>
+                          );
+                        }}
+                      />
+                      <ReferenceLine y={0} stroke="#363b4c" strokeWidth={2} />
+                      <Area
+                        type="monotone"
+                        dataKey="stock_level"
+                        stroke="#363b4c"
+                        strokeWidth={2}
+                        fill="url(#colorHistStock)"
+                        dot={(props: DotProps & { payload?: HistoricalDataPoint }) => {
+                          const { cx, cy, payload } = props;
+                          if (cx == null || cy == null || !payload) return <g key="dot-empty" />;
+                          const hasOrder = Boolean(payload.order_id);
+                          return (
+                            <circle
+                              key={`dot-${payload.transaction_id}`}
+                              cx={cx}
+                              cy={cy}
+                              r={hasOrder ? 6 : 4}
+                              fill={hasOrder ? "#3b82f6" : "#363b4c"}
+                              stroke="white"
+                              strokeWidth={2}
+                              style={{ cursor: hasOrder ? "pointer" : "default" }}
+                              onClick={() => {
+                                if (payload.order_id) {
+                                  window.open(`/orders/${payload.order_id}`, "_blank");
+                                }
+                              }}
+                            />
+                          );
+                        }}
+                        activeDot={(props: DotProps & { payload?: HistoricalDataPoint }) => {
+                          const { cx, cy, payload } = props;
+                          if (cx == null || cy == null || !payload) return <g key="active-dot-empty" />;
+                          const hasOrder = Boolean(payload.order_id);
+                          return (
+                            <circle
+                              key={`active-dot-${payload.transaction_id}`}
+                              cx={cx}
+                              cy={cy}
+                              r={hasOrder ? 8 : 6}
+                              fill={hasOrder ? "#2563eb" : "#363b4c"}
+                              stroke="white"
+                              strokeWidth={2}
+                              style={{ cursor: hasOrder ? "pointer" : "default" }}
+                              onClick={() => {
+                                if (payload.order_id) {
+                                  window.open(`/orders/${payload.order_id}`, "_blank");
+                                }
+                              }}
+                            />
+                          );
+                        }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="stock_level"
+                        stroke="transparent"
+                        dot={false}
+                        activeDot={false}
+                      />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                )}
+              </>
+            )}
+          </div>
         </div>
 
         {/* ========== SUPPLY & DEMAND TABLES ========== */}

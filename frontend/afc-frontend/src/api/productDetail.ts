@@ -161,6 +161,51 @@ export interface ProductOrderSummary {
   need_by?: string;
 }
 
+export interface LedgerItem {
+  id: number;
+  created_at: string;
+  last_updated_at: string;
+  reason: string;
+  quantity_delta: number;
+  order_id: number | null;
+  state: string;
+  note: string | null;
+  ledger_sequence: number | null;
+  running_balance: number;
+}
+
+export interface LedgerResponse {
+  page: number;
+  limit: number;
+  total: number;
+  final_balance: number;
+  product_id?: number;
+  child_product_id?: number;
+  results: LedgerItem[];
+}
+
+export async function fetchProductLedger(
+  productId: number,
+  page = 1,
+  limit = 500
+): Promise<LedgerResponse> {
+  const params = new URLSearchParams();
+  params.set("page", String(page));
+  params.set("limit", String(limit));
+  return apiRequest(`/transactions/ledger/${productId}?${params.toString()}`) as Promise<LedgerResponse>;
+}
+
+export async function fetchChildProductLedger(
+  childProductId: number,
+  page = 1,
+  limit = 500
+): Promise<LedgerResponse> {
+  const params = new URLSearchParams();
+  params.set("page", String(page));
+  params.set("limit", String(limit));
+  return apiRequest(`/transactions/ledger/child_product/${childProductId}?${params.toString()}`) as Promise<LedgerResponse>;
+}
+
 export async function fetchProductOrders(
   productId: number, 
   orderType: 'incoming' | 'outgoing',

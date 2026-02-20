@@ -737,6 +737,7 @@ def _get_transaction_ledger(db, product_id=None, child_product_id=None):
             Transaction.last_updated_at,
             Transaction.reason,
             Transaction.quantity_delta,
+            Transaction.order_id,
             Transaction.state,
             Transaction.note,
             Transaction.ledger_sequence,
