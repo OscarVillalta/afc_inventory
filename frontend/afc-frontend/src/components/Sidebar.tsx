@@ -9,6 +9,7 @@ export default function Sidebar() {
     { name: "Orders", to: "/orders/search", icon: "🧾" },
     { name: "Transactions", to: "/transactions", icon: "💱" },
     { name: "Conversions", to: "/conversions", icon: "🔄" },
+    { name: "Packing Slips", to: "/packing-slip-tracker", icon: "📋" },
   ];
 
   return (
