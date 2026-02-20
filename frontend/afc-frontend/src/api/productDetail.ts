@@ -184,6 +184,20 @@ export interface LedgerResponse {
   results: LedgerItem[];
 }
 
+export interface PendingProjectionItem {
+  id: number;
+  quantity_delta: number;
+  order_id: number | null;
+  order_number: string | null;
+  order_type: string | null;
+  eta: string | null;
+  reason: string;
+}
+
+export async function fetchPendingProjection(productId: number): Promise<PendingProjectionItem[]> {
+  return apiRequest(`/transactions/pending_projection/${productId}`) as Promise<PendingProjectionItem[]>;
+}
+
 export async function fetchProductLedger(
   productId: number,
   page = 1,

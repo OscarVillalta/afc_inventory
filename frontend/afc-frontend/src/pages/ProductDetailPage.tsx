@@ -17,11 +17,13 @@ import {
   fetchProductDetail,
   fetchProductTransactions,
   fetchProductOrders,
+  fetchPendingProjection,
   fetchProductLedger,
   fetchChildProductLedger,
   type ProductDetail,
   type TransactionItem,
   type ProductOrderSummary,
+  type PendingProjectionItem,
   type LedgerItem,
 } from "../api/productDetail";
 import { autocommitTxn } from "../api/transactions";
@@ -70,6 +72,7 @@ export default function ProductDetailPage() {
   const [transactions, setTransactions] = useState<TransactionItem[]>([]);
   const [incomingOrders, setIncomingOrders] = useState<ProductOrderSummary[]>([]);
   const [outgoingOrders, setOutgoingOrders] = useState<ProductOrderSummary[]>([]);
+  const [pendingProjection, setPendingProjection] = useState<PendingProjectionItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Adjust Stock modal state
@@ -120,11 +123,12 @@ export default function ProductDetailPage() {
       try {
         setLoading(true);
         const numericProductId = Number(productId);
-        const [productData, txnData, incomingData, outgoingData] = await Promise.all([
+        const [productData, txnData, incomingData, outgoingData, projectionData] = await Promise.all([
           fetchProductDetail(numericProductId),
           fetchProductTransactions(numericProductId, 1, 20),
           fetchProductOrders(numericProductId, 'incoming', 5),
           fetchProductOrders(numericProductId, 'outgoing', 5),
+          fetchPendingProjection(numericProductId),
         ]);
         setProduct(productData);
         
@@ -151,6 +155,7 @@ export default function ProductDetailPage() {
         setTransactions(allTransactions);
         setIncomingOrders(incomingData);
         setOutgoingOrders(outgoingData);
+        setPendingProjection(projectionData);
       } catch (error) {
         console.error("Failed to load product detail:", error);
         // Use mock data for demonstration when backend is unavailable
@@ -475,33 +480,25 @@ export default function ProductDetailPage() {
     );
   }
 
-  // Generate stock projection from real incoming/outgoing order data
+  // Generate stock projection from pending transactions with their order ETA
   const generateStockProjection = (): StockProjection[] => {
     const data: StockProjection[] = [];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Collect future events from real order data
+    // Collect future events from pending transactions (with ETA from linked orders)
     const events: { date: Date; delta: number; label: string; id: number }[] = [];
 
-    outgoingOrders.forEach((order) => {
-      const qty = order.quantity;
-      const dateStr = order.need_by || order.eta;
-      if (qty && dateStr) {
-        const date = new Date(dateStr);
-        if (date > today) {
-          events.push({ date, delta: -qty, label: order.order_number || `Order #${order.id}`, id: order.id });
-        }
-      }
-    });
-
-    incomingOrders.forEach((order) => {
-      const qty = order.quantity;
-      if (qty && order.eta) {
-        const date = new Date(order.eta);
-        if (date > today) {
-          events.push({ date, delta: qty, label: order.order_number || `PO #${order.id}`, id: order.id });
-        }
+    pendingProjection.forEach((txn) => {
+      if (!txn.eta) return;
+      const date = new Date(txn.eta);
+      if (date > today) {
+        events.push({
+          date,
+          delta: txn.quantity_delta,
+          label: txn.order_number || `Order #${txn.order_id}`,
+          id: txn.order_id ?? txn.id,
+        });
       }
     });
 
