@@ -93,6 +93,12 @@ export default function ProductDetailPage() {
   const [ledgerLoading, setLedgerLoading] = useState(false);
   const [ledgerError, setLedgerError] = useState<string | null>(null);
 
+  type ClickableDotProps<TPayload> = {
+    cx?: number;
+    cy?: number;
+    payload?: TPayload;
+  };  
+
   useEffect(() => {
     if (!productId) return;
 
@@ -809,10 +815,12 @@ export default function ProductDetailPage() {
                         stroke="#363b4c"
                         strokeWidth={2}
                         fill="url(#colorHistStock)"
-                        dot={(props: DotProps & { payload?: HistoricalDataPoint }) => {
+                        dot={(props: ClickableDotProps<HistoricalDataPoint>) => {
                           const { cx, cy, payload } = props;
-                          if (cx == null || cy == null || !payload) return <g key="dot-empty" />;
+                          if (cx == null || cy == null || !payload) return null;
+
                           const hasOrder = Boolean(payload.order_id);
+
                           return (
                             <circle
                               key={`dot-${payload.transaction_id}`}
@@ -824,17 +832,17 @@ export default function ProductDetailPage() {
                               strokeWidth={2}
                               style={{ cursor: hasOrder ? "pointer" : "default" }}
                               onClick={() => {
-                                if (payload.order_id) {
-                                  window.open(`/orders/${payload.order_id}`, "_blank");
-                                }
+                                if (payload.order_id) window.open(`/orders/${payload.order_id}`, "_blank");
                               }}
                             />
                           );
                         }}
-                        activeDot={(props: DotProps & { payload?: HistoricalDataPoint }) => {
+                        activeDot={(props: ClickableDotProps<HistoricalDataPoint>) => {
                           const { cx, cy, payload } = props;
-                          if (cx == null || cy == null || !payload) return <g key="active-dot-empty" />;
+                          if (cx == null || cy == null || !payload) return null;
+
                           const hasOrder = Boolean(payload.order_id);
+
                           return (
                             <circle
                               key={`active-dot-${payload.transaction_id}`}
@@ -846,9 +854,7 @@ export default function ProductDetailPage() {
                               strokeWidth={2}
                               style={{ cursor: hasOrder ? "pointer" : "default" }}
                               onClick={() => {
-                                if (payload.order_id) {
-                                  window.open(`/orders/${payload.order_id}`, "_blank");
-                                }
+                                if (payload.order_id) window.open(`/orders/${payload.order_id}`, "_blank");
                               }}
                             />
                           );
