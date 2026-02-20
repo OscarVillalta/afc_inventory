@@ -507,7 +507,7 @@ export default function ProductDetailPage() {
     let level = product.quantity.on_hand;
     let eventIdx = 0;
 
-    for (let i = 0; i <= 90; i += 10) {
+    for (let i = 0; i <= 60; i += 1) {
       const checkDate = new Date(today);
       checkDate.setDate(checkDate.getDate() + i);
       const prevDate = new Date(today);
