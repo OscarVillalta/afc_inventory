@@ -681,6 +681,58 @@ def rollback_transaction(txn_id):
         return jsonify({"error": "Unexpected error while rolling back transaction"}), 500
 
 # =====================================================
+# 🔹 GET Pending Transactions with Order ETA (for projected stock graph)
+# =====================================================
+@transaction_bp.route("/transactions/pending_projection/<int:product_id>", methods=["GET"])
+def get_pending_projection(product_id):
+    """
+    Return all pending transactions for a product and its child products,
+    joined with their linked order's ETA. Used for the projected stock graph.
+    """
+    db = g.db
+
+    product = db.get(Product, product_id)
+    if not product:
+        return jsonify({"error": "Product not found"}), 404
+
+    child_product_ids = db.execute(
+        select(ChildProduct.id).where(ChildProduct.parent_product_id == product_id)
+    ).scalars().all()
+
+    product_filter = Transaction.product_id == product_id
+    if child_product_ids:
+        product_filter = or_(product_filter, Transaction.child_product_id.in_(child_product_ids))
+
+    query = (
+        select(
+            Transaction.id,
+            Transaction.quantity_delta,
+            Transaction.order_id,
+            Transaction.reason,
+            Order.order_number,
+            Order.type.label("order_type"),
+            Order.eta,
+        )
+        .outerjoin(Order, Transaction.order_id == Order.id)
+        .where(
+            Transaction.state == TransactionState.PENDING.value,
+            product_filter,
+        )
+    )
+
+    rows = db.execute(query).mappings().all()
+
+    result = []
+    for row in rows:
+        row_dict = dict(row)
+        if row_dict.get("eta") is not None:
+            row_dict["eta"] = row_dict["eta"].strftime("%Y-%m-%d")
+        result.append(row_dict)
+
+    return jsonify(result), 200
+
+
+# =====================================================
 # 🔹 Helper for Ledger Queries
 # =====================================================
 def _get_transaction_ledger(db, product_id=None, child_product_id=None):
