@@ -4,14 +4,12 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
   ResponsiveContainer,
   Area,
   AreaChart,
   ReferenceLine,
   Line,
   ComposedChart,
-  type DotProps,
 } from "recharts";
 
 import MainLayout from "../layouts/MainLayout";
@@ -32,6 +30,7 @@ interface StockProjection {
   date: string;
   level: number;
   annotation?: string;
+  order_id?: number | null;
 }
 
 interface HistoricalDataPoint {
@@ -65,6 +64,21 @@ export default function ChildProductDetailPage() {
   const [ledgerItems, setLedgerItems] = useState<LedgerItem[]>([]);
   const [ledgerLoading, setLedgerLoading] = useState(false);
   const [ledgerError, setLedgerError] = useState<string | null>(null);
+  const [hoveredHistPoint, setHoveredHistPoint] = useState<{
+    data: HistoricalDataPoint;
+    cx: number;
+    cy: number;
+  } | null>(null);
+  const [hoveredProjPoint, setHoveredProjPoint] = useState<{
+    data: StockProjection;
+    cx: number;
+    cy: number;
+  } | null>(null);
+
+  const getDotFill = (isHovered: boolean, hasOrder: boolean): string => {
+    if (isHovered) return hasOrder ? "#2563eb" : "#2d3143";
+    return hasOrder ? "#3b82f6" : "#363b4c";
+  };
 
   useEffect(() => {
     if (!childProductId) return;
@@ -419,6 +433,10 @@ export default function ChildProductDetailPage() {
                 <h2 className="text-xl font-semibold text-[#363b4c] mb-4">
                   Projected Stock Level
                 </h2>
+                <div
+                  className="relative"
+                  onMouseLeave={() => setHoveredProjPoint(null)}
+                >
                 <ResponsiveContainer width="100%" height={300}>
                   <AreaChart data={stockProjection}>
                     <defs>
@@ -434,13 +452,6 @@ export default function ChildProductDetailPage() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="date" style={{ fontSize: "12px" }} stroke="#6b7280" />
                     <YAxis style={{ fontSize: "12px" }} stroke="#6b7280" />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "white",
-                        border: "1px solid #e5e7eb",
-                        borderRadius: "6px",
-                      }}
-                    />
                     <ReferenceLine y={0} stroke="#363b4c" strokeWidth={2} />
                     <Area
                       type="monotone"
@@ -448,9 +459,44 @@ export default function ChildProductDetailPage() {
                       stroke="#363b4c"
                       strokeWidth={2}
                       fill="url(#colorStock)"
+                      dot={(props: { cx?: number; cy?: number; payload?: StockProjection }) => {
+                        const { cx, cy, payload } = props;
+                        if (cx == null || cy == null || !payload) return null;
+                        const isHovered = hoveredProjPoint?.data.date === payload.date;
+                        return (
+                          <circle
+                            key={`proj-dot-${payload.date}`}
+                            cx={cx}
+                            cy={cy}
+                            r={isHovered ? 6 : 4}
+                            fill={isHovered ? "#2d3143" : "#363b4c"}
+                            stroke="white"
+                            strokeWidth={2}
+                            style={{ cursor: "default" }}
+                            onMouseEnter={() => setHoveredProjPoint({ data: payload, cx, cy })}
+                          />
+                        );
+                      }}
+                      activeDot={false}
                     />
                   </AreaChart>
                 </ResponsiveContainer>
+                {hoveredProjPoint && (
+                  <div
+                    className="pointer-events-none absolute z-10 bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-sm whitespace-nowrap"
+                    style={{
+                      left: hoveredProjPoint.cx + 12,
+                      top: Math.max(4, hoveredProjPoint.cy - 60),
+                    }}
+                  >
+                    <p className="font-semibold text-gray-800">{hoveredProjPoint.data.date}</p>
+                    <p className="text-gray-600 mt-1">Stock level: {hoveredProjPoint.data.level}</p>
+                    {hoveredProjPoint.data.annotation && (
+                      <p className="text-blue-600 mt-1">{hoveredProjPoint.data.annotation}</p>
+                    )}
+                  </div>
+                )}
+                </div>
               </>
             )}
 
@@ -517,6 +563,10 @@ export default function ChildProductDetailPage() {
                     No committed transactions found for the selected timeframe.
                   </div>
                 ) : (
+                  <div
+                    className="relative"
+                    onMouseLeave={() => setHoveredHistPoint(null)}
+                  >
                   <ResponsiveContainer width="100%" height={300}>
                     <ComposedChart data={historicalData}>
                       <defs>
@@ -528,35 +578,6 @@ export default function ChildProductDetailPage() {
                       <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                       <XAxis dataKey="date" style={{ fontSize: "12px" }} stroke="#6b7280" />
                       <YAxis style={{ fontSize: "12px" }} stroke="#6b7280" />
-                      <Tooltip
-                        content={({ active, payload }) => {
-                          if (!active || !payload?.length) return null;
-                          const d = payload[0].payload as HistoricalDataPoint;
-                          return (
-                            <div
-                              className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-sm"
-                              style={{ pointerEvents: "none" }}
-                            >
-                              <p className="font-semibold text-gray-800">
-                                {new Date(d.raw_date).toLocaleString("en-US", {
-                                  month: "short",
-                                  day: "numeric",
-                                  year: "numeric",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
-                              </p>
-                              <p className={`font-medium mt-1 ${d.quantity_delta > 0 ? "text-green-600" : "text-red-600"}`}>
-                                {d.quantity_delta > 0 ? "+" : ""}{d.quantity_delta} units
-                              </p>
-                              <p className="text-gray-600">Stock level: {d.stock_level}</p>
-                              {d.order_id && (
-                                <p className="text-blue-600 mt-1">Order #{d.order_id} — click to open</p>
-                              )}
-                            </div>
-                          );
-                        }}
-                      />
                       <ReferenceLine y={0} stroke="#363b4c" strokeWidth={2} />
                       <Area
                         type="monotone"
@@ -564,20 +585,22 @@ export default function ChildProductDetailPage() {
                         stroke="#363b4c"
                         strokeWidth={2}
                         fill="url(#colorHistStock)"
-                        dot={(props: DotProps & { payload?: HistoricalDataPoint }) => {
+                        dot={(props: { cx?: number; cy?: number; payload?: HistoricalDataPoint }) => {
                           const { cx, cy, payload } = props;
-                          if (cx == null || cy == null || !payload) return <g key="dot-empty" />;
+                          if (cx == null || cy == null || !payload) return null;
                           const hasOrder = Boolean(payload.order_id);
+                          const isHovered = hoveredHistPoint?.data.transaction_id === payload.transaction_id;
                           return (
                             <circle
                               key={`dot-${payload.transaction_id}`}
                               cx={cx}
                               cy={cy}
-                              r={hasOrder ? 6 : 4}
-                              fill={hasOrder ? "#3b82f6" : "#363b4c"}
+                              r={isHovered ? (hasOrder ? 8 : 6) : (hasOrder ? 6 : 4)}
+                              fill={getDotFill(isHovered, hasOrder)}
                               stroke="white"
                               strokeWidth={2}
                               style={{ cursor: hasOrder ? "pointer" : "default" }}
+                              onMouseEnter={() => setHoveredHistPoint({ data: payload, cx, cy })}
                               onClick={() => {
                                 if (payload.order_id) {
                                   window.open(`/orders/${payload.order_id}`, "_blank");
@@ -586,28 +609,7 @@ export default function ChildProductDetailPage() {
                             />
                           );
                         }}
-                        activeDot={(props: DotProps & { payload?: HistoricalDataPoint }) => {
-                          const { cx, cy, payload } = props;
-                          if (cx == null || cy == null || !payload) return <g key="active-dot-empty" />;
-                          const hasOrder = Boolean(payload.order_id);
-                          return (
-                            <circle
-                              key={`active-dot-${payload.transaction_id}`}
-                              cx={cx}
-                              cy={cy}
-                              r={hasOrder ? 8 : 6}
-                              fill={hasOrder ? "#2563eb" : "#363b4c"}
-                              stroke="white"
-                              strokeWidth={2}
-                              style={{ cursor: hasOrder ? "pointer" : "default" }}
-                              onClick={() => {
-                                if (payload.order_id) {
-                                  window.open(`/orders/${payload.order_id}`, "_blank");
-                                }
-                              }}
-                            />
-                          );
-                        }}
+                        activeDot={false}
                       />
                       <Line
                         type="monotone"
@@ -618,6 +620,33 @@ export default function ChildProductDetailPage() {
                       />
                     </ComposedChart>
                   </ResponsiveContainer>
+                  {hoveredHistPoint && (
+                    <div
+                      className="pointer-events-none absolute z-10 bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-sm whitespace-nowrap"
+                      style={{
+                        left: hoveredHistPoint.cx + 12,
+                        top: Math.max(4, hoveredHistPoint.cy - 60),
+                      }}
+                    >
+                      <p className="font-semibold text-gray-800">
+                        {new Date(hoveredHistPoint.data.raw_date).toLocaleString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                      <p className={`font-medium mt-1 ${hoveredHistPoint.data.quantity_delta > 0 ? "text-green-600" : "text-red-600"}`}>
+                        {hoveredHistPoint.data.quantity_delta > 0 ? "+" : ""}{hoveredHistPoint.data.quantity_delta} units
+                      </p>
+                      <p className="text-gray-600">Stock level: {hoveredHistPoint.data.stock_level}</p>
+                      {hoveredHistPoint.data.order_id && (
+                        <p className="text-blue-600 mt-1">Order #{hoveredHistPoint.data.order_id} — click to open</p>
+                      )}
+                    </div>
+                  )}
+                  </div>
                 )}
               </>
             )}
