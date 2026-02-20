@@ -91,6 +91,7 @@ export default function ProductDetailPage() {
   const [histCustomEnd, setHistCustomEnd] = useState("");
   const [ledgerItems, setLedgerItems] = useState<LedgerItem[]>([]);
   const [ledgerLoading, setLedgerLoading] = useState(false);
+  const [ledgerError, setLedgerError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!productId) return;
@@ -291,6 +292,7 @@ export default function ProductDetailPage() {
 
     const loadLedger = async () => {
       setLedgerLoading(true);
+      setLedgerError(null);
       try {
         const numericProductId = Number(productId);
         const [parentLedger, productData] = await Promise.all([
@@ -316,45 +318,7 @@ export default function ProductDetailPage() {
         setLedgerItems(allItems);
       } catch (error) {
         console.error("Failed to load ledger data:", error);
-        // Fallback mock data
-        setLedgerItems([
-          {
-            id: 1,
-            created_at: new Date(Date.now() - 30 * 86400000).toISOString(),
-            last_updated_at: new Date(Date.now() - 30 * 86400000).toISOString(),
-            reason: "receive",
-            quantity_delta: 50,
-            order_id: null,
-            state: "committed",
-            note: "Initial stock",
-            ledger_sequence: 1,
-            running_balance: 50,
-          },
-          {
-            id: 2,
-            created_at: new Date(Date.now() - 20 * 86400000).toISOString(),
-            last_updated_at: new Date(Date.now() - 20 * 86400000).toISOString(),
-            reason: "shipment",
-            quantity_delta: -15,
-            order_id: 5678,
-            state: "committed",
-            note: "Order #5678",
-            ledger_sequence: 2,
-            running_balance: 35,
-          },
-          {
-            id: 3,
-            created_at: new Date(Date.now() - 10 * 86400000).toISOString(),
-            last_updated_at: new Date(Date.now() - 10 * 86400000).toISOString(),
-            reason: "adjustment",
-            quantity_delta: 5,
-            order_id: null,
-            state: "committed",
-            note: "Physical count correction",
-            ledger_sequence: 3,
-            running_balance: 40,
-          },
-        ]);
+        setLedgerError("Failed to load historical data. Please try again.");
       } finally {
         setLedgerLoading(false);
       }
@@ -789,6 +753,10 @@ export default function ProductDetailPage() {
                   <div className="flex items-center justify-center h-[300px] text-gray-500">
                     Loading historical data…
                   </div>
+                ) : ledgerError ? (
+                  <div className="flex items-center justify-center h-[300px] text-red-500">
+                    {ledgerError}
+                  </div>
                 ) : historicalData.length === 0 ? (
                   <div className="flex items-center justify-center h-[300px] text-gray-500">
                     No committed transactions found for the selected timeframe.
@@ -843,7 +811,7 @@ export default function ProductDetailPage() {
                         fill="url(#colorHistStock)"
                         dot={(props: DotProps & { payload?: HistoricalDataPoint }) => {
                           const { cx, cy, payload } = props;
-                          if (cx == null || cy == null || !payload) return <g key={`dot-empty-${cx}-${cy}`} />;
+                          if (cx == null || cy == null || !payload) return <g key="dot-empty" />;
                           const hasOrder = Boolean(payload.order_id);
                           return (
                             <circle
@@ -865,7 +833,7 @@ export default function ProductDetailPage() {
                         }}
                         activeDot={(props: DotProps & { payload?: HistoricalDataPoint }) => {
                           const { cx, cy, payload } = props;
-                          if (cx == null || cy == null || !payload) return <g key={`active-dot-empty-${cx}-${cy}`} />;
+                          if (cx == null || cy == null || !payload) return <g key="active-dot-empty" />;
                           const hasOrder = Boolean(payload.order_id);
                           return (
                             <circle

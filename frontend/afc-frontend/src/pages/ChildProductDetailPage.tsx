@@ -64,6 +64,7 @@ export default function ChildProductDetailPage() {
   const [histCustomEnd, setHistCustomEnd] = useState("");
   const [ledgerItems, setLedgerItems] = useState<LedgerItem[]>([]);
   const [ledgerLoading, setLedgerLoading] = useState(false);
+  const [ledgerError, setLedgerError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!childProductId) return;
@@ -136,37 +137,13 @@ export default function ChildProductDetailPage() {
 
     const loadLedger = async () => {
       setLedgerLoading(true);
+      setLedgerError(null);
       try {
         const ledger = await fetchChildProductLedger(Number(childProductId), 1, 500);
         setLedgerItems(ledger.results || []);
       } catch (error) {
         console.error("Failed to load ledger data:", error);
-        setLedgerItems([
-          {
-            id: 1,
-            created_at: new Date(Date.now() - 30 * 86400000).toISOString(),
-            last_updated_at: new Date(Date.now() - 30 * 86400000).toISOString(),
-            reason: "receive",
-            quantity_delta: 50,
-            order_id: null,
-            state: "committed",
-            note: "Initial stock",
-            ledger_sequence: 1,
-            running_balance: 50,
-          },
-          {
-            id: 2,
-            created_at: new Date(Date.now() - 15 * 86400000).toISOString(),
-            last_updated_at: new Date(Date.now() - 15 * 86400000).toISOString(),
-            reason: "shipment",
-            quantity_delta: -10,
-            order_id: 1234,
-            state: "committed",
-            note: "Order fulfilled",
-            ledger_sequence: 2,
-            running_balance: 40,
-          },
-        ]);
+        setLedgerError("Failed to load historical data. Please try again.");
       } finally {
         setLedgerLoading(false);
       }
@@ -531,6 +508,10 @@ export default function ChildProductDetailPage() {
                   <div className="flex items-center justify-center h-[300px] text-gray-500">
                     Loading historical data…
                   </div>
+                ) : ledgerError ? (
+                  <div className="flex items-center justify-center h-[300px] text-red-500">
+                    {ledgerError}
+                  </div>
                 ) : historicalData.length === 0 ? (
                   <div className="flex items-center justify-center h-[300px] text-gray-500">
                     No committed transactions found for the selected timeframe.
@@ -585,7 +566,7 @@ export default function ChildProductDetailPage() {
                         fill="url(#colorHistStock)"
                         dot={(props: DotProps & { payload?: HistoricalDataPoint }) => {
                           const { cx, cy, payload } = props;
-                          if (cx == null || cy == null || !payload) return <g key={`dot-empty-${cx}-${cy}`} />;
+                          if (cx == null || cy == null || !payload) return <g key="dot-empty" />;
                           const hasOrder = Boolean(payload.order_id);
                           return (
                             <circle
@@ -607,7 +588,7 @@ export default function ChildProductDetailPage() {
                         }}
                         activeDot={(props: DotProps & { payload?: HistoricalDataPoint }) => {
                           const { cx, cy, payload } = props;
-                          if (cx == null || cy == null || !payload) return <g key={`active-dot-empty-${cx}-${cy}`} />;
+                          if (cx == null || cy == null || !payload) return <g key="active-dot-empty" />;
                           const hasOrder = Boolean(payload.order_id);
                           return (
                             <circle
