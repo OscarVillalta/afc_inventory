@@ -594,7 +594,7 @@ export default function ConversionsPage() {
 
   return (
     <MainLayout>
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 space-y-6">
+      <div className="max-w-10xl px-3 sm:px-6 space-y-6">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">Production Batches</h1>
