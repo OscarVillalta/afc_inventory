@@ -109,7 +109,7 @@ const mockData: PackingSlipRow[] = [
 
 function StatusPill({ status }: { status: string }) {
   const s = status.toLowerCase();
-  let cls = "inline-flex items-center gap-1.5 rounded-lg px-3 py-1 text-sm font-semibold ";
+  let cls = "inline-flex items-center gap-1.5 rounded-lg px-3 py-1 text-base font-semibold ";
   let dotCls = "w-1.5 h-1.5 rounded-full shrink-0 ";
   if (s.includes("deliver") || s.includes("complet")) {
     cls += "bg-green-100 text-green-700";
@@ -134,7 +134,7 @@ function StatusPill({ status }: { status: string }) {
 
 function TypePill({ type }: { type: string }) {
   const t = type.toLowerCase();
-  let cls = "inline-flex items-center gap-2 rounded-lg px-3 py-1 text-sm font-semibold ";
+  let cls = "inline-flex items-center gap-2 rounded-lg px-3 py-1 text-base font-semibold ";
   if (t.includes("installation")) cls += "bg-blue-100 text-blue-700";
   else if (t.includes("delivery")) cls += "bg-teal-100 text-teal-700";
   else if (t.includes("shipping")) cls += "bg-cyan-100 text-cyan-700";
@@ -330,38 +330,35 @@ function ExpandedPanel({ row, onCollapse }: { row: PackingSlipRow; onCollapse: (
               <span className="mx-2 text-slate-400">·</span>
               <span className="text-base font-semibold text-slate-600">{row.customer}</span>
             </div>
-            <button
-              onClick={onCollapse}
-              className="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-colors"
-              aria-label="Collapse"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-              </svg>
-            </button>
           </div>
 
-          <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">Progress</p>
+          <div className="flex">
+            <div>
+              <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">Progress</p>
 
-          {/* Progress Stepper */}
-          <ProgressStepper steps={steps} />
+              {/* Progress Stepper */}
+              <ProgressStepper steps={steps} />
 
-          {/* Footer info */}
-          <div className="mt-4 flex flex-col sm:flex-row gap-4 text-sm text-slate-600">
-            {lastCompleted && (
-              <div>
-                <span className="font-medium text-slate-700">Last action: </span>
-                {lastCompleted.label} completed
-                {lastCompleted.timestamp ? ` at ${lastCompleted.timestamp}` : ""}
+              {/* Footer info */}
+              <div className="mt-4 flex flex-col sm:flex-row gap-4 text-sm text-slate-600">
+                {lastCompleted && (
+                  <div>
+                    <span className="font-medium text-slate-700">Last action: </span>
+                    {lastCompleted.label} completed
+                    {lastCompleted.timestamp ? ` at ${lastCompleted.timestamp}` : ""}
+                  </div>
+                )}
+                
               </div>
-            )}
-            {row.notes && (
-              <div>
-                <span className="font-medium text-slate-700">Notes: </span>
-                {row.notes}
-              </div>
-            )}
+            </div>
+
+            <div className="grow ml-5">
+              <span className="font-medium text-slate-700">Notes</span>
+                <div className="h-full w-full mt-1 text-sm text-slate-600 ">{row.notes}</div>
+            </div>
           </div>
+
+          
         </div>
       </td>
     </tr>
@@ -558,7 +555,7 @@ export default function PackingSlipTrackerPage() {
             <table className="w-full table-fixed border-separate border-spacing-0 text-sm">
               <colgroup>
                 <col className="w-36" />
-                <col />
+                <col className="w-128"/>
                 <col className="w-36" />
                 <col className="w-40" />
                 <col className="w-36" />
@@ -621,7 +618,7 @@ export default function PackingSlipTrackerPage() {
                       <td className="px-4 py-3 border-b border-slate-200/60 border-r border-slate-200/50">
                         <span className="font-semibold text-slate-900">{row.packingSlipNo}</span>
                       </td>
-                      <td className="px-4 py-3 border-b border-slate-200/60 border-r border-slate-200/50 font-medium text-slate-800 max-w-0">
+                      <td className="px-4 py-3 border-b border-slate-200/60 border-r border-slate-200/50 font-medium text-slate-800 max-w-1">
                         <span className="truncate block" title={row.customer}>{row.customer}</span>
                       </td>
                       <td className="px-4 py-3 border-b border-slate-200/60 border-r border-slate-200/50">

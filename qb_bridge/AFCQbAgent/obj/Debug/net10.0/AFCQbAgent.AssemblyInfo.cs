@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AFCQbAgent")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e9d704ec6eac8dcb68b0da7f35e53f18edc5bb03")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2f164c1726985cf01f3675e93359c08889182825")]
 [assembly: System.Reflection.AssemblyProductAttribute("AFCQbAgent")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AFCQbAgent")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
