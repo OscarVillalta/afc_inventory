@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import React from "react";
 import MainLayout from "../layouts/MainLayout";
 
 // ─────────────────────────────────────────────
@@ -108,22 +109,44 @@ const mockData: PackingSlipRow[] = [
 
 function StatusPill({ status }: { status: string }) {
   const s = status.toLowerCase();
-  let cls = "badge text-xs font-medium px-2 py-1 rounded-full ";
-  if (s.includes("deliver") || s.includes("complet")) cls += "bg-green-100 text-green-700 border border-green-200";
-  else if (s.includes("pending") || s.includes("progress")) cls += "bg-yellow-100 text-yellow-700 border border-yellow-200";
-  else if (s.includes("back order") || s.includes("backorder")) cls += "bg-red-100 text-red-700 border border-red-200";
-  else cls += "bg-gray-100 text-gray-600 border border-gray-200";
-  return <span className={cls}>{status || "Not Started"}</span>;
+  let cls = "inline-flex items-center gap-1.5 rounded-lg px-3 py-1 text-sm font-semibold ";
+  let dotCls = "w-1.5 h-1.5 rounded-full shrink-0 ";
+  if (s.includes("deliver") || s.includes("complet")) {
+    cls += "bg-green-100 text-green-700";
+    dotCls += "bg-green-500";
+  } else if (s.includes("pending") || s.includes("progress")) {
+    cls += "bg-yellow-100 text-yellow-700";
+    dotCls += "bg-yellow-500";
+  } else if (s.includes("back order") || s.includes("backorder")) {
+    cls += "bg-red-100 text-red-700";
+    dotCls += "bg-red-500";
+  } else {
+    cls += "bg-slate-100 text-slate-600";
+    dotCls += "bg-slate-400";
+  }
+  return (
+    <span className={cls}>
+      <span className={dotCls} />
+      {status || "Not Started"}
+    </span>
+  );
 }
 
 function TypePill({ type }: { type: string }) {
   const t = type.toLowerCase();
-  let cls = "badge text-xs font-medium px-2 py-1 rounded-full ";
-  if (t.includes("installation")) cls += "bg-blue-100 text-blue-700 border border-blue-200";
-  else if (t.includes("delivery")) cls += "bg-teal-100 text-teal-700 border border-teal-200";
-  else if (t.includes("shipping")) cls += "bg-indigo-100 text-indigo-700 border border-indigo-200";
-  else cls += "bg-gray-100 text-gray-600 border border-gray-200";
-  return <span className={cls}>{type}</span>;
+  let cls = "inline-flex items-center gap-2 rounded-lg px-3 py-1 text-sm font-semibold ";
+  if (t.includes("installation")) cls += "bg-blue-100 text-blue-700";
+  else if (t.includes("delivery")) cls += "bg-teal-100 text-teal-700";
+  else if (t.includes("shipping")) cls += "bg-cyan-100 text-cyan-700";
+  else cls += "bg-slate-100 text-slate-600";
+  return (
+    <span className={cls}>
+      <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 17L17 7M17 7H7M17 7v10" />
+      </svg>
+      {type}
+    </span>
+  );
 }
 
 function StepCircle({ state }: { state: StepState }) {
@@ -298,39 +321,43 @@ function ExpandedPanel({ row, onCollapse }: { row: PackingSlipRow; onCollapse: (
 
   return (
     <tr>
-      <td colSpan={7} className="p-0">
-        <div className="bg-blue-50 border-t border-blue-100 px-6 py-4">
+      <td colSpan={7} className="p-0 border-b border-slate-200/60">
+        <div className="bg-slate-50/60 mx-3 my-2 rounded-xl border border-slate-200/60 p-4 sm:p-5">
           {/* Header */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-3">
             <div>
-              <span className="text-base font-bold text-gray-800">{row.packingSlipNo}</span>
-              <span className="mx-2 text-gray-400">·</span>
-              <span className="text-base font-semibold text-gray-600">{row.customer}</span>
+              <span className="text-base font-bold text-slate-900">{row.packingSlipNo}</span>
+              <span className="mx-2 text-slate-400">·</span>
+              <span className="text-base font-semibold text-slate-600">{row.customer}</span>
             </div>
             <button
               onClick={onCollapse}
-              className="text-gray-400 hover:text-gray-600 transition text-lg"
+              className="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-colors"
               aria-label="Collapse"
             >
-              ▲
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+              </svg>
             </button>
           </div>
+
+          <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">Progress</p>
 
           {/* Progress Stepper */}
           <ProgressStepper steps={steps} />
 
           {/* Footer info */}
-          <div className="mt-4 flex flex-col sm:flex-row gap-4 text-sm text-gray-600">
+          <div className="mt-4 flex flex-col sm:flex-row gap-4 text-sm text-slate-600">
             {lastCompleted && (
               <div>
-                <span className="font-medium text-gray-700">Last action: </span>
+                <span className="font-medium text-slate-700">Last action: </span>
                 {lastCompleted.label} completed
                 {lastCompleted.timestamp ? ` at ${lastCompleted.timestamp}` : ""}
               </div>
             )}
             {row.notes && (
               <div>
-                <span className="font-medium text-gray-700">Notes: </span>
+                <span className="font-medium text-slate-700">Notes: </span>
                 {row.notes}
               </div>
             )}
@@ -372,24 +399,28 @@ function Pagination({
   }
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-gray-100 text-sm text-gray-600">
-      <span>{total === 0 ? "No results" : `${start}–${end} of ${total}`}</span>
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-2 px-4 py-3 border-t border-slate-200/70 text-sm">
+      <span className="text-slate-500">{total === 0 ? "No results" : `${start}–${end} of ${total}`}</span>
       <div className="flex items-center gap-1">
         <button
           disabled={page <= 1}
           onClick={() => onPageChange(page - 1)}
-          className="btn btn-xs btn-ghost disabled:opacity-40"
+          className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 disabled:opacity-40 transition-colors"
         >
           ‹
         </button>
         {pages.map((p, i) =>
           p === "…" ? (
-            <span key={`ellipsis-${i}`} className="px-1 text-gray-400">…</span>
+            <span key={`ellipsis-${i}`} className="px-1 text-slate-400">…</span>
           ) : (
             <button
               key={p}
               onClick={() => onPageChange(p as number)}
-              className={`btn btn-xs ${page === p ? "btn-primary" : "btn-ghost"}`}
+              className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm transition-colors ${
+                page === p
+                  ? "bg-slate-700 text-white"
+                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+              }`}
             >
               {p}
             </button>
@@ -398,7 +429,7 @@ function Pagination({
         <button
           disabled={page >= totalPages}
           onClick={() => onPageChange(page + 1)}
-          className="btn btn-xs btn-ghost disabled:opacity-40"
+          className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 disabled:opacity-40 transition-colors"
         >
           ›
         </button>
@@ -520,71 +551,129 @@ export default function PackingSlipTrackerPage() {
         <KpiCards data={mockData} />
 
         {/* ── Table Card ──────────────────────────── */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/70 p-3 sm:p-4">
 
           {/* Table scroll wrapper */}
           <div className="overflow-x-auto">
-            <table className="table w-full text-sm">
-              <thead className="bg-gray-50 text-gray-500 border-b border-gray-200">
+            <table className="w-full table-fixed border-separate border-spacing-0 text-sm">
+              <colgroup>
+                <col className="w-36" />
+                <col />
+                <col className="w-36" />
+                <col className="w-40" />
+                <col className="w-36" />
+                <col className="w-14" />
+                <col className="w-12" />
+              </colgroup>
+              <thead>
                 <tr>
-                  <th className="py-3 px-4 text-left font-medium">Packing Slip #</th>
-                  <th className="py-3 px-4 text-left font-medium">Customer</th>
-                  <th className="py-3 px-4 text-left font-medium">Type</th>
-                  <th className="py-3 px-4 text-left font-medium">Status</th>
-                  <th className="py-3 px-4 text-left font-medium">Last Updated</th>
-                  <th className="py-3 px-4 text-left font-medium">Notes</th>
-                  <th className="py-3 px-4 w-10" />
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600 bg-slate-50 border-b border-slate-200/70 border-r border-slate-200/60 rounded-tl-xl">
+                    Packing Slip #
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600 bg-slate-50 border-b border-slate-200/70 border-r border-slate-200/60">
+                    Customer
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600 bg-slate-50 border-b border-slate-200/70 border-r border-slate-200/60">
+                    Type
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600 bg-slate-50 border-b border-slate-200/70 border-r border-slate-200/60">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600 bg-slate-50 border-b border-slate-200/70 border-r border-slate-200/60">
+                    <span className="inline-flex items-center gap-1">
+                      Last Updated
+                      <svg className="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </span>
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600 bg-slate-50 border-b border-slate-200/70 border-r border-slate-200/60">
+                    Notes
+                  </th>
+                  <th className="px-4 py-3 bg-slate-50 border-b border-slate-200/70 rounded-tr-xl w-12" />
                 </tr>
               </thead>
 
               <tbody>
                 {pageRows.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="py-12 text-center text-gray-400">
+                    <td colSpan={7} className="py-12 text-center text-slate-400">
                       No records found.
                     </td>
                   </tr>
                 )}
 
-                {pageRows.map((row) => (
-                  <>
+                {pageRows.map((row, rowIndex) => (
+                  <React.Fragment key={row.id}>
                     <tr
-                      key={row.id}
                       role="button"
                       tabIndex={0}
-                      className={`border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition ${
-                        expandedId === row.id ? "bg-blue-50" : ""
+                      className={`cursor-pointer transition-colors ${
+                        expandedId === row.id
+                          ? "bg-blue-50/60"
+                          : rowIndex % 2 === 0
+                          ? "bg-white hover:bg-slate-100/60"
+                          : "bg-slate-50/40 hover:bg-slate-100/60"
                       }`}
                       onClick={() => toggleExpand(row.id)}
                       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleExpand(row.id); } }}
                     >
-                      <td className="py-3 px-4 font-medium text-gray-800">{row.packingSlipNo}</td>
-                      <td className="py-3 px-4 text-gray-700">{row.customer}</td>
-                      <td className="py-3 px-4"><TypePill type={row.type} /></td>
-                      <td className="py-3 px-4"><StatusPill status={row.status} /></td>
-                      <td className="py-3 px-4 text-gray-500">{row.lastUpdated}</td>
-                      <td className="py-3 px-4 text-gray-500 max-w-xs">
+                      <td className="px-4 py-3 border-b border-slate-200/60 border-r border-slate-200/50">
+                        <span className="font-semibold text-slate-900">{row.packingSlipNo}</span>
+                      </td>
+                      <td className="px-4 py-3 border-b border-slate-200/60 border-r border-slate-200/50 font-medium text-slate-800 max-w-0">
+                        <span className="truncate block" title={row.customer}>{row.customer}</span>
+                      </td>
+                      <td className="px-4 py-3 border-b border-slate-200/60 border-r border-slate-200/50">
+                        <TypePill type={row.type} />
+                      </td>
+                      <td className="px-4 py-3 border-b border-slate-200/60 border-r border-slate-200/50">
+                        <StatusPill status={row.status} />
+                      </td>
+                      <td className="px-4 py-3 border-b border-slate-200/60 border-r border-slate-200/50 text-slate-700 font-medium">
+                        {row.lastUpdated}
+                      </td>
+                      <td className="px-4 py-3 border-b border-slate-200/60 border-r border-slate-200/50 text-center">
                         {row.notes ? (
-                          <span className="truncate block max-w-xs" title={row.notes}>
-                            {row.notes}
-                          </span>
+                          <div
+                            className="w-8 h-8 rounded-lg bg-slate-200 flex items-center justify-center text-slate-600 mx-auto"
+                            title={row.notes}
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                          </div>
                         ) : (
-                          <span className="text-gray-300">—</span>
+                          <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-300 mx-auto">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                          </div>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-gray-400 text-center select-none">
-                        {expandedId === row.id ? "▲" : "▼"}
+                      <td className="px-4 py-3 border-b border-slate-200/60 text-center">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); toggleExpand(row.id); }}
+                          className="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-colors mx-auto"
+                          aria-label={expandedId === row.id ? "Collapse" : "Expand"}
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            {expandedId === row.id
+                              ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                              : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            }
+                          </svg>
+                        </button>
                       </td>
                     </tr>
 
                     {expandedId === row.id && (
                       <ExpandedPanel
-                        key={`expanded-${row.id}`}
                         row={row}
                         onCollapse={() => setExpandedId(null)}
                       />
                     )}
-                  </>
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>
