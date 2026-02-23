@@ -10,9 +10,13 @@ export interface OrderItemPayload {
   part_number: string;
   quantity_ordered: number;
   quantity_fulfilled: number;
+  quantity_pending: number;
   status:string;
   note?: string;
   position: number;
+  on_hand: number | null;
+  reserved: number | null;
+  available: number | null;
 }
 
 export interface OrderItemTransaction {

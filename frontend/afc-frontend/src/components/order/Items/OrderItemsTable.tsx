@@ -21,6 +21,7 @@ import { reorderOrderItems } from "../../../api/orderDetail";
 import AddOrderItemForm from "../Sections/AddOrderItem";
 import OrderItemRow from "../Sections/OrderItemRow";
 import LineItemsMenu from "./LineItemsMenu";
+import OrderTotalsTab from "./OrderTotalsTab";
 
 interface Props {
   orderId: number;
@@ -469,9 +470,7 @@ export default function OrderItemsTable({
           </table>
         </DndContext>
         ) : (
-          <div className="p-8 text-center text-gray-400 italic">
-            Totals coming soon
-          </div>
+          <OrderTotalsTab items={localItems} orderType={orderType} />
         )}
       </div>
 
