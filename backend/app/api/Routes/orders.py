@@ -174,12 +174,31 @@ def get_order_items(order_id):
 
     # Sort items by position
     sorted_items = sorted(order.items, key=lambda x: x.position)
-    
+
+    # Batch fetch pending transaction quantities per order item (avoid N+1 queries)
+    pending_by_item: dict = {}
+    if sorted_items:
+        item_ids = [item.id for item in sorted_items]
+        pending_rows = db.execute(
+            select(
+                Transaction.order_item_id,
+                func.sum(func.abs(Transaction.quantity_delta)).label("pending_qty")
+            )
+            .where(Transaction.order_item_id.in_(item_ids))
+            .where(Transaction.state == "pending")
+            .group_by(Transaction.order_item_id)
+        ).all()
+        pending_by_item = {row.order_item_id: row.pending_qty for row in pending_rows}
+
     items = []
     for item in sorted_items:
         if item.type in ("Unit_Separator", "Section_Separator"):
             # Separator items don't have a product
             part_number = ""
+            on_hand = None
+            reserved = None
+            available = None
+            quantity_pending = 0
         else:
             product = item.product
 
@@ -191,7 +210,13 @@ def get_order_items(order_id):
                 part_number = f"Product #{product.id}"
             else:
                 part_number = "Unknown product"
-        
+
+            qty_record = product.quantity if product else None
+            on_hand = qty_record.on_hand if qty_record else None
+            reserved = qty_record.reserved if qty_record else None
+            available = qty_record.available if qty_record else None
+            quantity_pending = pending_by_item.get(item.id, 0)
+
         items.append({
             "id": item.id,
             "order_id": item.order_id,
@@ -200,9 +225,13 @@ def get_order_items(order_id):
             "part_number": part_number,
             "quantity_ordered": item.quantity_ordered,
             "quantity_fulfilled": item.quantity_fulfilled,
+            "quantity_pending": quantity_pending,
             "status": item.status,
             "note": item.note,
             "position": item.position,
+            "on_hand": on_hand,
+            "reserved": reserved,
+            "available": available,
         })
 
     return jsonify(items), 200
