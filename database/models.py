@@ -107,6 +107,7 @@ class Supplier(Base, SerializerMixin):
 
     air_filters: Mapped[List["AirFilter"]] = relationship(back_populates="supplier")
     misc_items: Mapped[List["MiscItem"]] = relationship(back_populates="supplier")
+    stock_items: Mapped[List["StockItem"]] = relationship(back_populates="supplier")
     orders: Mapped[List["Order"]] = relationship(back_populates="supplier")
 
 
@@ -130,6 +131,15 @@ class AirFilterCategory(Base, SerializerMixin):
     name: Mapped[str] = mapped_column(unique=True, nullable=False)
 
     air_filters: Mapped[List["AirFilter"]] = relationship("AirFilter", back_populates="category")
+
+
+class StockItemCategory(Base, SerializerMixin):
+    __tablename__ = "stock_item_categories"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(unique=True, nullable=False)
+
+    stock_items: Mapped[List["StockItem"]] = relationship("StockItem", back_populates="category")
 
 
 # =====================================================
@@ -200,6 +210,37 @@ class MiscItem(Base, SerializerMixin):
     )
 
 
+class StockItem(Base, SerializerMixin):
+    __tablename__ = "stock_items"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(String(255))
+    supplier_id: Mapped[int] = mapped_column(ForeignKey("suppliers.id"), nullable=False)
+    category_id: Mapped[int] = mapped_column(ForeignKey("stock_item_categories.id"), nullable=False)
+
+    supplier: Mapped["Supplier"] = relationship(back_populates="stock_items")
+    category: Mapped["StockItemCategory"] = relationship(back_populates="stock_items")
+
+    product: Mapped[Optional["Product"]] = relationship(
+        "Product",
+        primaryjoin=lambda: Product.reference_id == foreign(StockItem.id),
+        foreign_keys=lambda: [Product.reference_id],
+        back_populates="stock_item",
+        uselist=False,
+        viewonly=True,
+    )
+
+    child_product: Mapped[Optional["ChildProduct"]] = relationship(
+        "ChildProduct",
+        primaryjoin=lambda: ChildProduct.reference_id == foreign(StockItem.id),
+        foreign_keys=lambda: [ChildProduct.reference_id],
+        back_populates="stock_item",
+        uselist=False,
+        viewonly=True,
+    )
+
+
 # =====================================================
 # 🔹 Product (Catalog Root w/ Soft Delete)
 # =====================================================
@@ -226,6 +267,14 @@ class Product(Base, SerializerMixin):
     misc_item: Mapped[Optional["MiscItem"]] = relationship(
         "MiscItem",
         primaryjoin=lambda: Product.reference_id == foreign(MiscItem.id),
+        foreign_keys=lambda: [Product.reference_id],
+        back_populates="product",
+        uselist=False,
+    )
+
+    stock_item: Mapped[Optional["StockItem"]] = relationship(
+        "StockItem",
+        primaryjoin=lambda: Product.reference_id == foreign(StockItem.id),
         foreign_keys=lambda: [Product.reference_id],
         back_populates="product",
         uselist=False,
@@ -289,6 +338,14 @@ class ChildProduct(Base, SerializerMixin):
     misc_item: Mapped[Optional["MiscItem"]] = relationship(
         "MiscItem",
         primaryjoin=lambda: ChildProduct.reference_id == foreign(MiscItem.id),
+        foreign_keys=lambda: [ChildProduct.reference_id],
+        back_populates="child_product",
+        uselist=False,
+    )
+
+    stock_item: Mapped[Optional["StockItem"]] = relationship(
+        "StockItem",
+        primaryjoin=lambda: ChildProduct.reference_id == foreign(StockItem.id),
         foreign_keys=lambda: [ChildProduct.reference_id],
         back_populates="child_product",
         uselist=False,
