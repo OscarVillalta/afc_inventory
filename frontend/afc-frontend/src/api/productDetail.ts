@@ -230,3 +230,35 @@ export async function fetchProductOrders(
   ) as { results: ProductOrderSummary[] };
   return response.results || [];
 }
+
+export interface CreateChildAirFilterPayload {
+  part_number: string;
+  supplier_id: number;
+  category_id: number;
+  parent_product_id: number;
+  merv_rating?: number;
+  height?: number;
+  width?: number;
+  depth?: number;
+}
+
+export interface CreateChildMiscItemPayload {
+  name: string;
+  supplier_id: number;
+  parent_product_id: number;
+  description?: string;
+}
+
+export async function createChildAirFilter(data: CreateChildAirFilterPayload) {
+  return apiRequest("/child_products/air_filters", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function createChildMiscItem(data: CreateChildMiscItemPayload) {
+  return apiRequest("/child_products/misc_item", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
