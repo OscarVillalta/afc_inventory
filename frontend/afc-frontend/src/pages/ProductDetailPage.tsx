@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   XAxis,
@@ -27,6 +27,7 @@ import {
   type LedgerItem,
 } from "../api/productDetail";
 import { autocommitTxn } from "../api/transactions";
+import AddChildProductModal from "../components/inventory/AddChildProductModal";
 
 /* ============================================================
    TYPES
@@ -82,6 +83,9 @@ export default function ProductDetailPage() {
   const [adjustNotes, setAdjustNotes] = useState("");
   const [adjustSaving, setAdjustSaving] = useState(false);
 
+  // Add Child Product modal state
+  const [addChildProductOpen, setAddChildProductOpen] = useState(false);
+
   // Transaction filter state
   const [txnTypeFilter, setTxnTypeFilter] = useState<"all" | "planned" | "executed" | "reversed" | "adjustments">("all");
   const [txnDateRange, setTxnDateRange] = useState<7 | 30 | 90 | null>(null);
@@ -116,200 +120,199 @@ export default function ProductDetailPage() {
     return hasOrder ? "#3b82f6" : "#363b4c";
   };
 
-  useEffect(() => {
+  const loadData = useCallback(async () => {
     if (!productId) return;
+    try {
+      setLoading(true);
+      const numericProductId = Number(productId);
+      const [productData, txnData, incomingData, outgoingData, projectionData] = await Promise.all([
+        fetchProductDetail(numericProductId),
+        fetchProductTransactions(numericProductId, 1, 20),
+        fetchProductOrders(numericProductId, 'incoming', 5),
+        fetchProductOrders(numericProductId, 'outgoing', 5),
+        fetchPendingProjection(numericProductId),
+      ]);
+      setProduct(productData);
+      
+      let allTransactions = txnData.results || [];
 
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        const numericProductId = Number(productId);
-        const [productData, txnData, incomingData, outgoingData, projectionData] = await Promise.all([
-          fetchProductDetail(numericProductId),
-          fetchProductTransactions(numericProductId, 1, 20),
-          fetchProductOrders(numericProductId, 'incoming', 5),
-          fetchProductOrders(numericProductId, 'outgoing', 5),
-          fetchPendingProjection(numericProductId),
-        ]);
-        setProduct(productData);
-        
-        let allTransactions = txnData.results || [];
-
-        if (productData.child_products?.length) {
-          const childTxnResponses = await Promise.allSettled(
-            productData.child_products.map((child) =>
-              fetchProductTransactions(undefined, 1, 20, child.id)
-            )
-          );
-
-          childTxnResponses.forEach((result) => {
-            if (result.status === "fulfilled" && result.value?.results) {
-              allTransactions = allTransactions.concat(result.value.results);
-            }
-          });
-        }
-
-        allTransactions = allTransactions.sort(
-          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      if (productData.child_products?.length) {
+        const childTxnResponses = await Promise.allSettled(
+          productData.child_products.map((child) =>
+            fetchProductTransactions(undefined, 1, 20, child.id)
+          )
         );
 
-        setTransactions(allTransactions);
-        setIncomingOrders(incomingData);
-        setOutgoingOrders(outgoingData);
-        setPendingProjection(projectionData);
-      } catch (error) {
-        console.error("Failed to load product detail:", error);
-        // Use mock data for demonstration when backend is unavailable
-        // Product with ID 1 has child products, Product with ID 2 has no children
-        const hasChildren = Number(productId) === 1;
-        
-        setProduct({
-          id: Number(productId),
-          category: "Air Filters",
-          reference_id: 1,
-          details: {
-            part_number: hasChildren ? "AF-16252-11" : "AF-20304-13",
-            supplier_name: "Filter Dynamics Inc.",
-            filter_category: hasChildren ? "MERV 11" : "MERV 13",
-            height: hasChildren ? 16 : 20,
-            width: hasChildren ? 25 : 30,
-            depth: 2,
-            merv_rating: hasChildren ? 11 : 13,
-          },
-          quantity: {
-            on_hand: 45,
-            reserved: 20,
-            ordered: 60,
-            available: 25,
-            backordered: 5,
-          },
-          child_products: hasChildren ? [
-            {
-              id: 101,
-              category: "Air Filters",
-              reference_id: 10,
-              details: {
-                part_number: "AF-16252-11-ALT",
-                supplier_name: "Alternative Filters Co.",
-                filter_category: "MERV 11",
-                height: 16,
-                width: 25,
-                depth: 2,
-                merv_rating: 11,
-              },
-            },
-            {
-              id: 102,
-              category: "Air Filters",
-              reference_id: 11,
-              details: {
-                part_number: "AF-16252-11-ECO",
-                supplier_name: "Eco Filters Inc.",
-                filter_category: "MERV 11",
-                height: 16,
-                width: 25,
-                depth: 2,
-                merv_rating: 11,
-              },
-            },
-          ] : [],
+        childTxnResponses.forEach((result) => {
+          if (result.status === "fulfilled" && result.value?.results) {
+            allTransactions = allTransactions.concat(result.value.results);
+          }
         });
-        setTransactions([
-          {
-            id: 1,
-            product_id: Number(productId),
-            order_id: null,
-            quantity_delta: 50,
-            reason: "receive",
-            state: "committed",
-            note: "Shipment from supplier",
-            created_at: "2026-02-01T10:30:00Z",
-          },
-          {
-            id: 2,
-            product_id: Number(productId),
-            order_id: 5678,
-            quantity_delta: -15,
-            reason: "shipment",
-            state: "committed",
-            note: "Order #5678",
-            created_at: "2026-02-03T14:20:00Z",
-          },
-          {
-            id: 3,
-            product_id: Number(productId),
-            order_id: null,
-            quantity_delta: 5,
-            reason: "adjustment",
-            state: "committed",
-            note: "Physical count correction",
-            created_at: "2026-02-04T09:15:00Z",
-          },
-          ...(hasChildren
-            ? [
-                {
-                  id: 4,
-                  product_id: null,
-                  child_product_id: 101,
-                  order_id: 7890,
-                  quantity_delta: -3,
-                  reason: "shipment",
-                  state: "committed",
-                  note: "Child product shipment",
-                  created_at: "2026-02-05T11:00:00Z",
-                },
-              ]
-            : []),
-        ]);
-        setIncomingOrders([
-          {
-            id: 1,
-            order_number: "PO-1234",
-            type: "incoming",
-            cs_name: "Filter Dynamics Inc.",
-            status: "Pending",
-            created_at: "2026-01-15T10:00:00Z",
-            eta: "2026-03-15",
-            quantity: 100,
-          },
-          {
-            id: 2,
-            order_number: "PO-1235",
-            type: "incoming",
-            cs_name: "Filter Dynamics Inc.",
-            status: "Committed",
-            created_at: "2026-01-20T10:00:00Z",
-            eta: "2026-03-22",
-            quantity: 50,
-          },
-        ]);
-        setOutgoingOrders([
-          {
-            id: 3,
-            order_number: "ORD-5678",
-            type: "outgoing",
-            cs_name: "ABC Corp",
-            status: "Pending",
-            created_at: "2026-02-01T10:00:00Z",
-            need_by: "2026-03-01",
-            quantity: 20,
-          },
-          {
-            id: 4,
-            order_number: "ORD-5679",
-            type: "outgoing",
-            cs_name: "XYZ Inc",
-            status: "Completed",
-            created_at: "2026-02-03T10:00:00Z",
-            quantity: 10,
-          },
-        ]);
-      } finally {
-        setLoading(false);
       }
-    };
 
-    loadData();
+      allTransactions = allTransactions.sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+
+      setTransactions(allTransactions);
+      setIncomingOrders(incomingData);
+      setOutgoingOrders(outgoingData);
+      setPendingProjection(projectionData);
+    } catch (error) {
+      console.error("Failed to load product detail:", error);
+      // Use mock data for demonstration when backend is unavailable
+      // Product with ID 1 has child products, Product with ID 2 has no children
+      const hasChildren = Number(productId) === 1;
+      
+      setProduct({
+        id: Number(productId),
+        category: "Air Filters",
+        reference_id: 1,
+        details: {
+          part_number: hasChildren ? "AF-16252-11" : "AF-20304-13",
+          supplier_name: "Filter Dynamics Inc.",
+          filter_category: hasChildren ? "MERV 11" : "MERV 13",
+          height: hasChildren ? 16 : 20,
+          width: hasChildren ? 25 : 30,
+          depth: 2,
+          merv_rating: hasChildren ? 11 : 13,
+        },
+        quantity: {
+          on_hand: 45,
+          reserved: 20,
+          ordered: 60,
+          available: 25,
+          backordered: 5,
+        },
+        child_products: hasChildren ? [
+          {
+            id: 101,
+            category: "Air Filters",
+            reference_id: 10,
+            details: {
+              part_number: "AF-16252-11-ALT",
+              supplier_name: "Alternative Filters Co.",
+              filter_category: "MERV 11",
+              height: 16,
+              width: 25,
+              depth: 2,
+              merv_rating: 11,
+            },
+          },
+          {
+            id: 102,
+            category: "Air Filters",
+            reference_id: 11,
+            details: {
+              part_number: "AF-16252-11-ECO",
+              supplier_name: "Eco Filters Inc.",
+              filter_category: "MERV 11",
+              height: 16,
+              width: 25,
+              depth: 2,
+              merv_rating: 11,
+            },
+          },
+        ] : [],
+      });
+      setTransactions([
+        {
+          id: 1,
+          product_id: Number(productId),
+          order_id: null,
+          quantity_delta: 50,
+          reason: "receive",
+          state: "committed",
+          note: "Shipment from supplier",
+          created_at: "2026-02-01T10:30:00Z",
+        },
+        {
+          id: 2,
+          product_id: Number(productId),
+          order_id: 5678,
+          quantity_delta: -15,
+          reason: "shipment",
+          state: "committed",
+          note: "Order #5678",
+          created_at: "2026-02-03T14:20:00Z",
+        },
+        {
+          id: 3,
+          product_id: Number(productId),
+          order_id: null,
+          quantity_delta: 5,
+          reason: "adjustment",
+          state: "committed",
+          note: "Physical count correction",
+          created_at: "2026-02-04T09:15:00Z",
+        },
+        ...(hasChildren
+          ? [
+              {
+                id: 4,
+                product_id: null,
+                child_product_id: 101,
+                order_id: 7890,
+                quantity_delta: -3,
+                reason: "shipment",
+                state: "committed",
+                note: "Child product shipment",
+                created_at: "2026-02-05T11:00:00Z",
+              },
+            ]
+          : []),
+      ]);
+      setIncomingOrders([
+        {
+          id: 1,
+          order_number: "PO-1234",
+          type: "incoming",
+          cs_name: "Filter Dynamics Inc.",
+          status: "Pending",
+          created_at: "2026-01-15T10:00:00Z",
+          eta: "2026-03-15",
+          quantity: 100,
+        },
+        {
+          id: 2,
+          order_number: "PO-1235",
+          type: "incoming",
+          cs_name: "Filter Dynamics Inc.",
+          status: "Committed",
+          created_at: "2026-01-20T10:00:00Z",
+          eta: "2026-03-22",
+          quantity: 50,
+        },
+      ]);
+      setOutgoingOrders([
+        {
+          id: 3,
+          order_number: "ORD-5678",
+          type: "outgoing",
+          cs_name: "ABC Corp",
+          status: "Pending",
+          created_at: "2026-02-01T10:00:00Z",
+          need_by: "2026-03-01",
+          quantity: 20,
+        },
+        {
+          id: 4,
+          order_number: "ORD-5679",
+          type: "outgoing",
+          cs_name: "XYZ Inc",
+          status: "Completed",
+          created_at: "2026-02-03T10:00:00Z",
+          quantity: 10,
+        },
+      ]);
+    } finally {
+      setLoading(false);
+    }
   }, [productId]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   // Load ledger data when switching to historical tab or changing timeframe
   useEffect(() => {
@@ -970,8 +973,15 @@ export default function ProductDetailPage() {
 
           {/* ========== CHILD PRODUCTS / CREATE CHILD PRODUCT ========== */}
         <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden col-span-1">
-          <div className="bg-[#363b4c] text-white px-4 py-2">
+          <div className="bg-[#363b4c] text-white px-4 py-2 flex justify-between items-center">
             <h3 className="font-semibold">Child Products</h3>
+            <button
+              className="text-white text-sm hover:text-gray-300 transition-colors"
+              onClick={() => setAddChildProductOpen(true)}
+              title="Add a child product"
+            >
+              + Add
+            </button>
           </div>
           <div className="p-4">
             {product.child_products && product.child_products.length > 0 ? (
@@ -1012,10 +1022,7 @@ export default function ProductDetailPage() {
                 <p className="text-gray-500 mb-4">No child products</p>
                 <button
                   className="bg-[#363b4c] text-white px-6 py-2 rounded hover:bg-[#4a5063] transition-colors"
-                  onClick={() => {
-                    // TODO: Navigate to create child product page/modal
-                    alert("Create Child Product functionality coming soon!");
-                  }}
+                  onClick={() => setAddChildProductOpen(true)}
                 >
                   Create Child Product
                 </button>
@@ -1293,6 +1300,17 @@ export default function ProductDetailPage() {
           </div>
         )}
       </div>
+      {product && (
+        <AddChildProductModal
+          open={addChildProductOpen}
+          parentProductId={product.id}
+          onClose={() => setAddChildProductOpen(false)}
+          onCreated={() => {
+            setAddChildProductOpen(false);
+            loadData();
+          }}
+        />
+      )}
     </MainLayout>
   );
 }
