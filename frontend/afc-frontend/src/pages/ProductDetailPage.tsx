@@ -540,6 +540,7 @@ export default function ProductDetailPage() {
   const stockProjection = generateStockProjection();
 
   // Extract details
+  const isMiscItem = product.category === "Miscelaneous Items";
   const partNumber = product.details.part_number || product.details.name || "N/A";
   const description = product.details.filter_category
     ? `${product.details.height}x${product.details.width}x${product.details.depth} MERV ${product.details.merv_rating} Filter`
@@ -613,10 +614,15 @@ export default function ProductDetailPage() {
 
                   <div className="flex gap-6 mt-4 text-sm text-gray-600">
                     <div>
-                      <span className="font-medium">Part #:</span> {partNumber}
+                      <span className="font-medium">{isMiscItem ? "Name:" : "Part #:"}</span> {partNumber}
                     </div>
+                    {isMiscItem && product.details.description && (
+                      <div>
+                        <span className="font-medium">Description:</span> {product.details.description}
+                      </div>
+                    )}
                     <div>
-                      <span className="font-medium">Vendor:</span> {vendor}
+                      <span className="font-medium">{isMiscItem ? "Supplier:" : "Vendor:"}</span> {vendor}
                     </div>
                   </div>
                 </div>
@@ -1226,7 +1232,7 @@ export default function ProductDetailPage() {
               </div>
 
               <div className="mb-4">
-                <label className="font-medium text-sm text-gray-600">Part Number</label>
+                <label className="font-medium text-sm text-gray-600">{isMiscItem ? "Name" : "Part Number"}</label>
                 <div className="p-2 mt-1 border rounded-lg bg-gray-100 text-gray-700">{partNumber}</div>
               </div>
 

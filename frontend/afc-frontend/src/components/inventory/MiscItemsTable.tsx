@@ -8,6 +8,25 @@ import type { createTxnRequest } from "../../api/transactions";
 import { usePersistedFilters } from "../../hooks/usePersistedFilters";
 
 /* ============================================================
+   QUICK FILTER PRESETS
+============================================================ */
+
+type QuickView = "all" | "low_stock" | "backordered" | "has_orders";
+
+/* ============================================================
+   COLUMN VISIBILITY DEFAULTS
+============================================================ */
+
+const ALL_COLUMNS = ["Name", "Description", "Supplier", "Stock"] as const;
+type ColumnKey = typeof ALL_COLUMNS[number];
+const DEFAULT_VISIBLE: Record<ColumnKey, boolean> = {
+  Name: true,
+  Description: true,
+  Supplier: true,
+  Stock: true,
+};
+
+/* ============================================================
    TYPES
 ============================================================ */
 
@@ -95,6 +114,26 @@ export default function MiscItemsTable({ refreshToken }: { refreshToken?: number
     filterSupplier: "",
   });
 
+  /* ===================== QUICK VIEW ===================== */
+  const [activeView, setActiveView] = useState<QuickView>("all");
+
+  /* ===================== COLUMN VISIBILITY & DENSITY ===================== */
+  const [visibleCols, setVisibleCols] = useState<Record<ColumnKey, boolean>>({ ...DEFAULT_VISIBLE });
+  const [compact, setCompact] = useState(false);
+  const [showColMenu, setShowColMenu] = useState(false);
+
+  const toggleCol = (col: ColumnKey) =>
+    setVisibleCols((prev) => ({ ...prev, [col]: !prev[col] }));
+
+  const resetView = () => {
+    setVisibleCols({ ...DEFAULT_VISIBLE });
+    setCompact(false);
+  };
+
+  const isColVisible = useCallback((col: ColumnKey) => visibleCols[col], [visibleCols]);
+
+  const rowPadding = compact ? "py-1" : "py-3";
+
   /* ===================== EDIT MODAL ===================== */
   const [openEdit, setOpenEdit] = useState(false);
   const [editRow, setEditRow] = useState<EditFormState | null>(null);
@@ -143,7 +182,25 @@ export default function MiscItemsTable({ refreshToken }: { refreshToken?: number
   }, [loadData, refreshToken]);
 
   const rows: MiscItemPayload[] = data?.results ?? [];
-  const groupedProducts = useMemo(() => groupProducts(rows), [rows]);
+
+  /* ---------- client-side quick-view filter ---------- */
+  const filteredRows = useMemo(() => {
+    if (activeView === "all") return rows;
+    return rows.filter((r) => {
+      switch (activeView) {
+        case "low_stock":
+          return r.available <= 0;
+        case "backordered":
+          return r.backordered > 0;
+        case "has_orders":
+          return r.ordered > 0;
+        default:
+          return true;
+      }
+    });
+  }, [rows, activeView]);
+
+  const groupedProducts = useMemo(() => groupProducts(filteredRows), [filteredRows]);
 
   /* ===================== EXPAND/COLLAPSE HANDLERS ===================== */
 
@@ -210,7 +267,26 @@ export default function MiscItemsTable({ refreshToken }: { refreshToken?: number
     }
   };
 
+  /* ===================== VISIBLE COLUMNS FOR TABLE HEADER ===================== */
+
+  const visibleColumnHeaders = useMemo(() => {
+    const cols: string[] = [];
+    if (isColVisible("Name")) cols.push("Name");
+    if (isColVisible("Description")) cols.push("Description");
+    if (isColVisible("Supplier")) cols.push("Supplier");
+    cols.push(""); // spacer
+    if (isColVisible("Stock")) cols.push("STOCK");
+    return cols;
+  }, [isColVisible]);
+
   /* ===================== RENDER ===================== */
+
+  const QUICK_VIEWS: { key: QuickView; label: string }[] = [
+    { key: "all", label: "All" },
+    { key: "low_stock", label: "Low Stock" },
+    { key: "backordered", label: "Backordered" },
+    { key: "has_orders", label: "Has Open Orders" },
+  ];
 
   return (
     <div>
@@ -220,19 +296,73 @@ export default function MiscItemsTable({ refreshToken }: { refreshToken?: number
         </div>
       )}
 
+      {/* ================= TOOLBAR: QUICK VIEWS + COLUMN CONTROLS ================= */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        {/* Quick view buttons */}
+        <div className="flex gap-2 flex-wrap">
+          {QUICK_VIEWS.map((v) => (
+            <button
+              key={v.key}
+              onClick={() => setActiveView(v.key)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition border ${
+                activeView === v.key
+                  ? "bg-blue-100 text-blue-700 border-blue-300 shadow-sm"
+                  : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+              }`}
+            >
+              {v.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Column controls + density */}
+        <div className="flex items-center gap-2 relative">
+          {/* Density toggle */}
+          <button
+            onClick={() => setCompact((c) => !c)}
+            className="px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-200 bg-white hover:bg-gray-50 transition"
+            title={compact ? "Switch to comfortable" : "Switch to compact"}
+          >
+            {compact ? "Comfortable" : "Compact"}
+          </button>
+
+          {/* Column visibility */}
+          <div className="relative">
+            <button
+              onClick={() => setShowColMenu((s) => !s)}
+              className="px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-200 bg-white hover:bg-gray-50 transition"
+            >
+              Columns ▾
+            </button>
+            {showColMenu && (
+              <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-30 min-w-[160px]">
+                {ALL_COLUMNS.map((col) => (
+                  <label key={col} className="flex items-center gap-2 px-2 py-1 text-xs cursor-pointer hover:bg-gray-50 rounded">
+                    <input
+                      type="checkbox"
+                      className="checkbox checkbox-xs"
+                      checked={visibleCols[col]}
+                      onChange={() => toggleCol(col)}
+                    />
+                    {col}
+                  </label>
+                ))}
+                <hr className="my-1" />
+                <button
+                  onClick={resetView}
+                  className="w-full text-left px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 rounded"
+                >
+                  Reset view
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
       <MDTable
         title="Miscellaneous Items"
-        columns={[
-          "Name",
-          "Description",
-          "Supplier",
-          "On Hand",
-          "Ordered",
-          "Reserved",
-          "Available",
-          "Backordered",
-          "",
-        ]}
+        columns={visibleColumnHeaders}
         page={page}
         pageSize={pageSize}
         total={data?.total ?? 0}
@@ -240,43 +370,59 @@ export default function MiscItemsTable({ refreshToken }: { refreshToken?: number
       >
         {/* ================= FILTER ROW (SERVER-DRIVEN) ================= */}
         <tr className="border-b">
-          <th className="pr-3 pb-2">
-            <input
-              className="input input-bordered input-xs w-full"
-              placeholder="Search name..."
-              value={filters.searchName}
-              onChange={(e) => {
-                setPage(1);
-                setFilter("searchName", e.target.value);
-              }}
-            />
-          </th>
+          {isColVisible("Name") && (
+            <th className="pr-3 pb-2">
+              <input
+                className="input input-bordered input-xs w-full"
+                placeholder="Search name..."
+                value={filters.searchName}
+                onChange={(e) => {
+                  setPage(1);
+                  setFilter("searchName", e.target.value);
+                }}
+              />
+            </th>
+          )}
 
-          <th className="pb-2 pr-3">
-            <input
-              className="input input-bordered input-xs w-full"
-              placeholder="Description..."
-              value={filters.filterDescription}
-              onChange={(e) => {
-                setPage(1);
-                setFilter("filterDescription", e.target.value);
-              }}
-            />
-          </th>
+          {isColVisible("Description") && (
+            <th className="pb-2 pr-3">
+              <input
+                className="input input-bordered input-xs w-full"
+                placeholder="Description..."
+                value={filters.filterDescription}
+                onChange={(e) => {
+                  setPage(1);
+                  setFilter("filterDescription", e.target.value);
+                }}
+              />
+            </th>
+          )}
 
-          <th className="pb-2 pr-3">
-            <input
-              className="input input-bordered input-xs w-full"
-              placeholder="Supplier..."
-              value={filters.filterSupplier}
-              onChange={(e) => {
-                setPage(1);
-                setFilter("filterSupplier", e.target.value);
-              }}
-            />
-          </th>
+          {isColVisible("Supplier") && (
+            <th className="pb-2 pr-3">
+              <input
+                className="input input-bordered input-xs w-full"
+                placeholder="Supplier..."
+                value={filters.filterSupplier}
+                onChange={(e) => {
+                  setPage(1);
+                  setFilter("filterSupplier", e.target.value);
+                }}
+              />
+            </th>
+          )}
 
-          <th colSpan={6}></th>
+          <th></th>
+
+          {isColVisible("Stock") && (
+            <th className="flex justify-between items-center bg-blue-50 py-6 px-2 border-2 border-blue-400 rounded-lg shadow-sm">
+              <span className="font-semibold text-blue-600">On Hand</span>
+              <span className="font-semibold text-blue-600">Ordered</span>
+              <span className="font-semibold text-blue-600">Reserved</span>
+              <span className="font-semibold text-blue-600">Available</span>
+              <span className="font-semibold text-blue-600">Backordered</span>
+            </th>
+          )}
         </tr>
 
         {/* ================= DATA ROWS ================= */}
@@ -290,80 +436,78 @@ export default function MiscItemsTable({ refreshToken }: { refreshToken?: number
               <tr 
                 className="bg-white shadow-sm rounded-xl cursor-pointer hover:bg-gray-50 transition"
               >
+                {isColVisible("Name") && (
+                  <td 
+                    className={`${rowPadding} px-2 font-semibold w-1/6`}
+                    onClick={() => navigate(`/products/${group.parent.product_id}`)}
+                  >
+                    <div className="flex items-center gap-2">
+                      {hasChildren && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleExpand(group.parent.product_id);
+                          }}
+                          className="text-gray-400 hover:text-gray-600 transition"
+                        >
+                          {isExpanded ? "▼" : "▶"}
+                        </button>
+                      )}
+                      <span>{group.parent.name}</span>
+                    </div>
+                  </td>
+                )}
+                {isColVisible("Description") && (
+                  <td 
+                    className={`${rowPadding} px-2 w-1/4`}
+                    onClick={() => navigate(`/products/${group.parent.product_id}`)}
+                  >
+                    {group.parent.description ?? "—"}
+                  </td>
+                )}
+                {isColVisible("Supplier") && (
+                  <td 
+                    className={`${rowPadding} px-2 w-1/5`}
+                    onClick={() => navigate(`/products/${group.parent.product_id}`)}
+                  >
+                    {group.parent.supplier_name ?? "—"}
+                  </td>
+                )}
                 <td 
-                  className="py-3 px-2 font-semibold"
+                  className="w-1/32 text-center"
                   onClick={() => navigate(`/products/${group.parent.product_id}`)}
-                >
-                  <div className="flex items-center gap-2">
-                    {hasChildren && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleExpand(group.parent.product_id);
-                        }}
-                        className="text-gray-400 hover:text-gray-600 transition"
-                      >
-                        {isExpanded ? "▼" : "▶"}
-                      </button>
-                    )}
-                    <span>{group.parent.name}</span>
-                  </div>
-                </td>
-                <td 
-                  className="py-3 px-2"
-                  onClick={() => navigate(`/products/${group.parent.product_id}`)}
-                >
-                  {group.parent.description ?? "—"}
-                </td>
-                <td 
-                  className="py-3 px-2"
-                  onClick={() => navigate(`/products/${group.parent.product_id}`)}
-                >
-                  {group.parent.supplier_name ?? "—"}
-                </td>
-                <td 
-                  className="py-3 px-2"
-                  onClick={() => navigate(`/products/${group.parent.product_id}`)}
-                >
-                  {group.parent.on_hand}
-                </td>
-                <td 
-                  className="py-3 px-2"
-                  onClick={() => navigate(`/products/${group.parent.product_id}`)}
-                >
-                  {group.parent.ordered}
-                </td>
-                <td 
-                  className="py-3 px-2"
-                  onClick={() => navigate(`/products/${group.parent.product_id}`)}
-                >
-                  {group.parent.reserved}
-                </td>
+                ></td>
+                {isColVisible("Stock") && (
+                  <td 
+                    className={`${rowPadding} font-medium text-center bg-blue-50 border-2 border-blue-400 rounded-lg shadow-sm`}
+                    onClick={() => navigate(`/products/${group.parent.product_id}`)}
+                  >
+                    <div className="flex justify-around items-center gap-5">
+                      <span className="font-medium text-center">{group.parent.on_hand}</span>
+                      <span className="font-medium text-center">{group.parent.ordered}</span>
+                      <span className="font-medium text-center">{group.parent.reserved}</span>
+                      <span className="text-center">
+                        {group.parent.available > 0 ? (
+                          <span className="py-2 px-2 text-xs rounded-full bg-green-100 text-green-600 text-center">{group.parent.available}</span>
+                        ) : (
+                          <span className="py-2 px-2 text-gray-400 text-center">{group.parent.available}</span>
+                        )}
+                      </span>
+                      <span className="font-medium text-center">
+                        {group.parent.backordered > 0 ? (
+                          <span className="py-2 px-2 text-xs rounded-full bg-red-100 text-red-700 font-semibold text-center">
+                            {group.parent.backordered}
+                          </span>
+                        ) : (
+                          <span className="py-2 px-2 text-gray-400 text-center">—</span>
+                        )}
+                      </span>
+                    </div>
+                  </td>
+                )}
 
                 <td
-                  className={`py-3 px-2 font-medium ${
-                    group.parent.available > 0 ? "text-green-600" : "text-gray-400"
-                  }`}
-                  onClick={() => navigate(`/products/${group.parent.product_id}`)}
-                >
-                  {group.parent.available}
-                </td>
-
-                <td 
-                  className="py-3 px-2"
-                  onClick={() => navigate(`/products/${group.parent.product_id}`)}
-                >
-                  {group.parent.backordered > 0 ? (
-                    <span className="px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-700 font-semibold">
-                      {group.parent.backordered}
-                    </span>
-                  ) : (
-                    <span className="text-gray-400">—</span>
-                  )}
-                </td>
-
-                <td
-                  className="py-3 px-2 cursor-pointer hover:scale-110 transition"
+                  className={`${rowPadding} pl-5 cursor-pointer hover:scale-110 transition`}
                   onClick={(e) => {
                     e.stopPropagation();
                     handleEdit(group.parent);
@@ -404,57 +548,51 @@ export default function MiscItemsTable({ refreshToken }: { refreshToken?: number
                   key={child.id} 
                   className="bg-blue-50 hover:bg-blue-100 transition cursor-pointer"
                 >
+                  {isColVisible("Name") && (
+                    <td 
+                      className={`${rowPadding} px-2 font-semibold w-1/6 pl-10`}
+                      onClick={() => navigate(`/products/${child.product_id}`)}
+                    >
+                      <span className="text-gray-600">↳ {child.name}</span>
+                    </td>
+                  )}
+                  {isColVisible("Description") && (
+                    <td 
+                      className={`${rowPadding} px-2 w-1/4`}
+                      onClick={() => navigate(`/products/${child.product_id}`)}
+                    >
+                      {child.description ?? "—"}
+                    </td>
+                  )}
+                  {isColVisible("Supplier") && (
+                    <td 
+                      className={`${rowPadding} px-2 w-1/5`}
+                      onClick={() => navigate(`/products/${child.product_id}`)}
+                    >
+                      {child.supplier_name ?? "—"}
+                    </td>
+                  )}
                   <td 
-                    className="py-3 px-2 font-semibold pl-10"
+                    className="w-1/32 text-center"
                     onClick={() => navigate(`/products/${child.product_id}`)}
-                  >
-                    <span className="text-gray-600">↳ {child.name}</span>
-                  </td>
-                  <td 
-                    className="py-3 px-2"
-                    onClick={() => navigate(`/products/${child.product_id}`)}
-                  >
-                    {child.description ?? "—"}
-                  </td>
-                  <td 
-                    className="py-3 px-2"
-                    onClick={() => navigate(`/products/${child.product_id}`)}
-                  >
-                    {child.supplier_name ?? "—"}
-                  </td>
-                  <td 
-                    className="py-3 px-2 text-gray-500"
-                    onClick={() => navigate(`/products/${child.product_id}`)}
-                  >
-                    —
-                  </td>
-                  <td 
-                    className="py-3 px-2 text-gray-500"
-                    onClick={() => navigate(`/products/${child.product_id}`)}
-                  >
-                    —
-                  </td>
-                  <td 
-                    className="py-3 px-2 text-gray-500"
-                    onClick={() => navigate(`/products/${child.product_id}`)}
-                  >
-                    —
-                  </td>
-                  <td 
-                    className="py-3 px-2 text-gray-500"
-                    onClick={() => navigate(`/products/${child.product_id}`)}
-                  >
-                    —
-                  </td>
-                  <td 
-                    className="py-3 px-2 text-gray-500"
-                    onClick={() => navigate(`/products/${child.product_id}`)}
-                  >
-                    —
-                  </td>
+                  ></td>
+                  {isColVisible("Stock") && (
+                    <td 
+                      className={`${rowPadding} font-medium text-center bg-white border-2 border-blue-300 rounded-lg shadow-sm`}
+                      onClick={() => navigate(`/products/${child.product_id}`)}
+                    >
+                      <div className="flex justify-around items-center gap-5">
+                        <span className="font-medium text-center text-gray-500">—</span>
+                        <span className="font-medium text-center text-gray-500">—</span>
+                        <span className="font-medium text-center text-gray-500">—</span>
+                        <span className="font-medium text-center text-gray-500">—</span>
+                        <span className="font-medium text-center text-gray-500">—</span>
+                      </div>
+                    </td>
+                  )}
 
                   <td
-                    className="py-3 px-2 cursor-pointer hover:scale-110 transition"
+                    className={`${rowPadding} pl-5 cursor-pointer hover:scale-110 transition`}
                     onClick={(e) => {
                       e.stopPropagation();
                       // Child products share parent's quantity, so we don't allow editing
@@ -470,7 +608,7 @@ export default function MiscItemsTable({ refreshToken }: { refreshToken?: number
 
         {loading && (
           <tr>
-            <td colSpan={9} className="text-center py-6 text-gray-400">
+            <td colSpan={visibleColumnHeaders.length + 1} className="text-center py-6 text-gray-400">
               Loading misc items…
             </td>
           </tr>
