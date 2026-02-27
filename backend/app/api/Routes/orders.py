@@ -346,6 +346,40 @@ def update_order_status(order_id):
         "status": order.status
     }), 200
 
+@order_bp.route("/orders/<int:order_id>", methods=["DELETE"])
+def delete_order(order_id: int):
+    """
+    Delete an order only if it has no transactions on any of its items.
+    """
+    db = g.db
+
+    try:
+        order_id = validate_positive_integer(order_id, "order_id")
+        order = db.get(Order, order_id)
+
+        if not order:
+            raise ResourceNotFoundError("Order", order_id)
+
+        # Prevent deletion if any item has transactions
+        has_transactions = any(len(item.transactions) > 0 for item in order.items)
+        if has_transactions:
+            return jsonify({
+                "error": "Cannot delete order with existing transactions"
+            }), 409
+
+        db.delete(order)
+        db.commit()
+
+        return jsonify({"message": "Order deleted"}), 200
+
+    except ResourceNotFoundError as e:
+        return jsonify(e.to_dict()), e.status_code
+    except CustomValidationError as e:
+        return handle_validation_error(e)
+    except Exception as e:
+        return jsonify({"error": "Unexpected error", "details": str(e)}), 500
+
+
 @order_bp.route("/orders/<int:order_id>", methods=["PATCH"])
 def patch_order(order_id):
     db = g.db

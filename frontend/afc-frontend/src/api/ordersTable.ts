@@ -109,6 +109,12 @@ export function allocateAll(orderId: number) {
   });
 }
 
+export function deleteOrder(orderId: string | number) {
+  return apiRequest(`/orders/${orderId}`, {
+    method: "DELETE",
+  });
+}
+
 export function createOrderFromQB(payload: {
   reference_number: string;
   qb_doc_type: string;

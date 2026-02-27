@@ -384,7 +384,7 @@ export default function OrderItemsTable({
       />
 
       <div className="rounded-xl bg-white shadow-sm border overflow-x-auto">
-        <div className="flex bg-[#313545]">
+        <div className="flex bg-[#313545] items-center">
           <button
             className={`px-4 py-3 text-sm font-semibold transition-colors ${
               activeTab === "lineItems"
@@ -405,6 +405,16 @@ export default function OrderItemsTable({
           >
             Totals
           </button>
+          {!isCompleted && activeTab === "lineItems" && (
+            <div className="ml-auto pr-3">
+              <button
+                className="btn btn-sm btn-primary"
+                onClick={() => setShowAddForm(true)}
+              >
+                + Add Line Item
+              </button>
+            </div>
+          )}
         </div>
 
         {activeTab === "lineItems" ? (
@@ -473,15 +483,6 @@ export default function OrderItemsTable({
           <OrderTotalsTab items={localItems} orderType={orderType} />
         )}
       </div>
-
-      {!isCompleted && !showAddForm && activeTab === "lineItems" && (
-        <button
-          className="btn btn-sm btn-primary"
-          onClick={() => setShowAddForm(true)}
-        >
-          + Add Line Item
-        </button>
-      )}
 
       {!isCompleted && showAddForm && (
         <dialog className="modal modal-open">
