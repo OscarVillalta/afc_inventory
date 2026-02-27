@@ -2,7 +2,7 @@ import { apiRequest } from "./apiClient";
 
 export interface Product {
   id: number;
-  part_number: string;
+  part_number: string | null;
   category: string;
 }
 

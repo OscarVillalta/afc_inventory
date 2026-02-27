@@ -173,7 +173,7 @@ def get_products_names():
         elif p.category.name == "Miscelaneous Items":
             details = p.misc_item.to_dict()["name"]
         else:
-            details = {}
+            details = None
 
         response.append({
             "id": p.id,

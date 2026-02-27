@@ -60,6 +60,35 @@ export default function MDTable({
     onPageChange(newPage);
   };
 
+  const getVisiblePages = (): (number | "...")[] => {
+    if (totalPages <= 10) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+
+    const firstGroupEnd = Math.min(page + 4, totalPages);
+    const lastGroupStart = Math.max(totalPages - 4, 1);
+
+    if (firstGroupEnd >= lastGroupStart - 1) {
+      // Groups overlap or are adjacent — merge into one contiguous range
+      const mergeStart = Math.min(page, lastGroupStart);
+      return Array.from(
+        { length: totalPages - mergeStart + 1 },
+        (_, i) => mergeStart + i
+      );
+    }
+
+    const firstGroup = Array.from(
+      { length: firstGroupEnd - page + 1 },
+      (_, i) => page + i
+    );
+    const lastGroup = Array.from(
+      { length: totalPages - lastGroupStart + 1 },
+      (_, i) => lastGroupStart + i
+    );
+
+    return [...firstGroup, "...", ...lastGroup];
+  };
+
   return (
     <div className="relative w-full mb-12">
       {/* Floating Header Card */}
@@ -112,10 +141,15 @@ export default function MDTable({
           </button>
 
           {/* Page Numbers */}
-          {[...Array(totalPages)].map((_, i) => {
-            const p = i + 1;
+          {getVisiblePages().map((p, idx) => {
+            if (p === "...") {
+              return (
+                <span key={`ellipsis-${idx}`} className="px-3 py-2 text-gray-500 select-none">
+                  …
+                </span>
+              );
+            }
             const active = p === page;
-
             return (
               <button
                 key={p}

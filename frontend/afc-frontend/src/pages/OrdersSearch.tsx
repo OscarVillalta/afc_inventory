@@ -590,7 +590,7 @@ export default function OrdersSearchPage() {
                 {(() => {
                   const filteredProducts = availableProducts.filter((product) =>
                     filters.productSearch === "" ||
-                    product.part_number.toLowerCase().includes(filters.productSearch.toLowerCase()) ||
+                    (product.part_number?.toLowerCase().includes(filters.productSearch.toLowerCase()) ?? false) ||
                     product.category.toLowerCase().includes(filters.productSearch.toLowerCase())
                   );
                   
