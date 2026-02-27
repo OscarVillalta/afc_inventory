@@ -2,7 +2,7 @@ from pprint import pp
 from flask import g, jsonify, Blueprint
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
-from database.models import Product, ProductCategory, AirFilter, MiscItem, Quantity, Supplier, ChildProduct
+from database.models import Product, ProductCategory, AirFilter, MiscItem, StockItem, Quantity, Supplier, ChildProduct
 from app.api.Schemas.product_schema import ProductSchema
 
 product_bp = Blueprint("products", __name__)
@@ -23,7 +23,8 @@ def get_products():
             selectinload(Product.category),
             selectinload(Product.quantity),
             selectinload(Product.air_filter).selectinload(AirFilter.supplier),
-            selectinload(Product.misc_item).selectinload(MiscItem.supplier)
+            selectinload(Product.misc_item).selectinload(MiscItem.supplier),
+            selectinload(Product.stock_item).selectinload(StockItem.supplier)
         )
     ).scalars().all()
 
@@ -39,6 +40,9 @@ def get_products():
         elif p.misc_item:
             details = p.misc_item.to_dict()
             details["supplier_name"] = p.misc_item.supplier.name if p.misc_item.supplier else None
+        elif p.stock_item:
+            details = p.stock_item.to_dict()
+            details["supplier_name"] = p.stock_item.supplier.name if p.stock_item.supplier else None
         else:
             details = {}
 
@@ -68,8 +72,10 @@ def get_product(id):
             selectinload(Product.quantity),
             selectinload(Product.air_filter).selectinload(AirFilter.supplier),
             selectinload(Product.misc_item).selectinload(MiscItem.supplier),
+            selectinload(Product.stock_item).selectinload(StockItem.supplier),
             selectinload(Product.child_products).selectinload(ChildProduct.air_filter).selectinload(AirFilter.supplier),
-            selectinload(Product.child_products).selectinload(ChildProduct.misc_item).selectinload(MiscItem.supplier)
+            selectinload(Product.child_products).selectinload(ChildProduct.misc_item).selectinload(MiscItem.supplier),
+            selectinload(Product.child_products).selectinload(ChildProduct.stock_item).selectinload(StockItem.supplier)
         )
     ).scalars().first()
 
@@ -90,6 +96,9 @@ def get_product(id):
     elif product.misc_item:
         details = product.misc_item.to_dict()
         details["supplier_name"] = product.misc_item.supplier.name if product.misc_item.supplier else None
+    elif product.stock_item:
+        details = product.stock_item.to_dict()
+        details["supplier_name"] = product.stock_item.supplier.name if product.stock_item.supplier else None
     else:
         details = {}
 
@@ -104,6 +113,9 @@ def get_product(id):
             elif child.misc_item:
                 child_details = child.misc_item.to_dict()
                 child_details["supplier_name"] = child.misc_item.supplier.name if child.misc_item.supplier else None
+            elif child.stock_item:
+                child_details = child.stock_item.to_dict()
+                child_details["supplier_name"] = child.stock_item.supplier.name if child.stock_item.supplier else None
             else:
                 child_details = {}
             
@@ -159,7 +171,8 @@ def get_products_names():
             selectinload(Product.category),
             selectinload(Product.quantity),
             selectinload(Product.air_filter).selectinload(AirFilter.supplier),
-            selectinload(Product.misc_item).selectinload(MiscItem.supplier)
+            selectinload(Product.misc_item).selectinload(MiscItem.supplier),
+            selectinload(Product.stock_item).selectinload(StockItem.supplier)
         )
     ).scalars().all()
 
@@ -172,6 +185,8 @@ def get_products_names():
             details = p.air_filter.to_dict()["part_number"]
         elif p.category.name == "Miscelaneous Items":
             details = p.misc_item.to_dict()["name"]
+        elif p.category.name == "Stock Items":
+            details = p.stock_item.to_dict()["name"]
         else:
             details = None
 

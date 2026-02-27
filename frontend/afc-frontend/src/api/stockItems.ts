@@ -41,6 +41,18 @@ export interface StockItemSearchParams {
   category?: string;
 }
 
+export interface StockItemCategory {
+  id: number;
+  name: string;
+}
+
+export interface CreateStockItemPayload {
+  name: string;
+  supplier_id: number;
+  category_id: number;
+  description?: string | null;
+}
+
 /* ============================================================
    API FUNCTIONS
 ============================================================ */
@@ -66,4 +78,25 @@ export function fetchStockItems(
   return apiRequest(`/stock_items/search?${params.toString()}`, {
     method: "GET",
   });
+}
+
+export function fetchStockItemCategories(): Promise<StockItemCategory[]> {
+  return apiRequest("/stock_item_categories") as Promise<StockItemCategory[]>;
+}
+
+export function createStockItem(data: CreateStockItemPayload): Promise<{
+  message: string;
+  stock_item: { id: number; name: string };
+  product_id: number;
+  quantity_id: number;
+}> {
+  return apiRequest("/stock_items", {
+    method: "POST",
+    body: JSON.stringify(data),
+  }) as Promise<{
+    message: string;
+    stock_item: { id: number; name: string };
+    product_id: number;
+    quantity_id: number;
+  }>;
 }

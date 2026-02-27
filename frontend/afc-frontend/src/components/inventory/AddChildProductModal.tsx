@@ -7,9 +7,14 @@ import {
 import {
   createChildAirFilter,
   createChildMiscItem,
+  createChildStockItem,
 } from "../../api/productDetail";
+import {
+  fetchStockItemCategories,
+  type StockItemCategory,
+} from "../../api/stockItems";
 
-type ProductType = "air_filter" | "misc_item";
+type ProductType = "air_filter" | "misc_item" | "stock_item";
 
 interface AddChildProductModalProps {
   open: boolean;
@@ -36,6 +41,7 @@ export default function AddChildProductModal({
   const [loading, setLoading] = useState(false);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [categories, setCategories] = useState<AirFilterCategory[]>([]);
+  const [stockItemCategories, setStockItemCategories] = useState<StockItemCategory[]>([]);
 
   useEffect(() => {
     if (!open) return;
@@ -44,6 +50,9 @@ export default function AddChildProductModal({
     fetchAirFilterCategories()
       .then(setCategories)
       .catch(() => setCategories([]));
+    fetchStockItemCategories()
+      .then(setStockItemCategories)
+      .catch(() => setStockItemCategories([]));
   }, [open]);
 
   useEffect(() => {
@@ -63,6 +72,11 @@ export default function AddChildProductModal({
     [categories]
   );
 
+  const stockItemCategoryOptions = useMemo(
+    () => stockItemCategories.map((c) => ({ label: c.name, value: String(c.id) })),
+    [stockItemCategories]
+  );
+
   if (!open) return null;
 
   const disabled = loading;
@@ -76,7 +90,7 @@ export default function AddChildProductModal({
       alert(productType === "air_filter" ? "Part number is required." : "Name is required.");
       return;
     }
-    if (productType === "air_filter" && !categoryId) {
+    if ((productType === "air_filter" || productType === "stock_item") && !categoryId) {
       alert("Category is required.");
       return;
     }
@@ -94,11 +108,19 @@ export default function AddChildProductModal({
           width: Number(width) || 0,
           depth: Number(depth) || 0,
         });
-      } else {
+      } else if (productType === "misc_item") {
         await createChildMiscItem({
           name: partNumber.trim(),
           description: description || undefined,
           supplier_id: Number(supplierId),
+          parent_product_id: parentProductId,
+        });
+      } else {
+        await createChildStockItem({
+          name: partNumber.trim(),
+          description: description || undefined,
+          supplier_id: Number(supplierId),
+          category_id: Number(categoryId),
           parent_product_id: parentProductId,
         });
       }
@@ -135,6 +157,7 @@ export default function AddChildProductModal({
             >
               <option value="air_filter">Air Filter</option>
               <option value="misc_item">Misc Item</option>
+              <option value="stock_item">Stock Item</option>
             </select>
           </div>
 
@@ -167,7 +190,7 @@ export default function AddChildProductModal({
               className="input input-bordered w-full mt-1"
               value={partNumber}
               onChange={(e) => setPartNumber(e.target.value)}
-              placeholder={productType === "air_filter" ? "AF-12345" : "Misc item name"}
+              placeholder={productType === "air_filter" ? "AF-12345" : "Item name"}
               disabled={disabled}
             />
           </div>
@@ -185,6 +208,25 @@ export default function AddChildProductModal({
               >
                 <option value="">Select category...</option>
                 {categoryOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : productType === "stock_item" ? (
+            <div>
+              <label className="text-sm font-medium text-gray-600">
+                Category
+              </label>
+              <select
+                className="select select-bordered w-full mt-1"
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+                disabled={disabled}
+              >
+                <option value="">Select category...</option>
+                {stockItemCategoryOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
                   </option>
