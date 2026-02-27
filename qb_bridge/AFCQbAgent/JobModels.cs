@@ -9,7 +9,7 @@ public sealed class JobDto
     public string JobId { get; set; } = Guid.NewGuid().ToString("N");
 
     // Operation type:
-    // "query" | "create" (or "add")
+    // "query" (agent is query-only)
     public string Op { get; set; } = "";
 
     // Target entity:
@@ -20,16 +20,11 @@ public sealed class JobDto
     // ex: { "refnumber": "1234" } or { "txnid": "..." }
     public Dictionary<string, object> Params { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
-    // Optional payload (usually for creates/adds)
-    // ex: sales order header + line items
-    public Dictionary<string, object>? Payload { get; set; }
-
     // Optional: explicitly force a company file path if you want
     // (otherwise QbSdk can use its configured/default behavior)
     public string? CompanyFilePath { get; set; }
 
     // Optional: allow toggling includeLineItems or similar flags per job
-    // (you can ignore for now if you don't want it)
     public Dictionary<string, object>? Options { get; set; }
 }
 

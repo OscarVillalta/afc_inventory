@@ -1,17 +1,15 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Globalization;
 
 namespace AfcQbAgent;
 
 public sealed class QbxmlBuilder
 {
     private static readonly HashSet<string> AllowedOps =
-        new(StringComparer.OrdinalIgnoreCase) { "query", "create", "add" };
+        new(StringComparer.OrdinalIgnoreCase) { "query" };
 
     private static readonly HashSet<string> AllowedEntities =
-        new(StringComparer.OrdinalIgnoreCase) { "inventory", "iteminventory", "estimate", "sales_order", "salesorder", "invoice" };
+        new(StringComparer.OrdinalIgnoreCase) { "inventory", "iteminventory", "estimate", "sales_order", "salesorder", "invoice", "purchase_order", "purchaseorder" };
 
     private static string Norm(string? s) => (s ?? "").Trim().ToLowerInvariant();
 
@@ -25,10 +23,10 @@ public sealed class QbxmlBuilder
 
         // Strict allowlist so Flask gets predictable errors
         if (!AllowedOps.Contains(op))
-            throw new ArgumentException($"Unsupported op '{job.Op}'. Allowed: query, create, add.");
+            throw new ArgumentException($"Unsupported op '{job.Op}'. Allowed: query.");
 
         if (!AllowedEntities.Contains(entity))
-            throw new ArgumentException($"Unsupported entity '{job.Entity}'. Allowed: inventory, estimate, sales_order, invoice.");
+            throw new ArgumentException($"Unsupported entity '{job.Entity}'. Allowed: inventory, estimate, sales_order, invoice, purchase_order.");
 
         // --- Queries ---
         if (op == "ping" && (entity == "quickbooks" || entity == "qb"))
@@ -43,13 +41,12 @@ public sealed class QbxmlBuilder
         if (op == "query" && (entity == "sales_order" || entity == "salesorder"))
             return BuildSalesOrderQuery(job);
 
-        // keep your existing invoice support
+        if (op == "query" && (entity == "purchase_order" || entity == "purchaseorder"))
+            return BuildPurchaseOrderQuery(job);
+
+        // Keep the existing invoice support
         if (op == "query" && entity == "invoice")
             return BuildInvoiceQuery(job);
-
-        // --- Creates ---
-        if ((op == "create" || op == "add") && (entity == "sales_order" || entity == "salesorder"))
-            return BuildSalesOrderAdd(job);
 
         // --- Health / Ping ---
         if (op == "ping" && (entity == "quickbooks" || entity == "qb"))
@@ -138,79 +135,31 @@ public sealed class QbxmlBuilder
     }
 
     // ------------------------------------------------------------
-    // 4) PushSalesOrder -> SalesOrderAddRq
+    // 4) PullPurchaseOrder -> PurchaseOrderQueryRq
     // ------------------------------------------------------------
-    private static string BuildSalesOrderAdd(JobDto job)
+    private static string BuildPurchaseOrderQuery(JobDto job)
     {
-        if (job.Payload == null)
-            throw new ArgumentException("PushSalesOrder requires payload");
+        // Accept either params.txnid OR params.refnumber (exactly one)
+        var txnId = GetParamString(job, "txnid");
+        var refNumber = GetParamString(job, "refnumber");
 
-        // Required
-        var customerFullName = GetPayloadString(job, "customer_full_name");
-        if (string.IsNullOrWhiteSpace(customerFullName))
-            throw new ArgumentException("payload.customer_full_name is required");
+        if (!string.IsNullOrWhiteSpace(txnId) && !string.IsNullOrWhiteSpace(refNumber))
+            throw new ArgumentException("Provide only one: params.txnid OR params.refnumber (not both).");
 
-        // Optional
-        var refNumber = GetPayloadString(job, "refnumber");
-        var txnDateIso = GetPayloadString(job, "txn_date"); // "YYYY-MM-DD" or ISO
-        var memo = GetPayloadString(job, "memo");
-        var poNumber = GetPayloadString(job, "po_number");
+        if (string.IsNullOrWhiteSpace(txnId) && string.IsNullOrWhiteSpace(refNumber))
+            throw new ArgumentException("PurchaseOrder query requires params.txnid OR params.refnumber");
 
-        // Items (required)
-        var items = GetPayloadList(job, "items");
-        if (items.Count == 0)
-            throw new ArgumentException("payload.items must be a non-empty array");
-
-        var headerXml = $@"
-      <CustomerRef><FullName>{EscapeXml(customerFullName!)}</FullName></CustomerRef>
-{(string.IsNullOrWhiteSpace(refNumber) ? "" : $"      <RefNumber>{EscapeXml(refNumber!)}</RefNumber>\n")}
-{(string.IsNullOrWhiteSpace(txnDateIso) ? "" : $"      <TxnDate>{EscapeXml(NormalizeDateStrict(txnDateIso!))}</TxnDate>\n")}
-{(string.IsNullOrWhiteSpace(poNumber) ? "" : $"      <PONumber>{EscapeXml(poNumber!)}</PONumber>\n")}
-{(string.IsNullOrWhiteSpace(memo) ? "" : $"      <Memo>{EscapeXml(memo!)}</Memo>\n")}";
-
-        var linesXml = "";
-        foreach (var raw in items)
-        {
-            var dict = AsDict(raw);
-
-            var itemName = GetString(dict, "item_full_name") ?? GetString(dict, "item");
-            if (string.IsNullOrWhiteSpace(itemName))
-                throw new ArgumentException("Each payload.items element must include item_full_name (or item).");
-
-            var desc = GetString(dict, "desc") ?? GetString(dict, "description");
-
-            var qty = GetDecimal(dict, "quantity") ?? 0m;
-            if (qty <= 0)
-                throw new ArgumentException("Each payload.items element must include quantity > 0.");
-
-            // Either Rate or Amount (or neither), but not both
-            var rate = GetDecimal(dict, "rate");
-            var amount = GetDecimal(dict, "amount");
-            if (rate.HasValue && amount.HasValue)
-                throw new ArgumentException("Each payload.items element must include only one of: rate OR amount (not both).");
-
-            var classFullName = GetString(dict, "class_full_name");
-            var customerMsg = GetString(dict, "customer_msg");
-
-            linesXml += $@"
-      <SalesOrderLineAdd>
-        <ItemRef><FullName>{EscapeXml(itemName!)}</FullName></ItemRef>
-{(string.IsNullOrWhiteSpace(desc) ? "" : $"        <Desc>{EscapeXml(desc!)}</Desc>\n")}
-        <Quantity>{FormatDecimal(qty)}</Quantity>
-{(rate.HasValue ? $"        <Rate>{FormatDecimal(rate.Value)}</Rate>\n" : "")}
-{(!rate.HasValue && amount.HasValue ? $"        <Amount>{FormatDecimal(amount.Value)}</Amount>\n" : "")}
-{(string.IsNullOrWhiteSpace(classFullName) ? "" : $"        <ClassRef><FullName>{EscapeXml(classFullName!)}</FullName></ClassRef>\n")}
-{(string.IsNullOrWhiteSpace(customerMsg) ? "" : $"        <CustomerMsgRef><FullName>{EscapeXml(customerMsg!)}</FullName></CustomerMsgRef>\n")}
-      </SalesOrderLineAdd>";
-        }
-
-        var core = $@"
-    <SalesOrderAddRq>
-      <SalesOrderAdd>
-{headerXml}
-{linesXml}
-      </SalesOrderAdd>
-    </SalesOrderAddRq>";
+        var core = !string.IsNullOrWhiteSpace(txnId)
+            ? $@"
+    <PurchaseOrderQueryRq>
+      <TxnID>{EscapeXml(txnId!)}</TxnID>
+      <IncludeLineItems>true</IncludeLineItems>
+    </PurchaseOrderQueryRq>"
+            : $@"
+    <PurchaseOrderQueryRq>
+      <RefNumber>{EscapeXml(refNumber!)}</RefNumber>
+      <IncludeLineItems>true</IncludeLineItems>
+    </PurchaseOrderQueryRq>";
 
         return WrapRq(core);
     }
@@ -270,102 +219,6 @@ public sealed class QbxmlBuilder
         obj = JsonElementExtensions.NormalizeUnknown(obj);
         return Convert.ToString(obj)?.Trim();
     }
-
-    private static string? GetPayloadString(JobDto job, string key)
-    {
-        if (job.Payload == null) return null;
-        if (!job.Payload.TryGetValue(key, out var obj)) return null;
-
-        obj = JsonElementExtensions.NormalizeUnknown(obj);
-        return Convert.ToString(obj)?.Trim();
-    }
-
-    private static List<object> GetPayloadList(JobDto job, string key)
-    {
-        if (job.Payload == null) return new List<object>();
-        if (!job.Payload.TryGetValue(key, out var obj) || obj == null) return new List<object>();
-
-        obj = JsonElementExtensions.NormalizeUnknown(obj);
-
-        if (obj is List<object> lo) return lo;
-
-        if (obj is List<object?> lo2)
-        {
-            var outList = new List<object>();
-            foreach (var x in lo2) if (x != null) outList.Add(x);
-            return outList;
-        }
-
-        if (obj is object[] arr) return new List<object>(arr);
-
-        throw new ArgumentException($"payload.{key} must be an array");
-    }
-
-    private static Dictionary<string, object> AsDict(object raw)
-    {
-        // Normalize JsonElement -> Dictionary<string, object?>
-        var dictAny = JsonElementExtensions.NormalizeToDict(raw);
-
-        var dict = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-        foreach (var kv in dictAny)
-        {
-            if (kv.Value != null)
-                dict[kv.Key] = kv.Value!;
-        }
-        return dict;
-    }
-
-    private static string? GetString(Dictionary<string, object> d, string key)
-    {
-        if (!d.TryGetValue(key, out var obj) || obj == null) return null;
-        return Convert.ToString(obj)?.Trim();
-    }
-
-    private static decimal? GetDecimal(Dictionary<string, object> d, string key)
-    {
-        if (!d.TryGetValue(key, out var obj) || obj == null) return null;
-
-        obj = JsonElementExtensions.NormalizeUnknown(obj);
-
-        if (obj is decimal dec) return dec;
-        if (obj is double dbl) return (decimal)dbl;
-        if (obj is float fl) return (decimal)fl;
-        if (obj is int i) return i;
-        if (obj is long l) return l;
-
-        var s = Convert.ToString(obj);
-        if (decimal.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out var v))
-            return v;
-
-        return null;
-    }
-
-    private static string NormalizeDateStrict(string isoOrDate)
-    {
-        // QB expects YYYY-MM-DD
-        // If they pass full ISO (YYYY-MM-DDTHH:mm:ss), take date part.
-        var s = (isoOrDate ?? "").Trim();
-        if (string.IsNullOrWhiteSpace(s))
-            throw new ArgumentException("payload.txn_date must be non-empty if provided.");
-
-        var tIndex = s.IndexOf('T');
-        if (tIndex > 0) s = s.Substring(0, tIndex);
-
-        if (!DateTime.TryParseExact(
-                s,
-                "yyyy-MM-dd",
-                CultureInfo.InvariantCulture,
-                DateTimeStyles.None,
-                out _))
-        {
-            throw new ArgumentException("payload.txn_date must be YYYY-MM-DD (or ISO with a date prefix).");
-        }
-
-        return s;
-    }
-
-    private static string FormatDecimal(decimal v) =>
-        v.ToString("0.####", CultureInfo.InvariantCulture);
 
     private static string EscapeXml(string s) =>
         (s ?? "")

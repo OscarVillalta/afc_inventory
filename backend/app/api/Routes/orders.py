@@ -904,27 +904,57 @@ def create_order_from_qb():
             "error": "No line items found in QuickBooks response"
         }), 400
     
-    # Find or create customer based on QB customer name
+    # Determine order type based on QB document type
+    is_purchase_order = entity_type in ("purchase_order", "purchaseorder")
+    
+    # Find or create supplier/customer based on QB vendor/customer name
     customer = None
-    customer_name = metadata.get("customer_name")
-    if customer_name:
-        customer = db.execute(
-            select(Customer).where(Customer.name == customer_name)
-        ).scalar_one_or_none()
-        
-        # Create customer if doesn't exist
-        if not customer:
-            customer = Customer(name=customer_name)
-            db.add(customer)
-            db.flush()
+    supplier = None
+    
+    if is_purchase_order:
+        # Purchase orders are INCOMING: find or create supplier from vendor name
+        vendor_name = metadata.get("vendor_name")
+        if vendor_name:
+            supplier = db.execute(
+                select(Supplier).where(Supplier.name == vendor_name)
+            ).scalar_one_or_none()
+            
+            if not supplier:
+                supplier = Supplier(name=vendor_name)
+                db.add(supplier)
+                db.flush()
+    else:
+        # Sales orders/estimates/invoices are OUTGOING: find or create customer
+        customer_name = metadata.get("customer_name")
+        if customer_name:
+            customer = db.execute(
+                select(Customer).where(Customer.name == customer_name)
+            ).scalar_one_or_none()
+            
+            # Create customer if doesn't exist
+            if not customer:
+                customer = Customer(name=customer_name)
+                db.add(customer)
+                db.flush()
+    
+    # Parse ETA from metadata (set by QB ExpectedDate for purchase orders)
+    eta_value = None
+    eta_str = metadata.get("eta")
+    if eta_str:
+        try:
+            eta_value = datetime.strptime(eta_str, "%Y-%m-%d").date()
+        except ValueError:
+            pass
     
     # Create the order
     order = Order(
-        type=OrderType.OUTGOING.value,  # Sales orders/estimates/invoices are outgoing
+        type=OrderType.INCOMING.value if is_purchase_order else OrderType.OUTGOING.value,
         customer_id=customer.id if customer else None,
+        supplier_id=supplier.id if supplier else None,
         external_order_number=reference_number,
         description=metadata.get("memo", f"QB {entity_type.replace('_', ' ').title()} #{reference_number}"),
-        status=OrderStatus.PENDING.value
+        status=OrderStatus.PENDING.value,
+        eta=eta_value
     )
     
     db.add(order)
@@ -1084,6 +1114,8 @@ def create_order_from_qb():
         "order_number": order.order_number,
         "external_order_number": order.external_order_number,
         "customer_name": customer.name if customer else None,
+        "vendor_name": supplier.name if supplier else None,
+        "eta": order.eta.strftime("%Y-%m-%d") if order.eta else None,
         "items_created": len(created_items),
         "new_products_created": len(new_products),
         "items_skipped": len(skipped_items),

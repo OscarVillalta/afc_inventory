@@ -30,6 +30,8 @@ def parse_qb_line_items(qbxml_response: str, entity_type: str) -> List[Dict]:
         'salesorder': ('SalesOrderRet', 'SalesOrderLineRet'),
         'estimate': ('EstimateRet', 'EstimateLineRet'),
         'invoice': ('InvoiceRet', 'InvoiceLineRet'),
+        'purchase_order': ('PurchaseOrderRet', 'PurchaseOrderLineRet'),
+        'purchaseorder': ('PurchaseOrderRet', 'PurchaseOrderLineRet'),
     }
     
     entity_type_lower = entity_type.lower()
@@ -65,6 +67,8 @@ def parse_qb_line_items(qbxml_response: str, entity_type: str) -> List[Dict]:
         'salesorder': 'SalesOrderLineGroupRet',
         'estimate': 'EstimateLineGroupRet',
         'invoice': 'InvoiceLineGroupRet',
+        'purchase_order': 'PurchaseOrderLineGroupRet',
+        'purchaseorder': 'PurchaseOrderLineGroupRet',
     }
     
     group_tag = group_tag_map.get(entity_type_lower)
@@ -174,6 +178,8 @@ def extract_qb_metadata(qbxml_response: str, entity_type: str) -> Dict:
         'salesorder': 'SalesOrderRet',
         'estimate': 'EstimateRet',
         'invoice': 'InvoiceRet',
+        'purchase_order': 'PurchaseOrderRet',
+        'purchaseorder': 'PurchaseOrderRet',
     }
     
     entity_type_lower = entity_type.lower()
@@ -199,17 +205,29 @@ def extract_qb_metadata(qbxml_response: str, entity_type: str) -> Dict:
     if ref_number:
         metadata['ref_number'] = ref_number
     
-    # Extract customer name
+    # Extract customer name (sales orders, estimates, invoices)
     customer_ref = ret_element.find(".//CustomerRef")
     if customer_ref is not None:
         customer_name = get_element_text(customer_ref, "FullName")
         if customer_name:
             metadata['customer_name'] = customer_name
     
+    # Extract vendor name (purchase orders)
+    vendor_ref = ret_element.find(".//VendorRef")
+    if vendor_ref is not None:
+        vendor_name = get_element_text(vendor_ref, "FullName")
+        if vendor_name:
+            metadata['vendor_name'] = vendor_name
+    
     # Extract transaction date
     txn_date = get_element_text(ret_element, "TxnDate")
     if txn_date:
         metadata['txn_date'] = txn_date
+    
+    # Extract ETA (ExpectedDate for purchase orders)
+    expected_date = get_element_text(ret_element, "ExpectedDate")
+    if expected_date:
+        metadata['eta'] = expected_date
     
     # Extract memo/description
     memo = get_element_text(ret_element, "Memo")
