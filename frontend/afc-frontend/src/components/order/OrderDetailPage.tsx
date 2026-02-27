@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 
 import MainLayout from "../../layouts/MainLayout";
 import OrderHeader from "./OrderHeader";
@@ -13,7 +13,7 @@ import { fetchCustomers } from "../../api/customers";
 import type { Supplier } from "../../api/suppliers";
 import { fetchSuppliers } from "../../api/suppliers";
 
-import { patchOrder } from "../../api/ordersTable";
+import { patchOrder, deleteOrder } from "../../api/ordersTable";
 import type { OrderItemPayload } from "../../api/orderDetail";
 import { 
   fetchOrderItems,
@@ -48,6 +48,7 @@ interface OrderDetailPayload {
 
 export default function OrderDetailPage() {
   const { orderId } = useParams<{ orderId: string }>();
+  const navigate = useNavigate();
   const [selectedEntityId, setSelectedEntityId] = useState<number | null>(null);
 
   const [order, setOrder] = useState<OrderDetailPayload | null>(null);
@@ -57,8 +58,7 @@ export default function OrderDetailPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
 
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const [items, setItems] = useState<OrderItemPayload[]>([]);
   const [itemsLoading, setItemsLoading] = useState(true);
@@ -68,6 +68,53 @@ export default function OrderDetailPage() {
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
 
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">("idle");
+
+  // Debounce ref for auto-save
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [autoSaveError, setAutoSaveError] = useState<string | null>(null);
+
+  function buildPatch(overrides: Parameters<typeof patchOrder>[1] = {}): Parameters<typeof patchOrder>[1] {
+    return {
+      cs_id: selectedEntityId ?? undefined,
+      type: order?.type,
+      description: order?.description,
+      created_at: order?.created_at,
+      eta: order?.eta ?? null,
+      ...overrides,
+    };
+  }
+
+  function scheduleAutoSave(patch: Parameters<typeof patchOrder>[1]) {
+    if (!orderId) return;
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = setTimeout(async () => {
+      try {
+        const updated = await patchOrder(orderId, patch);
+        setOrder(updated);
+        setSelectedEntityId(updated.cs_id ?? null);
+        setAutoSaveError(null);
+      } catch (err) {
+        console.error("Auto-save failed:", err);
+        setAutoSaveError("Auto-save failed. Please refresh the page.");
+      }
+    }, 600);
+  }
+
+  async function handleDeleteOrder() {
+    if (!orderId || !order) return;
+    if (!confirm(`Delete order ${order.order_number}? This cannot be undone.`)) return;
+
+    setDeleting(true);
+    try {
+      await deleteOrder(orderId);
+      navigate("/order");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to delete order";
+      alert(msg);
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   async function handleCopySerializedOrder() {
   if (!orderId) return;
@@ -110,36 +157,6 @@ export default function OrderDetailPage() {
     setTimeout(() => setCopyStatus("idle"), 2000);
   }
 }
-
-  async function handleSave() {
-    if (!order || !orderId) return;
-    if (!selectedEntityId) {
-      setSaveError("Customer / Supplier is required.");
-      return;
-    }
-
-
-    setSaving(true);
-    setSaveError(null);
-
-    try {
-      const updated = await patchOrder(orderId, {
-        type: order.type,
-        cs_id: selectedEntityId,
-        description: order.description,
-        created_at: order.created_at,
-        eta: order.eta ?? null,
-      });
-
-      // Update local state with server truth
-      setOrder(updated);
-      setSelectedEntityId(updated.cs_id ?? null);
-    } catch (err) {
-      setSaveError("Failed to save order changes.");
-    } finally {
-      setSaving(false);
-    }
-  }
 
   async function refreshOrder() {
     if (!orderId) return;
@@ -394,14 +411,19 @@ export default function OrderDetailPage() {
 
               entities={order.type === "outgoing" ? customers : suppliers}
               selectedEntityId={selectedEntityId}
-              onEntityChange={setSelectedEntityId}
+              onEntityChange={(id) => {
+                setSelectedEntityId(id);
+                scheduleAutoSave(buildPatch({ cs_id: id }));
+              }}
 
-              onCreatedAtChange={(v) =>
-                setOrder({ ...order, created_at: v })
-              }
-              onEtaChange={(v) =>
-                setOrder({ ...order, eta: v })
-              }
+              onCreatedAtChange={(v) => {
+                setOrder({ ...order, created_at: v });
+                scheduleAutoSave(buildPatch({ created_at: v }));
+              }}
+              onEtaChange={(v) => {
+                setOrder({ ...order, eta: v });
+                scheduleAutoSave(buildPatch({ eta: v || null }));
+              }}
             />
           </div>
 
@@ -422,9 +444,10 @@ export default function OrderDetailPage() {
         <div className="lg:flex-1 w-full lg:w-auto lg:sticky lg:top-1 lg:self-start">
           <OrderDescription
             value={order.description}
-            onChange={(v) =>
-              setOrder({ ...order, description: v })
-            }
+            onChange={(v) => {
+              setOrder({ ...order, description: v });
+              scheduleAutoSave(buildPatch({ description: v }));
+            }}
             selectedItemsCount={selectedItems.size}
             onAllocateSelected={handleAllocateSelected}
             onCommitSelected={handleCommitSelected}
@@ -434,30 +457,18 @@ export default function OrderDetailPage() {
             orderType={order.type}
           />
 
-          <div className="flex justify-end gap-2 mb-3">
-            {saveError && (
-              <p className="text-sm text-red-500 mt-1">{saveError}</p>
-            )}
-            
-
+          <div className="flex justify-end pt-2 gap-x-2 items-center">
             {/* ===== ORDER ACTIONS ===== */}
-            <div className="flex justify-end pt-2 gap-x-2">
-              <button
-              className="btn btn-sm btn-outline"
-              onClick={() => window.location.reload()}
-              disabled={saving}
+            {autoSaveError && (
+              <p className="text-sm text-red-500">{autoSaveError}</p>
+            )}
+            <button
+              className="btn btn-sm btn-error"
+              onClick={handleDeleteOrder}
+              disabled={deleting}
             >
-              Cancel
+              {deleting ? "Deleting..." : "Delete Order"}
             </button>
-
-              <button
-                className="btn btn-sm btn-primary"
-                disabled={saving || selectedEntityId === null}
-                onClick={handleSave}
-              >
-                {saving ? "Saving..." : "Save"}
-              </button>
-            </div>
           </div>
         </div>
       </div>
