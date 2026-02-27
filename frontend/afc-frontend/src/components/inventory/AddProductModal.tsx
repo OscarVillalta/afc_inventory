@@ -6,9 +6,14 @@ import {
   type AirFilterCategory,
 } from "../../api/airfilters";
 import { createMiscItem } from "../../api/miscItems";
+import {
+  createStockItem,
+  fetchStockItemCategories,
+  type StockItemCategory,
+} from "../../api/stockItems";
 import { autocommitTxn } from "../../api/transactions";
 
-type ProductType = "air_filter" | "misc_item";
+type ProductType = "air_filter" | "misc_item" | "stock_item";
 
 interface AddProductModalProps {
   open: boolean;
@@ -34,6 +39,7 @@ export default function AddProductModal({
   const [loading, setLoading] = useState(false);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [categories, setCategories] = useState<AirFilterCategory[]>([]);
+  const [stockItemCategories, setStockItemCategories] = useState<StockItemCategory[]>([]);
 
   useEffect(() => {
     if (!open) return;
@@ -42,6 +48,9 @@ export default function AddProductModal({
     fetchAirFilterCategories()
       .then(setCategories)
       .catch(() => setCategories([]));
+    fetchStockItemCategories()
+      .then(setStockItemCategories)
+      .catch(() => setStockItemCategories([]));
   }, [open]);
 
   useEffect(() => {
@@ -60,6 +69,11 @@ export default function AddProductModal({
   const categoryOptions = useMemo(
     () => categories.map((c) => ({ label: c.name, value: String(c.id) })),
     [categories]
+  );
+
+  const stockItemCategoryOptions = useMemo(
+    () => stockItemCategories.map((c) => ({ label: c.name, value: String(c.id) })),
+    [stockItemCategories]
   );
 
   if (!open) return null;
@@ -98,11 +112,24 @@ export default function AddProductModal({
           depth: Number(depth) || 0,
         });
         productId = created?.product_id ?? null;
-      } else {
+      } else if (productType === "misc_item") {
         const created = await createMiscItem({
           name: partNumber.trim(),
           description: description || null,
           supplier_id: Number(supplierId),
+        });
+        productId = created?.product_id ?? null;
+      } else {
+        if (!categoryId) {
+          alert("Category is required.");
+          setLoading(false);
+          return;
+        }
+        const created = await createStockItem({
+          name: partNumber.trim(),
+          description: description || null,
+          supplier_id: Number(supplierId),
+          category_id: Number(categoryId),
         });
         productId = created?.product_id ?? null;
       }
@@ -149,6 +176,7 @@ export default function AddProductModal({
             >
               <option value="air_filter">Air Filter</option>
               <option value="misc_item">Misc Item</option>
+              <option value="stock_item">Stock Item</option>
             </select>
           </div>
 
@@ -181,7 +209,7 @@ export default function AddProductModal({
               className="input input-bordered w-full mt-1"
               value={partNumber}
               onChange={(e) => setPartNumber(e.target.value)}
-              placeholder={productType === "air_filter" ? "AF-12345" : "Misc item name"}
+              placeholder={productType === "air_filter" ? "AF-12345" : "Item name"}
               disabled={disabled}
             />
           </div>
@@ -199,6 +227,25 @@ export default function AddProductModal({
               >
                 <option value="">Select category...</option>
                 {categoryOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : productType === "stock_item" ? (
+            <div>
+              <label className="text-sm font-medium text-gray-600">
+                Category
+              </label>
+              <select
+                className="select select-bordered w-full mt-1"
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+                disabled={disabled}
+              >
+                <option value="">Select category...</option>
+                {stockItemCategoryOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
                   </option>
@@ -266,7 +313,7 @@ export default function AddProductModal({
           </div>
         )}
 
-        {productType === "air_filter" && (
+        {(productType === "air_filter" || productType === "stock_item") && (
           <div>
             <label className="text-sm font-medium text-gray-600">
               Description (optional)
@@ -276,7 +323,7 @@ export default function AddProductModal({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               disabled={disabled}
-              placeholder="e.g. High-efficiency pleated filter"
+              placeholder={productType === "air_filter" ? "e.g. High-efficiency pleated filter" : ""}
             />
           </div>
         )}

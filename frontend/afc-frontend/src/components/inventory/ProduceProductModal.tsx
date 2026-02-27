@@ -25,6 +25,7 @@ function formatChildLabel(child: ChildProductName) {
   if (child.part_number) return child.part_number;
   if (child.air_filter?.part_number) return child.air_filter.part_number;
   if (child.misc_item?.name) return child.misc_item.name;
+  if (child.stock_item?.name) return child.stock_item.name;
   return `Child ${child.id}`;
 }
 

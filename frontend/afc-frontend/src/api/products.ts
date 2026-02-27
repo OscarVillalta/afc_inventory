@@ -12,6 +12,7 @@ export interface ChildProductName {
   part_number?: string;
   air_filter?: { part_number?: string };
   misc_item?: { name?: string };
+  stock_item?: { name?: string };
 }
 
 export function fetchProducts() {

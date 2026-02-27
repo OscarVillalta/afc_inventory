@@ -542,8 +542,9 @@ export default function ProductDetailPage() {
   // Extract details
   const isAirFilter = product.category === "Air Filters";
   const isMiscItem = product.category === "Miscelaneous Items";
+  const isStockItem = product.category === "Stock Items";
   const partNumber = product.details.part_number || product.details.name || "N/A";
-  const description = isMiscItem
+  const description = (isMiscItem || isStockItem)
     ? product.details.description || "No description"
     : product.details.description || null;
   const vendor = product.details.supplier_name || "N/A";
@@ -644,15 +645,15 @@ export default function ProductDetailPage() {
                   ) : (
                     <div className="flex gap-6 mt-4 text-sm text-gray-600">
                       <div>
-                        <span className="font-medium">{isMiscItem ? "Name:" : "Part #:"}</span> {partNumber}
+                        <span className="font-medium">{(isMiscItem || isStockItem) ? "Name:" : "Part #:"}</span> {partNumber}
                       </div>
-                      {isMiscItem && product.details.description && (
+                      {(isMiscItem || isStockItem) && product.details.description && (
                         <div>
                           <span className="font-medium">Description:</span> {product.details.description}
                         </div>
                       )}
                       <div>
-                        <span className="font-medium">{isMiscItem ? "Supplier:" : "Vendor:"}</span> {vendor}
+                        <span className="font-medium">{(isMiscItem || isStockItem) ? "Supplier:" : "Vendor:"}</span> {vendor}
                       </div>
                     </div>
                   )}
