@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef } from "react";
+import React, { useLayoutEffect, useRef, useState } from "react";
 
 interface MDTableProps {
   title: string;
@@ -21,12 +21,15 @@ export default function MDTable({
   onPageChange,
   sortLabel,
 }: MDTableProps) {
-  const totalPages = Math.ceil(total / pageSize);
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const rangeStart = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const rangeEnd = Math.min(page * pageSize, total);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const savedScrollLeft = useRef(0);
   const savedScrollTop = useRef<number | null>(null);
+
+  const [pageInput, setPageInput] = useState("");
+  const [editing, setEditing] = useState(false);
 
   // Restore scroll positions after re-render
   useLayoutEffect(() => {
@@ -60,33 +63,13 @@ export default function MDTable({
     onPageChange(newPage);
   };
 
-  const getVisiblePages = (): (number | "...")[] => {
-    if (totalPages <= 10) {
-      return Array.from({ length: totalPages }, (_, i) => i + 1);
+  const commitPageInput = () => {
+    const parsed = parseInt(pageInput, 10);
+    if (!isNaN(parsed) && parsed >= 1 && parsed <= totalPages) {
+      handlePageChange(parsed);
     }
-
-    const firstGroupEnd = Math.min(page + 4, totalPages);
-    const lastGroupStart = Math.max(totalPages - 4, 1);
-
-    if (firstGroupEnd >= lastGroupStart - 1) {
-      // Groups overlap or are adjacent — merge into one contiguous range
-      const mergeStart = Math.min(page, lastGroupStart);
-      return Array.from(
-        { length: totalPages - mergeStart + 1 },
-        (_, i) => mergeStart + i
-      );
-    }
-
-    const firstGroup = Array.from(
-      { length: firstGroupEnd - page + 1 },
-      (_, i) => page + i
-    );
-    const lastGroup = Array.from(
-      { length: totalPages - lastGroupStart + 1 },
-      (_, i) => lastGroupStart + i
-    );
-
-    return [...firstGroup, "...", ...lastGroup];
+    setEditing(false);
+    setPageInput("");
   };
 
   return (
@@ -134,45 +117,53 @@ export default function MDTable({
           {/* Prev Button */}
           <button
             className="px-3 py-2 rounded-lg text-sm font-medium bg-gray-200 hover:bg-gray-300 disabled:opacity-40"
-            disabled={page === 1}
+            disabled={page <= 1}
             onClick={() => handlePageChange(page - 1)}
+            aria-label="Previous page"
           >
-            Prev
+            ‹
           </button>
 
-          {/* Page Numbers */}
-          {getVisiblePages().map((p, idx) => {
-            if (p === "...") {
-              return (
-                <span key={`ellipsis-${idx}`} className="px-3 py-2 text-gray-500 select-none">
-                  …
-                </span>
-              );
-            }
-            const active = p === page;
-            return (
-              <button
-                key={p}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition 
-                  ${
-                    active
-                      ? "bg-[#3A7BD5] text-white shadow-md"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                onClick={() => handlePageChange(p)}
-              >
-                {p}
-              </button>
-            );
-          })}
+          {/* Page indicator: editable */}
+          {editing ? (
+            <input
+              autoFocus
+              type="number"
+              min={1}
+              max={totalPages}
+              className="w-16 text-center border border-blue-400 rounded-lg px-2 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-300"
+              value={pageInput}
+              onChange={(e) => setPageInput(e.target.value)}
+              onBlur={commitPageInput}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") commitPageInput();
+                if (e.key === "Escape") {
+                  setEditing(false);
+                  setPageInput("");
+                }
+              }}
+            />
+          ) : (
+            <button
+              className="px-3 py-1.5 rounded-lg text-sm font-medium bg-[#3A7BD5] text-white shadow-md min-w-[72px] text-center"
+              onClick={() => {
+                setPageInput(String(page));
+                setEditing(true);
+              }}
+              title="Click to jump to a page"
+            >
+              {page} / {totalPages}
+            </button>
+          )}
 
           {/* Next Button */}
           <button
             className="px-3 py-2 rounded-lg text-sm font-medium bg-gray-200 hover:bg-gray-300 disabled:opacity-40"
-            disabled={page === totalPages}
+            disabled={page >= totalPages}
             onClick={() => handlePageChange(page + 1)}
+            aria-label="Next page"
           >
-            Next
+            ›
           </button>
         </div>
 
