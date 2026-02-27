@@ -9,7 +9,7 @@ class QBJobSchema(Schema):
 
     op = fields.Str(
         required=True,
-        validate=validate.OneOf(["query", "create", "add", "ping"])
+        validate=validate.OneOf(["query", "ping"])
     )
 
     entity = fields.Str(
@@ -35,13 +35,6 @@ class QBJobSchema(Schema):
         required=False,
         allow_none=True,
         load_default=dict,
-    )
-
-    payload = fields.Dict(
-        keys=fields.Str(),
-        values=fields.Raw(),
-        required=False,
-        allow_none=True,
     )
 
     companyFilePath = fields.Str(required=False, allow_none=True)
