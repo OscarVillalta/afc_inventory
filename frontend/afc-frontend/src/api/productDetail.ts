@@ -242,13 +242,6 @@ export interface CreateChildAirFilterPayload {
   depth?: number;
 }
 
-export interface CreateChildMiscItemPayload {
-  name: string;
-  supplier_id: number;
-  parent_product_id: number;
-  description?: string;
-}
-
 export interface CreateChildStockItemPayload {
   name: string;
   supplier_id: number;
@@ -259,13 +252,6 @@ export interface CreateChildStockItemPayload {
 
 export async function createChildAirFilter(data: CreateChildAirFilterPayload) {
   return apiRequest("/child_products/air_filters", {
-    method: "POST",
-    body: JSON.stringify(data),
-  });
-}
-
-export async function createChildMiscItem(data: CreateChildMiscItemPayload) {
-  return apiRequest("/child_products/misc_item", {
     method: "POST",
     body: JSON.stringify(data),
   });

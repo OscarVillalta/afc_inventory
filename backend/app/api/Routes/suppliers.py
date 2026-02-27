@@ -86,15 +86,7 @@ def delete_supplier(id):
             "linked_count": len(supplier.air_filters)
         }), 400
 
-    # 2️⃣ Check for Misc Items tied to this supplier
-    if supplier.misc_items:
-        return jsonify({
-            "error": "Cannot delete supplier.",
-            "reason": "Supplier is linked to Misc Items.",
-            "linked_count": len(supplier.misc_items)
-        }), 400
-
-    # 3️⃣ Check for Orders tied to this supplier
+    # 2️⃣ Check for Orders tied to this supplier
     if supplier.orders:
         return jsonify({
             "error": "Cannot delete supplier.",

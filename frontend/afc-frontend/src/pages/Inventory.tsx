@@ -1,6 +1,5 @@
 import { useState } from "react";
 import AirFiltersTable from "../components/inventory/AirFiltersTable";
-import MiscItemsTable from "../components/inventory/MiscItemsTable";
 import StockItemsTable from "../components/inventory/StockItemsTable";
 import AddProductModal from "../components/inventory/AddProductModal";
 import ProduceProductModal from "../components/inventory/ProduceProductModal";
@@ -8,7 +7,7 @@ import InventoryKpiRow from "../components/inventory/InventoryKpiRow";
 import MainLayout from "../layouts/MainLayout";
 
 export default function Inventory() {
-  const [tab, setTab] = useState<"filters" | "misc" | "stock">(
+  const [tab, setTab] = useState<"filters" | "stock">(
     "filters"
   );
   const [showAddProduct, setShowAddProduct] = useState(false);
@@ -64,18 +63,6 @@ export default function Inventory() {
           </button>
 
           <button
-            onClick={() => setTab("misc")}
-            className={`
-              px-4 py-2 rounded-lg text-sm font-medium transition
-              ${tab === "misc"
-                ? "bg-blue-100 text-blue-700 border border-blue-300 shadow-sm"
-                : "text-gray-600 hover:bg-gray-100"}
-            `}
-          >
-            Misc Items
-          </button>
-
-          <button
             onClick={() => setTab("stock")}
             className={`
               px-4 py-2 rounded-lg text-sm font-medium transition
@@ -91,7 +78,6 @@ export default function Inventory() {
         {/* CONTENT */}
         <div className="mt-10">
           {tab === "filters" && <AirFiltersTable refreshToken={refreshToken} />}
-          {tab === "misc" && <MiscItemsTable refreshToken={refreshToken} />}
           {tab === "stock" && <StockItemsTable refreshToken={refreshToken} />}
         </div>
 

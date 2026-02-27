@@ -106,7 +106,6 @@ class Supplier(Base, SerializerMixin):
     name: Mapped[str] = mapped_column(unique=True, nullable=False)
 
     air_filters: Mapped[List["AirFilter"]] = relationship(back_populates="supplier")
-    misc_items: Mapped[List["MiscItem"]] = relationship(back_populates="supplier")
     stock_items: Mapped[List["StockItem"]] = relationship(back_populates="supplier")
     orders: Mapped[List["Order"]] = relationship(back_populates="supplier")
 
@@ -182,34 +181,6 @@ class AirFilter(Base, SerializerMixin):
     )
 
 
-class MiscItem(Base, SerializerMixin):
-    __tablename__ = "misc_items"
-
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    name: Mapped[str] = mapped_column(String(100), nullable=False)
-    description: Mapped[Optional[str]] = mapped_column(String(255))
-    supplier_id: Mapped[int] = mapped_column(ForeignKey("suppliers.id"), nullable=False)
-
-    supplier: Mapped["Supplier"] = relationship(back_populates="misc_items")
-
-    product: Mapped[Optional["Product"]] = relationship(
-        "Product",
-        primaryjoin=lambda: Product.reference_id == foreign(MiscItem.id),
-        foreign_keys=lambda: [Product.reference_id],
-        back_populates="misc_item",
-        uselist=False,
-        viewonly=True,
-    )
-
-    child_product: Mapped[Optional["ChildProduct"]] = relationship(
-        "ChildProduct",
-        primaryjoin=lambda: ChildProduct.reference_id == foreign(MiscItem.id),
-        foreign_keys=lambda: [ChildProduct.reference_id],
-        back_populates="misc_item",
-        uselist=False,
-        viewonly=True,
-    )
-
 
 class StockItem(Base, SerializerMixin):
     __tablename__ = "stock_items"
@@ -260,14 +231,6 @@ class Product(Base, SerializerMixin):
     air_filter: Mapped[Optional["AirFilter"]] = relationship(
         "AirFilter",
         primaryjoin=lambda: Product.reference_id == foreign(AirFilter.id),
-        foreign_keys=lambda: [Product.reference_id],
-        back_populates="product",
-        uselist=False,
-    )
-
-    misc_item: Mapped[Optional["MiscItem"]] = relationship(
-        "MiscItem",
-        primaryjoin=lambda: Product.reference_id == foreign(MiscItem.id),
         foreign_keys=lambda: [Product.reference_id],
         back_populates="product",
         uselist=False,
@@ -331,14 +294,6 @@ class ChildProduct(Base, SerializerMixin):
     air_filter: Mapped[Optional["AirFilter"]] = relationship(
         "AirFilter",
         primaryjoin=lambda: ChildProduct.reference_id == foreign(AirFilter.id),
-        foreign_keys=lambda: [ChildProduct.reference_id],
-        back_populates="child_product",
-        uselist=False,
-    )
-
-    misc_item: Mapped[Optional["MiscItem"]] = relationship(
-        "MiscItem",
-        primaryjoin=lambda: ChildProduct.reference_id == foreign(MiscItem.id),
         foreign_keys=lambda: [ChildProduct.reference_id],
         back_populates="child_product",
         uselist=False,

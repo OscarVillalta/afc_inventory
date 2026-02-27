@@ -11,7 +11,6 @@ export interface ChildProductName {
   parent_product_id: number;
   part_number?: string;
   air_filter?: { part_number?: string };
-  misc_item?: { name?: string };
   stock_item?: { name?: string };
 }
 

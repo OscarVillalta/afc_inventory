@@ -4,7 +4,7 @@ from sqlalchemy import and_, or_
 from sqlalchemy.exc import IntegrityError, DatabaseError
 from app.api.Schemas.order_schema import OrderSchema
 from database.models import Customer, Supplier, OrderType, OrderStatus, OrderItemType, Transaction, TransactionState
-from database.models import Order, OrderItem, Product, AirFilter, MiscItem, Quantity
+from database.models import Order, OrderItem, Product, AirFilter, StockItem, Quantity
 from marshmallow import ValidationError
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, List, Tuple
@@ -204,8 +204,6 @@ def get_order_items(order_id):
 
             if product and product.category.name == "Air Filters":
                 part_number = product.air_filter.part_number
-            elif product and product.category.name == "Miscelaneous Items":
-                part_number = product.misc_item.name
             elif product:
                 part_number = f"Product #{product.id}"
             else:
@@ -273,8 +271,6 @@ def serialize_order(order_id):
             product = item.product
             if product and product.category.name == "Air Filters":
                 part_number = product.air_filter.part_number
-            elif product and product.category.name == "Miscelaneous Items":
-                part_number = product.misc_item.name
             elif product:
                 part_number = f"Product #{product.id}"
             else:
@@ -997,12 +993,9 @@ def create_order_from_qb():
     # Generate AFC order number
     order.order_number = f"AFC-{order.id:06d}"
     
-    # Get or create QB supplier once (used for auto-created MiscItems)
-    qb_supplier = None
-    
     # Process line items
     created_items = []
-    new_products = []  # Track newly created MiscItems
+    new_products = []
     skipped_items = []
     position = 0
     
@@ -1049,52 +1042,13 @@ def create_order_from_qb():
                 product = find_product_by_name(db, item_name)
                 
                 if not product:
-                    # Create a new MiscItem for unmatched QB items
-                    if qb_supplier is None:
-                        qb_supplier = get_or_create_qb_supplier(db)
-                    
-                    # Validate and truncate name if necessary (max 100 chars)
-                    validated_name = item_name[:100]
-                    
-                    # Validate and truncate description if necessary (max 255 chars)
-                    description = qb_line.get("description", "") or ""
-                    validated_description = description[:255]
-                    
-                    # Create MiscItem
-                    misc_item = MiscItem(
-                        name=validated_name,
-                        description=validated_description,
-                        supplier_id=qb_supplier.id
-                    )
-                    db.add(misc_item)
-                    db.flush()
-                    
-                    # Create associated Product (category_id for Misc Items)
-                    product = Product(
-                        category_id=Config.MISC_ITEM_CATEGORY_ID,
-                        reference_id=misc_item.id
-                    )
-                    db.add(product)
-                    db.flush()
-                    
-                    # Create Quantity record
-                    qty = Quantity(
-                        product_id=product.id,
-                        on_hand=0,
-                        reserved=0,
-                        ordered=0,
-                        location=0
-                    )
-                    db.add(qty)
-                    db.flush()
-                    
-                    # Track newly created product
-                    new_products.append({
-                        "name": validated_name,
-                        "description": validated_description,
-                        "product_id": product.id,
-                        "misc_item_id": misc_item.id
+                    # Skip unmatched QB items since misc_items have been removed
+                    skipped_items.append({
+                        "name": item_name,
+                        "reason": "Product not found in inventory"
                     })
+                    position += 1
+                    continue
 
                 
                 # Validate quantity
@@ -1163,7 +1117,7 @@ def create_order_from_qb():
 def find_product_by_name(db, item_name: str):
     """
     Find a product or child product in the database by matching the QB item name.
-    Tries to match against air filter part numbers and misc item names.
+    Tries to match against air filter part numbers and stock item names.
     
     Args:
         db: Database session
@@ -1193,22 +1147,22 @@ def find_product_by_name(db, item_name: str):
             # Return the parent product for child products
             return air_filter[0].child_product.parent_product
     
-    # Try misc items
-    misc_item = db.execute(
-        select(MiscItem).where(
+    # Try stock items
+    stock_item = db.execute(
+        select(StockItem).where(
             or_(
-                MiscItem.name == item_name,
-                func.lower(MiscItem.name) == item_name.lower()
+                StockItem.name == item_name,
+                func.lower(StockItem.name) == item_name.lower()
             )
         )
     ).first()
     
     # Prefer returning Product over ChildProduct
-    if misc_item:
-        if misc_item[0].product:
-            return misc_item[0].product
-        elif misc_item[0].child_product:
+    if stock_item:
+        if stock_item[0].product:
+            return stock_item[0].product
+        elif stock_item[0].child_product:
             # Return the parent product for child products
-            return misc_item[0].child_product.parent_product
+            return stock_item[0].child_product.parent_product
     
     return None
