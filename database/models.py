@@ -151,6 +151,7 @@ class AirFilter(Base, SerializerMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     part_number: Mapped[str] = mapped_column(unique=True, nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     merv_rating: Mapped[int] = mapped_column(Integer, nullable=False)
     height: Mapped[int] = mapped_column(Integer, default=0)
     width: Mapped[int] = mapped_column(Integer, default=0)

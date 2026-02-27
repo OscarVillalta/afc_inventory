@@ -166,6 +166,7 @@ def search_air_filters():
         select(
             AirFilter.id,
             AirFilter.part_number,
+            AirFilter.description,
             AirFilter.merv_rating,
             AirFilter.height,
             AirFilter.width,

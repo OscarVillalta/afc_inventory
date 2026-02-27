@@ -540,11 +540,12 @@ export default function ProductDetailPage() {
   const stockProjection = generateStockProjection();
 
   // Extract details
+  const isAirFilter = product.category === "Air Filters";
   const isMiscItem = product.category === "Miscelaneous Items";
   const partNumber = product.details.part_number || product.details.name || "N/A";
-  const description = product.details.filter_category
-    ? `${product.details.height}x${product.details.width}x${product.details.depth} MERV ${product.details.merv_rating} Filter`
-    : product.details.description || "No description";
+  const description = isMiscItem
+    ? product.details.description || "No description"
+    : product.details.description || null;
   const vendor = product.details.supplier_name || "N/A";
 
   const { on_hand, reserved, ordered, available, backordered } = product.quantity;
@@ -610,21 +611,51 @@ export default function ProductDetailPage() {
               <div className="flex items-start justify-between">
                 <div>
                   <h1 className="text-3xl font-bold text-[#363b4c]">{partNumber}</h1>
-                  <p className="text-lg text-gray-600 mt-1">{description}</p>
 
-                  <div className="flex gap-6 mt-4 text-sm text-gray-600">
-                    <div>
-                      <span className="font-medium">{isMiscItem ? "Name:" : "Part #:"}</span> {partNumber}
-                    </div>
-                    {isMiscItem && product.details.description && (
-                      <div>
-                        <span className="font-medium">Description:</span> {product.details.description}
+                  {isAirFilter ? (
+                    <div className="mt-3 space-y-1">
+                      <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                        <div>
+                          <span className="font-medium">Part #:</span> {partNumber}
+                        </div>
+                        <div>
+                          <span className="font-medium">Vendor:</span> {vendor}
+                        </div>
                       </div>
-                    )}
-                    <div>
-                      <span className="font-medium">{isMiscItem ? "Supplier:" : "Vendor:"}</span> {vendor}
+                      <div className="flex flex-wrap gap-4 text-sm text-gray-600 mt-2">
+                        <div>
+                          <span className="font-medium">Dimensions:</span>{" "}
+                          {product.details.height} × {product.details.width} × {product.details.depth}
+                        </div>
+                        <div>
+                          <span className="font-medium">MERV Rating:</span>{" "}
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+                            MERV {product.details.merv_rating}
+                          </span>
+                        </div>
+                      </div>
+                      {description && (
+                        <div className="mt-2 text-sm text-gray-600">
+                          <span className="font-medium">Description:</span>{" "}
+                          {description}
+                        </div>
+                      )}
                     </div>
-                  </div>
+                  ) : (
+                    <div className="flex gap-6 mt-4 text-sm text-gray-600">
+                      <div>
+                        <span className="font-medium">{isMiscItem ? "Name:" : "Part #:"}</span> {partNumber}
+                      </div>
+                      {isMiscItem && product.details.description && (
+                        <div>
+                          <span className="font-medium">Description:</span> {product.details.description}
+                        </div>
+                      )}
+                      <div>
+                        <span className="font-medium">{isMiscItem ? "Supplier:" : "Vendor:"}</span> {vendor}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <button
                   className="btn btn-sm bg-[#363b4c] text-white hover:bg-[#4a5063] border-0 flex-shrink-0"

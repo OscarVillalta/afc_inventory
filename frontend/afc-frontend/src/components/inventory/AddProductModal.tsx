@@ -89,6 +89,7 @@ export default function AddProductModal({
 
         const created = await createAirFilter({
           part_number: partNumber.trim(),
+          description: description || undefined,
           supplier_id: Number(supplierId),
           category_id: Number(categoryId),
           merv_rating: Number(mervRating) || 0,
@@ -262,6 +263,21 @@ export default function AddProductModal({
                 disabled={disabled}
               />
             </div>
+          </div>
+        )}
+
+        {productType === "air_filter" && (
+          <div>
+            <label className="text-sm font-medium text-gray-600">
+              Description (optional)
+            </label>
+            <input
+              className="input input-bordered w-full mt-1"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              disabled={disabled}
+              placeholder="e.g. High-efficiency pleated filter"
+            />
           </div>
         )}
 

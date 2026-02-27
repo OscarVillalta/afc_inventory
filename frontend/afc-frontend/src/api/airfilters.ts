@@ -10,6 +10,7 @@ export interface AirFilterPayload {
   child_product_id?: number | null;
   parent_product_id?: number | null;
   part_number: string;
+  description?: string | null;
   merv_rating: number;
 
   height: number;
@@ -29,6 +30,7 @@ export interface AirFilterPayload {
 export type CreateAirFilterPayload = Partial<AirFilterPayload> & {
   supplier_id: number;
   category_id: number;
+  description?: string;
   merv_rating?: number;
   height?: number;
   width?: number;

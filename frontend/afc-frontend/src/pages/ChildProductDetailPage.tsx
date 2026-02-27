@@ -273,10 +273,9 @@ export default function ChildProductDetailPage() {
   const stockProjection = generateStockProjection();
 
   // Extract details
+  const isAirFilter = childProduct.category === "Air Filters";
   const partNumber = childProduct.details.part_number || childProduct.details.name || "N/A";
-  const description = childProduct.details.filter_category
-    ? `${childProduct.details.height}x${childProduct.details.width}x${childProduct.details.depth} MERV ${childProduct.details.merv_rating} Filter`
-    : childProduct.details.description || "No description";
+  const description = childProduct.details.description || null;
   const vendor = childProduct.details.supplier_name || "N/A";
 
   const { on_hand, reserved, ordered, available, backordered } = childProduct.quantity;
@@ -284,9 +283,8 @@ export default function ChildProductDetailPage() {
   // Parent product info
   const parentPartNumber = childProduct.parent_product?.details.part_number || 
                           childProduct.parent_product?.details.name || "N/A";
-  const parentDescription = childProduct.parent_product?.details.filter_category
-    ? `${childProduct.parent_product.details.height}x${childProduct.parent_product.details.width}x${childProduct.parent_product.details.depth} MERV ${childProduct.parent_product.details.merv_rating} Filter`
-    : childProduct.parent_product?.details.description || "No description";
+  const parentIsAirFilter = childProduct.parent_product?.details.filter_category !== undefined;
+  const parentDescription = childProduct.parent_product?.details.description || null;
 
   return (
     <MainLayout>
@@ -328,16 +326,51 @@ export default function ChildProductDetailPage() {
                   Child Product
                 </span>
               </div>
-              <p className="text-lg text-gray-600 mt-1">{description}</p>
 
-              <div className="flex gap-6 mt-4 text-sm text-gray-600">
-                <div>
-                  <span className="font-medium">Part #:</span> {partNumber}
+              {isAirFilter ? (
+                <div className="mt-3 space-y-1">
+                  <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                    <div>
+                      <span className="font-medium">Part #:</span> {partNumber}
+                    </div>
+                    <div>
+                      <span className="font-medium">Vendor:</span> {vendor}
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-4 text-sm text-gray-600 mt-2">
+                    <div>
+                      <span className="font-medium">Dimensions:</span>{" "}
+                      {childProduct.details.height} × {childProduct.details.width} × {childProduct.details.depth}
+                    </div>
+                    <div>
+                      <span className="font-medium">MERV Rating:</span>{" "}
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+                        MERV {childProduct.details.merv_rating}
+                      </span>
+                    </div>
+                  </div>
+                  {description && (
+                    <div className="mt-2 text-sm text-gray-600">
+                      <span className="font-medium">Description:</span>{" "}
+                      {description}
+                    </div>
+                  )}
                 </div>
-                <div>
-                  <span className="font-medium">Vendor:</span> {vendor}
+              ) : (
+                <div className="flex gap-6 mt-4 text-sm text-gray-600">
+                  <div>
+                    <span className="font-medium">Part #:</span> {partNumber}
+                  </div>
+                  {description && (
+                    <div>
+                      <span className="font-medium">Description:</span> {description}
+                    </div>
+                  )}
+                  <div>
+                    <span className="font-medium">Vendor:</span> {vendor}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -374,7 +407,27 @@ export default function ChildProductDetailPage() {
                 <div className="flex justify-between items-start">
                   <div>
                     <p className="font-medium text-gray-800 text-lg">{parentPartNumber}</p>
-                    <p className="text-sm text-gray-600 mt-1">{parentDescription}</p>
+                    {parentIsAirFilter ? (
+                      <div className="mt-1 space-y-1">
+                        <div className="flex flex-wrap gap-3 text-sm text-gray-600">
+                          <span>
+                            <span className="font-medium">Dimensions:</span>{" "}
+                            {childProduct.parent_product.details.height} × {childProduct.parent_product.details.width} × {childProduct.parent_product.details.depth}
+                          </span>
+                          <span>
+                            <span className="font-medium">MERV:</span>{" "}
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+                              MERV {childProduct.parent_product.details.merv_rating}
+                            </span>
+                          </span>
+                        </div>
+                        {parentDescription && (
+                          <p className="text-sm text-gray-600">{parentDescription}</p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-600 mt-1">{parentDescription}</p>
+                    )}
                     <p className="text-xs text-gray-500 mt-2">
                       Supplier: {childProduct.parent_product.details.supplier_name || "N/A"}
                     </p>
