@@ -6,7 +6,6 @@ import {
 } from "../../api/airfilters";
 import {
   createChildAirFilter,
-  createChildMiscItem,
   createChildStockItem,
 } from "../../api/productDetail";
 import {
@@ -14,7 +13,7 @@ import {
   type StockItemCategory,
 } from "../../api/stockItems";
 
-type ProductType = "air_filter" | "misc_item" | "stock_item";
+type ProductType = "air_filter" | "stock_item";
 
 interface AddChildProductModalProps {
   open: boolean;
@@ -108,13 +107,6 @@ export default function AddChildProductModal({
           width: Number(width) || 0,
           depth: Number(depth) || 0,
         });
-      } else if (productType === "misc_item") {
-        await createChildMiscItem({
-          name: partNumber.trim(),
-          description: description || undefined,
-          supplier_id: Number(supplierId),
-          parent_product_id: parentProductId,
-        });
       } else {
         await createChildStockItem({
           name: partNumber.trim(),
@@ -156,7 +148,6 @@ export default function AddChildProductModal({
               disabled={disabled}
             >
               <option value="air_filter">Air Filter</option>
-              <option value="misc_item">Misc Item</option>
               <option value="stock_item">Stock Item</option>
             </select>
           </div>
@@ -233,19 +224,7 @@ export default function AddChildProductModal({
                 ))}
               </select>
             </div>
-          ) : (
-            <div>
-              <label className="text-sm font-medium text-gray-600">
-                Description (optional)
-              </label>
-              <input
-                className="input input-bordered w-full mt-1"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                disabled={disabled}
-              />
-            </div>
-          )}
+          ) : null}
         </div>
 
         {productType === "air_filter" && (

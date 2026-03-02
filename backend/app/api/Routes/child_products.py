@@ -1,7 +1,7 @@
 from flask import g, jsonify, request, Blueprint
 from sqlalchemy import select
 from marshmallow import ValidationError
-from database.models import ChildProduct, Product, AirFilter, MiscItem, StockItem, StockItemCategory, ProductCategory, Supplier, AirFilterCategory
+from database.models import ChildProduct, Product, AirFilter, StockItem, StockItemCategory, ProductCategory, Supplier, AirFilterCategory
 from app.api.Schemas.child_product_schema import ChildProductSchema
 
 child_product_bp = Blueprint("child_products", __name__)
@@ -10,7 +10,6 @@ child_product_list_schema = ChildProductSchema(many=True)
 
 # Category constants
 CATEGORY_AIR_FILTERS = 1
-CATEGORY_MISC_ITEMS = 2
 CATEGORY_STOCK_ITEMS = 3
 
 # =====================================================
@@ -38,10 +37,8 @@ def get_child_product(id):
         .options(
             selectinload(ChildProduct.category),
             selectinload(ChildProduct.air_filter).selectinload(AirFilter.supplier),
-            selectinload(ChildProduct.misc_item).selectinload(MiscItem.supplier),
             selectinload(ChildProduct.stock_item).selectinload(StockItem.supplier),
             selectinload(ChildProduct.parent_product).selectinload(Product.air_filter).selectinload(AirFilter.supplier),
-            selectinload(ChildProduct.parent_product).selectinload(Product.misc_item).selectinload(MiscItem.supplier),
             selectinload(ChildProduct.parent_product).selectinload(Product.stock_item).selectinload(StockItem.supplier),
             selectinload(ChildProduct.parent_product).selectinload(Product.quantity)
         )
@@ -56,9 +53,6 @@ def get_child_product(id):
     if cp.air_filter:
         details = cp.air_filter.to_dict()
         details["supplier_name"] = cp.air_filter.supplier.name if cp.air_filter.supplier else None
-    elif cp.misc_item:
-        details = cp.misc_item.to_dict()
-        details["supplier_name"] = cp.misc_item.supplier.name if cp.misc_item.supplier else None
     elif cp.stock_item:
         details = cp.stock_item.to_dict()
         details["supplier_name"] = cp.stock_item.supplier.name if cp.stock_item.supplier else None
@@ -72,9 +66,6 @@ def get_child_product(id):
         if cp.parent_product.air_filter:
             parent_details = cp.parent_product.air_filter.to_dict()
             parent_details["supplier_name"] = cp.parent_product.air_filter.supplier.name if cp.parent_product.air_filter.supplier else None
-        elif cp.parent_product.misc_item:
-            parent_details = cp.parent_product.misc_item.to_dict()
-            parent_details["supplier_name"] = cp.parent_product.misc_item.supplier.name if cp.parent_product.misc_item.supplier else None
         elif cp.parent_product.stock_item:
             parent_details = cp.parent_product.stock_item.to_dict()
             parent_details["supplier_name"] = cp.parent_product.stock_item.supplier.name if cp.parent_product.stock_item.supplier else None
@@ -168,60 +159,6 @@ def create_child_air_filter():
 
 
 # =====================================================
-# 🔹 POST new Child Product (Misc Item)
-# =====================================================
-@child_product_bp.route("/child_products/misc_item", methods=["POST"])
-def create_child_misc_item():
-    """Create a child product that references a misc item and shares parent's quantity"""
-    db = g.db
-    data = request.get_json() or {}
-    
-    # Required fields
-    required = ["name", "supplier_id", "parent_product_id"]
-    for field in required:
-        if field not in data:
-            return jsonify({"error": f"{field} is required"}), 400
-    
-    # Validate parent product exists and has quantity
-    parent_product = db.get(Product, data["parent_product_id"])
-    if not parent_product:
-        return jsonify({"error": "Parent product not found"}), 400
-    if not parent_product.quantity:
-        return jsonify({"error": "Parent product does not have a quantity record"}), 400
-    
-    # Validate supplier
-    supplier = db.get(Supplier, data["supplier_id"])
-    if not supplier:
-        return jsonify({"error": "Invalid supplier ID"}), 400
-    
-    # Create the misc item record
-    misc_item_data = {
-        "name": data["name"],
-        "supplier_id": data["supplier_id"],
-        "description": data.get("description", "")
-    }
-    new_misc_item = MiscItem.from_dict(misc_item_data)
-    db.add(new_misc_item)
-    db.flush()
-    
-    # Create the child product
-    child_product = ChildProduct(
-        category_id=CATEGORY_MISC_ITEMS,
-        reference_id=new_misc_item.id,
-        parent_product_id=data["parent_product_id"]
-    )
-    db.add(child_product)
-    db.commit()
-    
-    return jsonify({
-        "message": "Child misc item product created successfully",
-        "child_product_id": child_product.id,
-        "misc_item": new_misc_item.to_dict(),
-        "parent_product_id": child_product.parent_product_id
-    }), 201
-
-
-# =====================================================
 # 🔹 POST new Child Product (Stock Item)
 # =====================================================
 @child_product_bp.route("/child_products/stock_item", methods=["POST"])
@@ -291,11 +228,9 @@ def delete_child_product(id):
     if not cp:
         return jsonify({"error": "Child product not found"}), 404
     
-    # Delete the associated air filter, misc item, or stock item
+    # Delete the associated air filter or stock item
     if cp.air_filter:
         db.delete(cp.air_filter)
-    elif cp.misc_item:
-        db.delete(cp.misc_item)
     elif cp.stock_item:
         db.delete(cp.stock_item)
     

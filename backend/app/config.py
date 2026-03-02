@@ -15,10 +15,6 @@ class Config:
     QB_API_KEY = os.getenv("QB_API_KEY", "")
     QB_REQUEST_TIMEOUT = int(os.getenv("QB_REQUEST_TIMEOUT", "30"))
     
-    # Product Categories
-    # ID for Misc Items category (must match product_categories table)
-    MISC_ITEM_CATEGORY_ID = int(os.getenv("MISC_ITEM_CATEGORY_ID", "2"))
-    
     # QuickBooks Supplier
     # Auto-created supplier for products imported from QuickBooks
     QB_SUPPLIER_NAME = os.getenv("QB_SUPPLIER_NAME", "QuickBooks")
@@ -38,9 +34,6 @@ class Config:
     def validate(cls):
         """Validate configuration values."""
         errors = []
-        
-        if cls.MISC_ITEM_CATEGORY_ID < 1:
-            errors.append("MISC_ITEM_CATEGORY_ID must be a positive integer")
         
         if cls.DEFAULT_PAGE_SIZE < 1 or cls.DEFAULT_PAGE_SIZE > cls.MAX_PAGE_SIZE:
             errors.append(f"DEFAULT_PAGE_SIZE must be between 1 and {cls.MAX_PAGE_SIZE}")

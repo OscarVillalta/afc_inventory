@@ -57,7 +57,7 @@ function getChildLabel(child: ChildProductName) {
   return (
     child.part_number ||
     child.air_filter?.part_number ||
-    child.misc_item?.name ||
+    child.stock_item?.name ||
     `Child #${child.id}`
   );
 }

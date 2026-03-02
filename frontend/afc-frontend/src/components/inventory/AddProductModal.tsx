@@ -5,7 +5,6 @@ import {
   fetchAirFilterCategories,
   type AirFilterCategory,
 } from "../../api/airfilters";
-import { createMiscItem } from "../../api/miscItems";
 import {
   createStockItem,
   fetchStockItemCategories,
@@ -13,7 +12,7 @@ import {
 } from "../../api/stockItems";
 import { autocommitTxn } from "../../api/transactions";
 
-type ProductType = "air_filter" | "misc_item" | "stock_item";
+type ProductType = "air_filter" | "stock_item";
 
 interface AddProductModalProps {
   open: boolean;
@@ -112,13 +111,6 @@ export default function AddProductModal({
           depth: Number(depth) || 0,
         });
         productId = created?.product_id ?? null;
-      } else if (productType === "misc_item") {
-        const created = await createMiscItem({
-          name: partNumber.trim(),
-          description: description || null,
-          supplier_id: Number(supplierId),
-        });
-        productId = created?.product_id ?? null;
       } else {
         if (!categoryId) {
           alert("Category is required.");
@@ -175,7 +167,6 @@ export default function AddProductModal({
               disabled={disabled}
             >
               <option value="air_filter">Air Filter</option>
-              <option value="misc_item">Misc Item</option>
               <option value="stock_item">Stock Item</option>
             </select>
           </div>
@@ -252,19 +243,7 @@ export default function AddProductModal({
                 ))}
               </select>
             </div>
-          ) : (
-            <div>
-              <label className="text-sm font-medium text-gray-600">
-                Description (optional)
-              </label>
-              <input
-                className="input input-bordered w-full mt-1"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                disabled={disabled}
-              />
-            </div>
-          )}
+          ) : null}
         </div>
 
         {productType === "air_filter" && (

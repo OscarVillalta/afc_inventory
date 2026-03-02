@@ -36,7 +36,7 @@ function getChildPartNumber(cp: ChildProductName) {
   return (
     cp.part_number ||
     cp.air_filter?.part_number ||
-    cp.misc_item?.name ||
+    cp.stock_item?.name ||
     `Child #${cp.id}`
   );
 }
