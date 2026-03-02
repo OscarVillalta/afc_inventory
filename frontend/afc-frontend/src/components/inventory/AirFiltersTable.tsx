@@ -21,10 +21,10 @@ const ALL_COLUMNS = ["Part Number", "Supplier", "Category", "Dimensions", "Descr
 type ColumnKey = typeof ALL_COLUMNS[number];
 const DEFAULT_VISIBLE: Record<ColumnKey, boolean> = {
   "Part Number": true,
+  "Description": true,
   "Supplier": true,
   "Category": true,
   "Dimensions": true,
-  "Description": true,
   "MERV": true,
   "Stock": true,
 };
@@ -314,10 +314,10 @@ export default function AirFiltersTable({ refreshToken }: { refreshToken?: numbe
   const visibleColumnHeaders = useMemo(() => {
     const cols: string[] = [];
     if (isColVisible("Part Number")) cols.push("Part Number");
+    if (isColVisible("Description")) cols.push("Description");
     if (isColVisible("Supplier")) cols.push("Supplier");
     if (isColVisible("Category")) cols.push("Category");
     if (isColVisible("Dimensions")) cols.push("Dimensions");
-    if (isColVisible("Description")) cols.push("Description");
     if (isColVisible("MERV")) cols.push("MERV");
     cols.push(""); // spacer
     if (isColVisible("Stock")) cols.push("STOCK");
@@ -423,6 +423,12 @@ export default function AirFiltersTable({ refreshToken }: { refreshToken?: numbe
             </th>
           )}
 
+          {isColVisible("Description") && (
+            <th className="pr-3 pb-2">
+              <div className="h-6" />
+            </th>
+          )}
+
           {isColVisible("Supplier") && (
             <th className="pb-2 pr-3">
               <input
@@ -493,12 +499,6 @@ export default function AirFiltersTable({ refreshToken }: { refreshToken?: numbe
             </th>
           )}
 
-          {isColVisible("Description") && (
-            <th className="pr-3 pb-2">
-              <div className="h-6" />
-            </th>
-          )}
-
           {isColVisible("MERV") && (
             <th className="pr-3 pb-2 w-1/18">
               <input
@@ -559,6 +559,19 @@ export default function AirFiltersTable({ refreshToken }: { refreshToken?: numbe
                     </div>
                   </td>
                 )}
+                {isColVisible("Description") && (
+                  <td 
+                    className={`${rowPadding} px-2 max-w-[180px]`}
+                    onClick={() => navigate(`/products/${group.parent.product_id}`)}
+                  >
+                    <span
+                      className="block truncate text-sm text-gray-600"
+                      title={group.parent.description ?? ""}
+                    >
+                      {group.parent.description || <span className="text-gray-300">—</span>}
+                    </span>
+                  </td>
+                )}
                 {isColVisible("Supplier") && (
                   <td 
                     className={`${rowPadding} px-2 w-1/5`}
@@ -583,19 +596,7 @@ export default function AirFiltersTable({ refreshToken }: { refreshToken?: numbe
                     {group.parent.height} x {group.parent.width} x {group.parent.depth}
                   </td>
                 )}
-                {isColVisible("Description") && (
-                  <td 
-                    className={`${rowPadding} px-2 max-w-[180px]`}
-                    onClick={() => navigate(`/products/${group.parent.product_id}`)}
-                  >
-                    <span
-                      className="block truncate text-sm text-gray-600"
-                      title={group.parent.description ?? ""}
-                    >
-                      {group.parent.description || <span className="text-gray-300">—</span>}
-                    </span>
-                  </td>
-                )}
+            
                 {isColVisible("MERV") && (
                   <td 
                     className={`${rowPadding} text-center`}
@@ -688,6 +689,19 @@ export default function AirFiltersTable({ refreshToken }: { refreshToken?: numbe
                       <span className="text-gray-600">↳ {child.part_number}</span>
                     </td>
                   )}
+                  {isColVisible("Description") && (
+                    <td 
+                      className={`${rowPadding} px-2 max-w-[180px]`}
+                      onClick={() => navigate(`/products/${child.product_id}`)}
+                    >
+                      <span
+                        className="block truncate text-sm text-gray-600"
+                        title={child.description ?? ""}
+                      >
+                        {child.description || <span className="text-gray-300">—</span>}
+                      </span>
+                    </td>
+                  )}
                   {isColVisible("Supplier") && (
                     <td 
                       className={`${rowPadding} px-2 w-1/5`}
@@ -710,19 +724,6 @@ export default function AirFiltersTable({ refreshToken }: { refreshToken?: numbe
                       onClick={() => navigate(`/products/${child.product_id}`)}
                     >
                       {child.height} x {child.width} x {child.depth}
-                    </td>
-                  )}
-                  {isColVisible("Description") && (
-                    <td 
-                      className={`${rowPadding} px-2 max-w-[180px]`}
-                      onClick={() => navigate(`/products/${child.product_id}`)}
-                    >
-                      <span
-                        className="block truncate text-sm text-gray-600"
-                        title={child.description ?? ""}
-                      >
-                        {child.description || <span className="text-gray-300">—</span>}
-                      </span>
                     </td>
                   )}
                   {isColVisible("MERV") && (

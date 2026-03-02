@@ -44,7 +44,6 @@ from database.models import (
     Product,
     ProductCategory,
     Customer,
-    MiscItem,
     ConversionBatch,
     Conversion,
 )
