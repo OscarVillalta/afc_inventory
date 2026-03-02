@@ -56,6 +56,7 @@ export interface AirFilterCategory {
 
 export interface AirFilterSearchParams {
   part_number?: string;
+  description?: string;
   supplier?: string;
   category?: string;
   merv?: number;
@@ -83,6 +84,7 @@ export function fetchAirFilters(
   params.set("limit", String(limit));
 
   if (filters.part_number) params.set("part_number", filters.part_number);
+  if (filters.description) params.set("description", filters.description);
   if (filters.supplier) params.set("supplier", filters.supplier);
   if (filters.category !== undefined) params.set("category", String(filters.category));
   if (filters.merv !== undefined) params.set("merv", String(filters.merv));

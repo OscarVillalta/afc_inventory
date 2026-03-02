@@ -116,6 +116,7 @@ export default function AirFiltersTable({ refreshToken }: { refreshToken?: numbe
   /* ===================== FILTER STATE (PERSISTED) ===================== */
   const [filters, setFilter] = usePersistedFilters("filters_airfilters", {
     searchPart: "",
+    filterDescription: "",
     filterSupplier: "",
     filterCategory: "",
     filterMerv: "" as number | "",
@@ -168,6 +169,7 @@ export default function AirFiltersTable({ refreshToken }: { refreshToken?: numbe
 
     fetchAirFilters(page, pageSize, {
         part_number: filters.searchPart || undefined,
+        description: filters.filterDescription || undefined,
         supplier: filters.filterSupplier || undefined,
         category: filters.filterCategory || undefined,
         merv: filters.filterMerv || undefined,
@@ -197,7 +199,7 @@ export default function AirFiltersTable({ refreshToken }: { refreshToken?: numbe
 
   useEffect(() => {
     loadData();
-  }, [page, filters.searchPart, filters.filterSupplier, filters.filterCategory, filters.filterMerv, filters.filterHeight, filters.filterWidth, filters.filterDepth, refreshToken]);
+  }, [page, filters.searchPart, filters.filterDescription, filters.filterSupplier, filters.filterCategory, filters.filterMerv, filters.filterHeight, filters.filterWidth, filters.filterDepth, refreshToken]);
 
   const rows: AirFilterPayload[] = data?.results ?? [];
 
@@ -412,7 +414,7 @@ export default function AirFiltersTable({ refreshToken }: { refreshToken?: numbe
           {isColVisible("Part Number") && (
             <th className="pr-3 pb-2">
               <input
-                className="input input-bordered input-xs w-full"
+                className="input input-bordered input-xs w-full max-w-[110px]"
                 placeholder="Search..."
                 value={filters.searchPart}
                 onChange={(e) => {
@@ -425,14 +427,22 @@ export default function AirFiltersTable({ refreshToken }: { refreshToken?: numbe
 
           {isColVisible("Description") && (
             <th className="pr-3 pb-2">
-              <div className="h-6" />
+              <input
+                className="input input-bordered input-xs w-full max-w-[130px]"
+                placeholder="Description..."
+                value={filters.filterDescription}
+                onChange={(e) => {
+                  setPage(1);
+                  setFilter("filterDescription", e.target.value);
+                }}
+              />
             </th>
           )}
 
           {isColVisible("Supplier") && (
             <th className="pb-2 pr-3">
               <input
-                className="input input-bordered input-xs w-full"
+                className="input input-bordered input-xs w-full max-w-[110px]"
                 placeholder="Supplier..."
                 value={filters.filterSupplier}
                 onChange={(e) => {
@@ -446,7 +456,7 @@ export default function AirFiltersTable({ refreshToken }: { refreshToken?: numbe
           {isColVisible("Category") && (
             <th className="pb-2 pr-3 w-1/12">
               <input
-                className="input input-bordered input-xs w-full"
+                className="input input-bordered input-xs w-full max-w-[90px]"
                 placeholder="Category..."
                 value={filters.filterCategory}
                 onChange={(e) => {
@@ -502,7 +512,7 @@ export default function AirFiltersTable({ refreshToken }: { refreshToken?: numbe
           {isColVisible("MERV") && (
             <th className="pr-3 pb-2 w-1/18">
               <input
-                className="input input-bordered input-xs self-start text-center w-full"
+                className="input input-bordered input-xs text-center w-16"
                 placeholder="MERV..."
                 value={filters.filterMerv}
                 onChange={(e) => {
@@ -516,7 +526,7 @@ export default function AirFiltersTable({ refreshToken }: { refreshToken?: numbe
           <th></th>
 
           {isColVisible("Stock") && (
-            <th className="flex justify-between items-center bg-blue-50 py-6 px-2 border-2 border-blue-400 rounded-lg shadow-sm">
+            <th className="flex justify-between items-center bg-blue-50 py-6 px-2 border-2 border-blue-400 rounded-lg shadow-sm min-w-[350px]">
                 <span className="font-semibold text-blue-600">On Hand</span>
                 <span className="font-semibold text-blue-600">Ordered</span>
                 <span className="font-semibold text-blue-600">Reserved</span>
@@ -611,10 +621,10 @@ export default function AirFiltersTable({ refreshToken }: { refreshToken?: numbe
                 ></td>
                 {isColVisible("Stock") && (
                   <td 
-                    className={`${rowPadding} font-medium text-center bg-blue-50 border-2 border-blue-400 rounded-lg shadow-sm`}
+                    className={`${rowPadding} font-medium text-center bg-blue-50 border-2 border-blue-400 rounded-lg shadow-sm min-w-[350px]`}
                     onClick={() => navigate(`/products/${group.parent.product_id}`)}
                   >
-                    <div className="flex justify-around items-center gap-5">
+                    <div className="flex justify-around items-center gap-2">
                       <span className="font-medium text-center">{group.parent.on_hand}</span>
                       <span className="font-medium text-center">{group.parent.ordered}</span>
                       <span className="font-medium text-center">{group.parent.reserved}</span>
@@ -740,10 +750,10 @@ export default function AirFiltersTable({ refreshToken }: { refreshToken?: numbe
                   ></td>
                   {isColVisible("Stock") && (
                     <td 
-                      className={`${rowPadding} font-medium text-center bg-white border-2 border-blue-300 rounded-lg shadow-sm`}
+                      className={`${rowPadding} font-medium text-center bg-white border-2 border-blue-300 rounded-lg shadow-sm min-w-[350px]`}
                       onClick={() => navigate(`/products/${child.product_id}`)}
                     >
-                      <div className="flex justify-around items-center gap-5">
+                      <div className="flex justify-around items-center gap-2">
                         <span className="font-medium text-center text-gray-500">—</span>
                         <span className="font-medium text-center text-gray-500">—</span>
                         <span className="font-medium text-center text-gray-500">—</span>

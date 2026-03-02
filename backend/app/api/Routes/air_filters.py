@@ -144,6 +144,7 @@ def search_air_filters():
 
     # --- Query parameters ---
     part_number = request.args.get("part_number")
+    description = request.args.get("description")
     supplier_name = request.args.get("supplier")
     merv = request.args.get("merv", type=int)
     height = request.args.get("height", type=int)
@@ -199,6 +200,8 @@ def search_air_filters():
 
     if part_number:
         filters.append(AirFilter.part_number.ilike(f"%{part_number}%"))
+    if description:
+        filters.append(AirFilter.description.ilike(f"%{description}%"))
     if supplier_name:
         filters.append(Supplier.name.ilike(f"%{supplier_name}%"))
     if merv is not None:
