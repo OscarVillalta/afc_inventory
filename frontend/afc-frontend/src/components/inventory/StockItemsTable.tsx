@@ -294,7 +294,7 @@ export default function StockItemsTable({ refreshToken }: { refreshToken?: numbe
           {isColVisible("Name") && (
             <th className="pr-3 pb-2">
               <input
-                className="input input-bordered input-xs w-full"
+                className="input input-bordered input-xs w-full max-w-[110px]"
                 placeholder="Search name..."
                 value={filters.searchName}
                 onChange={(e) => {
@@ -308,7 +308,7 @@ export default function StockItemsTable({ refreshToken }: { refreshToken?: numbe
           {isColVisible("Description") && (
             <th className="pb-2 pr-3">
               <input
-                className="input input-bordered input-xs w-full"
+                className="input input-bordered input-xs w-full max-w-[130px]"
                 placeholder="Description..."
                 value={filters.filterDescription}
                 onChange={(e) => {
@@ -322,7 +322,7 @@ export default function StockItemsTable({ refreshToken }: { refreshToken?: numbe
           {isColVisible("Category") && (
             <th className="pb-2 pr-3">
               <input
-                className="input input-bordered input-xs w-full"
+                className="input input-bordered input-xs w-full max-w-[100px]"
                 placeholder="Category..."
                 value={filters.filterCategory}
                 onChange={(e) => {
@@ -336,7 +336,7 @@ export default function StockItemsTable({ refreshToken }: { refreshToken?: numbe
           {isColVisible("Supplier") && (
             <th className="pb-2 pr-3">
               <input
-                className="input input-bordered input-xs w-full"
+                className="input input-bordered input-xs w-full max-w-[110px]"
                 placeholder="Supplier..."
                 value={filters.filterSupplier}
                 onChange={(e) => {
@@ -350,7 +350,7 @@ export default function StockItemsTable({ refreshToken }: { refreshToken?: numbe
           <th></th>
 
           {isColVisible("Stock") && (
-            <th className="flex justify-between items-center bg-blue-50 py-6 px-2 border-2 border-blue-400 rounded-lg shadow-sm">
+            <th className="flex justify-between items-center bg-blue-50 py-6 px-2 border-2 border-blue-400 rounded-lg shadow-sm min-w-[350px]">
               <span className="font-semibold text-blue-600">On Hand</span>
               <span className="font-semibold text-blue-600">Ordered</span>
               <span className="font-semibold text-blue-600">Reserved</span>
@@ -376,10 +376,12 @@ export default function StockItemsTable({ refreshToken }: { refreshToken?: numbe
             )}
             {isColVisible("Description") && (
               <td
-                className={`${rowPadding} px-2 w-1/4`}
+                className={`${rowPadding} px-2 w-1/4 max-w-[200px]`}
                 onClick={() => navigate(`/products/${row.product_id}`)}
               >
-                {row.description ?? "—"}
+                <span className="block truncate" title={row.description ?? ""}>
+                  {row.description ?? "—"}
+                </span>
               </td>
             )}
             {isColVisible("Category") && (
@@ -404,10 +406,10 @@ export default function StockItemsTable({ refreshToken }: { refreshToken?: numbe
             ></td>
             {isColVisible("Stock") && (
               <td
-                className={`${rowPadding} font-medium text-center bg-blue-50 border-2 border-blue-400 rounded-lg shadow-sm`}
+                className={`${rowPadding} font-medium text-center bg-blue-50 border-2 border-blue-400 rounded-lg shadow-sm min-w-[350px]`}
                 onClick={() => navigate(`/products/${row.product_id}`)}
               >
-                <div className="flex justify-around items-center gap-5">
+                <div className="flex justify-around items-center gap-2">
                   <span className="font-medium text-center">{row.on_hand}</span>
                   <span className="font-medium text-center">{row.ordered}</span>
                   <span className="font-medium text-center">{row.reserved}</span>
