@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import React from "react";
 import MainLayout from "../layouts/MainLayout";
 import {
@@ -248,8 +248,7 @@ function ProgressStepper({
 type FilterTab = "All" | "Not Started" | "In Progress" | "Completed";
 
 interface FilterBarProps {
-  data: PackingSlipRow[];
-  total: number;
+  statusCounts: { All: number; "Not Started": number; "In Progress": number; Completed: number };
   activeTab: FilterTab;
   onTabChange: (tab: FilterTab) => void;
   search: string;
@@ -258,24 +257,13 @@ interface FilterBarProps {
 }
 
 function FilterBar({
-  data,
-  total,
+  statusCounts,
   activeTab,
   onTabChange,
   search,
   onSearchChange,
   onCreateClick,
 }: FilterBarProps) {
-  const counts = useMemo(
-    () => ({
-      All: total,
-      "Not Started": data.filter((r) => r.trackerStatus === "Not Started").length,
-      "In Progress": data.filter((r) => r.trackerStatus === "In Progress").length,
-      Completed: data.filter((r) => r.trackerStatus === "Completed").length,
-    }),
-    [data, total]
-  );
-
   const tabs: FilterTab[] = ["All", "Not Started", "In Progress", "Completed"];
 
   return (
@@ -301,7 +289,7 @@ function FilterBar({
                     : "bg-gray-100 text-gray-500"
                 }`}
               >
-                {counts[tab as keyof typeof counts]}
+                {statusCounts[tab as keyof typeof statusCounts]}
               </span>
             </button>
           ))}
@@ -341,11 +329,11 @@ function FilterBar({
 function ExpandedPanel({
   row,
   onCollapse,
-  onRefresh,
+  onTrackerUpdate,
 }: {
   row: PackingSlipRow;
   onCollapse: () => void;
-  onRefresh: () => void;
+  onTrackerUpdate: (orderId: number, updated: OrderTrackerPayload) => void;
 }) {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -356,11 +344,11 @@ function ExpandedPanel({
     setSaving(true);
     setSaveError(null);
     try {
-      await updateOrderTracker(row.id, {
+      const updated = await updateOrderTracker(row.id, {
         current_department: dept,
         step_index: index,
       });
-      onRefresh();
+      onTrackerUpdate(row.id, updated);
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : "Failed to update step.");
     } finally {
@@ -502,16 +490,18 @@ function Pagination({
 // KPI Cards
 // ─────────────────────────────────────────────
 
-function KpiCards({ data, total }: { data: PackingSlipRow[]; total: number }) {
-  const notStarted = data.filter((r) => r.trackerStatus === "Not Started").length;
-  const inProgress = data.filter((r) => r.trackerStatus === "In Progress").length;
-  const completed = data.filter((r) => r.trackerStatus === "Completed").length;
-
+function KpiCards({
+  total,
+  statusCounts,
+}: {
+  total: number;
+  statusCounts: { "Not Started": number; "In Progress": number; Completed: number };
+}) {
   const cards = [
     { label: "Total Orders", value: total, color: "text-gray-800" },
-    { label: "Not Started", value: notStarted, color: "text-slate-600" },
-    { label: "In Progress", value: inProgress, color: "text-yellow-600" },
-    { label: "Completed", value: completed, color: "text-green-600" },
+    { label: "Not Started", value: statusCounts["Not Started"], color: "text-slate-600" },
+    { label: "In Progress", value: statusCounts["In Progress"], color: "text-yellow-600" },
+    { label: "Completed", value: statusCounts["Completed"], color: "text-green-600" },
   ];
 
   return (
@@ -535,6 +525,8 @@ function KpiCards({ data, total }: { data: PackingSlipRow[]; total: number }) {
 
 const PAGE_SIZE = 10;
 
+const DEFAULT_STATUS_COUNTS = { "Not Started": 0, "In Progress": 0, Completed: 0 };
+
 export default function PackingSlipTrackerPage() {
   const [activeTab, setActiveTab] = useState<FilterTab>("All");
   const [search, setSearch] = useState("");
@@ -542,8 +534,9 @@ export default function PackingSlipTrackerPage() {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [page, setPage] = useState(1);
 
-  const [allRows, setAllRows] = useState<PackingSlipRow[]>([]);
+  const [rows, setRows] = useState<PackingSlipRow[]>([]);
   const [total, setTotal] = useState(0);
+  const [statusCounts, setStatusCounts] = useState(DEFAULT_STATUS_COUNTS);
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
@@ -553,13 +546,19 @@ export default function PackingSlipTrackerPage() {
     return () => clearTimeout(t);
   }, [search]);
 
-  const loadData = useCallback(async (p: number, s: string) => {
+  const loadData = useCallback(async (p: number, s: string, tab: FilterTab) => {
     setLoading(true);
     setFetchError(null);
     try {
-      const resp = await fetchPackingSlips({ page: p, limit: PAGE_SIZE, search: s });
-      setAllRows(resp.results.map(toPackingSlipRow));
+      const resp = await fetchPackingSlips({
+        page: p,
+        limit: PAGE_SIZE,
+        search: s,
+        tracker_status: tab === "All" ? undefined : tab,
+      });
+      setRows(resp.results.map(toPackingSlipRow));
       setTotal(resp.total);
+      setStatusCounts(resp.status_counts);
     } catch (err) {
       setFetchError(err instanceof Error ? err.message : "Failed to load data.");
     } finally {
@@ -568,10 +567,10 @@ export default function PackingSlipTrackerPage() {
   }, []);
 
   useEffect(() => {
-    loadData(page, debouncedSearch);
-  }, [page, debouncedSearch, loadData]);
+    loadData(page, debouncedSearch, activeTab);
+  }, [page, debouncedSearch, activeTab, loadData]);
 
-  // Reset page when search changes
+  // Reset page when search or tab changes
   const handleSearch = (v: string) => {
     setSearch(v);
     setPage(1);
@@ -582,15 +581,31 @@ export default function PackingSlipTrackerPage() {
     setPage(1);
   };
 
-  // Client-side filter by tracker status tab
-  const filtered = useMemo(() => {
-    if (activeTab === "All") return allRows;
-    return allRows.filter((r) => r.trackerStatus === activeTab);
-  }, [allRows, activeTab]);
+  // Optimistic update: update tracker in local state without a full reload
+  const handleTrackerUpdate = useCallback((orderId: number, updated: OrderTrackerPayload) => {
+    setRows((prev) =>
+      prev.map((row) => {
+        if (row.id !== orderId) return row;
+        const stepIndex = updated.step_index;
+        const trackerStatus =
+          stepIndex >= LAST_STEP_INDEX ? "Completed" : "In Progress";
+        return {
+          ...row,
+          tracker: updated,
+          trackerStatus,
+          lastUpdated: new Date(updated.updated_at).toLocaleDateString(),
+        };
+      })
+    );
+  }, []);
 
   const toggleExpand = (id: number) => {
     setExpandedId((prev) => (prev === id ? null : id));
   };
+
+  const allCount = (statusCounts["Not Started"] ?? 0) +
+    (statusCounts["In Progress"] ?? 0) +
+    (statusCounts["Completed"] ?? 0);
 
   return (
     <MainLayout>
@@ -608,8 +623,7 @@ export default function PackingSlipTrackerPage() {
 
         {/* ── Filter Bar ──────────────────────────── */}
         <FilterBar
-          data={allRows}
-          total={total}
+          statusCounts={{ All: allCount, ...statusCounts }}
           activeTab={activeTab}
           onTabChange={handleTabChange}
           search={search}
@@ -618,7 +632,7 @@ export default function PackingSlipTrackerPage() {
         />
 
         {/* ── KPI Cards ───────────────────────────── */}
-        <KpiCards data={allRows} total={total} />
+        <KpiCards total={allCount} statusCounts={statusCounts} />
 
         {/* ── Table Card ──────────────────────────── */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200/70 p-3 sm:p-4">
@@ -683,7 +697,7 @@ export default function PackingSlipTrackerPage() {
                   </tr>
                 )}
 
-                {!loading && filtered.length === 0 && (
+                {!loading && rows.length === 0 && (
                   <tr>
                     <td colSpan={8} className="py-12 text-center text-slate-400">
                       No records found.
@@ -692,7 +706,7 @@ export default function PackingSlipTrackerPage() {
                 )}
 
                 {!loading &&
-                  filtered.map((row, rowIndex) => (
+                  rows.map((row, rowIndex) => (
                     <React.Fragment key={row.id}>
                       <tr
                         role="button"
@@ -774,7 +788,7 @@ export default function PackingSlipTrackerPage() {
                         <ExpandedPanel
                           row={row}
                           onCollapse={() => setExpandedId(null)}
-                          onRefresh={() => loadData(page, debouncedSearch)}
+                          onTrackerUpdate={handleTrackerUpdate}
                         />
                       )}
                     </React.Fragment>

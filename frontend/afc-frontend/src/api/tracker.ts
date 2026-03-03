@@ -56,6 +56,11 @@ export interface PackingSlipsResponse {
   page: number;
   limit: number;
   total: number;
+  status_counts: {
+    "Not Started": number;
+    "In Progress": number;
+    Completed: number;
+  };
   results: PackingSlipResult[];
 }
 
@@ -103,10 +108,12 @@ export function fetchPackingSlips(params?: {
   page?: number;
   limit?: number;
   search?: string;
+  tracker_status?: string;
 }) {
   const query = new URLSearchParams();
   if (params?.page) query.set("page", String(params.page));
   if (params?.limit) query.set("limit", String(params.limit));
   if (params?.search) query.set("search", params.search);
+  if (params?.tracker_status) query.set("tracker_status", params.tracker_status);
   return apiRequest(`/packing-slips?${query.toString()}`) as Promise<PackingSlipsResponse>;
 }
