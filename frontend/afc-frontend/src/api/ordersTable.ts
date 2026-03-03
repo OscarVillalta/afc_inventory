@@ -41,6 +41,7 @@ export interface OrderDetailPayload {
   order_number: string;
   external_order_number: string;
   type: "incoming" | "outgoing";
+  order_type?: "Installation" | "Will Call" | "Shipment" | "Delivery" | null;
   cs_name: string;
   status: "Pending" | "Partially Fulfilled" | "Completed";
   description: string;
@@ -76,6 +77,7 @@ export function patchOrder(
   orderId: string,
   payload: {
     type?: "incoming" | "outgoing";
+    order_type?: "Installation" | "Will Call" | "Shipment" | "Delivery" | null;
     cs_id?: number;
     description?: string;
     created_at?: string;
