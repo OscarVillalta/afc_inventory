@@ -1,7 +1,7 @@
 from flask import Blueprint, g, jsonify, request
-from sqlalchemy import select
+from sqlalchemy import select, func, or_, case, and_
 from sqlalchemy.exc import IntegrityError, DatabaseError
-from database.models import Order, OrderTracker, OrderHistory, Department, OutgoingOrderType
+from database.models import Order, OrderTracker, OrderHistory, Department, OutgoingOrderType, Customer, OrderType
 from datetime import datetime, timezone
 from typing import Tuple, Any
 
@@ -161,3 +161,114 @@ def add_order_history(order_id: int) -> Tuple[Any, int]:
         return handle_database_error(error)
 
     return jsonify(entry.to_dict()), 201
+
+
+@tracker_bp.route("/packing-slips", methods=["GET"])
+def get_packing_slips() -> Tuple[Any, int]:
+    """Return all outgoing orders with their tracker and history info for the packing slip tracker page."""
+    db = g.db
+
+    page = request.args.get("page", default=1, type=int)
+    limit = request.args.get("limit", default=25, type=int)
+    search = request.args.get("search", "").strip()
+    tracker_status = request.args.get("tracker_status", "").strip()  # "Not Started"|"In Progress"|"Completed"
+    offset = (page - 1) * limit
+
+    # Number of steps defined on the frontend; last index = len(DEPT_STEPS) - 1
+    LAST_STEP_IDX = len([d for d in Department]) - 1  # 4 (SALES=0 … ACCOUNTING=4)
+
+    # Base query: outgoing orders joined with customer and tracker
+    base_query = (
+        select(Order)
+        .outerjoin(Customer, Order.customer_id == Customer.id)
+        .outerjoin(OrderTracker, OrderTracker.order_id == Order.id)
+        .where(Order.type == OrderType.OUTGOING.value)
+    )
+
+    if search:
+        base_query = base_query.where(
+            or_(
+                Order.order_number.ilike(f"%{search}%"),
+                Order.external_order_number.ilike(f"%{search}%"),
+                Customer.name.ilike(f"%{search}%"),
+            )
+        )
+
+    # Tracker status filter
+    if tracker_status == "Not Started":
+        base_query = base_query.where(OrderTracker.id == None)  # noqa: E711
+    elif tracker_status == "In Progress":
+        base_query = base_query.where(
+            OrderTracker.id != None,  # noqa: E711
+            OrderTracker.step_index < LAST_STEP_IDX,
+        )
+    elif tracker_status == "Completed":
+        base_query = base_query.where(
+            OrderTracker.id != None,  # noqa: E711
+            OrderTracker.step_index >= LAST_STEP_IDX,
+        )
+
+    # Efficient total count using the filtered query
+    total = db.execute(
+        select(func.count(Order.id)).select_from(
+            base_query.subquery()
+        )
+    ).scalar()
+
+    orders = db.execute(
+        base_query.order_by(Order.created_at.desc()).limit(limit).offset(offset)
+    ).scalars().all()
+
+    # Per-status counts for the tab badges (based on search, ignoring tracker_status)
+    counts_query = (
+        select(
+            func.count(case((OrderTracker.id == None, 1))).label("not_started"),  # noqa: E711
+            func.count(case((and_(OrderTracker.id != None, OrderTracker.step_index < LAST_STEP_IDX), 1))).label("in_progress"),  # noqa: E711
+            func.count(case((and_(OrderTracker.id != None, OrderTracker.step_index >= LAST_STEP_IDX), 1))).label("completed"),  # noqa: E711
+        )
+        .select_from(Order)
+        .outerjoin(Customer, Order.customer_id == Customer.id)
+        .outerjoin(OrderTracker, OrderTracker.order_id == Order.id)
+        .where(Order.type == OrderType.OUTGOING.value)
+    )
+    if search:
+        counts_query = counts_query.where(
+            or_(
+                Order.order_number.ilike(f"%{search}%"),
+                Order.external_order_number.ilike(f"%{search}%"),
+                Customer.name.ilike(f"%{search}%"),
+            )
+        )
+    counts_row = db.execute(counts_query).one()
+    status_counts = {
+        "Not Started": counts_row.not_started or 0,
+        "In Progress": counts_row.in_progress or 0,
+        "Completed": counts_row.completed or 0,
+    }
+
+    results = []
+    for order in orders:
+        tracker = order.tracker
+        history = sorted(order.history, key=lambda h: h.completed_at)
+        results.append({
+            "id": order.id,
+            "order_number": order.order_number,
+            "external_order_number": order.external_order_number,
+            "order_type": order.order_type,
+            "status": order.status,
+            "description": order.description,
+            "customer_name": order.customer.name if order.customer else None,
+            "created_at": order.created_at.isoformat() if order.created_at else None,
+            "completed_at": order.completed_at.isoformat() if order.completed_at else None,
+            "eta": order.eta.strftime("%Y-%m-%d") if order.eta else None,
+            "tracker": tracker.to_dict() if tracker else None,
+            "history": [h.to_dict() for h in history],
+        })
+
+    return jsonify({
+        "page": page,
+        "limit": limit,
+        "total": total,
+        "status_counts": status_counts,
+        "results": results,
+    }), 200
