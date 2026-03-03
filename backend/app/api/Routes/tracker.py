@@ -261,6 +261,8 @@ def get_packing_slips() -> Tuple[Any, int]:
             "created_at": order.created_at.isoformat() if order.created_at else None,
             "completed_at": order.completed_at.isoformat() if order.completed_at else None,
             "eta": order.eta.strftime("%Y-%m-%d") if order.eta else None,
+            "is_paid": order.is_paid,
+            "is_invoiced": order.is_invoiced,
             "tracker": tracker.to_dict() if tracker else None,
             "history": [h.to_dict() for h in history],
         })

@@ -483,6 +483,12 @@ def patch_order(order_id):
     if "external_order_number" in data:
         order.external_order_number = data["external_order_number"]
 
+    if "is_paid" in data:
+        order.is_paid = bool(data["is_paid"])
+
+    if "is_invoiced" in data:
+        order.is_invoiced = bool(data["is_invoiced"])
+
     db.commit()
 
     # ===============================

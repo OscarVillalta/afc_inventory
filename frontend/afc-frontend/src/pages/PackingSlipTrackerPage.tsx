@@ -4,6 +4,7 @@ import MainLayout from "../layouts/MainLayout";
 import {
   fetchPackingSlips,
   updateOrderTracker,
+  patchOrderPaidInvoiced,
   type PackingSlipResult,
   type Department,
   type OrderTrackerPayload,
@@ -22,7 +23,18 @@ const DEPT_STEPS: { dept: Department; label: string }[] = [
   { dept: "ACCOUNTING", label: "Accounting" },
 ];
 
+/** 6-step path used exclusively for Installation order types. */
+const INSTALLATION_STEPS: { dept: Department; label: string; occurrence: number }[] = [
+  { dept: "SALES",         label: "Sales",         occurrence: 0 },
+  { dept: "LOGISTICS",     label: "Logistics",     occurrence: 0 },
+  { dept: "DELIVERY_DEPT", label: "Delivery",      occurrence: 0 },
+  { dept: "SERVICE",       label: "Service",       occurrence: 0 },
+  { dept: "SALES",         label: "Sales II",      occurrence: 1 },
+  { dept: "LOGISTICS",     label: "Logistics II",  occurrence: 1 },
+];
+
 const LAST_STEP_INDEX = DEPT_STEPS.length - 1;
+const INSTALLATION_LAST_STEP = INSTALLATION_STEPS.length - 1;
 
 // ─────────────────────────────────────────────
 // Types
@@ -33,10 +45,14 @@ export type PackingSlipRow = {
   packingSlipNo: string;
   customer: string;
   type: string;
-  status: string;         // order fulfillment status
+  status: string;         // order fulfillment status (Pending / Partially Fulfilled / Completed)
+  stockState: string;     // "Reserved" | "Delivered"
   trackerStatus: string;  // derived from tracker step
+  trackerDept: string;    // current department label for "IN X" badge
   lastUpdated: string;
   notes?: string;
+  is_paid: boolean;
+  is_invoiced: boolean;
   tracker: OrderTrackerPayload | null;
   history: OrderHistoryPayload[];
 };
@@ -49,23 +65,51 @@ type Step = {
   dept: Department;
   index: number;
   timestamp: string;
+  performedBy: string;
   state: StepState;
 };
+
+// ─────────────────────────────────────────────
+// Helper: dept → human label
+// ─────────────────────────────────────────────
+
+function deptLabel(dept: string): string {
+  switch (dept) {
+    case "SALES": return "Sales";
+    case "LOGISTICS": return "Logistics";
+    case "DELIVERY_DEPT": return "Delivery";
+    case "SERVICE": return "Service";
+    case "ACCOUNTING": return "Accounting";
+    default: return dept;
+  }
+}
 
 // ─────────────────────────────────────────────
 // Helper: convert API result → PackingSlipRow
 // ─────────────────────────────────────────────
 
 function toPackingSlipRow(r: PackingSlipResult): PackingSlipRow {
+  const isInstallation = r.order_type === "Installation";
+  const lastStep = isInstallation ? INSTALLATION_LAST_STEP : LAST_STEP_INDEX;
   const stepIndex = r.tracker?.step_index ?? -1;
+
   let trackerStatus: string;
+  let trackerDept: string;
   if (!r.tracker) {
     trackerStatus = "Not Started";
-  } else if (stepIndex >= LAST_STEP_INDEX) {
+    trackerDept = "";
+  } else if (stepIndex >= lastStep) {
     trackerStatus = "Completed";
+    trackerDept = "";
   } else {
     trackerStatus = "In Progress";
+    trackerDept = r.tracker.current_department
+      ? `IN ${deptLabel(r.tracker.current_department).toUpperCase()}`
+      : "IN PROGRESS";
   }
+
+  // Physical stock state
+  const stockState = r.status === "Completed" ? "Delivered" : "Reserved";
 
   const updated = r.tracker?.updated_at ?? r.created_at;
   const lastUpdated = updated ? new Date(updated).toLocaleDateString() : "";
@@ -76,9 +120,13 @@ function toPackingSlipRow(r: PackingSlipResult): PackingSlipRow {
     customer: r.customer_name ?? "—",
     type: r.order_type ?? "—",
     status: r.status,
+    stockState,
     trackerStatus,
+    trackerDept,
     lastUpdated,
     notes: r.description ?? undefined,
+    is_paid: r.is_paid ?? false,
+    is_invoiced: r.is_invoiced ?? false,
     tracker: r.tracker,
     history: r.history,
   };
@@ -90,11 +138,38 @@ function toPackingSlipRow(r: PackingSlipResult): PackingSlipRow {
 
 export function buildSteps(row: PackingSlipRow): Step[] {
   const currentIndex = row.tracker?.step_index ?? -1;
+  const isInstallation = row.type === "Installation";
+  const stepsTemplate = isInstallation ? INSTALLATION_STEPS : DEPT_STEPS;
 
-  return DEPT_STEPS.map((d, i) => {
-    const histEntry = row.history
-      .filter((h) => h.to_department === d.dept)
-      .at(-1);
+  // Sort history ascending once
+  const sortedHistory = [...row.history].sort(
+    (a, b) => new Date(a.completed_at).getTime() - new Date(b.completed_at).getTime()
+  );
+
+  // Track how many times each dept has appeared as we walk through steps
+  const deptOccurrenceCounter: Partial<Record<Department, number>> = {};
+
+  return stepsTemplate.map((d, i) => {
+    // Determine which occurrence of this dept this step represents
+    const wantedOccurrence = isInstallation
+      ? (d as typeof INSTALLATION_STEPS[0]).occurrence
+      : 0;
+
+    // Find the (wantedOccurrence)th history entry for this dept
+    let count = 0;
+    let histEntry: OrderHistoryPayload | undefined;
+    for (const h of sortedHistory) {
+      if (h.to_department === d.dept) {
+        if (count === wantedOccurrence) {
+          histEntry = h;
+          break;
+        }
+        count++;
+      }
+    }
+
+    // Also track occurrence counter for non-installation (not strictly needed but consistent)
+    deptOccurrenceCounter[d.dept] = (deptOccurrenceCounter[d.dept] ?? 0) + 1;
 
     let state: StepState;
     if (i < currentIndex) state = "completed";
@@ -102,10 +177,22 @@ export function buildSteps(row: PackingSlipRow): Step[] {
     else state = "not-started";
 
     const timestamp = histEntry?.completed_at
-      ? new Date(histEntry.completed_at).toLocaleDateString()
+      ? new Date(histEntry.completed_at).toLocaleString("en-US", {
+          month: "short", day: "numeric", year: "numeric",
+          hour: "numeric", minute: "2-digit",
+        })
       : "";
+    const performedBy = histEntry?.performed_by ?? "";
 
-    return { key: d.dept, label: d.label, dept: d.dept, index: i, timestamp, state };
+    return {
+      key: `${d.dept}-${wantedOccurrence}-${i}`,
+      label: d.label,
+      dept: d.dept,
+      index: i,
+      timestamp,
+      performedBy,
+      state,
+    };
   });
 }
 
@@ -113,24 +200,46 @@ export function buildSteps(row: PackingSlipRow): Step[] {
 // Sub-components
 // ─────────────────────────────────────────────
 
-function TrackerStatusPill({ status }: { status: string }) {
-  const s = status.toLowerCase();
-  let cls = "inline-flex items-center gap-1.5 rounded-lg px-3 py-1 text-base font-semibold ";
-  let dotCls = "w-1.5 h-1.5 rounded-full shrink-0 ";
-  if (s.includes("complet")) {
-    cls += "bg-green-100 text-green-700";
-    dotCls += "bg-green-500";
-  } else if (s.includes("progress")) {
-    cls += "bg-yellow-100 text-yellow-700";
-    dotCls += "bg-yellow-500";
-  } else {
-    cls += "bg-slate-100 text-slate-600";
-    dotCls += "bg-slate-400";
+function StockStateBadge({ state }: { state: string }) {
+  if (state === "Delivered") {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold bg-green-600 text-white">
+        ✓ Delivered
+      </span>
+    );
   }
   return (
-    <span className={cls}>
-      <span className={dotCls} />
-      {status || "Not Started"}
+    <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold bg-blue-100 text-blue-700">
+      ◆ Reserved
+    </span>
+  );
+}
+
+function TrackerStatusBadge({ status, deptLabel: dept }: { status: string; deptLabel: string }) {
+  if (status === "Completed") {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-bold bg-green-100 text-green-700 uppercase tracking-wide">
+        ✓ COMPLETED
+      </span>
+    );
+  }
+  if (status === "In Progress" && dept) {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-bold bg-yellow-100 text-yellow-700 uppercase tracking-wide">
+        ● {dept}
+      </span>
+    );
+  }
+  if (status === "Not Started") {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-semibold bg-slate-100 text-slate-500 uppercase tracking-wide">
+        ○ NOT STARTED
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-semibold bg-slate-100 text-slate-500 uppercase tracking-wide">
+      ● {status}
     </span>
   );
 }
@@ -162,7 +271,7 @@ function StepCircle({ state }: { state: StepState }) {
     );
   if (state === "pending")
     return (
-      <div className="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center text-white text-xs shrink-0">
+      <div className="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center text-white text-xs shrink-0 animate-pulse">
         ●
       </div>
     );
@@ -201,7 +310,12 @@ function ProgressStepper({
                   : "Not Started"}
               </span>
               {step.timestamp && (
-                <span className="text-xs text-gray-400 text-center">{step.timestamp}</span>
+                <span className="text-xs text-gray-400 text-center mt-0.5">{step.timestamp}</span>
+              )}
+              {step.performedBy && (
+                <span className="text-xs text-blue-500 text-center mt-0.5 italic">
+                  by {step.performedBy}
+                </span>
               )}
               {onSetStep && (
                 <button
@@ -232,11 +346,72 @@ function ProgressStepper({
             </div>
             {/* Connector */}
             {i < steps.length - 1 && (
-              <div className="w-8 h-0.5 bg-gray-200 mt-4 shrink-0" />
+              <div
+                className={`w-8 h-0.5 mt-4 shrink-0 ${
+                  step.state === "completed" ? "bg-green-400" : "bg-gray-200"
+                }`}
+              />
             )}
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// PaidInvoicedToggle
+// ─────────────────────────────────────────────
+
+function PaidInvoicedToggle({
+  orderId,
+  isPaid,
+  isInvoiced,
+  onUpdate,
+}: {
+  orderId: number;
+  isPaid: boolean;
+  isInvoiced: boolean;
+  onUpdate: (field: "is_paid" | "is_invoiced", value: boolean) => void;
+}) {
+  const [savingPaid, setSavingPaid] = useState(false);
+  const [savingInvoiced, setSavingInvoiced] = useState(false);
+
+  const toggle = async (field: "is_paid" | "is_invoiced", current: boolean) => {
+    const setter = field === "is_paid" ? setSavingPaid : setSavingInvoiced;
+    setter(true);
+    try {
+      await patchOrderPaidInvoiced(orderId, { [field]: !current });
+      onUpdate(field, !current);
+    } finally {
+      setter(false);
+    }
+  };
+
+  return (
+    <div className="flex gap-2 flex-wrap">
+      <button
+        disabled={savingPaid}
+        onClick={() => toggle("is_paid", isPaid)}
+        className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all border ${
+          isPaid
+            ? "bg-green-500 text-white border-green-500 shadow-sm"
+            : "bg-white text-gray-500 border-gray-300 hover:bg-green-50 hover:text-green-600 hover:border-green-400"
+        }`}
+      >
+        {savingPaid ? "…" : isPaid ? "✓ PAID" : "PAID"}
+      </button>
+      <button
+        disabled={savingInvoiced}
+        onClick={() => toggle("is_invoiced", isInvoiced)}
+        className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all border ${
+          isInvoiced
+            ? "bg-green-500 text-white border-green-500 shadow-sm"
+            : "bg-white text-gray-500 border-gray-300 hover:bg-green-50 hover:text-green-600 hover:border-green-400"
+        }`}
+      >
+        {savingInvoiced ? "…" : isInvoiced ? "✓ INVOICED" : "INVOICED"}
+      </button>
     </div>
   );
 }
@@ -328,17 +503,16 @@ function FilterBar({
 
 function ExpandedPanel({
   row,
-  onCollapse,
   onTrackerUpdate,
+  onPaidInvoicedUpdate,
 }: {
   row: PackingSlipRow;
-  onCollapse: () => void;
   onTrackerUpdate: (orderId: number, updated: OrderTrackerPayload) => void;
+  onPaidInvoicedUpdate: (orderId: number, field: "is_paid" | "is_invoiced", value: boolean) => void;
 }) {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const steps = buildSteps(row);
-  const lastCompleted = [...steps].reverse().find((s) => s.state === "completed");
 
   const handleSetStep = async (dept: Department, index: number) => {
     setSaving(true);
@@ -361,7 +535,7 @@ function ExpandedPanel({
       <td colSpan={8} className="p-0 border-b border-slate-200/60">
         <div className="bg-slate-50/60 mx-3 my-2 rounded-xl border border-slate-200/60 p-4 sm:p-5">
           {/* Header */}
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-4">
             <div>
               <span className="text-base font-bold text-slate-900">{row.packingSlipNo}</span>
               <span className="mx-2 text-slate-400">·</span>
@@ -369,13 +543,44 @@ function ExpandedPanel({
             </div>
           </div>
 
-          <div className="flex flex-col gap-4">
-            <div>
+          {/* Two-column layout */}
+          <div className="flex flex-col lg:flex-row gap-6">
+
+            {/* ── Left Section: Financials & Notes ── */}
+            <div className="lg:w-48 shrink-0 flex flex-col gap-4">
+              <div>
+                <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-2">
+                  Financials
+                </p>
+                <PaidInvoicedToggle
+                  orderId={row.id}
+                  isPaid={row.is_paid}
+                  isInvoiced={row.is_invoiced}
+                  onUpdate={(field, value) => onPaidInvoicedUpdate(row.id, field, value)}
+                />
+              </div>
+
+              {row.notes && (
+                <div>
+                  <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">
+                    Notes
+                  </p>
+                  <p className="text-sm text-slate-600 break-words leading-relaxed">
+                    {row.notes}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Divider */}
+            <div className="hidden lg:block w-px bg-slate-200 shrink-0" />
+
+            {/* ── Right Section: Installation Path ── */}
+            <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">
-                Progress
+                {row.type === "Installation" ? "6-Step Installation Path" : "Progress"}
               </p>
 
-              {/* Progress Stepper with step controls */}
               <ProgressStepper
                 steps={steps}
                 onSetStep={handleSetStep}
@@ -385,25 +590,7 @@ function ExpandedPanel({
               {saveError && (
                 <p className="mt-2 text-xs text-red-600">{saveError}</p>
               )}
-
-              {/* Footer info */}
-              <div className="mt-4 flex flex-col sm:flex-row gap-4 text-sm text-slate-600">
-                {lastCompleted && (
-                  <div>
-                    <span className="font-medium text-slate-700">Last completed: </span>
-                    {lastCompleted.label}
-                    {lastCompleted.timestamp ? ` on ${lastCompleted.timestamp}` : ""}
-                  </div>
-                )}
-              </div>
             </div>
-
-            {row.notes && (
-              <div>
-                <span className="font-medium text-slate-700 text-sm">Notes</span>
-                <div className="mt-1 text-sm text-slate-600">{row.notes}</div>
-              </div>
-            )}
           </div>
         </div>
       </td>
@@ -586,18 +773,38 @@ export default function PackingSlipTrackerPage() {
     setRows((prev) =>
       prev.map((row) => {
         if (row.id !== orderId) return row;
+        const isInstallation = row.type === "Installation";
+        const lastStep = isInstallation ? INSTALLATION_LAST_STEP : LAST_STEP_INDEX;
         const stepIndex = updated.step_index;
-        const trackerStatus =
-          stepIndex >= LAST_STEP_INDEX ? "Completed" : "In Progress";
+        const trackerStatus = stepIndex >= lastStep ? "Completed" : "In Progress";
+        const trackerDept =
+          stepIndex >= lastStep
+            ? ""
+            : updated.current_department
+            ? `IN ${deptLabel(updated.current_department).toUpperCase()}`
+            : "IN PROGRESS";
         return {
           ...row,
           tracker: updated,
           trackerStatus,
+          trackerDept,
           lastUpdated: new Date(updated.updated_at).toLocaleDateString(),
         };
       })
     );
   }, []);
+
+  // Optimistic update for paid/invoiced toggles
+  const handlePaidInvoicedUpdate = useCallback(
+    (orderId: number, field: "is_paid" | "is_invoiced", value: boolean) => {
+      setRows((prev) =>
+        prev.map((row) =>
+          row.id === orderId ? { ...row, [field]: value } : row
+        )
+      );
+    },
+    []
+  );
 
   const toggleExpand = (id: number) => {
     setExpandedId((prev) => (prev === id ? null : id));
@@ -648,9 +855,9 @@ export default function PackingSlipTrackerPage() {
             <table className="w-full table-fixed border-separate border-spacing-0 text-sm">
               <colgroup>
                 <col className="w-36" />
-                <col className="w-48" />
-                <col className="w-36" />
-                <col className="w-40" />
+                <col className="w-44" />
+                <col className="w-32" />
+                <col className="w-32" />
                 <col className="w-40" />
                 <col className="w-36" />
                 <col className="w-14" />
@@ -668,7 +875,7 @@ export default function PackingSlipTrackerPage() {
                     Type
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600 bg-slate-50 border-b border-slate-200/70 border-r border-slate-200/60">
-                    Order Status
+                    Stock State
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600 bg-slate-50 border-b border-slate-200/70 border-r border-slate-200/60">
                     Tracker Status
@@ -737,11 +944,16 @@ export default function PackingSlipTrackerPage() {
                         <td className="px-4 py-3 border-b border-slate-200/60 border-r border-slate-200/50">
                           <TypePill type={row.type} />
                         </td>
-                        <td className="px-4 py-3 border-b border-slate-200/60 border-r border-slate-200/50 text-slate-600 text-sm">
-                          {row.status}
-                        </td>
+                        {/* Stock State */}
                         <td className="px-4 py-3 border-b border-slate-200/60 border-r border-slate-200/50">
-                          <TrackerStatusPill status={row.trackerStatus} />
+                          <StockStateBadge state={row.stockState} />
+                        </td>
+                        {/* Tracker Status */}
+                        <td className="px-4 py-3 border-b border-slate-200/60 border-r border-slate-200/50">
+                          <TrackerStatusBadge
+                            status={row.trackerStatus}
+                            deptLabel={row.trackerDept}
+                          />
                         </td>
                         <td className="px-4 py-3 border-b border-slate-200/60 border-r border-slate-200/50 text-slate-700 font-medium">
                           {row.lastUpdated}
@@ -787,8 +999,8 @@ export default function PackingSlipTrackerPage() {
                       {expandedId === row.id && (
                         <ExpandedPanel
                           row={row}
-                          onCollapse={() => setExpandedId(null)}
                           onTrackerUpdate={handleTrackerUpdate}
+                          onPaidInvoicedUpdate={handlePaidInvoicedUpdate}
                         />
                       )}
                     </React.Fragment>

@@ -48,6 +48,8 @@ export interface PackingSlipResult {
   created_at: string;
   completed_at?: string | null;
   eta?: string | null;
+  is_paid: boolean;
+  is_invoiced: boolean;
   tracker: OrderTrackerPayload | null;
   history: OrderHistoryPayload[];
 }
@@ -102,6 +104,16 @@ export function addOrderHistory(
     method: "POST",
     body: JSON.stringify(payload),
   }) as Promise<OrderHistoryPayload>;
+}
+
+export function patchOrderPaidInvoiced(
+  orderId: number | string,
+  payload: { is_paid?: boolean; is_invoiced?: boolean }
+) {
+  return apiRequest(`/orders/${orderId}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
 }
 
 export function fetchPackingSlips(params?: {
