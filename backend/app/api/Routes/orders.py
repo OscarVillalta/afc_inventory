@@ -4,9 +4,9 @@ from sqlalchemy import and_, or_
 from sqlalchemy.exc import IntegrityError, DatabaseError
 from app.api.Schemas.order_schema import OrderSchema
 from database.models import Customer, Supplier, OrderType, OrderStatus, OrderItemType, Transaction, TransactionState
-from database.models import Order, OrderItem, Product, AirFilter, StockItem, Quantity
+from database.models import Order, OrderItem, Product, AirFilter, StockItem, Quantity, OrderTracker, Department
 from marshmallow import ValidationError
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any, List, Tuple
 import requests
 
@@ -312,6 +312,14 @@ def create_order():
                 "error": "customer_id is required for outgoing orders"
             }), 400
         order.supplier_id = None
+        # Auto-create tracker for outgoing orders starting at SALES
+        tracker = OrderTracker(
+            order_id=order.id,
+            current_department=Department.SALES.value,
+            step_index=0,
+            updated_at=datetime.now(timezone.utc),
+        )
+        db.add(tracker)
 
     elif order.type == OrderType.INCOMING.value:
         if not order.supplier_id:
@@ -1073,7 +1081,17 @@ def create_order_from_qb():
                     "quantity": quantity
                 })
                 position += 1
-        
+
+        # Auto-create tracker for outgoing orders starting at SALES
+        if not is_purchase_order:
+            tracker = OrderTracker(
+                order_id=order.id,
+                current_department=Department.SALES.value,
+                step_index=0,
+                updated_at=datetime.now(timezone.utc),
+            )
+            db.add(tracker)
+
         safe_commit(db, "creating order from QuickBooks")
         
     except (CustomValidationError, DuplicateResourceError, ExternalServiceError) as e:

@@ -36,6 +36,29 @@ export interface OrderWithTracking {
   history: OrderHistoryPayload[];
 }
 
+/** Single row returned by the GET /packing-slips endpoint. */
+export interface PackingSlipResult {
+  id: number;
+  order_number: string;
+  external_order_number?: string | null;
+  order_type?: string | null;
+  status: string;
+  description?: string | null;
+  customer_name?: string | null;
+  created_at: string;
+  completed_at?: string | null;
+  eta?: string | null;
+  tracker: OrderTrackerPayload | null;
+  history: OrderHistoryPayload[];
+}
+
+export interface PackingSlipsResponse {
+  page: number;
+  limit: number;
+  total: number;
+  results: PackingSlipResult[];
+}
+
 export function fetchOrderTracking(orderId: number | string) {
   return apiRequest(`/orders/${orderId}/tracker`) as Promise<OrderWithTracking>;
 }
@@ -74,4 +97,16 @@ export function addOrderHistory(
     method: "POST",
     body: JSON.stringify(payload),
   }) as Promise<OrderHistoryPayload>;
+}
+
+export function fetchPackingSlips(params?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+}) {
+  const query = new URLSearchParams();
+  if (params?.page) query.set("page", String(params.page));
+  if (params?.limit) query.set("limit", String(params.limit));
+  if (params?.search) query.set("search", params.search);
+  return apiRequest(`/packing-slips?${query.toString()}`) as Promise<PackingSlipsResponse>;
 }

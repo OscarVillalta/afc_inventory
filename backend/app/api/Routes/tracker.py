@@ -1,7 +1,7 @@
 from flask import Blueprint, g, jsonify, request
-from sqlalchemy import select
+from sqlalchemy import select, func, or_
 from sqlalchemy.exc import IntegrityError, DatabaseError
-from database.models import Order, OrderTracker, OrderHistory, Department, OutgoingOrderType
+from database.models import Order, OrderTracker, OrderHistory, Department, OutgoingOrderType, Customer, OrderType
 from datetime import datetime, timezone
 from typing import Tuple, Any
 
@@ -161,3 +161,61 @@ def add_order_history(order_id: int) -> Tuple[Any, int]:
         return handle_database_error(error)
 
     return jsonify(entry.to_dict()), 201
+
+
+@tracker_bp.route("/packing-slips", methods=["GET"])
+def get_packing_slips() -> Tuple[Any, int]:
+    """Return all outgoing orders with their tracker and history info for the packing slip tracker page."""
+    db = g.db
+
+    page = request.args.get("page", default=1, type=int)
+    limit = request.args.get("limit", default=25, type=int)
+    search = request.args.get("search", "").strip()
+    offset = (page - 1) * limit
+
+    query = (
+        select(Order)
+        .outerjoin(Customer, Order.customer_id == Customer.id)
+        .where(Order.type == OrderType.OUTGOING.value)
+    )
+
+    if search:
+        query = query.where(
+            or_(
+                Order.order_number.ilike(f"%{search}%"),
+                Order.external_order_number.ilike(f"%{search}%"),
+                Customer.name.ilike(f"%{search}%"),
+            )
+        )
+
+    total = db.execute(select(func.count()).select_from(query.subquery())).scalar()
+
+    orders = db.execute(
+        query.order_by(Order.created_at.desc()).limit(limit).offset(offset)
+    ).scalars().all()
+
+    results = []
+    for order in orders:
+        tracker = order.tracker
+        history = sorted(order.history, key=lambda h: h.completed_at)
+        results.append({
+            "id": order.id,
+            "order_number": order.order_number,
+            "external_order_number": order.external_order_number,
+            "order_type": order.order_type,
+            "status": order.status,
+            "description": order.description,
+            "customer_name": order.customer.name if order.customer else None,
+            "created_at": order.created_at.isoformat() if order.created_at else None,
+            "completed_at": order.completed_at.isoformat() if order.completed_at else None,
+            "eta": order.eta.strftime("%Y-%m-%d") if order.eta else None,
+            "tracker": tracker.to_dict() if tracker else None,
+            "history": [h.to_dict() for h in history],
+        })
+
+    return jsonify({
+        "page": page,
+        "limit": limit,
+        "total": total,
+        "results": results,
+    }), 200
