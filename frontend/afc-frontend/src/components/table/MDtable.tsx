@@ -98,14 +98,23 @@ export default function MDTable({
         <table className="w-full border-separate border-spacing-y-2 border-separate min-w-[700px]">
           <thead>
             <tr>
-              {columns.map((col) => (
-                <th
-                  key={col}
-                  className="text-center text-gray-600 font-bold text-m uppercase tracking-wide"
-                >
-                  {col}
-                </th>
-              ))}
+              {columns.map((col) =>
+                col === "STOCK" ? (
+                  <th
+                    key={col}
+                    className="text-center text-gray-600 font-bold text-m uppercase tracking-wide"
+                  >
+                    {col}
+                  </th>
+                ) : (
+                  <th
+                    key={col}
+                    className="text-left text-gray-600 font-bold text-m uppercase tracking-wide"
+                  >
+                    {col}
+                  </th>
+                )
+              )}
             </tr>
           </thead>
 

@@ -412,7 +412,7 @@ export default function AirFiltersTable({ refreshToken }: { refreshToken?: numbe
         {/* ================= FILTER ROW (SERVER-DRIVEN) ================= */}
         <tr className="border-b">
           {isColVisible("Part Number") && (
-            <th className="pr-3 pb-2">
+            <th className="text-left pr-3 pb-2">
               <input
                 className="input input-bordered input-xs w-full max-w-[110px]"
                 placeholder="Search..."
@@ -426,7 +426,7 @@ export default function AirFiltersTable({ refreshToken }: { refreshToken?: numbe
           )}
 
           {isColVisible("Description") && (
-            <th className="pr-3 pb-2">
+            <th className="text-left pr-3 pb-2">
               <input
                 className="input input-bordered input-xs w-full max-w-[130px]"
                 placeholder="Description..."
@@ -440,7 +440,7 @@ export default function AirFiltersTable({ refreshToken }: { refreshToken?: numbe
           )}
 
           {isColVisible("Supplier") && (
-            <th className="pb-2 pr-3">
+            <th className="text-left pb-2 pr-3">
               <input
                 className="input input-bordered input-xs w-full max-w-[110px]"
                 placeholder="Supplier..."
@@ -454,7 +454,7 @@ export default function AirFiltersTable({ refreshToken }: { refreshToken?: numbe
           )}
 
           {isColVisible("Category") && (
-            <th className="pb-2 pr-3 w-1/12">
+            <th className="text-left pb-2 pr-3 w-1/12">
               <input
                 className="input input-bordered input-xs w-full max-w-[90px]"
                 placeholder="Category..."
@@ -510,7 +510,7 @@ export default function AirFiltersTable({ refreshToken }: { refreshToken?: numbe
           )}
 
           {isColVisible("MERV") && (
-            <th className="pr-3 pb-2 w-1/18">
+            <th className="text-left pr-3 pb-2 w-1/18">
               <input
                 className="input input-bordered input-xs text-center w-16"
                 placeholder="MERV..."
@@ -584,7 +584,7 @@ export default function AirFiltersTable({ refreshToken }: { refreshToken?: numbe
                 )}
                 {isColVisible("Supplier") && (
                   <td 
-                    className={`${rowPadding} px-2 w-1/5`}
+                    className={`${rowPadding} px-2 w-1/6`}
                     onClick={() => navigate(`/products/${group.parent.product_id}`)}
                   >
                     {group.parent.supplier_name ?? "—"}
@@ -600,7 +600,7 @@ export default function AirFiltersTable({ refreshToken }: { refreshToken?: numbe
                 )}
                 {isColVisible("Dimensions") && (
                   <td 
-                    className={`${rowPadding} px-2 text-center`}
+                    className={`${rowPadding} px-2 left`}
                     onClick={() => navigate(`/products/${group.parent.product_id}`)}
                   >
                     {group.parent.height} x {group.parent.width} x {group.parent.depth}
@@ -609,7 +609,7 @@ export default function AirFiltersTable({ refreshToken }: { refreshToken?: numbe
             
                 {isColVisible("MERV") && (
                   <td 
-                    className={`${rowPadding} text-center`}
+                    className={`${rowPadding} text-left`}
                     onClick={() => navigate(`/products/${group.parent.product_id}`)}
                   >
                     {group.parent.merv_rating}
@@ -621,7 +621,7 @@ export default function AirFiltersTable({ refreshToken }: { refreshToken?: numbe
                 ></td>
                 {isColVisible("Stock") && (
                   <td 
-                    className={`${rowPadding} font-medium text-center bg-blue-50 border-2 border-blue-400 rounded-lg shadow-sm min-w-[350px]`}
+                    className={`${rowPadding} font-medium text-center bg-blue-50 border-2 border-blue-400 rounded-lg shadow-sm min-w-[550px]`}
                     onClick={() => navigate(`/products/${group.parent.product_id}`)}
                   >
                     <div className="flex justify-around items-center gap-2">
@@ -750,7 +750,7 @@ export default function AirFiltersTable({ refreshToken }: { refreshToken?: numbe
                   ></td>
                   {isColVisible("Stock") && (
                     <td 
-                      className={`${rowPadding} font-medium text-center bg-white border-2 border-blue-300 rounded-lg shadow-sm min-w-[350px]`}
+                      className={`${rowPadding} font-medium text-center bg-white border-2 border-blue-300 rounded-lg shadow-sm min-w-[650px]`}
                       onClick={() => navigate(`/products/${child.product_id}`)}
                     >
                       <div className="flex justify-around items-center gap-2">

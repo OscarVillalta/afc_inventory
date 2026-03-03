@@ -292,7 +292,7 @@ export default function StockItemsTable({ refreshToken }: { refreshToken?: numbe
         {/* ================= FILTER ROW (SERVER-DRIVEN) ================= */}
         <tr className="border-b">
           {isColVisible("Name") && (
-            <th className="pr-3 pb-2">
+            <th className="text-left pb-2">
               <input
                 className="input input-bordered input-xs w-full max-w-[110px]"
                 placeholder="Search name..."
@@ -306,7 +306,7 @@ export default function StockItemsTable({ refreshToken }: { refreshToken?: numbe
           )}
 
           {isColVisible("Description") && (
-            <th className="pb-2 pr-3">
+            <th className="text-left pb-2 pr-3">
               <input
                 className="input input-bordered input-xs w-full max-w-[130px]"
                 placeholder="Description..."
@@ -320,7 +320,7 @@ export default function StockItemsTable({ refreshToken }: { refreshToken?: numbe
           )}
 
           {isColVisible("Category") && (
-            <th className="pb-2 pr-3">
+            <th className="text-left pb-2 pr-3">
               <input
                 className="input input-bordered input-xs w-full max-w-[100px]"
                 placeholder="Category..."
@@ -334,7 +334,7 @@ export default function StockItemsTable({ refreshToken }: { refreshToken?: numbe
           )}
 
           {isColVisible("Supplier") && (
-            <th className="pb-2 pr-3">
+            <th className="text-left pb-2 pr-3">
               <input
                 className="input input-bordered input-xs w-full max-w-[110px]"
                 placeholder="Supplier..."
@@ -406,7 +406,7 @@ export default function StockItemsTable({ refreshToken }: { refreshToken?: numbe
             ></td>
             {isColVisible("Stock") && (
               <td
-                className={`${rowPadding} font-medium text-center bg-blue-50 border-2 border-blue-400 rounded-lg shadow-sm min-w-[350px]`}
+                className={`${rowPadding} font-medium text-center bg-blue-50 border-2 border-blue-400 rounded-lg shadow-sm min-w-[550px]`}
                 onClick={() => navigate(`/products/${row.product_id}`)}
               >
                 <div className="flex justify-around items-center gap-2">
