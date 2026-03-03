@@ -3,7 +3,7 @@ from typing import List, Optional
 from datetime import datetime, timezone
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship, foreign
-from sqlalchemy import ForeignKey, String, Integer, BigInteger, Boolean, Index, Sequence, func, text
+from sqlalchemy import ForeignKey, String, Integer, BigInteger, Boolean, Index, Sequence, func, text, Text
 from sqlalchemy.inspection import inspect
 from sqlalchemy.ext.hybrid import hybrid_property
 
@@ -52,6 +52,21 @@ class ConversionState(str, Enum):
     COMPLETED = "completed"
     CANCELLED = "cancelled"
     ROLLED_BACK = "rolled_back"
+
+
+class OutgoingOrderType(str, Enum):
+    INSTALLATION = "Installation"
+    WILL_CALL = "Will Call"
+    SHIPMENT = "Shipment"
+    DELIVERY = "Delivery"
+
+
+class Department(str, Enum):
+    SALES = "SALES"
+    LOGISTICS = "LOGISTICS"
+    DELIVERY_DEPT = "DELIVERY_DEPT"
+    SERVICE = "SERVICE"
+    ACCOUNTING = "ACCOUNTING"
 
 
 # =====================================================
@@ -384,6 +399,7 @@ class Order(Base, SerializerMixin):
     external_order_number: Mapped[Optional[str]] = mapped_column(nullable=True)
 
     type: Mapped[str] = mapped_column(String, nullable=False)  # OrderType values
+    order_type: Mapped[Optional[str]] = mapped_column(String, nullable=True)  # OutgoingOrderType values
 
     supplier_id: Mapped[Optional[int]] = mapped_column(ForeignKey("suppliers.id"))
     customer_id: Mapped[Optional[int]] = mapped_column(ForeignKey("customers.id"))
@@ -407,6 +423,19 @@ class Order(Base, SerializerMixin):
         "Transaction",
         back_populates="order",
         passive_deletes=True,
+    )
+
+    tracker: Mapped[Optional["OrderTracker"]] = relationship(
+        "OrderTracker",
+        back_populates="order",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+
+    history: Mapped[List["OrderHistory"]] = relationship(
+        "OrderHistory",
+        back_populates="order",
+        cascade="all, delete-orphan",
     )
 
     def update_status(self):
@@ -684,6 +713,37 @@ class ConversionDecrease(Base, SerializerMixin):
 
     conversion: Mapped["Conversion"] = relationship("Conversion", back_populates="decreases")
     transaction: Mapped["Transaction"] = relationship("Transaction")
+
+
+# =====================================================
+# 🔹 Order Tracker
+# =====================================================
+
+class OrderTracker(Base, SerializerMixin):
+    __tablename__ = "order_tracker"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    order_id: Mapped[int] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"), nullable=False, unique=True)
+    current_department: Mapped[str] = mapped_column(String, nullable=False)
+    step_index: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+    order: Mapped["Order"] = relationship("Order", back_populates="tracker")
+
+
+class OrderHistory(Base, SerializerMixin):
+    __tablename__ = "order_history"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    order_id: Mapped[int] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"), nullable=False)
+    from_department: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    to_department: Mapped[str] = mapped_column(String, nullable=False)
+    action_taken: Mapped[str] = mapped_column(String, nullable=False)
+    performed_by: Mapped[str] = mapped_column(String, nullable=False)
+    completed_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc))
+    comments: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    order: Mapped["Order"] = relationship("Order", back_populates="history")
 
 
 # =====================================================
