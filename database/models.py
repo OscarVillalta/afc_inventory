@@ -409,6 +409,8 @@ class Order(Base, SerializerMixin):
     created_at: Mapped[datetime] = mapped_column(default=datetime.now(timezone.utc))
     completed_at: Mapped[Optional[datetime]] = mapped_column(nullable=True)
     eta: Mapped[Optional[datetime]] = mapped_column(nullable=True)
+    is_paid: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_invoiced: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     supplier: Mapped[Optional["Supplier"]] = relationship("Supplier", back_populates="orders")
     customer: Mapped[Optional["Customer"]] = relationship("Customer", back_populates="orders")
