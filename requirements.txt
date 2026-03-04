@@ -1,0 +1,14 @@
+flask==3.0.0
+flask-sqlalchemy==3.0.3
+psycopg[binary]==3.2.12
+python-dotenv==1.0.1
+gunicorn==22.0.0
+python-dotenv==1.0.1
+alembic==1.11.1
+SQLAlchemy==2.0.44
+marshmallow
+flask-cors
+requests
+defusedxml
+
+
