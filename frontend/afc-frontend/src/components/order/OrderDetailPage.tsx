@@ -25,6 +25,10 @@ import {
   fetchOrderItemTransactions,
 } from "../../api/orderDetail";
 
+import { fetchOrderTracking } from "../../api/tracker";
+import type { OrderWithTracking } from "../../api/tracker";
+import OrderTrackerControl from "./OrderTrackerControl";
+
 
 /* ===================== TYPES ===================== */
 
@@ -68,6 +72,8 @@ export default function OrderDetailPage() {
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
 
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">("idle");
+
+  const [trackingData, setTrackingData] = useState<OrderWithTracking | null>(null);
 
   // Debounce ref for auto-save
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -161,13 +167,15 @@ export default function OrderDetailPage() {
   async function refreshOrder() {
     if (!orderId) return;
 
-    const [orderData, itemsData] = await Promise.all([
+    const [orderData, itemsData, trackingResult] = await Promise.all([
       fetchOrderById(orderId),
       fetchOrderItems(orderId),
+      fetchOrderTracking(orderId),
     ]);
 
     setOrder(orderData);
     setItems(itemsData);
+    setTrackingData(trackingResult);
 
     // 🔑 force ALL OrderItemRow txns to reload
     setTxnRefreshKey((k) => k + 1);
@@ -181,9 +189,10 @@ export default function OrderDetailPage() {
     setLoading(true);
     setError(null);
 
-    fetchOrderById(orderId)
-      .then((data) => {
-        setOrder(data);
+    Promise.all([fetchOrderById(orderId), fetchOrderTracking(orderId)])
+      .then(([orderData, trackingResult]) => {
+        setOrder(orderData);
+        setTrackingData(trackingResult);
       })
       .catch(() => {
         setError("Failed to load order.");
@@ -395,9 +404,15 @@ export default function OrderDetailPage() {
             orderNumber={order.order_number}
             type={order.type}
             status={order.status}
+            currentDepartment={trackingData?.tracker?.current_department ?? null}
             onCopyOrder={handleCopySerializedOrder}
             copyStatus={copyStatus}
             selectedCount={selectedItems.size}
+          />
+          
+          <OrderTrackerControl
+            trackingData={trackingData}
+            onRefresh={refreshOrder}
           />
           
 
