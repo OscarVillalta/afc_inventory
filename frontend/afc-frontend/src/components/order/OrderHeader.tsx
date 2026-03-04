@@ -1,10 +1,22 @@
 type OrderType = "incoming" | "outgoing";
 type OrderStatus = "Pending" | "Partially Fulfilled" | "Completed";
 
+function deptLabel(dept: string): string {
+  switch (dept) {
+    case "SALES": return "Sales";
+    case "LOGISTICS": return "Logistics";
+    case "DELIVERY_DEPT": return "Delivery";
+    case "SERVICE": return "Service";
+    case "ACCOUNTING": return "Accounting";
+    default: return dept;
+  }
+}
+
 interface Props {
   orderNumber: string;
   type: OrderType;
   status: OrderStatus;
+  currentDepartment?: string | null;
   onCopyOrder?: () => void;
   copyStatus?: "idle" | "copied" | "error";
   selectedCount?: number;
@@ -14,6 +26,7 @@ export default function OrderHeader({
   orderNumber,
   type,
   status,
+  currentDepartment,
   onCopyOrder,
   copyStatus = "idle",
   selectedCount = 0,
@@ -72,6 +85,13 @@ export default function OrderHeader({
         >
           {status}
         </span>
+
+        {/* Current tracking department badge */}
+        {currentDepartment && (
+          <span className="px-3 py-1 rounded-full text-sm font-medium bg-yellow-400/20 text-yellow-200 border border-yellow-400/40">
+            ● {deptLabel(currentDepartment)}
+          </span>
+        )}
 
       </div>
     </div>
