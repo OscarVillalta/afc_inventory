@@ -48,6 +48,8 @@ export interface OrderDetailPayload {
   created_at: string;
   completed_at?: string | null;
   eta?: string | null;
+  is_paid?: boolean;
+  is_invoiced?: boolean;
 }
 
 export function fetchOrders(

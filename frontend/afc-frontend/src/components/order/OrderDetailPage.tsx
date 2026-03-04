@@ -27,7 +27,7 @@ import {
 
 import { fetchOrderTracking } from "../../api/tracker";
 import type { OrderWithTracking } from "../../api/tracker";
-import OrderTrackerControl from "./OrderTrackerControl";
+import OrderLifecycleCard from "./OrderLifecycleCard";
 
 
 /* ===================== TYPES ===================== */
@@ -46,6 +46,8 @@ interface OrderDetailPayload {
   created_at: string;
   completed_at?: string | null;
   eta?: string | null;
+  is_paid?: boolean;
+  is_invoiced?: boolean;
 }
 
 /* ===================== COMPONENT ===================== */
@@ -400,7 +402,7 @@ export default function OrderDetailPage() {
       <div className="flex flex-col lg:flex-row justify-start flex-grow gap-4">
         {/* LEFT COLUMN */}
         <div className="max-w-7xl space-y-4 lg:flex-3 w-full bg-slate-100 ">
-            <OrderHeader
+          <OrderHeader
             orderNumber={order.order_number}
             type={order.type}
             status={order.status}
@@ -408,11 +410,6 @@ export default function OrderDetailPage() {
             onCopyOrder={handleCopySerializedOrder}
             copyStatus={copyStatus}
             selectedCount={selectedItems.size}
-          />
-          
-          <OrderTrackerControl
-            trackingData={trackingData}
-            onRefresh={refreshOrder}
           />
           
 
@@ -470,6 +467,16 @@ export default function OrderDetailPage() {
             onRollbackSelected={handleRollbackSelected}
             disabled={order.status === "Completed"}
             orderType={order.type}
+          />
+
+          <OrderLifecycleCard
+            trackingData={trackingData}
+            createdAt={order.created_at}
+            status={order.status}
+            isPaid={order.is_paid ?? false}
+            isInvoiced={order.is_invoiced ?? false}
+            orderId={order.id}
+            onRefresh={refreshOrder}
           />
 
           <div className="flex justify-end pt-2 gap-x-2 items-center">
