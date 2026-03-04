@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'add_blocked_items_table'
-down_revision = 'add_order_tracker_tables'
+down_revision = '18d6e266d7db'
 branch_labels = None
 depends_on = None
 

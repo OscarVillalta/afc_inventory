@@ -1,6 +1,6 @@
 """Add is_paid and is_invoiced to orders
 
-Revision ID: add_is_paid_is_invoiced_to_orders
+Revision ID: add_to_orders
 Revises: add_order_tracker_tables
 Create Date: 2026-03-03 00:00:00.000000
 
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'add_is_paid_is_invoiced_to_orders'
-down_revision = 'add_order_tracker_tables'
+revision = 'add_is_paid_orders'
+down_revision = 'd52e53d38ade'
 branch_labels = None
 depends_on = None
 

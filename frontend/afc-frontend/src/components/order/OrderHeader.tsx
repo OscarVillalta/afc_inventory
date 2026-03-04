@@ -86,13 +86,6 @@ export default function OrderHeader({
           {status}
         </span>
 
-        {/* Current tracking department badge */}
-        {currentDepartment && (
-          <span className="px-3 py-1 rounded-full text-sm font-medium bg-yellow-400/20 text-yellow-200 border border-yellow-400/40">
-            ● {deptLabel(currentDepartment)}
-          </span>
-        )}
-
       </div>
     </div>
   );
