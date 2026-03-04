@@ -229,6 +229,17 @@ class StockItem(Base, SerializerMixin):
 
 
 # =====================================================
+# 🔹 Blocked Items
+# =====================================================
+
+class BlockedItem(Base, SerializerMixin):
+    __tablename__ = "blocked_items"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+
+
+# =====================================================
 # 🔹 Product (Catalog Root w/ Soft Delete)
 # =====================================================
 

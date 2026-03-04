@@ -4,7 +4,7 @@ from sqlalchemy import and_, or_
 from sqlalchemy.exc import IntegrityError, DatabaseError
 from app.api.Schemas.order_schema import OrderSchema
 from database.models import Customer, Supplier, OrderType, OrderStatus, OrderItemType, Transaction, TransactionState
-from database.models import Order, OrderItem, Product, AirFilter, StockItem, Quantity, OrderTracker, Department
+from database.models import Order, OrderItem, Product, AirFilter, StockItem, StockItemCategory, Quantity, OrderTracker, Department, BlockedItem
 from marshmallow import ValidationError
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any, List, Tuple
@@ -841,9 +841,9 @@ def create_order_from_qb():
     """
     Create a new order from QuickBooks data.
     
-    Automatically creates MiscItem products for unmatched QuickBooks items.
-    Unmatched items are associated with a "QuickBooks" supplier that is 
-    created automatically if it doesn't exist.
+    Items in the "blocked_items" table are skipped. Unmatched items (not found in
+    air_filters or stock_items) are automatically added to the stock_items table
+    and associated with the configured QuickBooks supplier.
     
     Expects JSON body with:
     {
@@ -853,7 +853,7 @@ def create_order_from_qb():
     
     Returns:
         JSON with order details, including:
-        - new_products: Array of newly created MiscItem products
+        - new_products: Array of newly created StockItem products
         - new_products_created: Count of new products created
         - created_items: All order items created
         - skipped_items: Items that were skipped (if any)
@@ -1053,16 +1053,65 @@ def create_order_from_qb():
                     position += 1
                     continue
                 
-                product = find_product_by_name(db, item_name)
-                
-                if not product:
-                    # Skip unmatched QB items since misc_items have been removed
+                # Check if item is blocked
+                blocked = db.execute(
+                    select(BlockedItem).where(
+                        func.lower(BlockedItem.name) == item_name.lower()
+                    )
+                ).scalar_one_or_none()
+
+                if blocked:
                     skipped_items.append({
                         "name": item_name,
-                        "reason": "Product not found in inventory"
+                        "reason": "Item is blocked"
                     })
                     position += 1
                     continue
+
+                product = find_product_by_name(db, item_name)
+                
+                if not product:
+                    # Item not found in air_filters or stock_items — auto-add to stock_items
+                    qb_supplier = db.execute(
+                        select(Supplier).where(Supplier.name == Config.QB_SUPPLIER_NAME)
+                    ).scalar_one_or_none()
+                    if not qb_supplier:
+                        qb_supplier = Supplier(name=Config.QB_SUPPLIER_NAME)
+                        db.add(qb_supplier)
+                        db.flush()
+
+                    qb_category = db.execute(
+                        select(StockItemCategory).where(StockItemCategory.name == Config.QB_SUPPLIER_NAME)
+                    ).scalar_one_or_none()
+                    if not qb_category:
+                        qb_category = StockItemCategory(name=Config.QB_SUPPLIER_NAME)
+                        db.add(qb_category)
+                        db.flush()
+
+                    new_stock_item = StockItem(
+                        name=item_name,
+                        supplier_id=qb_supplier.id,
+                        category_id=qb_category.id
+                    )
+                    db.add(new_stock_item)
+                    db.flush()
+
+                    product = Product(
+                        category_id=3,  # Product category ID for stock items (matches stock_items.py convention)
+                        reference_id=new_stock_item.id
+                    )
+                    db.add(product)
+                    db.flush()
+
+                    quantity = Quantity(product_id=product.id, on_hand=0, reserved=0, ordered=0, location=0)
+                    db.add(quantity)
+                    db.flush()
+
+                    new_products.append({
+                        "name": item_name,
+                        "stock_item_id": new_stock_item.id,
+                        "product_id": product.id
+                    })
 
                 
                 # Validate quantity
