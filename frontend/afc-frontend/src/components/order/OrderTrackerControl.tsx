@@ -1,6 +1,6 @@
 import { useState } from "react";
-import type { OrderWithTracking, Department } from "../../api/tracker";
-import { updateOrderTracker, initOrderTracker } from "../../api/tracker";
+import type { OrderWithTracking, Department, OrderTrackerStagePayload } from "../../api/tracker";
+import { toggleTrackerStage, initOrderTracker } from "../../api/tracker";
 
 // ─────────────────────────────────────────────
 // 6-step Installation lifecycle path
@@ -15,13 +15,9 @@ const TRACKER_STEPS: { dept: Department; label: string }[] = [
   { dept: "LOGISTICS",     label: "Logistics II" },
 ];
 
-const LAST_STEP_INDEX = TRACKER_STEPS.length - 1;
-
 // ─────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────
-
-type StepState = "completed" | "pending" | "not-started";
 
 interface Props {
   trackingData: OrderWithTracking | null;
@@ -29,24 +25,47 @@ interface Props {
 }
 
 // ─────────────────────────────────────────────
-// Step circle indicator
+// Step circle indicator (clickable)
 // ─────────────────────────────────────────────
 
-function StepCircle({ state }: { state: StepState }) {
-  if (state === "completed")
+function StepCircle({
+  isCompleted,
+  saving,
+  onClick,
+}: {
+  isCompleted: boolean;
+  saving: boolean;
+  onClick: () => void;
+}) {
+  const base = "w-8 h-8 rounded-full flex items-center justify-center text-white text-xs shrink-0 transition-all cursor-pointer select-none";
+  if (saving)
     return (
-      <div className="w-7 h-7 rounded-full bg-green-500 flex items-center justify-center text-white text-xs shrink-0">
+      <div className={`${base} bg-gray-300 animate-pulse`} title="Saving…">
+        ◌
+      </div>
+    );
+  if (isCompleted)
+    return (
+      <div
+        className={`${base} bg-green-500 hover:bg-green-600 shadow-sm`}
+        onClick={onClick}
+        title="Click to mark incomplete"
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onClick(); }}
+      >
         ✓
       </div>
     );
-  if (state === "pending")
-    return (
-      <div className="w-7 h-7 rounded-full bg-yellow-400 flex items-center justify-center text-white text-xs shrink-0 animate-pulse">
-        ●
-      </div>
-    );
   return (
-    <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 text-xs shrink-0">
+    <div
+      className={`${base} bg-gray-200 hover:bg-blue-400 hover:text-white text-gray-400`}
+      onClick={onClick}
+      title="Click to mark complete"
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onClick(); }}
+    >
       ○
     </div>
   );
@@ -57,79 +76,56 @@ function StepCircle({ state }: { state: StepState }) {
 // ─────────────────────────────────────────────
 
 export default function OrderTrackerControl({ trackingData, onRefresh }: Props) {
-  const [saving, setSaving] = useState(false);
+  const [savingIndex, setSavingIndex] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   if (!trackingData) return null;
 
-  const tracker = trackingData.tracker;
   const orderId = trackingData.order.id;
-  const currentStepIndex = tracker?.step_index ?? -1;
-  const isCompleted = currentStepIndex >= LAST_STEP_INDEX;
-  const nextStepIndex = currentStepIndex + 1;
-  const nextStep = !isCompleted ? TRACKER_STEPS[nextStepIndex] : null;
+  const stages = trackingData.stages ?? [];
 
-  // Build display steps with state
-  const steps = TRACKER_STEPS.map((step, i) => {
-    let state: StepState;
-    if (i < currentStepIndex) state = "completed";
-    else if (i === currentStepIndex) state = "pending";
-    else state = "not-started";
-    return { ...step, index: i, state };
-  });
+  // Build a lookup map: stage_index → stage record
+  const stageMap = new Map<number, OrderTrackerStagePayload>(
+    stages.map((s) => [s.stage_index, s])
+  );
 
-  async function handleAdvance() {
-    if (!orderId) return;
-    setSaving(true);
+  const allCompleted = TRACKER_STEPS.every((_, i) => stageMap.get(i)?.is_completed);
+
+  async function handleToggle(index: number) {
+    if (!orderId || savingIndex !== null) return;
+    setSavingIndex(index);
     setError(null);
     try {
-      if (!tracker) {
-        // No tracker yet — initialise at step 0
+      const currentStage = stageMap.get(index);
+      const newCompleted = !(currentStage?.is_completed ?? false);
+
+      // Ensure tracker exists before toggling stages
+      if (!trackingData!.tracker) {
         await initOrderTracker(orderId, {
           current_department: TRACKER_STEPS[0].dept,
           step_index: 0,
         });
-      } else if (nextStep) {
-        await updateOrderTracker(orderId, {
-          current_department: nextStep.dept,
-          step_index: nextStepIndex,
-        });
       }
+
+      await toggleTrackerStage(orderId, index, { is_completed: newCompleted });
       onRefresh();
     } catch (err) {
-      console.error("Failed to advance tracker:", err);
-      setError("Failed to update tracker. Please try again.");
+      console.error("Failed to toggle stage:", err);
+      setError("Failed to update stage. Please try again.");
     } finally {
-      setSaving(false);
+      setSavingIndex(null);
     }
   }
-
-  const advanceLabel = saving
-    ? "Saving…"
-    : isCompleted
-    ? "Completed"
-    : !tracker
-    ? "Start Tracking"
-    : `Advance to ${nextStep?.label ?? "Next Stage"}`;
 
   return (
     <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
       {/* Header row */}
       <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
         <h2 className="text-sm font-semibold text-slate-700">Order Tracker</h2>
-
-        {isCompleted ? (
+        {allCompleted && (
           <span className="text-xs font-semibold text-green-600 bg-green-50 border border-green-200 px-2.5 py-1 rounded-full">
             ✓ Tracking Complete
           </span>
-        ) : (
-          <button
-            className="btn btn-sm btn-primary"
-            onClick={handleAdvance}
-            disabled={saving}
-          >
-            {advanceLabel}
-          </button>
         )}
       </div>
 
@@ -140,32 +136,52 @@ export default function OrderTrackerControl({ trackingData, onRefresh }: Props) 
       {/* Step progression */}
       <div className="overflow-x-auto">
         <div className="flex items-start gap-0 min-w-max">
-          {steps.map((step, i) => (
-            <div key={`${step.dept}-${i}`} className="flex items-start">
-              {/* Step column */}
-              <div className="flex flex-col items-center w-24">
-                <StepCircle state={step.state} />
-                <span className="text-xs font-medium text-gray-700 mt-1 text-center leading-tight">
-                  {step.label}
-                </span>
-                <span className="text-xs text-gray-400 text-center mt-0.5">
-                  {step.state === "completed"
-                    ? "Done"
-                    : step.state === "pending"
-                    ? "Active"
-                    : "—"}
-                </span>
+          {TRACKER_STEPS.map((step, i) => {
+            const stage = stageMap.get(i);
+            const isCompleted = stage?.is_completed ?? false;
+            const saving = savingIndex === i;
+
+            const timestamp = stage?.completed_at
+              ? new Date(stage.completed_at).toLocaleString("en-US", {
+                  month: "short", day: "numeric", year: "numeric",
+                  hour: "numeric", minute: "2-digit",
+                })
+              : null;
+
+            return (
+              <div key={`${step.dept}-${i}`} className="flex items-start">
+                {/* Step column */}
+                <div className="flex flex-col items-center w-28">
+                  <StepCircle
+                    isCompleted={isCompleted}
+                    saving={saving}
+                    onClick={() => handleToggle(i)}
+                  />
+                  <span className="text-xs font-medium text-gray-700 mt-1 text-center leading-tight">
+                    {step.label}
+                  </span>
+                  {timestamp && (
+                    <span className="text-xs text-gray-400 text-center mt-0.5 leading-tight">
+                      {timestamp}
+                    </span>
+                  )}
+                  {stage?.completed_by && (
+                    <span className="text-xs text-blue-500 text-center mt-0.5 italic leading-tight">
+                      by {stage.completed_by}
+                    </span>
+                  )}
+                </div>
+                {/* Connector */}
+                {i < TRACKER_STEPS.length - 1 && (
+                  <div
+                    className={`w-6 h-0.5 mt-3.5 shrink-0 ${
+                      isCompleted ? "bg-green-400" : "bg-gray-200"
+                    }`}
+                  />
+                )}
               </div>
-              {/* Connector */}
-              {i < steps.length - 1 && (
-                <div
-                  className={`w-6 h-0.5 mt-3.5 shrink-0 ${
-                    step.state === "completed" ? "bg-green-400" : "bg-gray-200"
-                  }`}
-                />
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

@@ -3,7 +3,7 @@ from typing import List, Optional
 from datetime import datetime, timezone
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship, foreign
-from sqlalchemy import ForeignKey, String, Integer, BigInteger, Boolean, Index, Sequence, func, text, Text
+from sqlalchemy import ForeignKey, String, Integer, BigInteger, Boolean, Index, Sequence, func, text, Text, UniqueConstraint
 from sqlalchemy.inspection import inspect
 from sqlalchemy.ext.hybrid import hybrid_property
 
@@ -451,6 +451,12 @@ class Order(Base, SerializerMixin):
         cascade="all, delete-orphan",
     )
 
+    stages: Mapped[List["OrderTrackerStage"]] = relationship(
+        "OrderTrackerStage",
+        back_populates="order",
+        cascade="all, delete-orphan",
+    )
+
     def update_status(self):
         if not self.items:
             self.status = OrderStatus.PENDING.value
@@ -757,6 +763,24 @@ class OrderHistory(Base, SerializerMixin):
     comments: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     order: Mapped["Order"] = relationship("Order", back_populates="history")
+
+
+class OrderTrackerStage(Base, SerializerMixin):
+    """Stores the individual completion state for each tracker stage."""
+    __tablename__ = "order_tracker_stages"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    order_id: Mapped[int] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"), nullable=False)
+    stage_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    is_completed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    completed_by: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    completed_at: Mapped[Optional[datetime]] = mapped_column(nullable=True)
+
+    order: Mapped["Order"] = relationship("Order", back_populates="stages")
+
+    __table_args__ = (
+        UniqueConstraint("order_id", "stage_index", name="uq_order_tracker_stage"),
+    )
 
 
 # =====================================================

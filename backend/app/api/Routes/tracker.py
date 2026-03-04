@@ -1,7 +1,7 @@
 from flask import Blueprint, g, jsonify, request
 from sqlalchemy import select, func, or_, case, and_
 from sqlalchemy.exc import IntegrityError, DatabaseError
-from database.models import Order, OrderTracker, OrderHistory, Department, OutgoingOrderType, Customer, OrderType
+from database.models import Order, OrderTracker, OrderHistory, OrderTrackerStage, Department, OutgoingOrderType, Customer, OrderType
 from datetime import datetime, timezone
 from typing import Tuple, Any
 
@@ -33,10 +33,17 @@ def get_order_tracker(order_id: int) -> Tuple[Any, int]:
         .order_by(OrderHistory.completed_at.asc())
     ).scalars().all()
 
+    stage_rows = db.execute(
+        select(OrderTrackerStage)
+        .where(OrderTrackerStage.order_id == order_id)
+        .order_by(OrderTrackerStage.stage_index.asc())
+    ).scalars().all()
+
     return jsonify({
         "order": order.to_dict(),
         "tracker": tracker.to_dict() if tracker else None,
         "history": [h.to_dict() for h in history_rows],
+        "stages": [s.to_dict() for s in stage_rows],
     }), 200
 
 
@@ -163,6 +170,50 @@ def add_order_history(order_id: int) -> Tuple[Any, int]:
     return jsonify(entry.to_dict()), 201
 
 
+@tracker_bp.route("/orders/<int:order_id>/tracker/stages/<int:stage_index>", methods=["PATCH"])
+def toggle_tracker_stage(order_id: int, stage_index: int) -> Tuple[Any, int]:
+    """Toggle the completion state of a specific tracker stage for an order."""
+    db = g.db
+    data = request.get_json() or {}
+
+    order = db.get(Order, order_id)
+    if not order:
+        raise ResourceNotFoundError("Order", order_id)
+
+    is_completed = data.get("is_completed")
+    if is_completed is None or not isinstance(is_completed, bool):
+        return jsonify({"error": "is_completed (boolean) is required."}), 400
+
+    completed_by = data.get("completed_by", "").strip() or None
+
+    stage = db.execute(
+        select(OrderTrackerStage).where(
+            OrderTrackerStage.order_id == order_id,
+            OrderTrackerStage.stage_index == stage_index,
+        )
+    ).scalar_one_or_none()
+
+    if stage is None:
+        stage = OrderTrackerStage(
+            order_id=order_id,
+            stage_index=stage_index,
+            is_completed=is_completed,
+            completed_by=completed_by if is_completed else None,
+            completed_at=datetime.now(timezone.utc) if is_completed else None,
+        )
+        db.add(stage)
+    else:
+        stage.is_completed = is_completed
+        stage.completed_by = completed_by if is_completed else None
+        stage.completed_at = datetime.now(timezone.utc) if is_completed else None
+
+    error = safe_commit(db)
+    if error:
+        return handle_database_error(error)
+
+    return jsonify(stage.to_dict()), 200
+
+
 @tracker_bp.route("/packing-slips", methods=["GET"])
 def get_packing_slips() -> Tuple[Any, int]:
     """Return all outgoing orders with their tracker and history info for the packing slip tracker page."""
@@ -250,6 +301,7 @@ def get_packing_slips() -> Tuple[Any, int]:
     for order in orders:
         tracker = order.tracker
         history = sorted(order.history, key=lambda h: h.completed_at)
+        stages = sorted(order.stages, key=lambda s: s.stage_index)
         results.append({
             "id": order.id,
             "order_number": order.order_number,
@@ -265,6 +317,7 @@ def get_packing_slips() -> Tuple[Any, int]:
             "is_invoiced": order.is_invoiced,
             "tracker": tracker.to_dict() if tracker else None,
             "history": [h.to_dict() for h in history],
+            "stages": [s.to_dict() for s in stages],
         })
 
     return jsonify({
