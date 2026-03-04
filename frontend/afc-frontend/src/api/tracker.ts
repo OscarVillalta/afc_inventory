@@ -29,11 +29,21 @@ export interface OrderHistoryPayload {
   comments?: string | null;
 }
 
+export interface OrderTrackerStagePayload {
+  id: number;
+  order_id: number;
+  stage_index: number;
+  is_completed: boolean;
+  completed_by: string | null;
+  completed_at: string | null;
+}
+
 /** Joined view: an Order with its current tracking status and full history. */
 export interface OrderWithTracking {
   order: OrderDetailPayload;
   tracker: OrderTrackerPayload | null;
   history: OrderHistoryPayload[];
+  stages: OrderTrackerStagePayload[];
 }
 
 /** Single row returned by the GET /packing-slips endpoint. */
@@ -52,6 +62,7 @@ export interface PackingSlipResult {
   is_invoiced: boolean;
   tracker: OrderTrackerPayload | null;
   history: OrderHistoryPayload[];
+  stages: OrderTrackerStagePayload[];
 }
 
 export interface PackingSlipsResponse {
@@ -88,6 +99,17 @@ export function updateOrderTracker(
     method: "PATCH",
     body: JSON.stringify(payload),
   }) as Promise<OrderTrackerPayload>;
+}
+
+export function toggleTrackerStage(
+  orderId: number | string,
+  stageIndex: number,
+  payload: { is_completed: boolean; completed_by?: string }
+) {
+  return apiRequest(`/orders/${orderId}/tracker/stages/${stageIndex}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  }) as Promise<OrderTrackerStagePayload>;
 }
 
 export function addOrderHistory(

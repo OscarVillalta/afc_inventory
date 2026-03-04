@@ -3,12 +3,14 @@ import React from "react";
 import MainLayout from "../layouts/MainLayout";
 import {
   fetchPackingSlips,
-  updateOrderTracker,
+  toggleTrackerStage,
+  initOrderTracker,
   patchOrderPaidInvoiced,
   type PackingSlipResult,
   type Department,
   type OrderTrackerPayload,
   type OrderHistoryPayload,
+  type OrderTrackerStagePayload,
 } from "../api/tracker";
 
 // ─────────────────────────────────────────────
@@ -33,9 +35,6 @@ const INSTALLATION_STEPS: { dept: Department; label: string; occurrence: number 
   { dept: "LOGISTICS",     label: "Logistics II",  occurrence: 1 },
 ];
 
-const LAST_STEP_INDEX = DEPT_STEPS.length - 1;
-const INSTALLATION_LAST_STEP = INSTALLATION_STEPS.length - 1;
-
 // ─────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────
@@ -55,9 +54,8 @@ export type PackingSlipRow = {
   is_invoiced: boolean;
   tracker: OrderTrackerPayload | null;
   history: OrderHistoryPayload[];
+  stages: OrderTrackerStagePayload[];
 };
-
-type StepState = "completed" | "pending" | "not-started";
 
 type Step = {
   key: string;
@@ -66,7 +64,7 @@ type Step = {
   index: number;
   timestamp: string;
   performedBy: string;
-  state: StepState;
+  isCompleted: boolean;
 };
 
 // ─────────────────────────────────────────────
@@ -85,33 +83,49 @@ function deptLabel(dept: string): string {
 }
 
 // ─────────────────────────────────────────────
+// Helper: find the most recently completed stage
+// ─────────────────────────────────────────────
+
+function latestCompletedStage(stages: OrderTrackerStagePayload[]): OrderTrackerStagePayload | undefined {
+  return stages
+    .filter((s) => s.is_completed && s.completed_at)
+    .sort((a, b) => new Date(b.completed_at!).getTime() - new Date(a.completed_at!).getTime())[0];
+}
+
+// ─────────────────────────────────────────────
 // Helper: convert API result → PackingSlipRow
 // ─────────────────────────────────────────────
 
 function toPackingSlipRow(r: PackingSlipResult): PackingSlipRow {
   const isInstallation = r.order_type === "Installation";
-  const lastStep = isInstallation ? INSTALLATION_LAST_STEP : LAST_STEP_INDEX;
-  const stepIndex = r.tracker?.step_index ?? -1;
+  const totalSteps = isInstallation ? INSTALLATION_STEPS.length : DEPT_STEPS.length;
+  const stages = r.stages ?? [];
+  const completedCount = stages.filter((s) => s.is_completed).length;
 
   let trackerStatus: string;
   let trackerDept: string;
-  if (!r.tracker) {
+  if (completedCount === 0 && !r.tracker) {
     trackerStatus = "Not Started";
     trackerDept = "";
-  } else if (stepIndex >= lastStep) {
+  } else if (completedCount >= totalSteps) {
     trackerStatus = "Completed";
     trackerDept = "";
-  } else {
+  } else if (completedCount > 0 || r.tracker) {
     trackerStatus = "In Progress";
-    trackerDept = r.tracker.current_department
+    trackerDept = r.tracker?.current_department
       ? `IN ${deptLabel(r.tracker.current_department).toUpperCase()}`
       : "IN PROGRESS";
+  } else {
+    trackerStatus = "Not Started";
+    trackerDept = "";
   }
 
   // Physical stock state
   const stockState = r.status === "Completed" ? "Delivered" : "Reserved";
 
-  const updated = r.tracker?.updated_at ?? r.created_at;
+  // Use the most recent completed_at from stages, falling back to tracker updated_at
+  const latestStage = latestCompletedStage(stages);
+  const updated = latestStage?.completed_at ?? r.tracker?.updated_at ?? r.created_at;
   const lastUpdated = updated ? new Date(updated).toLocaleDateString() : "";
 
   return {
@@ -129,6 +143,7 @@ function toPackingSlipRow(r: PackingSlipResult): PackingSlipRow {
     is_invoiced: r.is_invoiced ?? false,
     tracker: r.tracker,
     history: r.history,
+    stages,
   };
 }
 
@@ -137,52 +152,29 @@ function toPackingSlipRow(r: PackingSlipResult): PackingSlipRow {
 // ─────────────────────────────────────────────
 
 export function buildSteps(row: PackingSlipRow): Step[] {
-  const currentIndex = row.tracker?.step_index ?? -1;
   const isInstallation = row.type === "Installation";
   const stepsTemplate = isInstallation ? INSTALLATION_STEPS : DEPT_STEPS;
 
-  // Sort history ascending once
-  const sortedHistory = [...row.history].sort(
-    (a, b) => new Date(a.completed_at).getTime() - new Date(b.completed_at).getTime()
+  // Build a map from stage_index → stage record
+  const stageMap = new Map<number, OrderTrackerStagePayload>(
+    (row.stages ?? []).map((s) => [s.stage_index, s])
   );
 
-  // Track how many times each dept has appeared as we walk through steps
-  const deptOccurrenceCounter: Partial<Record<Department, number>> = {};
-
   return stepsTemplate.map((d, i) => {
-    // Determine which occurrence of this dept this step represents
     const wantedOccurrence = isInstallation
       ? (d as typeof INSTALLATION_STEPS[0]).occurrence
       : 0;
 
-    // Find the (wantedOccurrence)th history entry for this dept
-    let count = 0;
-    let histEntry: OrderHistoryPayload | undefined;
-    for (const h of sortedHistory) {
-      if (h.to_department === d.dept) {
-        if (count === wantedOccurrence) {
-          histEntry = h;
-          break;
-        }
-        count++;
-      }
-    }
+    const stage = stageMap.get(i);
+    const isCompleted = stage?.is_completed ?? false;
 
-    // Also track occurrence counter for non-installation (not strictly needed but consistent)
-    deptOccurrenceCounter[d.dept] = (deptOccurrenceCounter[d.dept] ?? 0) + 1;
-
-    let state: StepState;
-    if (i < currentIndex) state = "completed";
-    else if (i === currentIndex) state = "pending";
-    else state = "not-started";
-
-    const timestamp = histEntry?.completed_at
-      ? new Date(histEntry.completed_at).toLocaleString("en-US", {
+    const timestamp = stage?.completed_at
+      ? new Date(stage.completed_at).toLocaleString("en-US", {
           month: "short", day: "numeric", year: "numeric",
           hour: "numeric", minute: "2-digit",
         })
       : "";
-    const performedBy = histEntry?.performed_by ?? "";
+    const performedBy = stage?.completed_by ?? "";
 
     return {
       key: `${d.dept}-${wantedOccurrence}-${i}`,
@@ -191,7 +183,7 @@ export function buildSteps(row: PackingSlipRow): Step[] {
       index: i,
       timestamp,
       performedBy,
-      state,
+      isCompleted,
     };
   });
 }
@@ -262,21 +254,46 @@ function TypePill({ type }: { type: string }) {
   );
 }
 
-function StepCircle({ state }: { state: StepState }) {
-  if (state === "completed")
+function StepCircle({
+  isCompleted,
+  saving,
+  onClick,
+}: {
+  isCompleted: boolean;
+  saving?: boolean;
+  onClick?: () => void;
+}) {
+  const base = "w-8 h-8 rounded-full flex items-center justify-center text-xs shrink-0 transition-all";
+  const interactive = onClick ? "cursor-pointer select-none" : "";
+
+  if (saving)
     return (
-      <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white text-xs shrink-0">
+      <div className={`${base} bg-gray-300 animate-pulse text-white`} title="Saving…">
+        ◌
+      </div>
+    );
+  if (isCompleted)
+    return (
+      <div
+        className={`${base} ${interactive} bg-green-500 hover:bg-green-600 text-white shadow-sm`}
+        onClick={onClick}
+        title={onClick ? "Click to mark incomplete" : undefined}
+        role={onClick ? "button" : undefined}
+        tabIndex={onClick ? 0 : undefined}
+        onKeyDown={onClick ? (e) => { if (e.key === "Enter" || e.key === " ") onClick(); } : undefined}
+      >
         ✓
       </div>
     );
-  if (state === "pending")
-    return (
-      <div className="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center text-white text-xs shrink-0 animate-pulse">
-        ●
-      </div>
-    );
   return (
-    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 text-xs shrink-0">
+    <div
+      className={`${base} ${interactive} bg-gray-200 hover:bg-blue-400 hover:text-white text-gray-400`}
+      onClick={onClick}
+      title={onClick ? "Click to mark complete" : undefined}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (e) => { if (e.key === "Enter" || e.key === " ") onClick(); } : undefined}
+    >
       ○
     </div>
   );
@@ -284,12 +301,12 @@ function StepCircle({ state }: { state: StepState }) {
 
 function ProgressStepper({
   steps,
-  onSetStep,
-  saving,
+  onToggleStep,
+  savingIndex,
 }: {
   steps: Step[];
-  onSetStep?: (dept: Department, index: number) => void;
-  saving?: boolean;
+  onToggleStep?: (index: number) => void;
+  savingIndex?: number | null;
 }) {
   return (
     <div className="overflow-x-auto">
@@ -298,16 +315,16 @@ function ProgressStepper({
           <div key={step.key} className="flex items-start">
             {/* Step */}
             <div className="flex flex-col items-center w-32">
-              <StepCircle state={step.state} />
+              <StepCircle
+                isCompleted={step.isCompleted}
+                saving={savingIndex === step.index}
+                onClick={onToggleStep ? () => onToggleStep(step.index) : undefined}
+              />
               <span className="text-xs font-semibold text-gray-700 mt-1 text-center">
                 {step.label}
               </span>
               <span className="text-xs text-gray-500 text-center mt-0.5">
-                {step.state === "completed"
-                  ? "Completed"
-                  : step.state === "pending"
-                  ? "In Progress"
-                  : "Not Started"}
+                {step.isCompleted ? "Completed" : "Not Started"}
               </span>
               {step.timestamp && (
                 <span className="text-xs text-gray-400 text-center mt-0.5">{step.timestamp}</span>
@@ -317,38 +334,12 @@ function ProgressStepper({
                   by {step.performedBy}
                 </span>
               )}
-              {onSetStep && (
-                <button
-                  disabled={saving || step.state === "pending"}
-                  onClick={() => onSetStep(step.dept, step.index)}
-                  className={`mt-1 px-2 py-0.5 rounded text-xs font-medium transition-colors ${
-                    step.state === "pending"
-                      ? "bg-yellow-100 text-yellow-600 cursor-default"
-                      : step.state === "completed"
-                      ? "bg-slate-100 text-slate-500 hover:bg-blue-50 hover:text-blue-600"
-                      : "bg-blue-50 text-blue-600 hover:bg-blue-100"
-                  }`}
-                  title={
-                    step.state === "pending"
-                      ? "Current step"
-                      : step.state === "completed"
-                      ? "Move back to this step"
-                      : "Set as current step"
-                  }
-                >
-                  {step.state === "pending"
-                    ? "Current"
-                    : step.state === "completed"
-                    ? "↩ Redo"
-                    : "→ Set"}
-                </button>
-              )}
             </div>
             {/* Connector */}
             {i < steps.length - 1 && (
               <div
                 className={`w-8 h-0.5 mt-4 shrink-0 ${
-                  step.state === "completed" ? "bg-green-400" : "bg-gray-200"
+                  step.isCompleted ? "bg-green-400" : "bg-gray-200"
                 }`}
               />
             )}
@@ -503,30 +494,39 @@ function FilterBar({
 
 function ExpandedPanel({
   row,
-  onTrackerUpdate,
+  onStagesUpdate,
   onPaidInvoicedUpdate,
 }: {
   row: PackingSlipRow;
-  onTrackerUpdate: (orderId: number, updated: OrderTrackerPayload) => void;
+  onStagesUpdate: (orderId: number, updatedStage: OrderTrackerStagePayload) => void;
   onPaidInvoicedUpdate: (orderId: number, field: "is_paid" | "is_invoiced", value: boolean) => void;
 }) {
-  const [saving, setSaving] = useState(false);
+  const [savingIndex, setSavingIndex] = useState<number | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const steps = buildSteps(row);
 
-  const handleSetStep = async (dept: Department, index: number) => {
-    setSaving(true);
+  const handleToggleStep = async (index: number) => {
+    setSavingIndex(index);
     setSaveError(null);
     try {
-      const updated = await updateOrderTracker(row.id, {
-        current_department: dept,
-        step_index: index,
-      });
-      onTrackerUpdate(row.id, updated);
+      // Ensure tracker exists
+      if (!row.tracker) {
+        const isInstallation = row.type === "Installation";
+        const firstDept = (isInstallation ? INSTALLATION_STEPS[0] : DEPT_STEPS[0]).dept;
+        await initOrderTracker(row.id, {
+          current_department: firstDept,
+          step_index: 0,
+        });
+      }
+
+      const currentStage = (row.stages ?? []).find((s) => s.stage_index === index);
+      const newCompleted = !(currentStage?.is_completed ?? false);
+      const updated = await toggleTrackerStage(row.id, index, { is_completed: newCompleted });
+      onStagesUpdate(row.id, updated);
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : "Failed to update step.");
     } finally {
-      setSaving(false);
+      setSavingIndex(null);
     }
   };
 
@@ -583,8 +583,8 @@ function ExpandedPanel({
 
               <ProgressStepper
                 steps={steps}
-                onSetStep={handleSetStep}
-                saving={saving}
+                onToggleStep={handleToggleStep}
+                savingIndex={savingIndex}
               />
 
               {saveError && (
@@ -768,27 +768,48 @@ export default function PackingSlipTrackerPage() {
     setPage(1);
   };
 
-  // Optimistic update: update tracker in local state without a full reload
-  const handleTrackerUpdate = useCallback((orderId: number, updated: OrderTrackerPayload) => {
+  // Optimistic update: update a stage in local state without a full reload
+  const handleStagesUpdate = useCallback((orderId: number, updatedStage: OrderTrackerStagePayload) => {
     setRows((prev) =>
       prev.map((row) => {
         if (row.id !== orderId) return row;
+
+        // Update the stages array
+        const existingIndex = row.stages.findIndex((s) => s.stage_index === updatedStage.stage_index);
+        const newStages = existingIndex >= 0
+          ? row.stages.map((s) => s.stage_index === updatedStage.stage_index ? updatedStage : s)
+          : [...row.stages, updatedStage];
+
         const isInstallation = row.type === "Installation";
-        const lastStep = isInstallation ? INSTALLATION_LAST_STEP : LAST_STEP_INDEX;
-        const stepIndex = updated.step_index;
-        const trackerStatus = stepIndex >= lastStep ? "Completed" : "In Progress";
-        const trackerDept =
-          stepIndex >= lastStep
-            ? ""
-            : updated.current_department
-            ? `IN ${deptLabel(updated.current_department).toUpperCase()}`
+        const totalSteps = isInstallation ? INSTALLATION_STEPS.length : DEPT_STEPS.length;
+        const completedCount = newStages.filter((s) => s.is_completed).length;
+
+        let trackerStatus: string;
+        let trackerDept: string;
+        if (completedCount === 0 && !row.tracker) {
+          trackerStatus = "Not Started";
+          trackerDept = "";
+        } else if (completedCount >= totalSteps) {
+          trackerStatus = "Completed";
+          trackerDept = "";
+        } else {
+          trackerStatus = "In Progress";
+          trackerDept = row.tracker?.current_department
+            ? `IN ${deptLabel(row.tracker.current_department).toUpperCase()}`
             : "IN PROGRESS";
+        }
+
+        const latest = latestCompletedStage(newStages);
+        const lastUpdated = latest?.completed_at
+          ? new Date(latest.completed_at).toLocaleDateString()
+          : row.lastUpdated;
+
         return {
           ...row,
-          tracker: updated,
+          stages: newStages,
           trackerStatus,
           trackerDept,
-          lastUpdated: new Date(updated.updated_at).toLocaleDateString(),
+          lastUpdated,
         };
       })
     );
@@ -999,7 +1020,7 @@ export default function PackingSlipTrackerPage() {
                       {expandedId === row.id && (
                         <ExpandedPanel
                           row={row}
-                          onTrackerUpdate={handleTrackerUpdate}
+                          onStagesUpdate={handleStagesUpdate}
                           onPaidInvoicedUpdate={handlePaidInvoicedUpdate}
                         />
                       )}
