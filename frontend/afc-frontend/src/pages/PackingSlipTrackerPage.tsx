@@ -12,6 +12,7 @@ import {
   type OrderHistoryPayload,
   type OrderTrackerStagePayload,
 } from "../api/tracker";
+import { ORDER_TYPE_LABELS } from "../constants/orderTypes";
 
 // ─────────────────────────────────────────────
 // Constants
@@ -97,7 +98,7 @@ function latestCompletedStage(stages: OrderTrackerStagePayload[]): OrderTrackerS
 // ─────────────────────────────────────────────
 
 function toPackingSlipRow(r: PackingSlipResult): PackingSlipRow {
-  const isInstallation = r.order_type === "Installation";
+  const isInstallation = r.order_type?.toLowerCase() === "installation";
   const totalSteps = isInstallation ? INSTALLATION_STEPS.length : DEPT_STEPS.length;
   const stages = r.stages ?? [];
   const completedCount = stages.filter((s) => s.is_completed).length;
@@ -152,7 +153,7 @@ function toPackingSlipRow(r: PackingSlipResult): PackingSlipRow {
 // ─────────────────────────────────────────────
 
 export function buildSteps(row: PackingSlipRow): Step[] {
-  const isInstallation = row.type === "Installation";
+  const isInstallation = row.type?.toLowerCase() === "installation";
   const stepsTemplate = isInstallation ? INSTALLATION_STEPS : DEPT_STEPS;
 
   // Build a map from stage_index → stage record
@@ -242,14 +243,16 @@ function TypePill({ type }: { type: string }) {
   if (t.includes("installation")) cls += "bg-blue-100 text-blue-700";
   else if (t.includes("delivery")) cls += "bg-teal-100 text-teal-700";
   else if (t.includes("shipment")) cls += "bg-cyan-100 text-cyan-700";
-  else if (t.includes("will call")) cls += "bg-purple-100 text-purple-700";
+  else if (t.includes("will_call") || t.includes("will call")) cls += "bg-purple-100 text-purple-700";
   else cls += "bg-slate-100 text-slate-600";
+  // Use canonical display label if available, otherwise capitalize the raw type
+  const displayLabel = ORDER_TYPE_LABELS[t as keyof typeof ORDER_TYPE_LABELS] ?? type;
   return (
     <span className={cls}>
       <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 17L17 7M17 7H7M17 7v10" />
       </svg>
-      {type}
+      {displayLabel}
     </span>
   );
 }
@@ -511,7 +514,7 @@ function ExpandedPanel({
     try {
       // Ensure tracker exists
       if (!row.tracker) {
-        const isInstallation = row.type === "Installation";
+        const isInstallation = row.type?.toLowerCase() === "installation";
         const firstDept = (isInstallation ? INSTALLATION_STEPS[0] : DEPT_STEPS[0]).dept;
         await initOrderTracker(row.id, {
           current_department: firstDept,
@@ -578,7 +581,7 @@ function ExpandedPanel({
             {/* ── Right Section: Installation Path ── */}
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">
-                {row.type === "Installation" ? "6-Step Installation Path" : "Progress"}
+                {row.type?.toLowerCase() === "installation" ? "6-Step Installation Path" : "Progress"}
               </p>
 
               <ProgressStepper
@@ -780,7 +783,7 @@ export default function PackingSlipTrackerPage() {
           ? row.stages.map((s) => s.stage_index === updatedStage.stage_index ? updatedStage : s)
           : [...row.stages, updatedStage];
 
-        const isInstallation = row.type === "Installation";
+        const isInstallation = row.type?.toLowerCase() === "installation";
         const totalSteps = isInstallation ? INSTALLATION_STEPS.length : DEPT_STEPS.length;
         const completedCount = newStages.filter((s) => s.is_completed).length;
 

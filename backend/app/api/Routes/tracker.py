@@ -1,7 +1,7 @@
 from flask import Blueprint, g, jsonify, request
 from sqlalchemy import select, func, or_, case, and_
 from sqlalchemy.exc import IntegrityError, DatabaseError
-from database.models import Order, OrderTracker, OrderHistory, OrderTrackerStage, Department, OutgoingOrderType, Customer, OrderType
+from database.models import Order, OrderTracker, OrderHistory, OrderTrackerStage, Department, OutgoingOrderType, Customer, OrderType, OUTGOING_TYPES
 from datetime import datetime, timezone
 from typing import Tuple, Any
 
@@ -233,7 +233,7 @@ def get_packing_slips() -> Tuple[Any, int]:
         select(Order)
         .outerjoin(Customer, Order.customer_id == Customer.id)
         .outerjoin(OrderTracker, OrderTracker.order_id == Order.id)
-        .where(Order.type == OrderType.OUTGOING.value)
+        .where(Order.type.in_(OUTGOING_TYPES))
     )
 
     if search:
@@ -280,7 +280,7 @@ def get_packing_slips() -> Tuple[Any, int]:
         .select_from(Order)
         .outerjoin(Customer, Order.customer_id == Customer.id)
         .outerjoin(OrderTracker, OrderTracker.order_id == Order.id)
-        .where(Order.type == OrderType.OUTGOING.value)
+        .where(Order.type.in_(OUTGOING_TYPES))
     )
     if search:
         counts_query = counts_query.where(
@@ -306,7 +306,7 @@ def get_packing_slips() -> Tuple[Any, int]:
             "id": order.id,
             "order_number": order.order_number,
             "external_order_number": order.external_order_number,
-            "order_type": order.order_type,
+            "order_type": order.type,
             "status": order.status,
             "description": order.description,
             "customer_name": order.customer.name if order.customer else None,

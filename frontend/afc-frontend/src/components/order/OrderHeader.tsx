@@ -1,16 +1,7 @@
-type OrderType = "incoming" | "outgoing";
-type OrderStatus = "Pending" | "Partially Fulfilled" | "Completed";
+import type { OrderType } from "../../constants/orderTypes";
+import { ORDER_TYPE_LABELS, ORDER_TYPE_COLORS } from "../../constants/orderTypes";
 
-function deptLabel(dept: string): string {
-  switch (dept) {
-    case "SALES": return "Sales";
-    case "LOGISTICS": return "Logistics";
-    case "DELIVERY_DEPT": return "Delivery";
-    case "SERVICE": return "Service";
-    case "ACCOUNTING": return "Accounting";
-    default: return dept;
-  }
-}
+type OrderStatus = "Pending" | "Partially Fulfilled" | "Completed";
 
 interface Props {
   orderNumber: string;
@@ -26,7 +17,6 @@ export default function OrderHeader({
   orderNumber,
   type,
   status,
-  currentDepartment,
   onCopyOrder,
   copyStatus = "idle",
   selectedCount = 0,
@@ -40,6 +30,9 @@ export default function OrderHeader({
       : selectedCount > 0
       ? `📋 Copy Selected (${selectedCount})`
       : "📋 Copy Order";
+
+  const colors = ORDER_TYPE_COLORS[type] ?? ORDER_TYPE_COLORS["installation"];
+  const typeLabel = ORDER_TYPE_LABELS[type] ?? type;
 
   return (
     <div className="bg-[#3A3F51] text-white px-4 sm:px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 rounded-xl shadow-sm">
@@ -64,13 +57,9 @@ export default function OrderHeader({
 
         {/* Type */}
         <span
-          className={`px-3 py-1 rounded-full text-sm font-medium border ${
-            type === "outgoing"
-              ? "bg-red-600/20 text-red-200 border-red-400/40"
-              : "bg-green-600/20 text-green-200 border-green-400/40"
-          }`}
+          className={`px-3 py-1 rounded-full text-sm font-medium border ${colors.bg} ${colors.text} ${colors.border}`}
         >
-          {type}
+          {typeLabel}
         </span>
 
         {/* Status */}

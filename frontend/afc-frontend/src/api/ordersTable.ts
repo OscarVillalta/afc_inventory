@@ -40,8 +40,8 @@ export interface OrderDetailPayload {
   id: number;
   order_number: string;
   external_order_number: string;
-  type: "incoming" | "outgoing";
-  order_type?: "Installation" | "Will Call" | "Shipment" | "Delivery" | null;
+  type: "incoming" | "installation" | "will_call" | "delivery" | "shipment";
+  order_type?: string | null;
   cs_name: string;
   status: "Pending" | "Partially Fulfilled" | "Completed";
   description: string;
@@ -78,8 +78,8 @@ export function fetchOrderById(orderId: string) {
 export function patchOrder(
   orderId: string,
   payload: {
-    type?: "incoming" | "outgoing";
-    order_type?: "Installation" | "Will Call" | "Shipment" | "Delivery" | null;
+    type?: "incoming" | "installation" | "will_call" | "delivery" | "shipment";
+    order_type?: string | null;
     cs_id?: number;
     description?: string;
     created_at?: string;
@@ -93,7 +93,7 @@ export function patchOrder(
 }
 
 export function createOrder(payload: {
-  type: "incoming" | "outgoing";
+  type: "incoming" | "installation" | "will_call" | "delivery" | "shipment";
   customer_id?: number;
   supplier_id?: number;
   eta?: string | null;
@@ -122,6 +122,7 @@ export function deleteOrder(orderId: string | number) {
 export function createOrderFromQB(payload: {
   reference_number: string;
   qb_doc_type: string;
+  order_type?: string;
 }) {
   return apiRequest("/orders/from-qb", {
     method: "POST",
