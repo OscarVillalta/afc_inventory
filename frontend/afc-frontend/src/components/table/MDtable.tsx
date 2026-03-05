@@ -8,7 +8,23 @@ interface MDTableProps {
   pageSize: number;
   total: number;
   onPageChange: (page: number) => void;
+  onPageSizeChange?: (size: number) => void;
   sortLabel?: string;
+}
+
+const PAGE_SIZE_OPTIONS = [10, 12, 25, 50];
+
+/** Build a compact list of page-number tokens including ellipsis. */
+function buildPageTokens(current: number, total: number): (number | "…")[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages: (number | "…")[] = [1];
+  if (current > 3) pages.push("…");
+  for (let p = Math.max(2, current - 1); p <= Math.min(total - 1, current + 1); p++) {
+    pages.push(p);
+  }
+  if (current < total - 2) pages.push("…");
+  pages.push(total);
+  return pages;
 }
 
 export default function MDTable({
@@ -19,6 +35,7 @@ export default function MDTable({
   pageSize,
   total,
   onPageChange,
+  onPageSizeChange,
   sortLabel,
 }: MDTableProps) {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -31,13 +48,11 @@ export default function MDTable({
   const [pageInput, setPageInput] = useState("");
   const [editing, setEditing] = useState(false);
 
-  // Restore scroll positions after re-render
+  const pageTokens = buildPageTokens(page, totalPages);
+
   useLayoutEffect(() => {
     const el = scrollContainerRef.current;
-    if (el) {
-      el.scrollLeft = savedScrollLeft.current;
-    }
-    // Restore the parent scrollable container's vertical scroll position
+    if (el) el.scrollLeft = savedScrollLeft.current;
     if (savedScrollTop.current !== null) {
       const scrollParent = scrollContainerRef.current?.closest("main");
       if (scrollParent) {
@@ -49,83 +64,88 @@ export default function MDTable({
 
   const handleScroll = () => {
     const el = scrollContainerRef.current;
-    if (el) {
-      savedScrollLeft.current = el.scrollLeft;
-    }
+    if (el) savedScrollLeft.current = el.scrollLeft;
   };
 
   const handlePageChange = (newPage: number) => {
-    // Save the parent's vertical scroll position before page change triggers re-render
     const scrollParent = scrollContainerRef.current?.closest("main");
-    if (scrollParent) {
-      savedScrollTop.current = scrollParent.scrollTop;
-    }
+    if (scrollParent) savedScrollTop.current = scrollParent.scrollTop;
     onPageChange(newPage);
   };
 
   const commitPageInput = () => {
     const parsed = parseInt(pageInput, 10);
-    if (!isNaN(parsed) && parsed >= 1 && parsed <= totalPages) {
-      handlePageChange(parsed);
-    }
+    if (!isNaN(parsed) && parsed >= 1 && parsed <= totalPages) handlePageChange(parsed);
     setEditing(false);
     setPageInput("");
   };
 
-  return (
-    <div className="relative w-full mb-12">
-      {/* Floating Header Card */}
-      <div
-        className="
-          absolute -top-6 left-6 right-6 
-          rounded-xl shadow-lg 
-          text-white font-semibold text-lg 
-          px-6 py-4
-        "
-        style={{
-          background: "linear-gradient(90deg, #3A7BD5 0%, #2B60C8 100%)",
-        }}
-      >
-        {title}
-      </div>
+  // suppress unused title warning — kept for API compatibility
+  void title;
 
-      {/* Main Table Container */}
+  return (
+    <div className="w-full mb-8 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      {/* Scrollable table area */}
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="bg-white rounded-2xl shadow-md p-6 border border-gray-100 pt-12 overflow-x-auto"
+        className="overflow-x-auto"
       >
-        <table className="w-full border-separate border-spacing-y-2 border-separate min-w-[700px]">
+        <table className="w-full border-collapse min-w-[700px]">
+          {/* Column headers */}
           <thead>
-            <tr>
-              {columns.map((col) =>
-                col === "STOCK" ? (
-                  <th
-                    key={col}
-                    className="text-center text-gray-600 font-bold text-m uppercase tracking-wide"
-                  >
-                    {col}
-                  </th>
-                ) : (
-                  <th
-                    key={col}
-                    className="text-left text-gray-600 font-bold text-m uppercase tracking-wide"
-                  >
-                    {col}
-                  </th>
-                )
-              )}
+            <tr className="bg-gray-50 border-b border-gray-200">
+              {columns.map((col, idx) => (
+                <th
+                  key={`${col}-${idx}`}
+                  className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap"
+                >
+                  {col}
+                </th>
+              ))}
             </tr>
           </thead>
 
-          <tbody className="text-gray-800">{children}</tbody>
+          {/* Data rows — zebra striping via nth-child */}
+          <tbody className="divide-y divide-gray-100 [&>tr:nth-child(even)]:bg-gray-50/60">
+            {children}
+          </tbody>
         </table>
 
-        {/* Pagination */}
-        <div className="flex justify-center items-center gap-2 mt-6">
-          {/* Prev Button */}
+        {sortLabel && (
+          <div className="px-4 py-1 text-xs text-gray-400 text-right border-t border-gray-100">
+            Sorted by: {sortLabel}
+          </div>
+        )}
+      </div>
+
+      {/* ── Dark pagination dock ── */}
+      <div className="flex items-center justify-between bg-gray-900 text-gray-400 px-4 py-2.5 text-xs gap-4 flex-wrap">
+        {/* Left: rows per page */}
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-gray-500">Rows per page:</span>
+          {onPageSizeChange ? (
+            <select
+              className="bg-gray-800 border border-gray-700 text-gray-300 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+              value={pageSize}
+              onChange={(e) => {
+                onPageSizeChange(Number(e.target.value));
+                handlePageChange(1);
+              }}
+            >
+              {PAGE_SIZE_OPTIONS.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          ) : (
+            <span className="bg-gray-800 border border-gray-700 text-gray-300 rounded px-2 py-1">{pageSize}</span>
+          )}
+        </div>
+
+        {/* Center: page numbers */}
+        <div className="flex items-center gap-1">
           <button
-            className="px-3 py-2 rounded-lg text-sm font-medium bg-gray-200 hover:bg-gray-300 disabled:opacity-40"
+            className="w-7 h-7 flex items-center justify-center rounded text-sm text-gray-400 hover:bg-gray-700 hover:text-white disabled:opacity-30 transition"
             disabled={page <= 1}
             onClick={() => handlePageChange(page - 1)}
             aria-label="Previous page"
@@ -133,41 +153,46 @@ export default function MDTable({
             ‹
           </button>
 
-          {/* Page indicator: editable */}
-          {editing ? (
-            <input
-              autoFocus
-              type="number"
-              min={1}
-              max={totalPages}
-              className="w-16 text-center border border-blue-400 rounded-lg px-2 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-300"
-              value={pageInput}
-              onChange={(e) => setPageInput(e.target.value)}
-              onBlur={commitPageInput}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") commitPageInput();
-                if (e.key === "Escape") {
-                  setEditing(false);
-                  setPageInput("");
-                }
-              }}
-            />
-          ) : (
-            <button
-              className="px-3 py-1.5 rounded-lg text-sm font-medium bg-[#3A7BD5] text-white shadow-md min-w-[72px] text-center"
-              onClick={() => {
-                setPageInput(String(page));
-                setEditing(true);
-              }}
-              title="Click to jump to a page"
-            >
-              {page} / {totalPages}
-            </button>
+          {pageTokens.map((token, idx) =>
+            token === "…" ? (
+              <span key={`ellipsis-${idx}`} className="px-1 text-gray-600 select-none">…</span>
+            ) : editing && token === page ? (
+              <input
+                key={token}
+                autoFocus
+                type="number"
+                min={1}
+                max={totalPages}
+                className="w-10 text-center bg-gray-800 border border-blue-500 rounded px-1 py-0.5 text-xs text-white focus:outline-none"
+                value={pageInput}
+                onChange={(e) => setPageInput(e.target.value)}
+                onBlur={commitPageInput}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") commitPageInput();
+                  if (e.key === "Escape") { setEditing(false); setPageInput(""); }
+                }}
+              />
+            ) : (
+              <button
+                key={token}
+                onClick={() => {
+                  if (token === page) { setPageInput(String(page)); setEditing(true); }
+                  else handlePageChange(token as number);
+                }}
+                className={`w-7 h-7 flex items-center justify-center rounded text-xs transition ${
+                  token === page
+                    ? "bg-blue-600 text-white font-semibold"
+                    : "text-gray-400 hover:bg-gray-700 hover:text-white"
+                }`}
+                title={token === page ? "Click to jump to a page" : undefined}
+              >
+                {token}
+              </button>
+            )
           )}
 
-          {/* Next Button */}
           <button
-            className="px-3 py-2 rounded-lg text-sm font-medium bg-gray-200 hover:bg-gray-300 disabled:opacity-40"
+            className="w-7 h-7 flex items-center justify-center rounded text-sm text-gray-400 hover:bg-gray-700 hover:text-white disabled:opacity-30 transition"
             disabled={page >= totalPages}
             onClick={() => handlePageChange(page + 1)}
             aria-label="Next page"
@@ -176,13 +201,10 @@ export default function MDTable({
           </button>
         </div>
 
-        {/* Audit Footer */}
-        {total > 0 && (
-          <div className="flex justify-between items-center mt-4 px-2 text-xs text-gray-400">
-            <span>Showing {rangeStart}–{rangeEnd} of {total}</span>
-            {sortLabel && <span>Sorted by: {sortLabel}</span>}
-          </div>
-        )}
+        {/* Right: result count */}
+        <span className="shrink-0 text-gray-500">
+          {total > 0 ? `Showing ${rangeStart}–${rangeEnd} of ${total}` : "No results"}
+        </span>
       </div>
     </div>
   );
