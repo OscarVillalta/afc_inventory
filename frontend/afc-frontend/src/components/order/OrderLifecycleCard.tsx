@@ -1,6 +1,6 @@
-import { useState } from "react";
-import type { OrderWithTracking, Department } from "../../api/tracker";
-import { patchOrderPaidInvoiced, initOrderTracker, updateOrderTracker } from "../../api/tracker";
+import { useState, useEffect } from "react";
+import type { OrderWithTracking, Department, OrderTrackerStagePayload } from "../../api/tracker";
+import { patchOrderPaidInvoiced, initOrderTracker, toggleTrackerStage } from "../../api/tracker";
 
 // ─────────────────────────────────────────────
 // 6-step lifecycle path
@@ -14,8 +14,6 @@ const TRACKER_STEPS: { dept: Department; label: string }[] = [
   { dept: "SALES",         label: "Sales II" },
   { dept: "LOGISTICS",     label: "Logistics II" },
 ];
-
-const LAST_STEP_INDEX = TRACKER_STEPS.length - 1;
 
 // ─────────────────────────────────────────────
 // Types
@@ -37,10 +35,30 @@ interface Props {
 // Step icon
 // ─────────────────────────────────────────────
 
-function StepIcon({ state }: { state: StepState }) {
+function StepIcon({
+  state,
+  onClick,
+  saving,
+}: {
+  state: StepState;
+  onClick: () => void;
+  saving: boolean;
+}) {
+  if (saving) {
+    return (
+      <div className="w-7 h-7 rounded-full bg-gray-300 flex items-center justify-center shrink-0 animate-pulse" />
+    );
+  }
   if (state === "completed") {
     return (
-      <div className="w-7 h-7 rounded-full bg-green-500 flex items-center justify-center shrink-0">
+      <div
+        className="w-7 h-7 rounded-full bg-green-500 flex items-center justify-center shrink-0 cursor-pointer hover:bg-green-600 transition-colors"
+        onClick={onClick}
+        role="button"
+        tabIndex={0}
+        title="Click to mark incomplete"
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
+      >
         <svg className="w-4 h-4 text-white" viewBox="0 0 20 20" fill="currentColor">
           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
         </svg>
@@ -49,7 +67,14 @@ function StepIcon({ state }: { state: StepState }) {
   }
   if (state === "active") {
     return (
-      <div className="relative w-9 h-9 flex items-center justify-center shrink-0">
+      <div
+        className="relative w-9 h-9 flex items-center justify-center shrink-0 cursor-pointer"
+        onClick={onClick}
+        role="button"
+        tabIndex={0}
+        title="Click to mark complete"
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
+      >
         {/* Outer glow ring */}
         <div className="absolute inset-0 rounded-full border-2 border-blue-200 bg-blue-50" />
         {/* Blue circle outline */}
@@ -60,7 +85,14 @@ function StepIcon({ state }: { state: StepState }) {
     );
   }
   return (
-    <div className="w-7 h-7 rounded-full border-[3px] border-gray-300 bg-white shrink-0" />
+    <div
+      className="w-7 h-7 rounded-full border-[3px] border-gray-300 bg-white shrink-0 cursor-pointer hover:border-blue-400 transition-colors"
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      title="Click to mark complete"
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
+    />
   );
 }
 
@@ -118,25 +150,35 @@ export default function OrderLifecycleCard({
 }: Props) {
   const [paid, setPaid] = useState(isPaid);
   const [invoiced, setInvoiced] = useState(isInvoiced);
-  const [saving, setSaving] = useState(false);
-  const [advanceError, setAdvanceError] = useState<string | null>(null);
+  const [savingIndex, setSavingIndex] = useState<number | null>(null);
+  const [toggleError, setToggleError] = useState<string | null>(null);
+
+  // Sync local state when props change (fixes bug where checkboxes appear unchecked after refresh)
+  useEffect(() => { setPaid(isPaid); }, [isPaid]);
+  useEffect(() => { setInvoiced(isInvoiced); }, [isInvoiced]);
 
   const tracker = trackingData?.tracker ?? null;
-  const stepIndex = tracker?.step_index ?? -1;
-  const history = trackingData?.history ?? [];
-  const isCompleted = stepIndex >= LAST_STEP_INDEX;
-  const nextStepIndex = stepIndex + 1;
-  const nextStep = !isCompleted ? TRACKER_STEPS[nextStepIndex] : null;
+  const stages = trackingData?.stages ?? [];
+
+  // Build a lookup map: stage_index → stage record
+  const stageMap = new Map<number, OrderTrackerStagePayload>(
+    stages.map((s) => [s.stage_index, s])
+  );
+
+  const firstIncompleteIndex = TRACKER_STEPS.findIndex((_, i) => !stageMap.get(i)?.is_completed);
+  const allCompleted = firstIncompleteIndex === -1 && stages.length > 0;
 
   const steps = TRACKER_STEPS.map((step, i) => {
+    const stage = stageMap.get(i);
+    const isStageCompleted = stage?.is_completed ?? false;
+
     let state: StepState;
-    if (i < stepIndex) state = "completed";
-    else if (i === stepIndex) state = "active";
+    if (isStageCompleted) state = "completed";
+    else if (i === firstIncompleteIndex) state = "active";
     else state = "pending";
 
-    const historyEntry = history[i];
-    const timestamp = historyEntry?.completed_at
-      ? new Date(historyEntry.completed_at).toLocaleString("en-US", {
+    const timestamp = stage?.completed_at
+      ? new Date(stage.completed_at).toLocaleString("en-US", {
           month: "2-digit",
           day: "2-digit",
           year: "numeric",
@@ -160,28 +202,29 @@ export default function OrderLifecycleCard({
       })
     : "—";
 
-  async function handleAdvance() {
-    if (!orderId) return;
-    setSaving(true);
-    setAdvanceError(null);
+  async function handleToggle(index: number) {
+    if (!orderId || savingIndex !== null) return;
+    setSavingIndex(index);
+    setToggleError(null);
     try {
+      const currentStage = stageMap.get(index);
+      const newCompleted = !(currentStage?.is_completed ?? false);
+
+      // Ensure tracker exists before toggling stages
       if (!tracker) {
         await initOrderTracker(orderId, {
           current_department: TRACKER_STEPS[0].dept,
           step_index: 0,
         });
-      } else if (nextStep) {
-        await updateOrderTracker(orderId, {
-          current_department: nextStep.dept,
-          step_index: nextStepIndex,
-        });
       }
+
+      await toggleTrackerStage(orderId, index, { is_completed: newCompleted });
       onRefresh();
     } catch (err) {
-      console.error("Failed to advance tracker:", err);
-      setAdvanceError("Failed to update tracker. Please try again.");
+      console.error("Failed to toggle stage:", err);
+      setToggleError("Failed to update stage. Please try again.");
     } finally {
-      setSaving(false);
+      setSavingIndex(null);
     }
   }
 
@@ -207,36 +250,20 @@ export default function OrderLifecycleCard({
     }
   }
 
-  const advanceLabel = saving
-    ? "Saving…"
-    : isCompleted
-    ? "Completed"
-    : !tracker
-    ? "Start Tracking"
-    : `Advance to ${nextStep!.label}`;
-
   return (
     <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 mt-4">
       {/* Header row */}
       <div className="flex items-center justify-between mb-5 gap-2 flex-wrap">
         <h2 className="text-xl font-extrabold text-gray-900">Progress Tracker</h2>
-        {isCompleted ? (
+        {allCompleted && (
           <span className="text-sm font-semibold text-green-700 bg-green-100 border border-green-300 px-3 py-1 rounded-full">
             ✓ Tracking Complete
           </span>
-        ) : (
-          <button
-            className="btn btn-sm btn-primary"
-            onClick={handleAdvance}
-            disabled={saving}
-          >
-            {advanceLabel}
-          </button>
         )}
       </div>
 
-      {advanceError && (
-        <p className="text-sm text-red-500 mb-3">{advanceError}</p>
+      {toggleError && (
+        <p className="text-sm text-red-500 mb-3">{toggleError}</p>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -246,7 +273,7 @@ export default function OrderLifecycleCard({
             <div key={i} className="flex items-start gap-3">
               {/* Icon + connector line */}
               <div className="flex flex-col items-center">
-                <StepIcon state={step.state} />
+                <StepIcon state={step.state} onClick={() => handleToggle(i)} saving={savingIndex === i} />
                 {i < steps.length - 1 && (
                   <div
                     className={`w-0.5 h-8 mt-0.5 ${
