@@ -97,45 +97,6 @@ function StepIcon({
 }
 
 // ─────────────────────────────────────────────
-// Custom checkbox
-// ─────────────────────────────────────────────
-
-function CustomCheckbox({
-  checked,
-  onChange,
-  label,
-}: {
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  label: string;
-}) {
-  return (
-    <label className="flex items-center gap-3 cursor-pointer select-none">
-      <input
-        type="checkbox"
-        className="sr-only"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-      />
-      <div
-        className={`w-7 h-7 rounded-md flex items-center justify-center border-2 ${
-          checked
-            ? "bg-slate-700 border-slate-700"
-            : "border-gray-400 bg-white"
-        }`}
-      >
-        {checked && (
-          <svg className="w-4 h-4 text-white" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-          </svg>
-        )}
-      </div>
-      <span className="text-base font-semibold text-gray-700">{label}</span>
-    </label>
-  );
-}
-
-// ─────────────────────────────────────────────
 // Main component
 // ─────────────────────────────────────────────
 
@@ -151,6 +112,8 @@ export default function OrderLifecycleCard({
   const [paid, setPaid] = useState(isPaid);
   const [invoiced, setInvoiced] = useState(isInvoiced);
   const [savingIndex, setSavingIndex] = useState<number | null>(null);
+  const [savingPaid, setSavingPaid] = useState(false);
+  const [savingInvoiced, setSavingInvoiced] = useState(false);
   const [toggleError, setToggleError] = useState<string | null>(null);
 
   // Sync local state when props change (fixes bug where checkboxes appear unchecked after refresh)
@@ -230,23 +193,29 @@ export default function OrderLifecycleCard({
 
   async function handlePaidChange(checked: boolean) {
     setPaid(checked);
+    setSavingPaid(true);
     try {
       await patchOrderPaidInvoiced(orderId, { is_paid: checked });
       onRefresh();
     } catch (err) {
       console.error("Failed to update paid status:", err);
       setPaid(!checked);
+    } finally {
+      setSavingPaid(false);
     }
   }
 
   async function handleInvoicedChange(checked: boolean) {
     setInvoiced(checked);
+    setSavingInvoiced(true);
     try {
       await patchOrderPaidInvoiced(orderId, { is_invoiced: checked });
       onRefresh();
     } catch (err) {
       console.error("Failed to update invoiced status:", err);
       setInvoiced(!checked);
+    } finally {
+      setSavingInvoiced(false);
     }
   }
 
@@ -332,17 +301,29 @@ export default function OrderLifecycleCard({
             <p className="text-sm font-medium text-gray-900 mt-1">{status}</p>
           </div>
 
-          <div className="mt-4 space-y-3">
-            <CustomCheckbox
-              checked={invoiced}
-              onChange={handleInvoicedChange}
-              label="Invoiced"
-            />
-            <CustomCheckbox
-              checked={paid}
-              onChange={handlePaidChange}
-              label="Paid"
-            />
+          <div className="mt-4 flex gap-2 flex-wrap">
+            <button
+              disabled={savingInvoiced}
+              onClick={() => handleInvoicedChange(!invoiced)}
+              className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all border ${
+                invoiced
+                  ? "bg-green-500 text-white border-green-500 shadow-sm"
+                  : "bg-white text-gray-500 border-gray-300 hover:bg-green-50 hover:text-green-600 hover:border-green-400"
+              }`}
+            >
+              {savingInvoiced ? "…" : invoiced ? "✓ INVOICED" : "INVOICED"}
+            </button>
+            <button
+              disabled={savingPaid}
+              onClick={() => handlePaidChange(!paid)}
+              className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all border ${
+                paid
+                  ? "bg-green-500 text-white border-green-500 shadow-sm"
+                  : "bg-white text-gray-500 border-gray-300 hover:bg-green-50 hover:text-green-600 hover:border-green-400"
+              }`}
+            >
+              {savingPaid ? "…" : paid ? "✓ PAID" : "PAID"}
+            </button>
           </div>
         </div>
       </div>
