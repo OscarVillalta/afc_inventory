@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'add_order_tracker_stages'
-down_revision = 'add_order_tracker_tables'
+down_revision = '616f14360892'
 branch_labels = None
 depends_on = None
 

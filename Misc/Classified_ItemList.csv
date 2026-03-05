@@ -318,7 +318,7 @@ AMPHC-24242,24x24x2 Class 1 - High Temp Galv. Steel Filter..,"Aircon Filter Mfg.
 AWCT40268,XF80MAX-13-5.25X24.375X60-FPVC-DG,,5.25X24.375X60,5.25,24.375,60.0,,,stock_item
 AWCT40537,XF80MAX-13-5.25X24.375X48-FPVC-DG,,5.25X24.375X48,5.25,24.375,48.0,,,stock_item
 BF1824-A,BF 1824-A..Equivalent 16B23 Kaydon,Fluitek Corporation. (PAID BY CC),,,,,,,stock_item
-BT8874-MPG,4-23/32OD 11-17/32L 10u Sp/On Max Perf Glass Hyd,Total Filtration Services,,,,,,,stock_item
+BT8874-MPG,4-23/32OD 11-17/32L 10u Sp/On Max Perf Glass Hyd,Total Filtration Services,,,,,,,air_filter
 BU-0537000033,0537000033..Baffle Strainer 160/250-PREVIO..REF#130 237x310x20,SHW FILTER-Guangzhou Sun,237x310x20,237.0,310.0,20.0,,,stock_item
 BU-0537000034,0537000034..Baffle Strainer 400/630-PREVIO..REF# 130 345x450x20,SHW FILTER-Guangzhou Sun,345x450x20,345.0,450.0,20.0,,,stock_item
 CCM1205-108-CHM,PK12 Module w/CHM,"Freudenberg Filtration Technologies, L.P.",,,,,,,stock_item
@@ -522,7 +522,7 @@ G4-MINIPLEAT,580x650x48 G4 Glass Media Plastic Frame MINI Pleat,"Wetzel Technolo
 GALV3401-12243,12x24x3 Galv Blank Frames,"Aircon Filter Mfg. Co., Inc.",12x24x3,12.0,24.0,3.0,,,stock_item
 GALV3401-20243,20x24x3 Galv Blank Frames,"Aircon Filter Mfg. Co., Inc.",20x24x3,20.0,24.0,3.0,,,stock_item
 GALV3401-24243,24x24x3 Galv Blank Frames,"Aircon Filter Mfg. Co., Inc.",24x24x3,24.0,24.0,3.0,,,stock_item
-GDS12201,12x20x1 Glass Double Strut Disposable,Glasfloss Industries,12x20x1,12.0,20.0,1.0,,,stock_item
+GDS12201,12x20x1 Glass Double Strut Disposable,Glasfloss Industries,12x20x1,12.0,20.0,1.0,,,air_filter
 HT-242412-GALWT,"HT Filter Box Style Galvanized Frame 24x24x12(610x610x292)  Glass fiber media,with galvanized protection nets on both sides, with glass fiber gasket+metal support on CAS; 4250m3/h, Temp <=350°C","Wetzel Technologies Co., Ltd",24x24x12,24.0,24.0,12.0,,,air_filter
 HT-24242-ALUWT,"HT Filter Aluminum Frame 24x24x2 (610x610x55mm) Glass fiber media, glass fiber Separator, with protection nets on both sides,with glass fiber gasket on Dirty air side","Wetzel Technologies Co., Ltd",24x24x2 ,24.0,24.0,2.0,,,air_filter
 HVP10101,10x10x1 MERV10 High Capacity Pleat,Glasfloss Industries,10x10x1,10.0,10.0,1.0,MERV10,10.0,air_filter
@@ -1538,7 +1538,7 @@ ZPS2424695BO,24x24x6 Synthetic MERV 14 Rigid Box Non-Header,Glasfloss Industries
 99-4-00-00-16,STRAIGHT ZEOLITE MEDIA,RSE Incorporated,,,,,,,air_filter
 99-4-00-00-21,RSE4 (4%PP) MEDIA,RSE Incorporated,,,,,4%,7.0,air_filter
 99-4-00-00-23,"CHM, Purafil Chemisorbant Media",RSE Incorporated,,,,,,,air_filter
-A-5-20252 Stainless Steel,A-5 20x25x2  Stainless Steel high temperature glass,"Aircon Filter Mfg. Co., Inc.",20x25x2 ,20.0,25.0,2.0,,,stock_item
+A-5-20252 Stainless Steel,A-5 20x25x2  Stainless Steel high temperature glass,"Aircon Filter Mfg. Co., Inc.",20x25x2 ,20.0,25.0,2.0,,,air_filter
 A-5 Aluminum16252,16x25x2 Aluminum Mesh Filter,"Aircon Filter Mfg. Co., Inc.",16x25x2,16.0,25.0,2.0,,,air_filter
 A-6 Industrial Metal,"A-6 Industrial Filter..18 3/4"" x 15 3/8"" x 0.50""","Aircon Filter Mfg. Co., Inc.","18 3/4"" x 15 3/8"" x 0.50""",18.75,15.375,0.5,,,air_filter
 A-Stainless Steel,,"Aircon Filter Mfg. Co., Inc.",,,,,,,stock_item
@@ -1819,12 +1819,12 @@ GC312-00-CG,HILCO Filter Element,Hilliard Corporation,,,,,,,air_filter
 GC312-00-CGHVT,HILCO Gas Coalescer Filter Element,Hilliard Corporation,,,,,,,air_filter
 GC312-00-CGV,HILCO Filter Element,Hilliard Corporation,,,,,,,air_filter
 GC414-00-CGV,HILCO COALESCER CARTRIDGE,Hilliard Corporation,,,,,,,air_filter
-GDS-SPECIAL,Special Glass Double Strut Disposable,Glasfloss Industries,,,,,,,stock_item
-GDS12301,12x30x1 Glass Double Strut Disposable,Glasfloss Industries,12x30x1,12.0,30.0,1.0,,,stock_item
-GDS14241,14x24x1 Glass Double Strut Disposable,Glasfloss Industries,14x24x1,14.0,24.0,1.0,,,stock_item
-GDS16161,16x16x1 Glass Double Strut Disposable,Glasfloss Industries,16x16x1,16.0,16.0,1.0,,,stock_item
-GDS20251,20x25x1 Glass Double Strut Disposable,Glasfloss Industries,20x25x1,20.0,25.0,1.0,,,stock_item
-GDS24242,24x24x2 Glass Double Strut Disposable,Glasfloss Industries,24x24x2,24.0,24.0,2.0,,,stock_item
+GDS-SPECIAL,Special Glass Double Strut Disposable,Glasfloss Industries,,,,,,,air_filter
+GDS12301,12x30x1 Glass Double Strut Disposable,Glasfloss Industries,12x30x1,12.0,30.0,1.0,,,air_filter
+GDS14241,14x24x1 Glass Double Strut Disposable,Glasfloss Industries,14x24x1,14.0,24.0,1.0,,,air_filter
+GDS16161,16x16x1 Glass Double Strut Disposable,Glasfloss Industries,16x16x1,16.0,16.0,1.0,,,air_filter
+GDS20251,20x25x1 Glass Double Strut Disposable,Glasfloss Industries,20x25x1,20.0,25.0,1.0,,,air_filter
+GDS24242,24x24x2 Glass Double Strut Disposable,Glasfloss Industries,24x24x2,24.0,24.0,2.0,,,air_filter
 Glasdek,"GX30 72""x12""x12""",HuTek (Asia) Company Ltd,"72""x12""x12""",72.0,12.0,12.0,,,stock_item
 GORE BAGS,,"W.L Gore & Associates, Inc",,,,,,,stock_item
 GTA-SPECIAL,,Glasfloss Industries,,,,,,,stock_item

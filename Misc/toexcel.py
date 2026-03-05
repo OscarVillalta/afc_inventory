@@ -8,7 +8,8 @@ FILTER_KEYWORDS = [
     "merv", "filter", "ply", "hepa", "ulpa", "pleat", "pleated",
     "panel", "prefilter", "pre-filter", "v-bank",
     "mini pleat", "bag filter", "cartridge", "cube filter", "box", "bag", "cylinder",
-    "rigid", "sock", "cube", "panel", "media", "synthetic", "fiberglass", "canister", "cel"
+    "rigid", "sock", "cube", "panel", "media", "synthetic", "fiberglass", "canister", "cel", "Glass", "glass", "canister",
+    
 ]
 
 SALES_KEYWORDS = [
