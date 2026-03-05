@@ -11,6 +11,16 @@ import AutocompleteInput from "../components/AutocompleteInput";
 import { usePersistedFilters } from "../hooks/usePersistedFilters";
 import CreateOrderModal from "../components/order/Table/CreateOrderModal";
 import PullFromQBModal from "../components/order/Table/PullFromQBModal";
+import { ALL_ORDER_TYPES, ORDER_TYPE_LABELS, type OrderType } from "../constants/orderTypes";
+
+/** Light-background badge classes keyed by order type. */
+const ORDER_TYPE_BADGE_CLASSES: Record<OrderType, string> = {
+  incoming:     "bg-green-100  text-green-700",
+  installation: "bg-blue-100   text-blue-700",
+  will_call:    "bg-purple-100 text-purple-700",
+  delivery:     "bg-teal-100   text-teal-700",
+  shipment:     "bg-cyan-100   text-cyan-700",
+};
 
 export default function OrdersSearchPage() {
   const navigate = useNavigate();
@@ -26,10 +36,11 @@ export default function OrdersSearchPage() {
   
   // Type options for autocomplete
   const typeOptions = [
-    { id: 1, name: "All" },
-    { id: 2, name: "incoming" },
-    { id: 3, name: "outgoing" },
-    { id: 4, name: "contract" },
+    { id: 0, name: "All" },
+    ...ALL_ORDER_TYPES.map((type, i) => ({
+      id: i + 1,
+      name: ORDER_TYPE_LABELS[type],
+    })),
   ];
   
   // Search filters (PERSISTED)
@@ -77,7 +88,9 @@ export default function OrdersSearchPage() {
       const updatedFilters: Record<string, string | number[]> = {};
       
       if (typeParam) {
-        updatedFilters.filterType = typeParam;
+        // Convert raw type key from URL (e.g. "will_call") to display label (e.g. "Will Call")
+        updatedFilters.filterType =
+          ORDER_TYPE_LABELS[typeParam as OrderType] ?? typeParam;
       }
       if (productIdsParam) {
         const productIds = productIdsParam.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
@@ -106,7 +119,15 @@ export default function OrdersSearchPage() {
       if (activeFilters.searchDescription) apiFilters.description = activeFilters.searchDescription as string;
       if (activeFilters.searchCustomer) apiFilters.customer_name = activeFilters.searchCustomer as string;
       if (activeFilters.searchSupplier) apiFilters.supplier_name = activeFilters.searchSupplier as string;
-      if (activeFilters.filterType && activeFilters.filterType !== "All") apiFilters.type = activeFilters.filterType as string;
+      if (activeFilters.filterType && activeFilters.filterType !== "All") {
+        // Map display label (e.g. "Will Call") or raw key (e.g. "will_call") to the API type key
+        const typeKey = ALL_ORDER_TYPES.find(
+          (t) => ORDER_TYPE_LABELS[t] === activeFilters.filterType || t === activeFilters.filterType
+        );
+        if (typeKey) {
+          apiFilters.type = typeKey;
+        }
+      }
       
       // Date filters based on selected type
       if (activeFilters.dateFilterType === "created") {
@@ -427,12 +448,10 @@ export default function OrdersSearchPage() {
                           )}
                           <span
                             className={`px-3 py-1 rounded-full text-xs font-medium ${
-                              order.type === "outgoing"
-                                ? "bg-blue-100 text-blue-700"
-                                : "bg-green-100 text-green-700"
+                              ORDER_TYPE_BADGE_CLASSES[order.type] ?? "bg-gray-100 text-gray-700"
                             }`}
                           >
-                            {order.type.charAt(0).toUpperCase() + order.type.slice(1)}
+                            {ORDER_TYPE_LABELS[order.type as OrderType] ?? order.type.charAt(0).toUpperCase() + order.type.slice(1)}
                           </span>
                         </div>
                         
