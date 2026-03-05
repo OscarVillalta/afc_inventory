@@ -1,3 +1,6 @@
+import { isOutgoingType } from "../../constants/orderTypes";
+import type { OrderType } from "../../constants/orderTypes";
+
 interface Props {
   value: string;
   onChange: (value: string) => void;
@@ -7,7 +10,7 @@ interface Props {
   onCancelSelected: () => void;
   onRollbackSelected: () => void;
   disabled?: boolean;
-  orderType: "incoming" | "outgoing";
+  orderType: OrderType;
 }
 
 export default function OrderDescription({ 
@@ -45,14 +48,14 @@ export default function OrderDescription({
               onClick={onAllocateSelected}
               disabled={disabled}
             >
-              {orderType === "outgoing" ? "Reserve Selected" : "Order Selected"}
+              {isOutgoingType(orderType) ? "Reserve Selected" : "Order Selected"}
             </button>
             <button
               className="btn btn-xs btn-success"
               onClick={onCommitSelected}
               disabled={disabled}
             >
-              {orderType === "outgoing" ? "Fulfill Selected" : "Receive Selected"}
+              {isOutgoingType(orderType) ? "Fulfill Selected" : "Receive Selected"}
             </button>
             <button
               className="btn btn-xs btn-error"

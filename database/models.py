@@ -15,8 +15,32 @@ from database import Base
 # =====================================================
 
 class OrderType(str, Enum):
-    OUTGOING = "outgoing"
+    INSTALLATION = "installation"
+    WILL_CALL = "will_call"
+    DELIVERY = "delivery"
+    SHIPMENT = "shipment"
     INCOMING = "incoming"
+    # Legacy value kept for backward compatibility with existing data
+    OUTGOING = "outgoing"
+
+
+# Outgoing-equivalent types: require customer, create tracker, reduce stock
+OUTGOING_TYPES = {
+    OrderType.INSTALLATION.value,
+    OrderType.WILL_CALL.value,
+    OrderType.DELIVERY.value,
+    OrderType.SHIPMENT.value,
+    OrderType.OUTGOING.value,  # legacy
+}
+
+# All valid non-legacy type values accepted for new orders
+VALID_ORDER_TYPES = {
+    OrderType.INSTALLATION.value,
+    OrderType.WILL_CALL.value,
+    OrderType.DELIVERY.value,
+    OrderType.SHIPMENT.value,
+    OrderType.INCOMING.value,
+}
 
 
 class OrderStatus(str, Enum):

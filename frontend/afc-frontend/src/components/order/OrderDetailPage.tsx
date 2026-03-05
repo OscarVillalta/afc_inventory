@@ -30,9 +30,11 @@ import type { OrderWithTracking } from "../../api/tracker";
 import OrderLifecycleCard from "./OrderLifecycleCard";
 
 
+import type { OrderType } from "../../constants/orderTypes";
+import { isOutgoingType } from "../../constants/orderTypes";
+
 /* ===================== TYPES ===================== */
 
-type OrderType = "incoming" | "outgoing";
 type OrderStatus = "Pending" | "Partially Fulfilled" | "Completed";
 
 interface OrderDetailPayload {
@@ -305,7 +307,7 @@ export default function OrderDetailPage() {
       await refreshOrder();
       setSelectedItems(new Set());
     } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : (order?.type === "outgoing" ? "Failed to fulfill selected items" : "Failed to receive selected items");
+      const errorMsg = err instanceof Error ? err.message : (order?.type && isOutgoingType(order.type) ? "Failed to fulfill selected items" : "Failed to receive selected items");
       alert(errorMsg);
     }
   }
@@ -325,7 +327,7 @@ export default function OrderDetailPage() {
       return;
     }
 
-    if (!confirm(order?.type === "outgoing"
+    if (!confirm(order?.type && isOutgoingType(order.type)
       ? "Cancel all transactions for selected items?"
       : "Cancel all orders for selected items?")) {
       return;
@@ -421,7 +423,7 @@ export default function OrderDetailPage() {
               completedAt={order.completed_at}
               eta={order.eta}
 
-              entities={order.type === "outgoing" ? customers : suppliers}
+              entities={isOutgoingType(order.type) ? customers : suppliers}
               selectedEntityId={selectedEntityId}
               onEntityChange={(id) => {
                 setSelectedEntityId(id);
@@ -435,6 +437,10 @@ export default function OrderDetailPage() {
               onEtaChange={(v) => {
                 setOrder({ ...order, eta: v });
                 scheduleAutoSave(buildPatch({ eta: v || null }));
+              }}
+              onTypeChange={(newType) => {
+                setOrder({ ...order, type: newType });
+                scheduleAutoSave(buildPatch({ type: newType }));
               }}
             />
           </div>

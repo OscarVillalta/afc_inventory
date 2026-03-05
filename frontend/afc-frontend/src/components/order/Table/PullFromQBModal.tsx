@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { createOrderFromQB } from "../../../api/ordersTable";
+import { OUTGOING_ORDER_TYPES, ORDER_TYPE_LABELS } from "../../../constants/orderTypes";
 
 interface Props {
   open: boolean;
@@ -17,12 +18,25 @@ const QB_DOC_TYPES = [
 export default function PullFromQBModal({ open, onClose, onCreated }: Props) {
   const [referenceNumber, setReferenceNumber] = useState("");
   const [docType, setDocType] = useState("sales_order");
+  const [orderType, setOrderType] = useState("installation");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const isPurchaseOrder = docType === "purchase_order";
+
+  function handleDocTypeChange(newDocType: string) {
+    setDocType(newDocType);
+    if (newDocType === "purchase_order") {
+      setOrderType("incoming");
+    } else if (orderType === "incoming") {
+      setOrderType("installation");
+    }
+  }
 
   function handleClose() {
     setReferenceNumber("");
     setDocType("sales_order");
+    setOrderType("installation");
     setError(null);
     onClose();
   }
@@ -42,6 +56,7 @@ export default function PullFromQBModal({ open, onClose, onCreated }: Props) {
       const response = await createOrderFromQB({
         reference_number: referenceNumber.trim(),
         qb_doc_type: docType,
+        order_type: isPurchaseOrder ? undefined : orderType,
       });
 
       const orderId = response.order_id;
@@ -80,7 +95,7 @@ export default function PullFromQBModal({ open, onClose, onCreated }: Props) {
           <select
             className="select select-bordered w-full"
             value={docType}
-            onChange={(e) => setDocType(e.target.value)}
+            onChange={(e) => handleDocTypeChange(e.target.value)}
           >
             {QB_DOC_TYPES.map((dt) => (
               <option key={dt.value} value={dt.value}>
@@ -88,6 +103,28 @@ export default function PullFromQBModal({ open, onClose, onCreated }: Props) {
               </option>
             ))}
           </select>
+        </div>
+
+        {/* Order Type (hidden for Purchase Orders — always Incoming) */}
+        <div>
+          <label className="label text-sm font-medium">Order Type</label>
+          {isPurchaseOrder ? (
+            <div className="input input-bordered w-full flex items-center text-gray-500 bg-gray-50 cursor-not-allowed">
+              Incoming
+            </div>
+          ) : (
+            <select
+              className="select select-bordered w-full"
+              value={orderType}
+              onChange={(e) => setOrderType(e.target.value)}
+            >
+              {OUTGOING_ORDER_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {ORDER_TYPE_LABELS[t]}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
 
         {/* Error */}

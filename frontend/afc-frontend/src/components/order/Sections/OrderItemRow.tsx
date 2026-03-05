@@ -15,10 +15,12 @@ import {
   deleteOrderItem,
   updateOrderItem,
 } from "../../../api/orderDetail";
+import type { OrderType } from "../../../constants/orderTypes";
+import { isOutgoingType } from "../../../constants/orderTypes";
 
 interface Props {
   item: OrderItemPayload;
-  orderType: "incoming" | "outgoing";
+  orderType: OrderType;
   onRefresh: () => void;
   txnRefreshKey: number;
   isSelected: boolean;
@@ -219,7 +221,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
     setSubmitting(true);
     setError(null);
 
-    const isOutgoing = orderType === "outgoing";
+    const isOutgoing = isOutgoingType(orderType);
 
     try {
       await createOrderItemTransaction({
@@ -603,7 +605,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
             {remainingSafe > 0 && (
               <div className="flex flex-wrap items-center gap-3">
                 <span className="text-sm text-gray-500">
-                  {orderType === "outgoing"
+                  {isOutgoingType(orderType)
                     ? "Reserve Qty:"
                     : "Order Qty:"}
                 </span>
@@ -636,7 +638,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
                   onClick={handleCreatePendingTxn}
                   disabled={submitting}
                 >
-                  {submitting ? "Saving…" : orderType === "outgoing" ? "Reserve" : "Order"}
+                  {submitting ? "Saving…" : isOutgoingType(orderType) ? "Reserve" : "Order"}
                 </button>
 
         
@@ -704,9 +706,9 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
                             }`}
                           >
                             {tx.state === "pending"
-                              ? orderType === "outgoing" ? "Reserved" : "Ordered"
+                              ? isOutgoingType(orderType) ? "Reserved" : "Ordered"
                               : tx.state === "committed"
-                              ? orderType === "outgoing" ? "Fulfilled" : "Received"
+                              ? isOutgoingType(orderType) ? "Fulfilled" : "Received"
                               : tx.state === "rolled_back"
                               ? "Reversed"
                               : tx.state === "cancelled"
@@ -735,7 +737,7 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
                                     handleCommit(e, tx.id)
                                   }
                                 >
-                                  {orderType === "outgoing" ? "Fulfill" : "Receive"}
+                                  {isOutgoingType(orderType) ? "Fulfill" : "Receive"}
                                 </button>
                                 <button
                                   className="btn btn-xs btn-error"

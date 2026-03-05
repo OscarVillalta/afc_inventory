@@ -222,7 +222,7 @@ export async function fetchChildProductLedger(
 
 export async function fetchProductOrders(
   productId: number, 
-  orderType: 'incoming' | 'outgoing',
+  orderType: string,
   limit: number = 5
 ): Promise<ProductOrderSummary[]> {
   const response = await apiRequest(

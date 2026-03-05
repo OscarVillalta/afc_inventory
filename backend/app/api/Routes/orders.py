@@ -3,7 +3,7 @@ from sqlalchemy import select, func, null
 from sqlalchemy import and_, or_
 from sqlalchemy.exc import IntegrityError, DatabaseError
 from app.api.Schemas.order_schema import OrderSchema
-from database.models import Customer, Supplier, OrderType, OrderStatus, OrderItemType, Transaction, TransactionState
+from database.models import Customer, Supplier, OrderType, OrderStatus, OrderItemType, Transaction, TransactionState, OUTGOING_TYPES, VALID_ORDER_TYPES
 from database.models import Order, OrderItem, Product, AirFilter, StockItem, StockItemCategory, Quantity, OrderTracker, Department, BlockedItem
 from marshmallow import ValidationError
 from datetime import datetime, timedelta, timezone
@@ -128,7 +128,7 @@ def get_order(order_id: int) -> Tuple[Any, int]:
         # Determine customer or supplier name
         cs_name = None
         cs_id = None
-        if order.type == OrderType.OUTGOING.value and order.customer:
+        if order.type in OUTGOING_TYPES and order.customer:
             cs_id = order.customer.id
             cs_name = order.customer.name
         elif order.type == OrderType.INCOMING.value and order.supplier:
@@ -306,7 +306,7 @@ def create_order():
     # ===============================
     # Validate customer / supplier
     # ===============================
-    if order.type == OrderType.OUTGOING.value:
+    if order.type in OUTGOING_TYPES:
         if not order.customer_id:
             return jsonify({
                 "error": "customer_id is required for outgoing orders"
@@ -410,10 +410,7 @@ def patch_order(order_id):
     if "type" in data:
         new_type = data["type"]
 
-        if new_type not in (
-            OrderType.OUTGOING.value,
-            OrderType.INCOMING.value,
-        ):
+        if new_type not in VALID_ORDER_TYPES:
             return jsonify({"error": "Invalid order type"}), 400
 
         order.type = new_type
@@ -427,7 +424,7 @@ def patch_order(order_id):
         if not cs_id:
             return jsonify({"error": "cs_id cannot be empty"}), 400
 
-        if order.type == OrderType.OUTGOING.value:
+        if order.type in OUTGOING_TYPES:
             order.customer_id = cs_id
             order.supplier_id = None
         elif order.type == OrderType.INCOMING.value:
@@ -495,7 +492,7 @@ def patch_order(order_id):
     # Return updated order (same shape as GET)
     # ===============================
     cs_name = None
-    if order.type == OrderType.OUTGOING.value and order.customer:
+    if order.type in OUTGOING_TYPES and order.customer:
         cs_name = order.customer.name
     elif order.type == OrderType.INCOMING.value and order.supplier:
         cs_name = order.supplier.name
@@ -602,7 +599,11 @@ def search_orders():
     filters = []
 
     if order_type:
-        filters.append(Order.type == order_type)
+        # "outgoing" is a legacy/convenience filter matching all outgoing-equivalent types
+        if order_type == "outgoing":
+            filters.append(Order.type.in_(OUTGOING_TYPES))
+        else:
+            filters.append(Order.type == order_type)
 
     if status:
         filters.append(Order.status == status)
@@ -759,7 +760,7 @@ def allocate_all(order_id):
 
         qty_delta = (
             -remaining
-            if order.type == OrderType.OUTGOING.value
+            if order.type in OUTGOING_TYPES
             else remaining
         )
 
@@ -848,7 +849,8 @@ def create_order_from_qb():
     Expects JSON body with:
     {
         "reference_number": "8800",
-        "qb_doc_type": "sales_order" | "estimate" | "invoice"
+        "qb_doc_type": "sales_order" | "estimate" | "invoice" | "purchase_order",
+        "order_type": "installation" | "will_call" | "delivery" | "shipment"  (optional, for non-purchase orders)
     }
     
     Returns:
@@ -864,6 +866,7 @@ def create_order_from_qb():
     # Validate required fields
     reference_number = data.get("reference_number")
     qb_doc_type = data.get("qb_doc_type", "").lower()
+    order_type_override = data.get("order_type")
     
     if not reference_number:
         return jsonify({"error": "reference_number is required"}), 400
@@ -990,9 +993,25 @@ def create_order_from_qb():
         except ValueError:
             pass
     
+    # Determine the final order type
+    if is_purchase_order:
+        final_order_type = OrderType.INCOMING.value
+    else:
+        # Validate the order_type_override if provided
+        outgoing_type_options = {
+            OrderType.INSTALLATION.value,
+            OrderType.WILL_CALL.value,
+            OrderType.DELIVERY.value,
+            OrderType.SHIPMENT.value,
+        }
+        if order_type_override and order_type_override in outgoing_type_options:
+            final_order_type = order_type_override
+        else:
+            final_order_type = OrderType.INSTALLATION.value  # default for non-PO QB orders
+
     # Create the order
     order = Order(
-        type=OrderType.INCOMING.value if is_purchase_order else OrderType.OUTGOING.value,
+        type=final_order_type,
         customer_id=customer.id if customer else None,
         supplier_id=supplier.id if supplier else None,
         external_order_number=reference_number,

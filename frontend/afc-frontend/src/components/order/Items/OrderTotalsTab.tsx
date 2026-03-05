@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
 import type { OrderItemPayload } from "../../../api/orderDetail";
+import type { OrderType } from "../../../constants/orderTypes";
+import { isOutgoingType } from "../../../constants/orderTypes";
 
 interface Props {
   items: OrderItemPayload[];
-  orderType: "incoming" | "outgoing";
+  orderType: OrderType;
 }
 
 interface ProductSummary {
@@ -17,10 +19,10 @@ interface ProductSummary {
   available: number | null;
 }
 
-function hasEnoughStock(product: ProductSummary, orderType: "incoming" | "outgoing"): boolean {
+function hasEnoughStock(product: ProductSummary, orderType: OrderType): boolean {
   if (product.on_hand === null) return true;
   const remaining = product.total_ordered - product.total_fulfilled;
-  if (orderType === "outgoing") {
+  if (isOutgoingType(orderType)) {
     // Available stock + what's already reserved for this order covers the remaining
     const effectiveAvailable = (product.available ?? 0) + product.total_pending;
     return effectiveAvailable >= remaining;
@@ -101,7 +103,7 @@ export default function OrderTotalsTab({ items, orderType }: Props) {
     productsWithInventory.length > 0 &&
     productsWithInventory.every((p) => hasEnoughStock(p, orderType));
 
-  const pendingLabel = orderType === "outgoing" ? "Reserved" : "Ordered";
+  const pendingLabel = isOutgoingType(orderType) ? "Reserved" : "Ordered";
 
   return (
     <div className="p-4 space-y-4">
