@@ -14,7 +14,7 @@ import PullFromQBModal from "../components/order/Table/PullFromQBModal";
 import { ALL_ORDER_TYPES, ORDER_TYPE_LABELS, type OrderType } from "../constants/orderTypes";
 
 /** Light-background badge classes keyed by order type. */
-const ORDER_TYPE_BADGE_CLASSES: Record<string, string> = {
+const ORDER_TYPE_BADGE_CLASSES: Record<OrderType, string> = {
   incoming:     "bg-green-100  text-green-700",
   installation: "bg-blue-100   text-blue-700",
   will_call:    "bg-purple-100 text-purple-700",
@@ -123,8 +123,10 @@ export default function OrdersSearchPage() {
         // Map display label (e.g. "Will Call") or raw key (e.g. "will_call") to the API type key
         const typeKey = ALL_ORDER_TYPES.find(
           (t) => ORDER_TYPE_LABELS[t] === activeFilters.filterType || t === activeFilters.filterType
-        ) ?? (activeFilters.filterType as string);
-        apiFilters.type = typeKey;
+        );
+        if (typeKey) {
+          apiFilters.type = typeKey;
+        }
       }
       
       // Date filters based on selected type
