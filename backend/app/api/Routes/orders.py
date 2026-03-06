@@ -153,6 +153,8 @@ def get_order(order_id: int) -> Tuple[Any, int]:
                 order.eta.strftime(Config.DATE_FORMAT)
                 if order.eta else None
             ),
+            "is_paid": order.is_paid,
+            "is_invoiced": order.is_invoiced,
         }), 200
         
     except ResourceNotFoundError as e:
