@@ -8,6 +8,7 @@ export interface ProductDetail {
     part_number?: string;
     name?: string;
     supplier_name?: string;
+    supplier_id?: number;
     filter_category?: string;
     height?: number;
     width?: number;
