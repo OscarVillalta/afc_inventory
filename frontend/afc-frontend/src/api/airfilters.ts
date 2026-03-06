@@ -127,6 +127,16 @@ export function updateAirFilter(
   });
 }
 
+export function patchAirFilter(
+  id: string | number,
+  data: { supplier_id?: number; category_id?: number; merv_rating?: number }
+) {
+  return apiRequest(`/air_filters/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
 export function deleteAirFilter(id: string | number) {
   return apiRequest(`/air_filters/${id}`, {
     method: "DELETE",
