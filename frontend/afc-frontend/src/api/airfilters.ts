@@ -129,7 +129,16 @@ export function updateAirFilter(
 
 export function patchAirFilter(
   id: string | number,
-  data: { supplier_id?: number; category_id?: number; merv_rating?: number }
+  data: {
+    supplier_id?: number;
+    category_id?: number;
+    merv_rating?: number;
+    height?: number;
+    width?: number;
+    depth?: number;
+    description?: string | null;
+    part_number?: string;
+  }
 ) {
   return apiRequest(`/air_filters/${id}`, {
     method: "PATCH",

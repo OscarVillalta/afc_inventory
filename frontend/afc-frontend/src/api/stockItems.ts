@@ -86,7 +86,7 @@ export function fetchStockItemCategories(): Promise<StockItemCategory[]> {
 
 export function patchStockItem(
   id: string | number,
-  data: { supplier_id?: number; category_id?: number }
+  data: { supplier_id?: number; category_id?: number; name?: string; description?: string | null }
 ) {
   return apiRequest(`/stock_items/${id}`, {
     method: "PATCH",
