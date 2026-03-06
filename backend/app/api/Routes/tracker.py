@@ -11,6 +11,18 @@ from app.api.error_handling import (
     ResourceNotFoundError,
 )
 
+# All order types that participate in the packing-slip tracker
+# (outgoing types + incoming / purchase orders)
+TRACKER_TYPES = OUTGOING_TYPES | {OrderType.INCOMING.value}
+
+# SQLAlchemy CASE expression: total stages expected for each order type
+# Must mirror the frontend step-path definitions (INSTALLATION_STEPS, WILL_CALL_STEPS, PURCHASE_ORDER_STEPS)
+_total_steps_expr = case(
+    (Order.type == OrderType.INSTALLATION.value, 6),
+    (Order.type.in_([OrderType.WILL_CALL.value, OrderType.DELIVERY.value, OrderType.SHIPMENT.value]), 4),
+    else_=3,  # incoming / purchase order (and legacy "outgoing")
+)
+
 tracker_bp = Blueprint("tracker", __name__)
 
 
@@ -216,7 +228,7 @@ def toggle_tracker_stage(order_id: int, stage_index: int) -> Tuple[Any, int]:
 
 @tracker_bp.route("/packing-slips", methods=["GET"])
 def get_packing_slips() -> Tuple[Any, int]:
-    """Return all outgoing orders with their tracker and history info for the packing slip tracker page."""
+    """Return all tracker-eligible orders (outgoing + purchase/incoming) with their tracker and history info."""
     db = g.db
 
     page = request.args.get("page", default=1, type=int)
@@ -225,15 +237,31 @@ def get_packing_slips() -> Tuple[Any, int]:
     tracker_status = request.args.get("tracker_status", "").strip()  # "Not Started"|"In Progress"|"Completed"
     offset = (page - 1) * limit
 
-    # Number of steps defined on the frontend; last index = len(DEPT_STEPS) - 1
-    LAST_STEP_IDX = len([d for d in Department]) - 1  # 4 (SALES=0 … ACCOUNTING=4)
+    # Correlated sub-query: count of completed stages for each order row
+    _completed_stages_subq = (
+        select(func.count(OrderTrackerStage.id))
+        .where(
+            OrderTrackerStage.order_id == Order.id,
+            OrderTrackerStage.is_completed == True,  # noqa: E712
+        )
+        .correlate(Order)
+        .scalar_subquery()
+    )
 
-    # Base query: outgoing orders joined with customer and tracker
+    # Status conditions (mirror the frontend toPackingSlipRow logic)
+    _not_started_cond = and_(OrderTracker.id.is_(None), _completed_stages_subq == 0)
+    _completed_cond = _completed_stages_subq >= _total_steps_expr
+    _in_progress_cond = and_(
+        or_(OrderTracker.id.is_not(None), _completed_stages_subq > 0),
+        _completed_stages_subq < _total_steps_expr,
+    )
+
+    # Base query: all tracker-eligible orders joined with customer and tracker
     base_query = (
         select(Order)
         .outerjoin(Customer, Order.customer_id == Customer.id)
         .outerjoin(OrderTracker, OrderTracker.order_id == Order.id)
-        .where(Order.type.in_(OUTGOING_TYPES))
+        .where(Order.type.in_(TRACKER_TYPES))
     )
 
     if search:
@@ -245,19 +273,13 @@ def get_packing_slips() -> Tuple[Any, int]:
             )
         )
 
-    # Tracker status filter
+    # Tracker status filter using stage-completion counts
     if tracker_status == "Not Started":
-        base_query = base_query.where(OrderTracker.id == None)  # noqa: E711
+        base_query = base_query.where(_not_started_cond)
     elif tracker_status == "In Progress":
-        base_query = base_query.where(
-            OrderTracker.id != None,  # noqa: E711
-            OrderTracker.step_index < LAST_STEP_IDX,
-        )
+        base_query = base_query.where(_in_progress_cond)
     elif tracker_status == "Completed":
-        base_query = base_query.where(
-            OrderTracker.id != None,  # noqa: E711
-            OrderTracker.step_index >= LAST_STEP_IDX,
-        )
+        base_query = base_query.where(_completed_cond)
 
     # Efficient total count using the filtered query
     total = db.execute(
@@ -271,25 +293,28 @@ def get_packing_slips() -> Tuple[Any, int]:
     ).scalars().all()
 
     # Per-status counts for the tab badges (based on search, ignoring tracker_status)
+    _search_filter = (
+        or_(
+            Order.order_number.ilike(f"%{search}%"),
+            Order.external_order_number.ilike(f"%{search}%"),
+            Customer.name.ilike(f"%{search}%"),
+        )
+        if search
+        else None
+    )
     counts_query = (
         select(
-            func.count(case((OrderTracker.id == None, 1))).label("not_started"),  # noqa: E711
-            func.count(case((and_(OrderTracker.id != None, OrderTracker.step_index < LAST_STEP_IDX), 1))).label("in_progress"),  # noqa: E711
-            func.count(case((and_(OrderTracker.id != None, OrderTracker.step_index >= LAST_STEP_IDX), 1))).label("completed"),  # noqa: E711
+            func.count(case((_not_started_cond, 1))).label("not_started"),
+            func.count(case((_in_progress_cond, 1))).label("in_progress"),
+            func.count(case((_completed_cond, 1))).label("completed"),
         )
         .select_from(Order)
         .outerjoin(Customer, Order.customer_id == Customer.id)
         .outerjoin(OrderTracker, OrderTracker.order_id == Order.id)
-        .where(Order.type.in_(OUTGOING_TYPES))
+        .where(Order.type.in_(TRACKER_TYPES))
     )
-    if search:
-        counts_query = counts_query.where(
-            or_(
-                Order.order_number.ilike(f"%{search}%"),
-                Order.external_order_number.ilike(f"%{search}%"),
-                Customer.name.ilike(f"%{search}%"),
-            )
-        )
+    if _search_filter is not None:
+        counts_query = counts_query.where(_search_filter)
     counts_row = db.execute(counts_query).one()
     status_counts = {
         "Not Started": counts_row.not_started or 0,

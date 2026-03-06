@@ -16,18 +16,10 @@ import {
 import { ORDER_TYPE_LABELS } from "../constants/orderTypes";
 
 // ─────────────────────────────────────────────
-// Constants
+// Tracker step-path definitions (one per order type group)
 // ─────────────────────────────────────────────
 
-const DEPT_STEPS: { dept: Department; label: string }[] = [
-  { dept: "SALES", label: "Sales" },
-  { dept: "LOGISTICS", label: "Logistics" },
-  { dept: "DELIVERY_DEPT", label: "Delivery" },
-  { dept: "SERVICE", label: "Service" },
-  { dept: "ACCOUNTING", label: "Accounting" },
-];
-
-/** 6-step path used exclusively for Installation order types. */
+/** 6-step path used exclusively for Installation orders. */
 const INSTALLATION_STEPS: { dept: Department; label: string; occurrence: number }[] = [
   { dept: "SALES",         label: "Sales",         occurrence: 0 },
   { dept: "LOGISTICS",     label: "Logistics",     occurrence: 0 },
@@ -36,6 +28,29 @@ const INSTALLATION_STEPS: { dept: Department; label: string; occurrence: number 
   { dept: "SALES",         label: "Sales II",      occurrence: 1 },
   { dept: "LOGISTICS",     label: "Logistics II",  occurrence: 1 },
 ];
+
+/** 4-step path used for Will Call, Delivery, and Shipment orders. */
+const WILL_CALL_STEPS: { dept: Department; label: string }[] = [
+  { dept: "SALES",         label: "Sales" },
+  { dept: "LOGISTICS",     label: "Logistics" },
+  { dept: "DELIVERY_DEPT", label: "Delivery" },
+  { dept: "LOGISTICS",     label: "Logistics II" },
+];
+
+/** 3-step path used for Purchase Order (incoming) orders. */
+const PURCHASE_ORDER_STEPS: { dept: Department; label: string }[] = [
+  { dept: "LOGISTICS",     label: "Logistics" },
+  { dept: "DELIVERY_DEPT", label: "Delivery" },
+  { dept: "LOGISTICS",     label: "Logistics II" },
+];
+
+/** Returns the correct step template for the given order type string. */
+function getStepsTemplate(orderType: string): { dept: Department; label: string }[] {
+  const t = orderType?.toLowerCase();
+  if (t === "installation") return INSTALLATION_STEPS;
+  if (t === "incoming") return PURCHASE_ORDER_STEPS;
+  return WILL_CALL_STEPS; // will_call, delivery, shipment
+}
 
 // ─────────────────────────────────────────────
 // Types
@@ -100,8 +115,8 @@ function latestCompletedStage(stages: OrderTrackerStagePayload[]): OrderTrackerS
 // ─────────────────────────────────────────────
 
 function toPackingSlipRow(r: PackingSlipResult): PackingSlipRow {
-  const isInstallation = r.order_type?.toLowerCase() === "installation";
-  const totalSteps = isInstallation ? INSTALLATION_STEPS.length : DEPT_STEPS.length;
+  const stepsTemplate = getStepsTemplate(r.order_type ?? "");
+  const totalSteps = stepsTemplate.length;
   const stages = r.stages ?? [];
   const completedCount = stages.filter((s) => s.is_completed).length;
 
@@ -156,8 +171,8 @@ function toPackingSlipRow(r: PackingSlipResult): PackingSlipRow {
 // ─────────────────────────────────────────────
 
 export function buildSteps(row: PackingSlipRow): Step[] {
+  const stepsTemplate = getStepsTemplate(row.type ?? "");
   const isInstallation = row.type?.toLowerCase() === "installation";
-  const stepsTemplate = isInstallation ? INSTALLATION_STEPS : DEPT_STEPS;
 
   // Build a map from stage_index → stage record
   const stageMap = new Map<number, OrderTrackerStagePayload>(
@@ -247,9 +262,17 @@ function TypePill({ type }: { type: string }) {
   else if (t.includes("delivery")) cls += "bg-teal-100 text-teal-700";
   else if (t.includes("shipment")) cls += "bg-cyan-100 text-cyan-700";
   else if (t.includes("will_call") || t.includes("will call")) cls += "bg-purple-100 text-purple-700";
+  else if (t === "incoming") cls += "bg-orange-100 text-orange-700";
   else cls += "bg-slate-100 text-slate-600";
-  // Use canonical display label if available, otherwise capitalize the raw type
-  const displayLabel = ORDER_TYPE_LABELS[t as keyof typeof ORDER_TYPE_LABELS] ?? type;
+
+  // Display "Purchase Order" for incoming orders; use canonical label otherwise
+  let displayLabel: string;
+  if (t === "incoming") {
+    displayLabel = "Purchase Order";
+  } else {
+    displayLabel = ORDER_TYPE_LABELS[t as keyof typeof ORDER_TYPE_LABELS] ?? type;
+  }
+
   return (
     <span className={cls}>
       <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -442,8 +465,8 @@ function ExpandedPanel({
     try {
       // Ensure tracker exists
       if (!row.tracker) {
-        const isInstallation = row.type?.toLowerCase() === "installation";
-        const firstDept = (isInstallation ? INSTALLATION_STEPS[0] : DEPT_STEPS[0]).dept;
+        const template = getStepsTemplate(row.type ?? "");
+        const firstDept = template[0].dept;
         await initOrderTracker(row.id, {
           current_department: firstDept,
           step_index: 0,
@@ -517,7 +540,11 @@ function ExpandedPanel({
             {/* ── Middle Section: Progress Tracker ── */}
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">
-                {row.type?.toLowerCase() === "installation" ? "6-Step Installation Path" : "Progress"}
+                {row.type?.toLowerCase() === "installation"
+                  ? "6-Step Installation Path"
+                  : row.type?.toLowerCase() === "incoming"
+                  ? "3-Step Purchase Order Path"
+                  : "4-Step Progress"}
               </p>
 
               <ProgressStepper
@@ -739,8 +766,7 @@ export default function PackingSlipTrackerPage() {
           ? row.stages.map((s) => s.stage_index === updatedStage.stage_index ? updatedStage : s)
           : [...row.stages, updatedStage];
 
-        const isInstallation = row.type?.toLowerCase() === "installation";
-        const totalSteps = isInstallation ? INSTALLATION_STEPS.length : DEPT_STEPS.length;
+        const totalSteps = getStepsTemplate(row.type ?? "").length;
         const completedCount = newStages.filter((s) => s.is_completed).length;
 
         let trackerStatus: string;
@@ -870,6 +896,7 @@ export default function PackingSlipTrackerPage() {
               <option value="Delivery">Delivery</option>
               <option value="Shipment">Shipment</option>
               <option value="Will Call">Will Call</option>
+              <option value="incoming">Purchase Order</option>
             </select>
           </div>
 

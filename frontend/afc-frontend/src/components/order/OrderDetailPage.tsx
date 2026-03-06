@@ -482,6 +482,7 @@ export default function OrderDetailPage() {
             isPaid={order.is_paid ?? false}
             isInvoiced={order.is_invoiced ?? false}
             orderId={order.id}
+            orderType={order.type}
             onRefresh={refreshOrder}
           />
 
