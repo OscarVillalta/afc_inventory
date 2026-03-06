@@ -149,7 +149,7 @@ function toPackingSlipRow(r: PackingSlipResult): PackingSlipRow {
   return {
     id: r.id,
     packingSlipNo: r.order_number,
-    customer: r.customer_name ?? "—",
+    customer: (r.order_type?.toLowerCase() === "incoming" ? r.supplier_name : r.customer_name) ?? "—",
     type: r.order_type ?? "—",
     status: r.status,
     stockState,
@@ -387,26 +387,60 @@ function PaidInvoicedToggle({
   orderId,
   isPaid,
   isInvoiced,
+  field,
   onUpdate,
 }: {
   orderId: number;
   isPaid: boolean;
   isInvoiced: boolean;
+  field?: "is_paid" | "is_invoiced";
   onUpdate: (field: "is_paid" | "is_invoiced", value: boolean) => void;
 }) {
   const [savingPaid, setSavingPaid] = useState(false);
   const [savingInvoiced, setSavingInvoiced] = useState(false);
 
-  const toggle = async (field: "is_paid" | "is_invoiced", current: boolean) => {
-    const setter = field === "is_paid" ? setSavingPaid : setSavingInvoiced;
+  const toggle = async (f: "is_paid" | "is_invoiced", current: boolean) => {
+    const setter = f === "is_paid" ? setSavingPaid : setSavingInvoiced;
     setter(true);
     try {
-      await patchOrderPaidInvoiced(orderId, { [field]: !current });
-      onUpdate(field, !current);
+      await patchOrderPaidInvoiced(orderId, { [f]: !current });
+      onUpdate(f, !current);
     } finally {
       setter(false);
     }
   };
+
+  if (field === "is_paid") {
+    return (
+      <button
+        disabled={savingPaid}
+        onClick={(e) => { e.stopPropagation(); toggle("is_paid", isPaid); }}
+        className={`px-3 py-1 rounded-full text-xs font-semibold transition-all border ${
+          isPaid
+            ? "bg-green-500 text-white border-green-500 shadow-sm"
+            : "bg-white text-gray-500 border-gray-300 hover:bg-green-50 hover:text-green-600 hover:border-green-400"
+        }`}
+      >
+        {savingPaid ? "…" : isPaid ? "✓ PAID" : "PAID"}
+      </button>
+    );
+  }
+
+  if (field === "is_invoiced") {
+    return (
+      <button
+        disabled={savingInvoiced}
+        onClick={(e) => { e.stopPropagation(); toggle("is_invoiced", isInvoiced); }}
+        className={`px-3 py-1 rounded-full text-xs font-semibold transition-all border ${
+          isInvoiced
+            ? "bg-green-500 text-white border-green-500 shadow-sm"
+            : "bg-white text-gray-500 border-gray-300 hover:bg-green-50 hover:text-green-600 hover:border-green-400"
+        }`}
+      >
+        {savingInvoiced ? "…" : isInvoiced ? "✓ INVOICED" : "INVOICED"}
+      </button>
+    );
+  }
 
   return (
     <div className="flex gap-2 flex-wrap">
@@ -449,11 +483,9 @@ type FilterTab = "All" | "Not Started" | "In Progress" | "Completed";
 function ExpandedPanel({
   row,
   onStagesUpdate,
-  onPaidInvoicedUpdate,
 }: {
   row: PackingSlipRow;
   onStagesUpdate: (orderId: number, updatedStage: OrderTrackerStagePayload) => void;
-  onPaidInvoicedUpdate: (orderId: number, field: "is_paid" | "is_invoiced", value: boolean) => void;
 }) {
   const [savingIndex, setSavingIndex] = useState<number | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -486,7 +518,7 @@ function ExpandedPanel({
 
   return (
     <tr>
-      <td colSpan={8} className="p-0 border-b border-slate-200/60">
+      <td colSpan={10} className="p-0 border-b border-slate-200/60">
         <div className="bg-slate-50/60 mx-3 my-2 rounded-xl border border-slate-200/60 p-4 sm:p-5">
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
@@ -519,25 +551,7 @@ function ExpandedPanel({
           {/* Three-column layout */}
           <div className="flex flex-col lg:flex-row gap-6">
 
-            {/* ── Left Section: Financials ── */}
-            <div className="lg:w-48 shrink-0 flex flex-col gap-4">
-              <div>
-                <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-2">
-                  Financials
-                </p>
-                <PaidInvoicedToggle
-                  orderId={row.id}
-                  isPaid={row.is_paid}
-                  isInvoiced={row.is_invoiced}
-                  onUpdate={(field, value) => onPaidInvoicedUpdate(row.id, field, value)}
-                />
-              </div>
-            </div>
-
-            {/* Divider */}
-            <div className="hidden lg:block w-px bg-slate-200 shrink-0" />
-
-            {/* ── Middle Section: Progress Tracker ── */}
+            {/* ── Left Section: Progress Tracker ── */}
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">
                 {row.type?.toLowerCase() === "installation"
@@ -993,6 +1007,8 @@ export default function PackingSlipTrackerPage() {
                 <col className="w-32" />
                 <col className="w-40" />
                 <col className="w-36" />
+                <col className="w-28" />
+                <col className="w-28" />
                 <col className="w-12" />
               </colgroup>
               <thead>
@@ -1023,6 +1039,12 @@ export default function PackingSlipTrackerPage() {
                       </svg>
                     </span>
                   </th>
+                  <th className="px-4 py-3 text-center text-sm font-semibold text-slate-600 bg-slate-50 border-b border-slate-200/70 border-r border-slate-200/60">
+                    Paid
+                  </th>
+                  <th className="px-4 py-3 text-center text-sm font-semibold text-slate-600 bg-slate-50 border-b border-slate-200/70 border-r border-slate-200/60">
+                    Invoiced
+                  </th>
                   <th className="px-4 py-3 bg-slate-50 border-b border-slate-200/70 rounded-tr-xl w-12" />
                 </tr>
               </thead>
@@ -1030,7 +1052,7 @@ export default function PackingSlipTrackerPage() {
               <tbody>
                 {loading && (
                   <tr>
-                    <td colSpan={8} className="py-12 text-center text-slate-400">
+                    <td colSpan={10} className="py-12 text-center text-slate-400">
                       Loading…
                     </td>
                   </tr>
@@ -1038,7 +1060,7 @@ export default function PackingSlipTrackerPage() {
 
                 {!loading && filteredRows.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="py-12 text-center text-slate-400">
+                    <td colSpan={10} className="py-12 text-center text-slate-400">
                       No records found.
                     </td>
                   </tr>
@@ -1110,6 +1132,24 @@ export default function PackingSlipTrackerPage() {
                         <td className="px-4 py-3 border-b border-slate-200/60 border-r border-slate-200/50 text-slate-700 font-medium">
                           {row.lastUpdated}
                         </td>
+                        <td className="px-2 py-3 border-b border-slate-200/60 border-r border-slate-200/50 text-center">
+                          <PaidInvoicedToggle
+                            orderId={row.id}
+                            isPaid={row.is_paid}
+                            isInvoiced={row.is_invoiced}
+                            field="is_paid"
+                            onUpdate={(field, value) => handlePaidInvoicedUpdate(row.id, field, value)}
+                          />
+                        </td>
+                        <td className="px-2 py-3 border-b border-slate-200/60 border-r border-slate-200/50 text-center">
+                          <PaidInvoicedToggle
+                            orderId={row.id}
+                            isPaid={row.is_paid}
+                            isInvoiced={row.is_invoiced}
+                            field="is_invoiced"
+                            onUpdate={(field, value) => handlePaidInvoicedUpdate(row.id, field, value)}
+                          />
+                        </td>
                         <td className="px-4 py-3 border-b border-slate-200/60 text-center">
                           <button
                             onClick={(e) => {
@@ -1134,7 +1174,6 @@ export default function PackingSlipTrackerPage() {
                         <ExpandedPanel
                           row={row}
                           onStagesUpdate={handleStagesUpdate}
-                          onPaidInvoicedUpdate={handlePaidInvoicedUpdate}
                         />
                       )}
                     </React.Fragment>

@@ -55,6 +55,7 @@ export interface PackingSlipResult {
   status: string;
   description?: string | null;
   customer_name?: string | null;
+  supplier_name?: string | null;
   created_at: string;
   completed_at?: string | null;
   eta?: string | null;
