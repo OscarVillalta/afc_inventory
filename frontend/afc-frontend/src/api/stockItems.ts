@@ -84,6 +84,16 @@ export function fetchStockItemCategories(): Promise<StockItemCategory[]> {
   return apiRequest("/stock_item_categories") as Promise<StockItemCategory[]>;
 }
 
+export function patchStockItem(
+  id: string | number,
+  data: { supplier_id?: number; category_id?: number }
+) {
+  return apiRequest(`/stock_items/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
 export function createStockItem(data: CreateStockItemPayload): Promise<{
   message: string;
   stock_item: { id: number; name: string };

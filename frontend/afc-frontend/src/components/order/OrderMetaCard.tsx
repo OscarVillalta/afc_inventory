@@ -1,8 +1,10 @@
 import { useState } from "react";
+import type { OrderType } from "../../constants/orderTypes";
+import { ORDER_TYPE_LABELS, OUTGOING_ORDER_TYPES } from "../../constants/orderTypes";
 
 /* ===================== TYPES ===================== */
 
-export type OrderType = "incoming" | "outgoing";
+export type { OrderType };
 export type OrderStatus = "Pending" | "Partially Fulfilled" | "Completed";
 
 export interface EntityOption {
@@ -26,6 +28,7 @@ interface Props {
   /* Handlers */
   onCreatedAtChange: (v: string) => void;
   onEtaChange: (v: string) => void;
+  onTypeChange?: (newType: OrderType) => void;
 }
 
 /* ===================== COMPONENT ===================== */
@@ -43,11 +46,12 @@ export default function OrderMetaCard({
 
   onCreatedAtChange,
   onEtaChange,
+  onTypeChange,
 }: Props) {
   const [open, setOpen] = useState(true);
 
-  const entityLabel = type === "outgoing" ? "Customer" : "Supplier";
-  const typeLabel = type === "outgoing" ? "Outgoing" : "Incoming";
+  const entityLabel = type === "incoming" ? "Supplier" : "Customer";
+  const canChangeType = type !== "incoming" && !!onTypeChange;
 
   return (
     <div className="bg-white rounded-xl shadow-sm border">
@@ -64,10 +68,24 @@ export default function OrderMetaCard({
       {open && (
         <div className="px-6 pb-4 text-sm text-gray-600 grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-          {/* Type (READ-ONLY) */}
+          {/* Type */}
           <div>
             <p className="font-medium text-gray-700">Type</p>
-            <p className="py-2">{typeLabel}</p>
+            {canChangeType ? (
+              <select
+                className="select select-bordered select-sm w-full"
+                value={type}
+                onChange={(e) => onTypeChange(e.target.value as OrderType)}
+              >
+                {OUTGOING_ORDER_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {ORDER_TYPE_LABELS[t]}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <p className="py-2">{ORDER_TYPE_LABELS[type] ?? type}</p>
+            )}
           </div>
 
           {/* Created At */}

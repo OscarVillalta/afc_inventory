@@ -25,10 +25,16 @@ import {
   fetchOrderItemTransactions,
 } from "../../api/orderDetail";
 
+import { fetchOrderTracking } from "../../api/tracker";
+import type { OrderWithTracking } from "../../api/tracker";
+import OrderLifecycleCard from "./OrderLifecycleCard";
+
+
+import type { OrderType } from "../../constants/orderTypes";
+import { isOutgoingType } from "../../constants/orderTypes";
 
 /* ===================== TYPES ===================== */
 
-type OrderType = "incoming" | "outgoing";
 type OrderStatus = "Pending" | "Partially Fulfilled" | "Completed";
 
 interface OrderDetailPayload {
@@ -42,6 +48,8 @@ interface OrderDetailPayload {
   created_at: string;
   completed_at?: string | null;
   eta?: string | null;
+  is_paid?: boolean;
+  is_invoiced?: boolean;
 }
 
 /* ===================== COMPONENT ===================== */
@@ -68,6 +76,8 @@ export default function OrderDetailPage() {
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
 
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">("idle");
+
+  const [trackingData, setTrackingData] = useState<OrderWithTracking | null>(null);
 
   // Debounce ref for auto-save
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -161,13 +171,15 @@ export default function OrderDetailPage() {
   async function refreshOrder() {
     if (!orderId) return;
 
-    const [orderData, itemsData] = await Promise.all([
+    const [orderData, itemsData, trackingResult] = await Promise.all([
       fetchOrderById(orderId),
       fetchOrderItems(orderId),
+      fetchOrderTracking(orderId),
     ]);
 
     setOrder(orderData);
     setItems(itemsData);
+    setTrackingData(trackingResult);
 
     // 🔑 force ALL OrderItemRow txns to reload
     setTxnRefreshKey((k) => k + 1);
@@ -181,9 +193,10 @@ export default function OrderDetailPage() {
     setLoading(true);
     setError(null);
 
-    fetchOrderById(orderId)
-      .then((data) => {
-        setOrder(data);
+    Promise.all([fetchOrderById(orderId), fetchOrderTracking(orderId)])
+      .then(([orderData, trackingResult]) => {
+        setOrder(orderData);
+        setTrackingData(trackingResult);
       })
       .catch(() => {
         setError("Failed to load order.");
@@ -294,7 +307,7 @@ export default function OrderDetailPage() {
       await refreshOrder();
       setSelectedItems(new Set());
     } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : (order?.type === "outgoing" ? "Failed to fulfill selected items" : "Failed to receive selected items");
+      const errorMsg = err instanceof Error ? err.message : (order?.type && isOutgoingType(order.type) ? "Failed to fulfill selected items" : "Failed to receive selected items");
       alert(errorMsg);
     }
   }
@@ -314,7 +327,7 @@ export default function OrderDetailPage() {
       return;
     }
 
-    if (!confirm(order?.type === "outgoing"
+    if (!confirm(order?.type && isOutgoingType(order.type)
       ? "Cancel all transactions for selected items?"
       : "Cancel all orders for selected items?")) {
       return;
@@ -391,10 +404,11 @@ export default function OrderDetailPage() {
       <div className="flex flex-col lg:flex-row justify-start flex-grow gap-4">
         {/* LEFT COLUMN */}
         <div className="max-w-7xl space-y-4 lg:flex-3 w-full bg-slate-100 ">
-            <OrderHeader
+          <OrderHeader
             orderNumber={order.order_number}
             type={order.type}
             status={order.status}
+            currentDepartment={trackingData?.tracker?.current_department ?? null}
             onCopyOrder={handleCopySerializedOrder}
             copyStatus={copyStatus}
             selectedCount={selectedItems.size}
@@ -409,7 +423,7 @@ export default function OrderDetailPage() {
               completedAt={order.completed_at}
               eta={order.eta}
 
-              entities={order.type === "outgoing" ? customers : suppliers}
+              entities={isOutgoingType(order.type) ? customers : suppliers}
               selectedEntityId={selectedEntityId}
               onEntityChange={(id) => {
                 setSelectedEntityId(id);
@@ -423,6 +437,10 @@ export default function OrderDetailPage() {
               onEtaChange={(v) => {
                 setOrder({ ...order, eta: v });
                 scheduleAutoSave(buildPatch({ eta: v || null }));
+              }}
+              onTypeChange={(newType) => {
+                setOrder({ ...order, type: newType });
+                scheduleAutoSave(buildPatch({ type: newType }));
               }}
             />
           </div>
@@ -455,6 +473,16 @@ export default function OrderDetailPage() {
             onRollbackSelected={handleRollbackSelected}
             disabled={order.status === "Completed"}
             orderType={order.type}
+          />
+
+          <OrderLifecycleCard
+            trackingData={trackingData}
+            createdAt={order.created_at}
+            status={order.status}
+            isPaid={order.is_paid ?? false}
+            isInvoiced={order.is_invoiced ?? false}
+            orderId={order.id}
+            onRefresh={refreshOrder}
           />
 
           <div className="flex justify-end pt-2 gap-x-2 items-center">

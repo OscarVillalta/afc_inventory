@@ -4,14 +4,14 @@ import type { Supplier } from "../../../api/suppliers";
 import { fetchCustomers } from "../../../api/customers";
 import { fetchSuppliers } from "../../../api/suppliers";
 import { createOrder } from "../../../api/ordersTable";
+import type { OrderType } from "../../../constants/orderTypes";
+import { ALL_ORDER_TYPES, ORDER_TYPE_LABELS, isOutgoingType } from "../../../constants/orderTypes";
 
 interface Props {
   open: boolean;
   onClose: () => void;
   onCreated: (orderId?: number) => void;
 }
-
-type OrderType = "incoming" | "outgoing";
 
 function isoToDate(value?: string | null) {
   return value ? value.slice(0, 10) : "";
@@ -31,7 +31,7 @@ export default function CreateOrderModal({
   onClose,
   onCreated,
 }: Props) {
-  const [type, setType] = useState<OrderType>("outgoing");
+  const [type, setType] = useState<OrderType>("installation");
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [entityId, setEntityId] = useState<number | null>(null);
@@ -73,7 +73,7 @@ export default function CreateOrderModal({
     try {
       const response = await createOrder({
         type,
-        customer_id: type === "outgoing" ? entityId : undefined,
+        customer_id: isOutgoingType(type) ? entityId : undefined,
         supplier_id: type === "incoming" ? entityId : undefined,
         eta: isoToDate(eta) || null,
         description: description || null,
@@ -92,8 +92,7 @@ export default function CreateOrderModal({
 
   /* ===================== RENDER ===================== */
 
-  const entities =
-    type === "outgoing" ? customers : suppliers;
+  const entities = isOutgoingType(type) ? customers : suppliers;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
@@ -114,15 +113,18 @@ export default function CreateOrderModal({
               setType(e.target.value as OrderType)
             }
           >
-            <option value="outgoing">Outgoing</option>
-            <option value="incoming">Incoming</option>
+            {ALL_ORDER_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {ORDER_TYPE_LABELS[t]}
+              </option>
+            ))}
           </select>
         </div>
 
         {/* Customer / Supplier */}
         <div>
           <label className="label text-sm font-medium">
-            {type === "outgoing"
+            {isOutgoingType(type)
               ? "Customer"
               : "Supplier"}
           </label>

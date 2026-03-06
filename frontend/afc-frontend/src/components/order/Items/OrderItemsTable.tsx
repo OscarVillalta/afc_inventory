@@ -23,10 +23,12 @@ import OrderItemRow from "../Sections/OrderItemRow";
 import LineItemsMenu from "./LineItemsMenu";
 import OrderTotalsTab from "./OrderTotalsTab";
 
+import type { OrderType } from "../../../constants/orderTypes";
+
 interface Props {
   orderId: number;
   orderStatus: string;
-  orderType: "incoming" | "outgoing";
+  orderType: OrderType;
   items: OrderItemPayload[];
   loading: boolean;
   onRefresh: () => void;
