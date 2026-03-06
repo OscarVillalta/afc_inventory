@@ -168,12 +168,12 @@ export default function OrderTotalsTab({ items, orderType }: Props) {
           <thead>
             <tr className="text-xs text-gray-500">
               <th>Part Number</th>
-              <th className="text-right">Total Ordered</th>
-              <th className="text-right">{pendingLabel}</th>
-              <th className="text-right">Fulfilled</th>
-              <th className="text-right">Remaining</th>
-              <th className="text-right">On Hand</th>
-              <th className="text-right">Available</th>
+              <th className="text-center">Total Ordered</th>
+              <th className="text-center">{pendingLabel}</th>
+              <th className="text-center">Fulfilled</th>
+              <th className="text-center">Remaining</th>
+              <th className="text-center">On Hand</th>
+              <th className="text-center">Available</th>
               <th className="text-center">Stock Status</th>
             </tr>
           </thead>
@@ -191,14 +191,14 @@ export default function OrderTotalsTab({ items, orderType }: Props) {
                 return (
                   <tr key={product.product_id} className="hover:bg-gray-50">
                     <td className="font-semibold">{product.part_number}</td>
-                    <td className="text-right">{product.total_ordered}</td>
-                    <td className="text-right">{product.total_pending}</td>
-                    <td className="text-right">{product.total_fulfilled}</td>
-                    <td className="text-right">{remaining}</td>
-                    <td className="text-right">
+                    <td className="text-center">{product.total_ordered}</td>
+                    <td className="text-center">{product.total_pending}</td>
+                    <td className="text-center">{product.total_fulfilled}</td>
+                    <td className="text-center">{remaining}</td>
+                    <td className="text-center">
                       {product.on_hand !== null ? product.on_hand : "—"}
                     </td>
-                    <td className="text-right">
+                    <td className="text-center">
                       {product.available !== null ? product.available : "—"}
                     </td>
                     <td className="text-center">
