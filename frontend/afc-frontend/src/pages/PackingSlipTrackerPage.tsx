@@ -1001,13 +1001,13 @@ export default function PackingSlipTrackerPage() {
                     Packing Slip #
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600 bg-slate-50 border-b border-slate-200/70 border-r border-slate-200/60">
-                    Customer
+                    External Order #
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600 bg-slate-50 border-b border-slate-200/70 border-r border-slate-200/60">
+                    Company
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600 bg-slate-50 border-b border-slate-200/70 border-r border-slate-200/60">
                     Type
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600 bg-slate-50 border-b border-slate-200/70 border-r border-slate-200/60">
-                    External Order #
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600 bg-slate-50 border-b border-slate-200/70 border-r border-slate-200/60">
                     Stock State
@@ -1074,14 +1074,6 @@ export default function PackingSlipTrackerPage() {
                             {row.packingSlipNo}
                           </Link>
                         </td>
-                        <td className="px-4 py-3 border-b border-slate-200/60 border-r border-slate-200/50 font-medium text-slate-800">
-                          <span className="truncate block" title={row.customer}>
-                            {row.customer}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 border-b border-slate-200/60 border-r border-slate-200/50">
-                          <TypePill type={row.type} />
-                        </td>
                         {/* External Order # */}
                         <td className="px-4 py-3 border-b border-slate-200/60 border-r border-slate-200/50">
                           {row.externalOrderNumber ? (
@@ -1095,6 +1087,14 @@ export default function PackingSlipTrackerPage() {
                           ) : (
                             <span className="text-slate-400">—</span>
                           )}
+                        </td>
+                        <td className="px-4 py-3 border-b border-slate-200/60 border-r border-slate-200/50 font-medium text-slate-800">
+                          <span className="truncate block" title={row.customer}>
+                            {row.customer}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 border-b border-slate-200/60 border-r border-slate-200/50">
+                          <TypePill type={row.type} />
                         </td>
                         {/* Stock State */}
                         <td className="px-4 py-3 border-b border-slate-200/60 border-r border-slate-200/50">
