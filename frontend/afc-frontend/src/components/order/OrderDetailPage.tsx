@@ -117,7 +117,7 @@ export default function OrderDetailPage() {
     setDeleting(true);
     try {
       await deleteOrder(orderId);
-      navigate("/order");
+      navigate("/order/search");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to delete order";
       alert(msg);

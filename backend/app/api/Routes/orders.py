@@ -1043,7 +1043,7 @@ def create_order_from_qb():
                 separator_type = OrderItemType.UNIT_SEPARATOR.value
                 if description:
                     desc_lower = description.lower()
-                    replaced, count = re.subn(r'&#149(?!\d)', '•', description)
+                    replaced, count = re.subn(r'(?:&#149;?|\x95)', '•', description)
                     if count:
                         separator_type = OrderItemType.SECTION_SEPARATOR.value
                         description = replaced
