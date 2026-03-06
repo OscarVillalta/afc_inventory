@@ -3,10 +3,11 @@ import type { OrderWithTracking, Department, OrderTrackerStagePayload } from "..
 import { patchOrderPaidInvoiced, initOrderTracker, toggleTrackerStage } from "../../api/tracker";
 
 // ─────────────────────────────────────────────
-// 6-step lifecycle path
+// Tracker step-path definitions (per order type)
 // ─────────────────────────────────────────────
 
-const TRACKER_STEPS: { dept: Department; label: string }[] = [
+/** 6-step path for Installation orders. */
+const INSTALLATION_STEPS: { dept: Department; label: string }[] = [
   { dept: "SALES",         label: "Sales" },
   { dept: "LOGISTICS",     label: "Logistics" },
   { dept: "DELIVERY_DEPT", label: "Delivery" },
@@ -14,6 +15,28 @@ const TRACKER_STEPS: { dept: Department; label: string }[] = [
   { dept: "SALES",         label: "Sales II" },
   { dept: "LOGISTICS",     label: "Logistics II" },
 ];
+
+/** 4-step path for Will Call, Delivery, and Shipment orders. */
+const WILL_CALL_STEPS: { dept: Department; label: string }[] = [
+  { dept: "SALES",         label: "Sales" },
+  { dept: "LOGISTICS",     label: "Logistics" },
+  { dept: "DELIVERY_DEPT", label: "Delivery" },
+  { dept: "LOGISTICS",     label: "Logistics II" },
+];
+
+/** 3-step path for Purchase Order (incoming) orders. */
+const PURCHASE_ORDER_STEPS: { dept: Department; label: string }[] = [
+  { dept: "LOGISTICS",     label: "Logistics" },
+  { dept: "DELIVERY_DEPT", label: "Delivery" },
+  { dept: "LOGISTICS",     label: "Logistics II" },
+];
+
+function getTrackerSteps(orderType: string): { dept: Department; label: string }[] {
+  const t = orderType?.toLowerCase();
+  if (t === "installation") return INSTALLATION_STEPS;
+  if (t === "incoming") return PURCHASE_ORDER_STEPS;
+  return WILL_CALL_STEPS; // will_call, delivery, shipment
+}
 
 // ─────────────────────────────────────────────
 // Types
@@ -28,6 +51,7 @@ interface Props {
   isPaid: boolean;
   isInvoiced: boolean;
   orderId: number;
+  orderType: string;
   onRefresh: () => void;
 }
 
@@ -107,6 +131,7 @@ export default function OrderLifecycleCard({
   isPaid,
   isInvoiced,
   orderId,
+  orderType,
   onRefresh,
 }: Props) {
   const [paid, setPaid] = useState(isPaid);
@@ -119,6 +144,8 @@ export default function OrderLifecycleCard({
   // Sync local state when props change (fixes bug where checkboxes appear unchecked after refresh)
   useEffect(() => { setPaid(isPaid); }, [isPaid]);
   useEffect(() => { setInvoiced(isInvoiced); }, [isInvoiced]);
+
+  const TRACKER_STEPS = getTrackerSteps(orderType);
 
   const tracker = trackingData?.tracker ?? null;
   const stages = trackingData?.stages ?? [];
