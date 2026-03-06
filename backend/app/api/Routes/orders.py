@@ -8,6 +8,7 @@ from database.models import Order, OrderItem, Product, AirFilter, StockItem, Sto
 from marshmallow import ValidationError
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any, List, Tuple
+import re
 import requests
 
 from app.config import Config
@@ -1042,7 +1043,11 @@ def create_order_from_qb():
                 separator_type = OrderItemType.UNIT_SEPARATOR.value
                 if description:
                     desc_lower = description.lower()
-                    if "building" in desc_lower or "bldg" in desc_lower or "•" in description:
+                    replaced, count = re.subn(r'&#149(?!\d)', '•', description)
+                    if count:
+                        separator_type = OrderItemType.SECTION_SEPARATOR.value
+                        description = replaced
+                    elif "building" in desc_lower or "bldg" in desc_lower or "•" in description:
                         separator_type = OrderItemType.SECTION_SEPARATOR.value
 
                 # Create separator item
