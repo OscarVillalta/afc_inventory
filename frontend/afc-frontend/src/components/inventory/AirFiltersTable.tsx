@@ -144,7 +144,7 @@ export default function AirFiltersTable({
 }: Props) {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(12);
+  const [pageSize, setPageSize] = useState(25);
 
   const [data, setData] = useState<AirFilterResponse>();
   const [loading, setLoading] = useState(false);
@@ -504,7 +504,7 @@ export default function AirFiltersTable({
                   <div className="flex items-center justify-end gap-2 opacity-40 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={(e) => { e.stopPropagation(); handleEdit(group.parent); }}
-                      className="text-gray-500 hover:text-blue-600 transition"
+                      className="text-gray-500 hover:text-blue-600 transition cursor-pointer"
                       title="Edit"
                     >
                       <PencilIcon />
