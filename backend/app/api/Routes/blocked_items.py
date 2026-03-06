@@ -52,7 +52,7 @@ def create_blocked_item():
     # Create the BlockedItem
     blocked_item = BlockedItem.from_dict(data)
     db.add(blocked_item)
-    db.flush()
+    db.commit()
 
     return jsonify({
         "message": "Blocked item created successfully.",

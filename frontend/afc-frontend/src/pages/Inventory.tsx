@@ -88,7 +88,7 @@ export default function Inventory() {
             <input
               type="text"
               className="w-full rounded-full border border-gray-200 bg-white shadow-sm pl-9 pr-4 py-2.5 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-              placeholder="Search by part number, name, or description…"
+              placeholder="Search by part number"
               value={globalSearch}
               onChange={(e) => setGlobalSearch(e.target.value)}
             />
@@ -182,7 +182,7 @@ export default function Inventory() {
                 onChange={(e) => setFilterMerv(e.target.value)}
               >
                 <option value="">Any MERV</option>
-                {[8, 11, 13, 14, 16].map((m) => (
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18].map((m) => (
                   <option key={m} value={m}>MERV {m}</option>
                 ))}
               </select>

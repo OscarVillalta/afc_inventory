@@ -13,83 +13,80 @@ DEFAULT_AIR_FILTER_CATEGORY_ID = 1
 
 HEADERS = {"Content-Type": "application/json"}
 
-# Reusing your supplier map
-
-
 SUPPLIER_MAP = {
-    "Columbus Industries": 75,
-    "AFC Manufacturing": 76,
-    "Caldwell Group": 77,
-    "Wetzel Technologies": 78,
-    "Hilliard Corporation": 79,
-    "UVDI UltraViolet Devices": 80,
-    "M.L. Filters": 81,
-    "Commercial Filters": 82,
-    "Fiber Bond": 83,
-    "AAF/Flanders": 84,
-    "RSE Incorporated": 85,
-    "Aircon Filter": 86,
-    "Freudenberg Filtration": 87,
-    "Parker-Hannifin": 88,
-    "Fluitek Corporation": 89,
-    "Total Filtration Services": 90,
-    "SHW FILTERS": 91,
-    "Munters": 92,
-    "Portacool": 93,
-    "HuTek (Asia)": 94,
-    "Advanced Filtration": 95,
-    "CMS Century": 96,
-    "Excelair Industries": 97,
-    "EFC International": 98,
-    "Glasfloss Industries": 99,
-    "Fleetlife, Inc.": 100,
-    "Zephyr Filtration": 101,
-    "American Air Filter": 102,
-    "Mikropor America": 103,
-    "SoCal Filter": 104,
-    "Hengst Filtration": 105,
-    "MGT Air Filtration": 106,
-    "NXTNANO": 107,
-    "Komar Alliance": 108,
-    "United Filtration": 109,
-    "Precision Filtration": 110,
-    "Industrial Filtration": 111,
-    "Aeolus Corporation": 112,
-    "Universal Air Filter": 113,
-    "Killer Filter": 114,
-    "UV Resources": 115,
-    "P & G Manufacturing": 116,
-    "Filter-Mart Corporation": 117,
-    "Riverfront Filtration": 118,
-    "Camfill USA": 119,
-    "Cleanova": 120,
-    "OEM Parts": 121,
-    "Freedom Filtration": 122,
-    "Facet - Filtration Group": 123,
-    "Filtration Group": 124,
-    "Orange County Filter": 125,
-    "AMI Filtration": 126,
-    "Brentwood Industries": 127,
-    "Bestorq Power Transmission": 128,
-    "Springfield Filtration": 129,
-    "Camfil Power Systems": 130,
-    "Harrington Industrial": 131,
-    "Elements Filtration": 132,
-    "Motion Industries": 133,
-    "Blue Heaven Technologies": 134,
-    "W.L Gore & Associates": 135,
-    "Flodraulic Group": 136,
-    "D-Mark": 137,
-    "AirFlotek": 138,
-    "American Filtration": 139,
-    "Applied Air Systems": 140,
-    "Webster Air": 141,
-    "Hydraulic Supply": 142,
-    "Main Filter": 143,
-    "Blocksom & Co.": 144,
-    "Smith Filter": 145,
-    "Parker Hannifin": 146,
-    "Air Rite Service": 147,
+    "Columbus Industries, Inc.": 150,
+    "AFC Manufacturing": 151,
+    "Caldwell Gasket": 152,
+    "Wetzel Technologies Co., Ltd": 153,
+    "Hilliard Corporation": 154,
+    "UVDI UltraViolet Devices, Inc.": 155,
+    "M.L. Filters": 156,
+    "Commercial Filters Sales": 157,
+    "Fiber Bond Corporation": 158,
+    "AAF/Flanders Corporation": 159,
+    "RSE Incorporated": 160,
+    "Aircon Filter Mfg. Co., Inc.": 161,
+    "Freudenberg Filtration Technologies, L.P.": 162,
+    "Parker-Hannifin Corporation": 163,
+    "Fluitek Corporation. (PAID BY CC)": 164,
+    "Total Filtration Services": 165,
+    "SHW FILTER-Guangzhou Sun": 166,
+    "Munters": 167,
+    "Portacool": 168,
+    "HuTek (Asia) Company Ltd": 169,
+    "Advanced Sealing": 170,
+    "CMS Century Mechanical Systems": 171,
+    "Excelair International, Inc.": 172,
+    "EFC International": 173,
+    "Glasfloss Industries": 174,
+    "Fleetlife, Inc.": 175,
+    "Zephyr Filtration": 176,
+    "American Nonwoven, Inc. / VFT INC.": 177,
+    "Mikropor America": 178,
+    "SoCal Filters and Service": 179,
+    "Hengst Filtration USA, LLC": 180,
+    "MGT Air Filters": 181,
+    "NXTNANO, LLC": 182,
+    "Komar Alliance": 183,
+    "United Filters": 184,
+    "Precision Filter Products, LLC": 185,
+    "Industrial Filtration, Inc.": 186,
+    "Aeolus Corporation": 187,
+    "Universal Elastic & Garment": 188,
+    "Killer Filter-PPD CREDIT CARD": 189,
+    "UV Resources (Steril-Aire)": 190,
+    "P & G Manufacturing": 191,
+    "Filter-Mart Corporation": 192,
+    "Riverfront Machine": 193,
+    "Camfill USA INC": 194,
+    "Cleanova": 195,
+    "OEM Parts Network": 196,
+    "Freedom Filtration": 197,
+    "Facet - Filtration Group": 198,
+    "Filtration Group Inc": 199,
+    "Orange County Industrial Plastics": 200,
+    "AMI Filtration Products, Inc.": 201,
+    "Brentwood Industries": 202,
+    "Bestorq Power Transmission Belts": 203,
+    "Springfield Filtration": 204,
+    "Camfil Power Systems NA": 205,
+    "Harrington Industrial Plastics": 206,
+    "Elements Fiber, Inc.": 207,
+    "Motion Industries": 208,
+    "Blue Heaven Technologies": 209,
+    "W.L Gore & Associates, Inc": 210,
+    "Flodraulic Group, Inc.": 211,
+    "D-Mark": 212,
+    "AirFlotek": 213,
+    "American Metal Filter Company": 214,
+    "Applied Air Filters, Inc": 215,
+    "Webster Air": 216,
+    "Hydraulic Controls Inc.": 217,
+    "Main Filter": 218,
+    "Blocksom & Co.": 219,
+    "Smith Filter": 220,
+    "Parker Hannifin Corporation - GT": 221,
+    "Air Rite Service Supply, Inc": 222,
 }
 
 def safe_int(value):
@@ -124,10 +121,11 @@ def main():
         supplier_name = str(row.get("Preferred Vendor", "")).strip()
         classification = str(row.get("Classification", "")).strip()
         
-        # Dimensions and MERV
+        # Dimensions, MERV, and Category ID
         height = safe_int(row.get("Height"))
         width = safe_int(row.get("Width"))
         depth = safe_int(row.get("Depth"))
+        category_id = safe_int(row.get("Category_ID"))
         
         # Use MERV Value if available, otherwise fallback to MERV column
         merv_val = row.get("MERV Value") if pd.notna(row.get("MERV Value")) else row.get("MERV")
@@ -138,16 +136,9 @@ def main():
             skip_count += 1
             continue
 
-        if classification == "sales_item":
-            # The blocked items schema only contains a `name` field
-            payload = {
-                "name": part_number,
-            }
-            endpoint = BLOCKED_ITEM_ENDPOINT
-
         # Map the supplier
         supplier_id = SUPPLIER_MAP.get(supplier_name)
-        if not supplier_id:
+        if not supplier_id and classification != "sales_item":
             print(f"Skipping {part_number} — Unknown supplier: {supplier_name}")
             skip_count += 1
             continue
@@ -158,7 +149,8 @@ def main():
                 "part_number": part_number,
                 "description": description if description else None,
                 "supplier_id": supplier_id,
-                "category_id": DEFAULT_AIR_FILTER_CATEGORY_ID,
+                # Dynamically apply the Category ID (or fallback to default if missing)
+                "category_id": category_id if category_id > 0 else DEFAULT_AIR_FILTER_CATEGORY_ID,
                 "merv_rating": merv if merv <= 18 else 18,  # Schema enforces max=18
                 "height": height,
                 "width": width,
@@ -175,13 +167,31 @@ def main():
                 "category_id": 1,  # Hardcoded to 1 as requested
             }
             endpoint = STOCK_ITEM_ENDPOINT
+
+        # 3. Route Sales Items to Blocked Items
+        elif classification == "sales_item":
+            # The blocked items schema only contains a `name` field
+            payload = {
+                "name": part_number,
+            }
+            endpoint = BLOCKED_ITEM_ENDPOINT
             
         else:
             print(f"Skipping {part_number} — Unknown classification: {classification}")
             skip_count += 1
             continue
-    
 
+        try:
+            r = session.post(endpoint, json=payload, timeout=10)
+            if r.status_code in (200, 201):
+                success_count += 1
+            else:
+                error_count += 1
+                print(f"FAILED {part_number} ({classification}): {r.status_code} {r.text}")
+        except Exception as e:
+            error_count += 1
+            print(f"ERROR posting {part_number}: {e}")
+    
         # Small delay to prevent overwhelming the local API
         time.sleep(0.03)
 

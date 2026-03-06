@@ -1138,12 +1138,6 @@ export default function ProductDetailPage() {
                   </p>
                 </div>
               )}
-              <div className="flex items-start gap-2">
-                <span className="text-yellow-500 text-lg">⚠</span>
-                <p className="text-sm text-gray-700">
-                  Missing ETA for PO-1234
-                </p>
-              </div>
             </div>
           </div>
         </div>

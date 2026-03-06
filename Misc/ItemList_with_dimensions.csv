@@ -1,6 +1,6 @@
 Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Account,Asset Account,Accumulated Depreciation,Purchase Description,Quantity On Hand,Cost,Preferred Vendor,Tax Agency,Price,Reorder Pt (Min),MPN,HVP24244,Size_Matched_Text,Height,Width,Depth,MERV,MERV Value
-,Not-active,Service,2040W-3PLY-2,20x40 3 Ply Poly Panel,Tax,Sales,,,0,,,0,,,10.46,,,,20x40,20,40,,,
-,Active,Service,Air Filtration Log/Sheet Book,"To ensure the Title 22 Code of Regulations Compliance- AFC provides a written record of inspection, cleaning and/or replacement.  Log book/binder includes; Technical Regulations & Procedures; detailed filter information, log sheets to all filters AFC w...",Non,Sales,,,0,,,0,,,1200,,,,,,,,,
+,Not-active,Service,2040W-3PLY-2,20x40 3 Ply Poly Panel,Tax,Sales,,,0,,,0,M.L. Filters,,10.46,,,,20x40,20,40,,,8
+,Active,Service,Sales Air Filtration Log/Sheet Book,credit,Non,Sales,,,0,,,0,MISC,,1200,,,,,,,,,
 ,Not-active,Service,CI-M145P-12204-,12x20x4 MERV 15 Mini Pleat Plastic Frame,Tax,Sales,Cost of Goods Sold,,0,12x20x4 MERV 15 Mini Pleat Plastic Frame,,50.16,"Columbus Industries, Inc.",,78.5,,,,12x20x4,12,20,4,MERV 15,15
 ,Not-active,Service,F-CUBE-V2424-CV,Pre-filter Carbon cube for 24x24x12 V4-Bank Filters,Tax,Sales,Cost of Goods Sold,,0,Pre-filter Carbon cube for 24x24x12 V4-Bank Filters,,0,AFC Manufacturing,,0,,,,24x24x12,24,24,12,,
 ,Active,Inventory Part,012-100093,"Down Stream Gasketing, Neoprene",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"Down Stream Gasketing, Neoprene",0,0,Caldwell Gasket,,0,,012-100093,,,,,,,
@@ -17,251 +17,251 @@ Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Accou
 ,Active,Inventory Part,10014-062,"HILCO REPAIR KIT - 3"" E STYLE VALVE",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"HILCO REPAIR KIT - 3"" E STYLE VALVE",0,1058.25,Hilliard Corporation,,1511.2,,10014-062,,,,,,,
 ,Active,Inventory Part,10014-096,"Soft Goods Repair Kit..O-Rings, Pads, & Stem.. HILCO Transfer Valve Model F-20B-150P-001",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"Soft Goods Repair Kit..O-Rings, Pads, & Stem.. HILCO Transfer Valve Model F-20B-150P-001..",0,1875,Hilliard Corporation,,2678.57,,10014-096,,,,,,,
 ,Active,Inventory Part,10014-SER,"Soft Goods Repair Kit..O-Rings, Pads, Stem, Handle, Pin & Spring..HILCO Transfer Valve Model F-20B-150P-001..",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"Soft Goods Repair Kit..O-Rings, Pads, Stem, Handle, Pin & Spring..HILCO Transfer Valve Model F-20B-150P-001..",0,2063,Hilliard Corporation,,2947.14,,10014-SER,,,,,,,
-,Active,Inventory Part,1010-2ply,10x10 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,10x10 2-Ply Poly Panel,259,3.32,M.L. Filters,,5.11,,1010-2ply,,10x10,10,10,,,
-,Active,Inventory Part,1010-3ply,10x10 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,10x10 MZP 3-Ply Poly Panel,0,5.6,M.L. Filters,,5.78,,1010-3ply,,10x10,10,10,,,
-,Active,Inventory Part,1012-3ply,10x12 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,10x12 MZP 3-Ply Poly Panel,0,5.6,M.L. Filters,,6.35,,1012-3ply,,10x12,10,12,,,
-,Active,Inventory Part,1020-2ply,10x20 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,10x20 2-Ply Poly Panel,50,3.7,M.L. Filters,,5.4,,1020-2ply,,10x20,10,20,,,
-,Active,Inventory Part,1020-3ply,10x20 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,10x20 MZP 3-Ply Poly Panel,0,3.78,M.L. Filters,,6.25,,1020-3ply,,10x20,10,20,,,
-,Active,Inventory Part,1025-3ply,10x25 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,10x25 3-Ply Poly Panel,0,4.17,M.L. Filters,,6.22,,1025-3ply,,10x25,10,25,,,
-,Active,Inventory Part,1030-3ply,10x30 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,10x30 MZP 3-Ply Poly Panel,0,5.6,M.L. Filters,,7.21,,1030-3ply,,10x30,10,30,,,
-,Active,Inventory Part,1040-2ply,10x40 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,10x40 2-Ply Poly Panel,0,7.7,M.L. Filters,,12.83,,1040-2ply,,10x40,10,40,,,
-,Active,Inventory Part,1080-2ply,10x80 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,10x80 2-Ply Poly Panel,0,14.4,M.L. Filters,,22.45,,1080-2ply,,10x80,10,80,,,
-,Active,Inventory Part,1142-2ply,11x42 MZP 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,11x42 MZP 2-Ply Poly Panel,320,5.95,M.L. Filters,,15.8,,1142-2ply,,11x42,11,42,,,
+,Active,Inventory Part,1010-2ply,10x10 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,10x10 2-Ply Poly Panel,259,3.32,M.L. Filters,,5.11,,1010-2ply,,10x10,10,10,,,8
+,Active,Inventory Part,1010-3ply,10x10 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,10x10 MZP 3-Ply Poly Panel,0,5.6,M.L. Filters,,5.78,,1010-3ply,,10x10,10,10,,,8
+,Active,Inventory Part,1012-3ply,10x12 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,10x12 MZP 3-Ply Poly Panel,0,5.6,M.L. Filters,,6.35,,1012-3ply,,10x12,10,12,,,8
+,Active,Inventory Part,1020-2ply,10x20 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,10x20 2-Ply Poly Panel,50,3.7,M.L. Filters,,5.4,,1020-2ply,,10x20,10,20,,,8
+,Active,Inventory Part,1020-3ply,10x20 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,10x20 MZP 3-Ply Poly Panel,0,3.78,M.L. Filters,,6.25,,1020-3ply,,10x20,10,20,,,8
+,Active,Inventory Part,1025-3ply,10x25 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,10x25 3-Ply Poly Panel,0,4.17,M.L. Filters,,6.22,,1025-3ply,,10x25,10,25,,,8
+,Active,Inventory Part,1030-3ply,10x30 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,10x30 MZP 3-Ply Poly Panel,0,5.6,M.L. Filters,,7.21,,1030-3ply,,10x30,10,30,,,8
+,Active,Inventory Part,1040-2ply,10x40 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,10x40 2-Ply Poly Panel,0,7.7,M.L. Filters,,12.83,,1040-2ply,,10x40,10,40,,,8
+,Active,Inventory Part,1080-2ply,10x80 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,10x80 2-Ply Poly Panel,0,14.4,M.L. Filters,,22.45,,1080-2ply,,10x80,10,80,,,8
+,Active,Inventory Part,1142-2ply,11x42 MZP 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,11x42 MZP 2-Ply Poly Panel,320,5.95,M.L. Filters,,15.8,,1142-2ply,,11x42,11,42,,,8
 ,Active,Inventory Part,12.24.2 Nova Pleat,12x24x2 NovaPleat No Wire,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x24x2 NovaPleat No Wire,0,4.1641,Commercial Filters Sales,,4.13,,12.24.2 Nova Pleat,,12x24x2,12,24,2,,
-,Active,Inventory Part,1212-2Ply,12x12 2-Ply Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x12 2-Ply Panel,292,3.17,M.L. Filters,,5.3,,1212-2Ply,,12x12,12,12,,,
-,Active,Inventory Part,1212-3Ply,12x12 3-Ply Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x12 3-Ply Panel,109,4.15,M.L. Filters,,6.66,,1212-3Ply,,12x12,12,12,,,
-,Active,Inventory Part,12120-2ply,12x120 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x120 2-Ply Poly Panel,8,18.25,M.L. Filters,,28.08,,12120-2ply,,12x120,12,120,,,
-,Active,Inventory Part,12120-3ply,12x120 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x120 MZP 3-Ply Poly Panel,0,19.25,M.L. Filters,,29.62,,12120-3ply,,12x120,12,120,,,
-,Active,Inventory Part,1212W-2Ply-P,"12""  x 12""   2 Ply Panel Filter",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"12""  x 12""   2 Ply Panel Filter",0,2.96,M.L. Filters,,5.92,,1212W-2Ply-P,,"12""  x 12""",12,12,,,
-,Active,Inventory Part,12144-2PLY-6L,12x144 2 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x144 2 Ply Poly Panel,0,0,M.L. Filters,,29.82,,,,12x144,12,144,,,
-,Active,Inventory Part,12144-3PLY-6L,12x144 3 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x144 3 Ply Poly Panel,0,0,M.L. Filters,,29.82,,,,12x144,12,144,,,
-,Active,Inventory Part,1218-2ply,12x18 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x18 2-Ply Poly Panel,61,4.05,M.L. Filters,,6.17,,1218-2ply,,12x18,12,18,,,
-,Active,Inventory Part,1218-3ply,12x18 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x18 MZP 3-Ply Poly Panel,0,3.85,M.L. Filters,,6.52,,1218-3ply,,12x18,12,18,,,
-,Active,Inventory Part,1218-5050WW-P,12x18 2-Ply Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x18 2-Ply Panel,0,2.9,M.L. Filters,,7.44,,1218-5050WW-P,,12x18,12,18,,,
-,Active,Inventory Part,1220-2ply,12x20 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x20 2-Ply Poly Panel,275,3.73,M.L. Filters,,5.48,,1220-2ply,,12x20,12,20,,,
-,Active,Inventory Part,1220-3ply,12x20 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x20 3-Ply Poly Panel,123,4.63,M.L. Filters,,5.33,,1220-3ply,,12x20,12,20,,,
-,Active,Inventory Part,1224-2ply,12x24 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x24 2-Ply Poly Panel,1665,4.13,M.L. Filters,,5.91,,1224-2ply,,12x24,12,24,,,
-,Active,Inventory Part,1224-3ply,12x24 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x24 MZP 3-Ply Poly Panel,648,3.85,M.L. Filters,,5.33,,1224-3ply,,12x24,12,24,,,
-,Active,Inventory Part,1224W-3PLY-P,12x24 3 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x24 3 Ply Poly Panel,0,0,M.L. Filters,,0,,,,12x24,12,24,,,
-,Active,Inventory Part,1238-2ply,12x38 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x38 2-Ply Poly Panel,0,7.17,M.L. Filters,,11.28,,1238-2ply,,12x38,12,38,,,
-,Active,Inventory Part,1243-2ply,12x43 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x43 2-Ply Poly Panel,59,6.04,M.L. Filters,,11.35,,1243-2ply,,12x43,12,43,,,
-,Active,Inventory Part,1243-3ply,12x43 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x43 MZP 3-Ply Poly Panel,0,3.85,M.L. Filters,,11.51,,1243-3ply,,12x43,12,43,,,
-,Active,Inventory Part,1248W-2PLY-P,12x48 2 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x48 2 Ply Poly Panel,0,9.94,M.L. Filters,,9.94,,,,12x48,12,48,,,
-,Active,Inventory Part,1248W-3PLY-P,12x48 3 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x48 3 Ply Poly Panel,0,9.94,M.L. Filters,,9.94,,,,12x48,12,48,,,
-,Active,Inventory Part,1272-2Ply,12x72 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x72 2-Ply Poly Panel,4,10.95,M.L. Filters,,16.85,,1272-2Ply,,12x72,12,72,,,
-,Active,Inventory Part,1272-3Ply,12x72 3-Ply Poly Panel Special,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x72 3-Ply Poly Panel Special,0,11.55,M.L. Filters,,20.13,,1272-3Ply,,12x72,12,72,,,
-,Active,Inventory Part,1296-2ply,12x96 2-Ply Poly Panel Special,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x96 2-Ply Poly Panel Special,7,16.5,M.L. Filters,,26.08,,1296-2ply,,12x96,12,96,,,
-,Active,Inventory Part,1296-3Ply,12x96 3-Ply Poly Panel Special,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x96 3-Ply Poly Panel Special,0,,M.L. Filters,,31.65,,1296-3Ply,,12x96,12,96,,,
-,Active,Inventory Part,1321-2ply,13x21 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,13x21 2-Ply Poly Panel,60,3.74,M.L. Filters,,6.05,,1321-2ply,,13x21,13,21,,,
-,Active,Inventory Part,1321-3ply,13x21 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,13x21 MZP 3-Ply Poly Panel,56,4.49,M.L. Filters,,6.85,,1321-3ply,,13x21,13,21,,,
-,Active,Inventory Part,1322-2ply,13x22 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,13x22 2-Ply Poly Panel,61,3.74,M.L. Filters,,6.05,,1322-2ply,,13x22,13,22,,,
-,Active,Inventory Part,1322-3ply,13x22 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,13x22 3-Ply Poly Panel,0,5.6,M.L. Filters,,7.1,,1322-3ply,,13x22,13,22,,,
-,Active,Inventory Part,1324-2ply,13x24-3/4 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,13x24-3/4 2-Ply Poly Panel,0,3.88,M.L. Filters,,5.96,,1324-2ply,,13x24-3/4,13,24.75,,,
+,Active,Inventory Part,1212-2Ply,12x12 2-Ply Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x12 2-Ply Panel,292,3.17,M.L. Filters,,5.3,,1212-2Ply,,12x12,12,12,,,8
+,Active,Inventory Part,1212-3Ply,12x12 3-Ply Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x12 3-Ply Panel,109,4.15,M.L. Filters,,6.66,,1212-3Ply,,12x12,12,12,,,8
+,Active,Inventory Part,12120-2ply,12x120 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x120 2-Ply Poly Panel,8,18.25,M.L. Filters,,28.08,,12120-2ply,,12x120,12,120,,,8
+,Active,Inventory Part,12120-3ply,12x120 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x120 MZP 3-Ply Poly Panel,0,19.25,M.L. Filters,,29.62,,12120-3ply,,12x120,12,120,,,8
+,Active,Inventory Part,1212W-2Ply-P,"12""  x 12""   2 Ply Panel Filter",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"12""  x 12""   2 Ply Panel Filter",0,2.96,M.L. Filters,,5.92,,1212W-2Ply-P,,"12""  x 12""",12,12,,,8
+,Active,Inventory Part,12144-2PLY-6L,12x144 2 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x144 2 Ply Poly Panel,0,0,M.L. Filters,,29.82,,,,12x144,12,144,,,8
+,Active,Inventory Part,12144-3PLY-6L,12x144 3 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x144 3 Ply Poly Panel,0,0,M.L. Filters,,29.82,,,,12x144,12,144,,,8
+,Active,Inventory Part,1218-2ply,12x18 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x18 2-Ply Poly Panel,61,4.05,M.L. Filters,,6.17,,1218-2ply,,12x18,12,18,,,8
+,Active,Inventory Part,1218-3ply,12x18 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x18 MZP 3-Ply Poly Panel,0,3.85,M.L. Filters,,6.52,,1218-3ply,,12x18,12,18,,,8
+,Active,Inventory Part,1218-5050WW-P,12x18 2-Ply Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x18 2-Ply Panel,0,2.9,M.L. Filters,,7.44,,1218-5050WW-P,,12x18,12,18,,,8
+,Active,Inventory Part,1220-2ply,12x20 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x20 2-Ply Poly Panel,275,3.73,M.L. Filters,,5.48,,1220-2ply,,12x20,12,20,,,8
+,Active,Inventory Part,1220-3ply,12x20 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x20 3-Ply Poly Panel,123,4.63,M.L. Filters,,5.33,,1220-3ply,,12x20,12,20,,,8
+,Active,Inventory Part,1224-2ply,12x24 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x24 2-Ply Poly Panel,1665,4.13,M.L. Filters,,5.91,,1224-2ply,,12x24,12,24,,,8
+,Active,Inventory Part,1224-3ply,12x24 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x24 MZP 3-Ply Poly Panel,648,3.85,M.L. Filters,,5.33,,1224-3ply,,12x24,12,24,,,8
+,Active,Inventory Part,1224W-3PLY-P,12x24 3 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x24 3 Ply Poly Panel,0,0,M.L. Filters,,0,,,,12x24,12,24,,,8
+,Active,Inventory Part,1238-2ply,12x38 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x38 2-Ply Poly Panel,0,7.17,M.L. Filters,,11.28,,1238-2ply,,12x38,12,38,,,8
+,Active,Inventory Part,1243-2ply,12x43 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x43 2-Ply Poly Panel,59,6.04,M.L. Filters,,11.35,,1243-2ply,,12x43,12,43,,,8
+,Active,Inventory Part,1243-3ply,12x43 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x43 MZP 3-Ply Poly Panel,0,3.85,M.L. Filters,,11.51,,1243-3ply,,12x43,12,43,,,8
+,Active,Inventory Part,1248W-2PLY-P,12x48 2 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x48 2 Ply Poly Panel,0,9.94,M.L. Filters,,9.94,,,,12x48,12,48,,,8
+,Active,Inventory Part,1248W-3PLY-P,12x48 3 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x48 3 Ply Poly Panel,0,9.94,M.L. Filters,,9.94,,,,12x48,12,48,,,8
+,Active,Inventory Part,1272-2Ply,12x72 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x72 2-Ply Poly Panel,4,10.95,M.L. Filters,,16.85,,1272-2Ply,,12x72,12,72,,,8
+,Active,Inventory Part,1272-3Ply,12x72 3-Ply Poly Panel Special,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x72 3-Ply Poly Panel Special,0,11.55,M.L. Filters,,20.13,,1272-3Ply,,12x72,12,72,,,8
+,Active,Inventory Part,1296-2ply,12x96 2-Ply Poly Panel Special,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x96 2-Ply Poly Panel Special,7,16.5,M.L. Filters,,26.08,,1296-2ply,,12x96,12,96,,,8
+,Active,Inventory Part,1296-3Ply,12x96 3-Ply Poly Panel Special,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x96 3-Ply Poly Panel Special,0,,M.L. Filters,,31.65,,1296-3Ply,,12x96,12,96,,,8
+,Active,Inventory Part,1321-2ply,13x21 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,13x21 2-Ply Poly Panel,60,3.74,M.L. Filters,,6.05,,1321-2ply,,13x21,13,21,,,8
+,Active,Inventory Part,1321-3ply,13x21 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,13x21 MZP 3-Ply Poly Panel,56,4.49,M.L. Filters,,6.85,,1321-3ply,,13x21,13,21,,,8
+,Active,Inventory Part,1322-2ply,13x22 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,13x22 2-Ply Poly Panel,61,3.74,M.L. Filters,,6.05,,1322-2ply,,13x22,13,22,,,8
+,Active,Inventory Part,1322-3ply,13x22 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,13x22 3-Ply Poly Panel,0,5.6,M.L. Filters,,7.1,,1322-3ply,,13x22,13,22,,,8
+,Active,Inventory Part,1324-2ply,13x24-3/4 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,13x24-3/4 2-Ply Poly Panel,0,3.88,M.L. Filters,,5.96,,1324-2ply,,13x24-3/4,13,24.75,,,8
 ,Active,Inventory Part,14.20.2 Nova Pleat,14x20x2 NovaPleat No Wire,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x20x2 NovaPleat No Wire,96,3.75,Commercial Filters Sales,,4.13,,14.20.2 Nova Pleat,,14x20x2,14,20,2,,
 ,Active,Inventory Part,14.25.1 Nova Pleat,14x25x1 NovaPleat No Wire,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x25x1 NovaPleat No Wire,0,3.92,Commercial Filters Sales,,4.13,,14.25.1 Nova Pleat,,14x25x1,14,25,1,,
-,Active,Inventory Part,1414-2ply,14x14 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x14 2-Ply Poly Panel,210,3.36,M.L. Filters,,5.16,,1414-2ply,,14x14,14,14,,,
-,Active,Inventory Part,1414-3ply,14x14 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x14 3-Ply Poly Panel,20,3.56,M.L. Filters,,6.6,,1414-3ply,,14x14,14,14,,,
-,Active,Inventory Part,1419-2ply,14x19 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x19 2-Ply Poly Panel,70,3.6,M.L. Filters,,5.54,,1419-2ply,,14x19,14,19,,,
-,Active,Inventory Part,1419-3ply,14x19 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x19 3-Ply Poly Panel,0,5.6,M.L. Filters,,6.74,,1419-3ply,,14x19,14,19,,,
-,Active,Inventory Part,1420-2ply,14x20 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x20 2-Ply Poly Panel,48,3.73,M.L. Filters,,6.03,,1420-2ply,,14x20,14,20,,,
-,Active,Inventory Part,1420-3ply,14x20 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x20 MZP 3-Ply Poly Panel,152,4.43,M.L. Filters,,6.64,,1420-3ply,,14x20,14,20,,,
-,Active,Inventory Part,1420-5050WW-P,14x20 Poly Panel 2 Ply,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x20 Poly Panel 2 Ply,3,3.39,M.L. Filters,,0,,,,14x20,14,20,,,
-,Active,Inventory Part,1424-2ply,14x24 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x24 2-Ply Poly Panel,176,4.07,M.L. Filters,,6.26,,1424-2ply,,14x24,14,24,,,
-,Active,Inventory Part,1424-3ply,14x24 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x24 3-Ply Poly Panel,0,4.1,M.L. Filters,,6.64,,1424-3ply,,14x24,14,24,,,
-,Active,Inventory Part,1425-2ply,14x25 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x25 2-Ply Poly Panel,276,4.76,M.L. Filters,,6.06,,1425-2ply,,14x25,14,25,,,
-,Active,Inventory Part,1425-3ply,14x25 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x25 3-Ply Poly Panel,0,4.18,M.L. Filters,,5.77,,1425-3ply,,14x25,14,25,,,
-,Active,Inventory Part,1428-2ply,14x28 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x28 2-Ply Poly Panel,65,4.9,M.L. Filters,,7.16,,1428-2ply,,14x28,14,28,,,
-,Active,Inventory Part,1428-3ply,14x28 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x28 3-Ply Poly Panel,0,5.6,M.L. Filters,,7.83,,1428-3ply,,14x28,14,28,,,
-,Active,Inventory Part,1430-3Ply,14x30 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x30 MZP 3-Ply Poly Panel,167,5.95,M.L. Filters,,10.56,,1430-3Ply,,14x30,14,30,,,
-,Active,Inventory Part,1438-2ply,14x38 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x38 2-Ply Poly Panel,38,7.3,M.L. Filters,,10.3,,1438-2ply,,14x38,14,38,,,
-,Active,Inventory Part,1438-3ply,14x38 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x38 3-Ply Poly Panel,0,7.3,M.L. Filters,,10.43,,1438-3ply,,14x38,14,38,,,
-,Active,Inventory Part,1444-2ply,14x44 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x44 2-Ply Poly Panel,5,7.7,M.L. Filters,,12.15,,1444-2ply,,14x44,14,44,,,
-,Active,Inventory Part,1444-3ply,14x44 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x44 MZP 3-Ply Poly Panel,0,9.5,M.L. Filters,,14.91,,1444-3ply,,14x44,14,44,,,
-,Active,Inventory Part,1520-2ply,15x20 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,15x20 2-Ply Poly Panel,159,3.83,M.L. Filters,,6.34,,1520-2ply,,15x20,15,20,,,
-,Active,Inventory Part,1520-3ply,15x20 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,15x20 3-Ply Poly Panel,40,4.96,M.L. Filters,,5.47,,1520-3ply,,15x20,15,20,,,
-,Active,Inventory Part,1520-5050WW-P,15x20 2-Ply Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,15x20 2-Ply Panel,88,3.37,M.L. Filters,,7.44,,1520-5050WW-P,,15x20,15,20,,,
-,Active,Inventory Part,1525-3ply,15x25 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,15x25 3-Ply Poly Panel,3,3.95,M.L. Filters,,7.47,,1525-3ply,,15x25,15,25,,,
-,Active,Inventory Part,1530-2Ply,15x30 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,15x30 2-Ply Poly Panel,147,5.31,M.L. Filters,,7.87,,1530-2Ply,,15x30,15,30,,,
-,Active,Inventory Part,1530-3Ply,15x30 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,15x30 3-Ply Poly Panel,125,6.04,M.L. Filters,,6.65,,1530-3Ply,,15x30,15,30,,,
-,Not-active,Inventory Part,1530-5050WW-P,15x30 2-Ply Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,15x30 2-Ply Panel,0,2.67,M.L. Filters,,7.44,,1530-5050WW-P,,15x30,15,30,,,
-,Active,Inventory Part,15305/8-2Ply,15x30 5/8 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,15x30 5/8 2-Ply Poly Panel,113,5.09,M.L. Filters,,7.27,,15305/8-2Ply,,15x30 5/8,15,30.625,,,
-,Active,Inventory Part,15305/8-3Ply,15x30 -5/8 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,15x30 -5/8 3 Ply Link,128,6.52,M.L. Filters,,6.8,,15305/8-3Ply,,15x30 ,15,30,,,
-,Active,Inventory Part,1530W-2PLY P,"15""x30"" 2 PLY PANEL FILTER",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"15""x30"" 2 PLY PANEL FILTER",11,4.3,M.L. Filters,,6.2,,1530W-2PLY P,,"15""x30""",15,30,,,
-,Active,Inventory Part,1531-3Ply,15x31 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,15x31 3-Ply Poly Panel,0,4.95,M.L. Filters,,8.38,,1531-3Ply,,15x31,15,31,,,
-,Active,Inventory Part,1534-2ply,15x34 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,15x34 2-Ply Poly Panel,25,6.46,M.L. Filters,,8.21,,1534-2ply,,15x34,15,34,,,
+,Active,Inventory Part,1414-2ply,14x14 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x14 2-Ply Poly Panel,210,3.36,M.L. Filters,,5.16,,1414-2ply,,14x14,14,14,,,8
+,Active,Inventory Part,1414-3ply,14x14 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x14 3-Ply Poly Panel,20,3.56,M.L. Filters,,6.6,,1414-3ply,,14x14,14,14,,,8
+,Active,Inventory Part,1419-2ply,14x19 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x19 2-Ply Poly Panel,70,3.6,M.L. Filters,,5.54,,1419-2ply,,14x19,14,19,,,8
+,Active,Inventory Part,1419-3ply,14x19 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x19 3-Ply Poly Panel,0,5.6,M.L. Filters,,6.74,,1419-3ply,,14x19,14,19,,,8
+,Active,Inventory Part,1420-2ply,14x20 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x20 2-Ply Poly Panel,48,3.73,M.L. Filters,,6.03,,1420-2ply,,14x20,14,20,,,8
+,Active,Inventory Part,1420-3ply,14x20 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x20 MZP 3-Ply Poly Panel,152,4.43,M.L. Filters,,6.64,,1420-3ply,,14x20,14,20,,,8
+,Active,Inventory Part,1420-5050WW-P,14x20 Poly Panel 2 Ply,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x20 Poly Panel 2 Ply,3,3.39,M.L. Filters,,0,,,,14x20,14,20,,,8
+,Active,Inventory Part,1424-2ply,14x24 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x24 2-Ply Poly Panel,176,4.07,M.L. Filters,,6.26,,1424-2ply,,14x24,14,24,,,8
+,Active,Inventory Part,1424-3ply,14x24 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x24 3-Ply Poly Panel,0,4.1,M.L. Filters,,6.64,,1424-3ply,,14x24,14,24,,,8
+,Active,Inventory Part,1425-2ply,14x25 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x25 2-Ply Poly Panel,276,4.76,M.L. Filters,,6.06,,1425-2ply,,14x25,14,25,,,8
+,Active,Inventory Part,1425-3ply,14x25 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x25 3-Ply Poly Panel,0,4.18,M.L. Filters,,5.77,,1425-3ply,,14x25,14,25,,,8
+,Active,Inventory Part,1428-2ply,14x28 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x28 2-Ply Poly Panel,65,4.9,M.L. Filters,,7.16,,1428-2ply,,14x28,14,28,,,8
+,Active,Inventory Part,1428-3ply,14x28 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x28 3-Ply Poly Panel,0,5.6,M.L. Filters,,7.83,,1428-3ply,,14x28,14,28,,,8
+,Active,Inventory Part,1430-3Ply,14x30 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x30 MZP 3-Ply Poly Panel,167,5.95,M.L. Filters,,10.56,,1430-3Ply,,14x30,14,30,,,8
+,Active,Inventory Part,1438-2ply,14x38 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x38 2-Ply Poly Panel,38,7.3,M.L. Filters,,10.3,,1438-2ply,,14x38,14,38,,,8
+,Active,Inventory Part,1438-3ply,14x38 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x38 3-Ply Poly Panel,0,7.3,M.L. Filters,,10.43,,1438-3ply,,14x38,14,38,,,8
+,Active,Inventory Part,1444-2ply,14x44 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x44 2-Ply Poly Panel,5,7.7,M.L. Filters,,12.15,,1444-2ply,,14x44,14,44,,,8
+,Active,Inventory Part,1444-3ply,14x44 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,14x44 MZP 3-Ply Poly Panel,0,9.5,M.L. Filters,,14.91,,1444-3ply,,14x44,14,44,,,8
+,Active,Inventory Part,1520-2ply,15x20 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,15x20 2-Ply Poly Panel,159,3.83,M.L. Filters,,6.34,,1520-2ply,,15x20,15,20,,,8
+,Active,Inventory Part,1520-3ply,15x20 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,15x20 3-Ply Poly Panel,40,4.96,M.L. Filters,,5.47,,1520-3ply,,15x20,15,20,,,8
+,Active,Inventory Part,1520-5050WW-P,15x20 2-Ply Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,15x20 2-Ply Panel,88,3.37,M.L. Filters,,7.44,,1520-5050WW-P,,15x20,15,20,,,8
+,Active,Inventory Part,1525-3ply,15x25 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,15x25 3-Ply Poly Panel,3,3.95,M.L. Filters,,7.47,,1525-3ply,,15x25,15,25,,,8
+,Active,Inventory Part,1530-2Ply,15x30 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,15x30 2-Ply Poly Panel,147,5.31,M.L. Filters,,7.87,,1530-2Ply,,15x30,15,30,,,8
+,Active,Inventory Part,1530-3Ply,15x30 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,15x30 3-Ply Poly Panel,125,6.04,M.L. Filters,,6.65,,1530-3Ply,,15x30,15,30,,,8
+,Not-active,Inventory Part,1530-5050WW-P,15x30 2-Ply Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,15x30 2-Ply Panel,0,2.67,M.L. Filters,,7.44,,1530-5050WW-P,,15x30,15,30,,,8
+,Active,Inventory Part,15305/8-2Ply,15x30 5/8 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,15x30 5/8 2-Ply Poly Panel,113,5.09,M.L. Filters,,7.27,,15305/8-2Ply,,15x30 5/8,15,30.625,,,8
+,Active,Inventory Part,15305/8-3Ply,15x30 -5/8 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,15x30 -5/8 3 Ply Link,128,6.52,M.L. Filters,,6.8,,15305/8-3Ply,,15x30 ,15,30,,,8
+,Active,Inventory Part,1530W-2PLY P,"15""x30"" 2 PLY PANEL FILTER",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"15""x30"" 2 PLY PANEL FILTER",11,4.3,M.L. Filters,,6.2,,1530W-2PLY P,,"15""x30""",15,30,,,8
+,Active,Inventory Part,1531-3Ply,15x31 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,15x31 3-Ply Poly Panel,0,4.95,M.L. Filters,,8.38,,1531-3Ply,,15x31,15,31,,,8
+,Active,Inventory Part,1534-2ply,15x34 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,15x34 2-Ply Poly Panel,25,6.46,M.L. Filters,,8.21,,1534-2ply,,15x34,15,34,,,8
 ,Active,Inventory Part,16.20.1 Nova Pleat,16x20x1 NovaPleat No Wire,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x20x1 NovaPleat No Wire,0,2.07,Commercial Filters Sales,,4.13,,16.20.1 Nova Pleat,,16x20x1,16,20,1,,
 ,Active,Inventory Part,16.20.2 Nova Pleat,16x20x2 NovaPleat No Wire,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x20x2 NovaPleat No Wire,36,2.48,Commercial Filters Sales,,4.13,,16.20.2 Nova Pleat,,16x20x2,16,20,2,,
 ,Active,Inventory Part,16.25.1 Nova Pleat,16x25x1 NovaPleat No Wire,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x25x1 NovaPleat No Wire,0,3.9184,Commercial Filters Sales,,4.82,,16.25.1 Nova Pleat,,16x25x1,16,25,1,,
 ,Active,Inventory Part,16.25.2 Nova Pleat,16x25x2 NovaPleat No Wire,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x25x2 NovaPleat No Wire,60,2.89,Commercial Filters Sales,,4.82,,16.25.2 Nova Pleat,,16x25x2,16,25,2,,
-,Active,Inventory Part,16100-2Ply,16x100 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x100 2-Ply Poly Panel,-5,20.96,M.L. Filters,,32.25,,16100-2Ply,,16x100,16,100,,,
-,Active,Inventory Part,16120-2ply,"16"" X 120"" 2 PLY LINK FILTER",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"16"" X 120"" 2 PLY LINK FILTER",0,20.4,M.L. Filters,,31.38,,16120-2ply,,"16"" X 120""",16,120,,,
-,Active,Inventory Part,16120W - 3PLY - 5L,"16"" X 120"" 3 PLY LINK FILTER",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"16"" X 120"" 3 PLY LINK FILTER",0,20.55,M.L. Filters,,31.62,,16120W - 3PLY - 5L,,"16"" X 120""",16,120,,,
-,Active,Inventory Part,1616-2Ply,16x16 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x16 2-Ply Poly Panel,499,3.88,M.L. Filters,,5.12,,1616-2Ply,,16x16,16,16,,,
-,Active,Inventory Part,1616-3Ply,16x16 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x16 3-Ply Poly Panel,328,3.78,M.L. Filters,,5.08,,1616-3Ply,,16x16,16,16,,,
-,Active,Inventory Part,1618-3Ply,16x18 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x18 3-Ply Poly Panel,0,4.01,M.L. Filters,,6.75,,1618-3Ply,,16x18,16,18,,,
-,Active,Inventory Part,1618-5050WW-P,16x18 Poly Panels 2 ply,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x18 Poly Panels 2 ply,3,3.35,M.L. Filters,,0,,,,16x18,16,18,,,
-,Active,Inventory Part,1620-2Ply,16x20 2-Ply Poly Panels,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x20 2-Ply Poly Panels,798,3.65,M.L. Filters,,5.22,,1620-2Ply,,16x20,16,20,,,
-,Active,Inventory Part,1620-2Ply FB Gold Panel,16x20 2-Ply Gold Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x20 2-Ply Gold Panel,0,2.99,Fiber Bond Corporation,,4.6,,1620-2Ply FB Gold Panel,,16x20,16,20,,,
-,Active,Inventory Part,1620-3Ply,16x20 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x20 3-Ply Poly Panel,645,4.11,M.L. Filters,,5.55,,1620-3Ply,,16x20,16,20,,,
-,Not-active,Inventory Part,1620-5050WW-P,16x20 2-Ply Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x20 2-Ply Panel,0,3.55,M.L. Filters,,7.84,,1620-5050WW-P,,16x20,16,20,,,
-,Active,Inventory Part,1622-2Ply,16x22 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x22 2-Ply Poly Panel,160,3.97,M.L. Filters,,7.27,,1622-2Ply,,16x22,16,22,,,
-,Active,Inventory Part,1622-3Ply,16x22 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x22 3-Ply Poly Panel,0,4.8,M.L. Filters,,6.42,,1622-3Ply,,16x22,16,22,,,
-,Active,Inventory Part,1622-5050WW-P,16x22 2-Ply Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x22 2-Ply Panel,0,3.51,M.L. Filters,,7.44,,1622-5050WW-P,,16x22,16,22,,,
-,Active,Inventory Part,1624-2ply,16x24 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x24 2-Ply Poly Panel,932,4.55,M.L. Filters,,5.88,,1624-2ply,,16x24,16,24,,,
-,Active,Inventory Part,1624-3Ply,16x24 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x24 3-Ply Poly Panel,562,4.91,M.L. Filters,,6.2,,1624-3Ply,,16x24,16,24,,,
-,Not-active,Inventory Part,1624-5050-G/W,16x24 Poly Panels 2 ply,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x24 Poly Panels 2 ply,0,3.73,M.L. Filters,,0,,,,16x24,16,24,,,
-,Active,Inventory Part,1625-2Ply,16x25 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x25 2-Ply Poly Panel,1157,3.99,M.L. Filters,,6,,1625-2Ply,,16x25,16,25,,,
-,Active,Inventory Part,1625-3Ply,16x25 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x25 3-Ply Poly Panel,332,5.7,M.L. Filters,,6.2,,1625-3Ply,,16x25,16,25,,,
-,Not-active,Inventory Part,1625-5050WW-P,16x25 2-Ply Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x25 2-Ply Panel,0,2.67,M.L. Filters,,7.44,,1625-5050WW-P,,16x25,16,25,,,
-,Active,Inventory Part,1628-2ply,16x28 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x28 2-Ply Poly Panel,10,4.67,M.L. Filters,,6.16,,1628-2ply,,16x28,16,28,,,
-,Active,Inventory Part,1630-2Ply,16x30 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x30 2-Ply Poly Panel,266,5.12,M.L. Filters,,7.39,,1630-2Ply,,16x30,16,30,,,
-,Active,Inventory Part,1630-3Ply,16x30 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x30 3-Ply Poly Panel,304,6.08,M.L. Filters,,7.05,,1630-3Ply,,16x30,16,30,,,
-,Active,Inventory Part,1631-3Ply,16x31 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x31 3-Ply Poly Panel,0,5.14,M.L. Filters,,8.44,,1631-3Ply,,16x31,16,31,,,
-,Active,Inventory Part,1632-2ply,16x32 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x32 2-Ply Poly Panel,59,5.19,M.L. Filters,,8.09,,1632-2ply,,16x32,16,32,,,
-,Active,Inventory Part,1632-2PLY-2L,16x32 2 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x32 2 Ply Poly Panel,0,11.29,M.L. Filters,,11.29,,,,16x32,16,32,,,
-,Active,Inventory Part,1632-3ply,16x32 3 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x32 3 Ply Poly Panel,104,6.45,M.L. Filters,,8.53,,1632-3ply,,16x32,16,32,,,
-,Active,Inventory Part,1636-2ply,16x36 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x36 2-Ply Poly Panel,0,6.2,M.L. Filters,,9.53,,1636-2ply,,16x36,16,36,,,
-,Active,Inventory Part,1640-3ply,16x40 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x40 MZP 3-Ply Poly Panel,0,7.83,M.L. Filters,,12.34,,1640-3ply,,16x40,16,40,,,
-,Active,Inventory Part,1648-2Ply,"16x48 MERV 9, 2-Ply Poly Link w/Antimicrobial",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"16x48 MERV 9, 2-Ply Poly Link w/Antimicrobial",9,9.61,M.L. Filters,,19.43,,1648-2Ply,,16x48,16,48,,MERV 9,9
-,Active,Inventory Part,1650-2ply,16x50 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x50 2-Ply Poly Panel,0,7.98,M.L. Filters,,12.28,,1650-2ply,,16x50,16,50,,,
-,Active,Inventory Part,1650-3ply,16x50 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x50 MZP 3-Ply Poly Panel,0,9,M.L. Filters,,15.3,,1650-3ply,,16x50,16,50,,,
-,Active,Inventory Part,1651-2Ply,16.5x51.5 2-Ply Poly Panels,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16.5x51.5 2-Ply Poly Panels,17,8.69,M.L. Filters,,13.32,,1651-2Ply,,16.5x51.5,16.5,51.5,,,
-,Active,Inventory Part,1664-2PLY-3L,16x64 2-Ply Poly Link,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x64 2-Ply Poly Link,0,14.96,M.L. Filters,,29.92,,1664-2PLY-3L,,16x64,16,64,,,
-,Active,Inventory Part,1672-2ply,16x72 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x72 2-Ply Poly Panel,3,13.2,M.L. Filters,,20.6,,1672-2ply,,16x72,16,72,,,
-,Active,Inventory Part,1672-3ply,16x72 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x72 3-Ply Poly Panel,0,13.2,M.L. Filters,,20.6,,1672-3ply,,16x72,16,72,,,
-,Active,Inventory Part,1675-2PLY-3L,16x75 MZP 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x75 MZP 2-Ply Poly Panel,45,11.67,M.L. Filters,,23.41,,1675-2PLY-3L,,16x75,16,75,,,
-,Active,Inventory Part,1680-2Ply,16x80 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x80 2-Ply Poly Panel,4,16.04,M.L. Filters,,24.67,,1680-2Ply,,16x80,16,80,,,
-,Active,Inventory Part,1680-3Ply,16x80 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x80 3-Ply Poly Panel,0,16.04,M.L. Filters,,24.97,,1680-3Ply,,16x80,16,80,,,
+,Active,Inventory Part,16100-2Ply,16x100 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x100 2-Ply Poly Panel,-5,20.96,M.L. Filters,,32.25,,16100-2Ply,,16x100,16,100,,,8
+,Active,Inventory Part,16120-2ply,"16"" X 120"" 2 PLY LINK FILTER",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"16"" X 120"" 2 PLY LINK FILTER",0,20.4,M.L. Filters,,31.38,,16120-2ply,,"16"" X 120""",16,120,,,8
+,Active,Inventory Part,16120W - 3PLY - 5L,"16"" X 120"" 3 PLY LINK FILTER",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"16"" X 120"" 3 PLY LINK FILTER",0,20.55,M.L. Filters,,31.62,,16120W - 3PLY - 5L,,"16"" X 120""",16,120,,,8
+,Active,Inventory Part,1616-2Ply,16x16 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x16 2-Ply Poly Panel,499,3.88,M.L. Filters,,5.12,,1616-2Ply,,16x16,16,16,,,8
+,Active,Inventory Part,1616-3Ply,16x16 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x16 3-Ply Poly Panel,328,3.78,M.L. Filters,,5.08,,1616-3Ply,,16x16,16,16,,,8
+,Active,Inventory Part,1618-3Ply,16x18 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x18 3-Ply Poly Panel,0,4.01,M.L. Filters,,6.75,,1618-3Ply,,16x18,16,18,,,8
+,Active,Inventory Part,1618-5050WW-P,16x18 Poly Panels 2 ply,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x18 Poly Panels 2 ply,3,3.35,M.L. Filters,,0,,,,16x18,16,18,,,8
+,Active,Inventory Part,1620-2Ply,16x20 2-Ply Poly Panels,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x20 2-Ply Poly Panels,798,3.65,M.L. Filters,,5.22,,1620-2Ply,,16x20,16,20,,,8
+,Active,Inventory Part,1620-2Ply FB Gold Panel,16x20 2-Ply Gold Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x20 2-Ply Gold Panel,0,2.99,Fiber Bond Corporation,,4.6,,1620-2Ply FB Gold Panel,,16x20,16,20,,,8
+,Active,Inventory Part,1620-3Ply,16x20 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x20 3-Ply Poly Panel,645,4.11,M.L. Filters,,5.55,,1620-3Ply,,16x20,16,20,,,8
+,Not-active,Inventory Part,1620-5050WW-P,16x20 2-Ply Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x20 2-Ply Panel,0,3.55,M.L. Filters,,7.84,,1620-5050WW-P,,16x20,16,20,,,8
+,Active,Inventory Part,1622-2Ply,16x22 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x22 2-Ply Poly Panel,160,3.97,M.L. Filters,,7.27,,1622-2Ply,,16x22,16,22,,,8
+,Active,Inventory Part,1622-3Ply,16x22 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x22 3-Ply Poly Panel,0,4.8,M.L. Filters,,6.42,,1622-3Ply,,16x22,16,22,,,8
+,Active,Inventory Part,1622-5050WW-P,16x22 2-Ply Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x22 2-Ply Panel,0,3.51,M.L. Filters,,7.44,,1622-5050WW-P,,16x22,16,22,,,8
+,Active,Inventory Part,1624-2ply,16x24 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x24 2-Ply Poly Panel,932,4.55,M.L. Filters,,5.88,,1624-2ply,,16x24,16,24,,,8
+,Active,Inventory Part,1624-3Ply,16x24 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x24 3-Ply Poly Panel,562,4.91,M.L. Filters,,6.2,,1624-3Ply,,16x24,16,24,,,8
+,Not-active,Inventory Part,1624-5050-G/W,16x24 Poly Panels 2 ply,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x24 Poly Panels 2 ply,0,3.73,M.L. Filters,,0,,,,16x24,16,24,,,8
+,Active,Inventory Part,1625-2Ply,16x25 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x25 2-Ply Poly Panel,1157,3.99,M.L. Filters,,6,,1625-2Ply,,16x25,16,25,,,8
+,Active,Inventory Part,1625-3Ply,16x25 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x25 3-Ply Poly Panel,332,5.7,M.L. Filters,,6.2,,1625-3Ply,,16x25,16,25,,,8
+,Not-active,Inventory Part,1625-5050WW-P,16x25 2-Ply Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x25 2-Ply Panel,0,2.67,M.L. Filters,,7.44,,1625-5050WW-P,,16x25,16,25,,,8
+,Active,Inventory Part,1628-2ply,16x28 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x28 2-Ply Poly Panel,10,4.67,M.L. Filters,,6.16,,1628-2ply,,16x28,16,28,,,8
+,Active,Inventory Part,1630-2Ply,16x30 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x30 2-Ply Poly Panel,266,5.12,M.L. Filters,,7.39,,1630-2Ply,,16x30,16,30,,,8
+,Active,Inventory Part,1630-3Ply,16x30 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x30 3-Ply Poly Panel,304,6.08,M.L. Filters,,7.05,,1630-3Ply,,16x30,16,30,,,8
+,Active,Inventory Part,1631-3Ply,16x31 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x31 3-Ply Poly Panel,0,5.14,M.L. Filters,,8.44,,1631-3Ply,,16x31,16,31,,,8
+,Active,Inventory Part,1632-2ply,16x32 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x32 2-Ply Poly Panel,59,5.19,M.L. Filters,,8.09,,1632-2ply,,16x32,16,32,,,8
+,Active,Inventory Part,1632-2PLY-2L,16x32 2 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x32 2 Ply Poly Panel,0,11.29,M.L. Filters,,11.29,,,,16x32,16,32,,,8
+,Active,Inventory Part,1632-3ply,16x32 3 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x32 3 Ply Poly Panel,104,6.45,M.L. Filters,,8.53,,1632-3ply,,16x32,16,32,,,8
+,Active,Inventory Part,1636-2ply,16x36 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x36 2-Ply Poly Panel,0,6.2,M.L. Filters,,9.53,,1636-2ply,,16x36,16,36,,,8
+,Active,Inventory Part,1640-3ply,16x40 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x40 MZP 3-Ply Poly Panel,0,7.83,M.L. Filters,,12.34,,1640-3ply,,16x40,16,40,,,8
+,Active,Inventory Part,1648-2Ply,"16x48 MERV 9, 2-Ply Poly Link w/Antimicrobial",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"16x48 MERV 9, 2-Ply Poly Link w/Antimicrobial",9,9.61,M.L. Filters,,19.43,,1648-2Ply,,16x48,16,48,,MERV 9,8
+,Active,Inventory Part,1650-2ply,16x50 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x50 2-Ply Poly Panel,0,7.98,M.L. Filters,,12.28,,1650-2ply,,16x50,16,50,,,8
+,Active,Inventory Part,1650-3ply,16x50 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x50 MZP 3-Ply Poly Panel,0,9,M.L. Filters,,15.3,,1650-3ply,,16x50,16,50,,,8
+,Active,Inventory Part,1651-2Ply,16.5x51.5 2-Ply Poly Panels,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16.5x51.5 2-Ply Poly Panels,17,8.69,M.L. Filters,,13.32,,1651-2Ply,,16.5x51.5,16.5,51.5,,,8
+,Active,Inventory Part,1664-2PLY-3L,16x64 2-Ply Poly Link,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x64 2-Ply Poly Link,0,14.96,M.L. Filters,,29.92,,1664-2PLY-3L,,16x64,16,64,,,8
+,Active,Inventory Part,1672-2ply,16x72 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x72 2-Ply Poly Panel,3,13.2,M.L. Filters,,20.6,,1672-2ply,,16x72,16,72,,,8
+,Active,Inventory Part,1672-3ply,16x72 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x72 3-Ply Poly Panel,0,13.2,M.L. Filters,,20.6,,1672-3ply,,16x72,16,72,,,8
+,Active,Inventory Part,1675-2PLY-3L,16x75 MZP 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x75 MZP 2-Ply Poly Panel,45,11.67,M.L. Filters,,23.41,,1675-2PLY-3L,,16x75,16,75,,,8
+,Active,Inventory Part,1680-2Ply,16x80 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x80 2-Ply Poly Panel,4,16.04,M.L. Filters,,24.67,,1680-2Ply,,16x80,16,80,,,8
+,Active,Inventory Part,1680-3Ply,16x80 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x80 3-Ply Poly Panel,0,16.04,M.L. Filters,,24.97,,1680-3Ply,,16x80,16,80,,,8
 ,Active,Inventory Part,16x32 Poly Panel,16x32 Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x32 Poly Panel,0,4.61,M.L. Filters,,11.29,,16x32 Poly Panel,,16x32,16,32,,,
-,Active,Inventory Part,1718-5050WW-P,17x18 Poly Panels 2 Ply,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,17x18 Poly Panels 2 Ply,0,3.51,M.L. Filters,,0,,,,17x18,17,18,,,
+,Active,Inventory Part,1718-5050WW-P,17x18 Poly Panels 2 Ply,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,17x18 Poly Panels 2 Ply,0,3.51,M.L. Filters,,0,,,,17x18,17,18,,,8
 ,Active,Inventory Part,18-6005-01,7.5 AMP Door Switch,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,7.5 AMP Door Switch,0,135,"UVDI UltraViolet Devices, Inc.",,225,,18-6005-01,,,,,,,
 ,Active,Inventory Part,18.24.2 Nova Pleat,18x24x2 NovaPleat No Wire,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,18x24x2 NovaPleat No Wire,12,3.25,Commercial Filters Sales,,5.42,,18.24.2 Nova Pleat,,18x24x2,18,24,2,,
-,Active,Inventory Part,1818-3ply,18x18 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,18x18 MZP 3-Ply Poly Panel,146,5.19,M.L. Filters,,7.23,,1818-3ply,,18x18,18,18,,,
-,Active,Inventory Part,1822-3Ply,18x22 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,18x22 3-Ply Poly Panel,0,4.3,M.L. Filters,,6.92,,1822-3Ply,,18x22,18,22,,,
-,Active,Inventory Part,1822-5050WW-P,18x22 Poly Panel 2 Ply,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,18x22 Poly Panel 2 Ply,2,3.87,M.L. Filters,,0,,,,18x22,18,22,,,
-,Active,Inventory Part,1824-3ply,18x24 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,18x24 MZP 3-Ply Poly Panel,117,4.88,M.L. Filters,,6.43,,1824-3ply,,18x24,18,24,,,
-,Active,Inventory Part,1825-3ply,18x25 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,18x25 MZP 3-Ply Poly Panel,50,4.98,M.L. Filters,,6.96,,1825-3ply,,18x25,18,25,,,
-,Active,Inventory Part,1828-5050-G/W,18x28 Poly Panels 2 Ply,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,18x28 Poly Panels 2 Ply,3,4.38,M.L. Filters,,0,,,,18x28,18,28,,,
-,Active,Inventory Part,1830-2Ply,18x30 2-Ply Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,18x30 2-Ply Panel,77,5.1,M.L. Filters,,8.82,,1830-2Ply,,18x30,18,30,,,
-,Active,Inventory Part,1830-5050WW-P,18x30 2-Ply Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,18x30 2-Ply Panel,0,4.21,M.L. Filters,,7.44,,1830-5050WW-P,,18x30,18,30,,,
-,Active,Inventory Part,1837-2ply,18x37 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,18x37 MZP 2-Ply Poly Panel,36,6.66,M.L. Filters,,0,,1837-2ply,,18x37,18,37,,,
-,Active,Inventory Part,1921-5050WW-P,19x21 Poly Panels 2 ply,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,19x21 Poly Panels 2 ply,0,3.89,M.L. Filters,,0,,,,19x21,19,21,,,
+,Active,Inventory Part,1818-3ply,18x18 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,18x18 MZP 3-Ply Poly Panel,146,5.19,M.L. Filters,,7.23,,1818-3ply,,18x18,18,18,,,8
+,Active,Inventory Part,1822-3Ply,18x22 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,18x22 3-Ply Poly Panel,0,4.3,M.L. Filters,,6.92,,1822-3Ply,,18x22,18,22,,,8
+,Active,Inventory Part,1822-5050WW-P,18x22 Poly Panel 2 Ply,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,18x22 Poly Panel 2 Ply,2,3.87,M.L. Filters,,0,,,,18x22,18,22,,,8
+,Active,Inventory Part,1824-3ply,18x24 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,18x24 MZP 3-Ply Poly Panel,117,4.88,M.L. Filters,,6.43,,1824-3ply,,18x24,18,24,,,8
+,Active,Inventory Part,1825-3ply,18x25 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,18x25 MZP 3-Ply Poly Panel,50,4.98,M.L. Filters,,6.96,,1825-3ply,,18x25,18,25,,,8
+,Active,Inventory Part,1828-5050-G/W,18x28 Poly Panels 2 Ply,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,18x28 Poly Panels 2 Ply,3,4.38,M.L. Filters,,0,,,,18x28,18,28,,,8
+,Active,Inventory Part,1830-2Ply,18x30 2-Ply Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,18x30 2-Ply Panel,77,5.1,M.L. Filters,,8.82,,1830-2Ply,,18x30,18,30,,,8
+,Active,Inventory Part,1830-5050WW-P,18x30 2-Ply Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,18x30 2-Ply Panel,0,4.21,M.L. Filters,,7.44,,1830-5050WW-P,,18x30,18,30,,,8
+,Active,Inventory Part,1837-2ply,18x37 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,18x37 MZP 2-Ply Poly Panel,36,6.66,M.L. Filters,,0,,1837-2ply,,18x37,18,37,,,8
+,Active,Inventory Part,1921-5050WW-P,19x21 Poly Panels 2 ply,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,19x21 Poly Panels 2 ply,0,3.89,M.L. Filters,,0,,,,19x21,19,21,,,8
 ,Active,Inventory Part,20.20.2 Nova Pleat,20x20x2 NovaPleat No Wire,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x20x2 NovaPleat No Wire,36,4.5434,Commercial Filters Sales,,4.63,,20.20.2 Nova Pleat,,20x20x2,20,20,2,,
 ,Active,Inventory Part,20.24.2 Nova Pleat,20x24x2 NovaPleat No Wire,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x24x2 NovaPleat No Wire,36,5.047,Commercial Filters Sales,,8.42208,,20.24.2 Nova Pleat,,20x24x2,20,24,2,,
 ,Active,Inventory Part,20.25.1 Nova Pleat,20x25x1 NovaPleat No Wire,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x25x1 NovaPleat No Wire,32,836.52,Commercial Filters Sales,,5.39,,20.25.1 Nova Pleat,,20x25x1,20,25,1,,
 ,Active,Inventory Part,20.25.2 Nova Pleat,20x25x2 NovaPleat No Wire,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x25x2 NovaPleat No Wire,36,5.0465,Commercial Filters Sales,,4.67,,20.25.2 Nova Pleat,,20x25x2,20,25,2,,
-,Active,Inventory Part,20112-2Ply,"20x112 MERV 9, 2-Ply Poly Link w/Antimicrobial",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"20x112 MERV 9, 2-Ply Poly Link w/Antimicrobial",0,0,M.L. Filters,,43.85,,20112-2Ply,,20x112,20,112,,MERV 9,9
-,Active,Inventory Part,20117-2ply,"20x117 MERV 9, 2-Ply Poly Link w/Antimicrobial",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"20x117 MERV 9, 2-Ply Poly Link w/Antimicrobial",0,0,M.L. Filters,,44.77,,20117-2ply,,20x117,20,117,,MERV 9,9
-,Active,Inventory Part,20120-2Ply,20x120 2-Ply Poly Link,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x120 2-Ply Poly Link,-15,25.2,M.L. Filters,,38.77,,20120-2Ply,,20x120,20,120,,,
-,Active,Inventory Part,20120W - 3PLY - 5L,"20"" X 120"" 3 PLY LINK FILTER",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"20"" X 120"" 3 PLY LINK FILTER",0,23.8,M.L. Filters,,32.62,,20120W - 3PLY - 5L,,"20"" X 120""",20,120,,,
-,Active,Inventory Part,2020-2ply,20x20 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x20 2-Ply Poly Panel,1656,4,M.L. Filters,,6.15,,2020-2ply,,20x20,20,20,,,
-,Active,Inventory Part,2020-3ply,20x20 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x20 MZP 3-Ply Poly Panel,430,5.02,M.L. Filters,,6.19,,2020-3ply,,20x20,20,20,,,
-,Not-active,Inventory Part,2020-5050WW-P,20x20 2-Ply Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x20 2-Ply Panel,0,3.83,M.L. Filters,,8.14,,2020-5050WW-P,,20x20,20,20,,,
-,Active,Inventory Part,2022-2ply,20x22 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x22 2-Ply Poly Panel,259,4.36,M.L. Filters,,6.4,,2022-2ply,,20x22,20,22,,,
-,Active,Inventory Part,2022-3ply,2022-3ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,2022-3ply Poly Panel,70,4.74,M.L. Filters,,8.03,,2022-3ply,,,,,,,
-,Active,Inventory Part,2022-5050WW-P,20x22 2-Ply Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x22 2-Ply Panel,50,2.67,M.L. Filters,,7.44,,2022-5050WW-P,,20x22,20,22,,,
-,Active,Inventory Part,2024-2Ply,20x24 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x24 2-Ply Poly Panel,1067,4.69,M.L. Filters,,7.03,,2024-2Ply,,20x24,20,24,,,
-,Active,Inventory Part,2024-3ply,20x24 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x24 MZP 3-Ply Poly Panel,970,4.86,M.L. Filters,,7.36,,2024-3ply,,20x24,20,24,,,
-,Active,Inventory Part,2024-5050WW-P,20x24 Poly Panel 2 Ply,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x24 Poly Panel 2 Ply,56,4.14,M.L. Filters,,0,,,,20x24,20,24,,,
-,Active,Inventory Part,2025-2ply,20x25 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x25 2-Ply Poly Panel,1075,4.55,M.L. Filters,,6.8,,2025-2ply,,20x25,20,25,,,
-,Active,Inventory Part,2025-3ply,20x25 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x25 3-Ply Poly Panel,618,5.2,M.L. Filters,,7.09,,2025-3ply,,20x25,20,25,,,
-,Active,Inventory Part,2025-5050WW-P,20x25 Poly Panels 2 Ply,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x25 Poly Panels 2 Ply,0,4.1,M.L. Filters,,0,,,,20x25,20,25,,,
-,Active,Inventory Part,2026-2ply,20x26 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x26 2-Ply Poly Panel,54,5.27,M.L. Filters,,8.11,,2026-2ply,,20x26,20,26,,,
-,Active,Inventory Part,2029-3ply,20.5x29.25 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20.5 x 29.25 MZP 3-Ply Poly Panel,0,4.49,M.L. Filters,,9.6,,2029-3ply,,20.5x29.25,20.5,29.25,,,
-,Active,Inventory Part,2030-2Ply,20x30 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x30 2-Ply Poly Panel,276,5.65,M.L. Filters,,8.37,,2030-2Ply,,20x30,20,30,,,
-,Active,Inventory Part,2030-2Ply FB Gold Panel,20x30 2-Ply Gold Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x30 2-Ply Gold Panel,216,11.8,Fiber Bond Corporation,,0,,2030-2Ply FB Gold Panel,,20x30,20,30,,,
-,Active,Inventory Part,2030-3Ply,20x30 - 3 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x30 - 3 Ply Poly Panel,0,6.74,M.L. Filters,,7.83,,2030-3Ply,,20x30 ,20,30,,,
-,Active,Inventory Part,2030-5050WW-P,20x30 2-Ply Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x30 2-Ply Panel,0,4.42,M.L. Filters,,7.44,,2030-5050WW-P,,20x30,20,30,,,
-,Active,Inventory Part,2032-2Ply,20x32 2Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x32 2Ply Poly Panel,101,5.8,M.L. Filters,,8.92,,2032-2Ply,,20x32,20,32,,,
-,Active,Inventory Part,2032-3Ply,2032 - 3 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,2032 - 3 Ply Poly Panel,50,7.9,M.L. Filters,,7.93,,2032-3Ply,,,,,,,
-,Active,Inventory Part,2036-2ply,20x36 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x36 2-Ply Poly Panel,4,6.2,M.L. Filters,,9.53,,2036-2ply,,20x36,20,36,,,
-,Active,Inventory Part,2036-3ply,20x36 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x36 MZP 3-Ply Poly Panel,0,6.46,M.L. Filters,,9.95,,2036-3ply,,20x36,20,36,,,
-,Active,Inventory Part,2040-2Ply,20x40 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x40 2-Ply Poly Panel,8,9.05,M.L. Filters,,13.92,,2040-2Ply,,20x40,20,40,,,
-,Active,Inventory Part,2040-3Ply,20x40 3 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x40 3 Ply Poly Panel,0,0,M.L. Filters,,18.76,,2040-3Ply,,20x40,20,40,,,
-,Active,Inventory Part,2040W-2PLY-2L,20x40 2 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x40 2 Ply Poly Panel,0,0,M.L. Filters,,0,,,,20x40,20,40,,,
-,Active,Inventory Part,2050-2Ply,20x50 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x50 2-Ply Poly Panel,0,9.1,M.L. Filters,,14.33,,2050-2Ply,,20x50,20,50,,,
-,Active,Inventory Part,2050-3Ply,20x50 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x50 3-Ply Poly Panel,2,10.34,M.L. Filters,,17.55,,2050-3Ply,,20x50,20,50,,,
-,Active,Inventory Part,2060-2Ply,20x60 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x60 2-Ply Poly Panel,0,12,M.L. Filters,,18.46,,2060-2Ply,,20x60,20,60,,,
-,Active,Inventory Part,2060-3Ply,20x60 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x60 3-Ply Poly Panel,0,13.47,M.L. Filters,,21.02,,2060-3Ply,,20x60,20,60,,,
-,Active,Inventory Part,2064-2PLY-3L,20x64 2-Ply Poly Link,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x64 2-Ply Poly Link,0,8.97,M.L. Filters,,19.02,,2064-2PLY-3L,,20x64,20,64,,,
-,Active,Inventory Part,2072-2ply,20x72 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x72 2-Ply Poly Panel,5,13.41,M.L. Filters,,20.63,,2072-2ply,,20x72,20,72,,,
-,Active,Inventory Part,2072-3ply,20x72 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x72 MZP 3-Ply Poly Panel,0,14.76,M.L. Filters,,26.14,,2072-3ply,,20x72,20,72,,,
-,Active,Inventory Part,2075-2Ply,20x75 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x75 2-Ply Poly Panel,0,13.65,M.L. Filters,,21,,2075-2Ply,,20x75,20,75,,,
-,Active,Inventory Part,2075W-2PLY-3L,20x75 2 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,,0,0,M.L. Filters,,22.62,,,,20x75,20,75,,,
-,Active,Inventory Part,2075W-3PLY-3L,20x75 3 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,,0,0,M.L. Filters,,22.62,,,,20x75,20,75,,,
-,Active,Inventory Part,2080-2ply,20x80 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x80 2-Ply Poly Panel,-4,14.4,M.L. Filters,,22.45,,2080-2ply,,20x80,20,80,,,
-,Active,Inventory Part,2084-2PLY-4L,20x84 2-Ply Poly Link,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x84 2-Ply Poly Link,0,18.97,M.L. Filters,,37.94,,2084-2PLY-4L,,20x84,20,84,,,
+,Active,Inventory Part,20112-2Ply,"20x112 MERV 9, 2-Ply Poly Link w/Antimicrobial",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"20x112 MERV 9, 2-Ply Poly Link w/Antimicrobial",0,0,M.L. Filters,,43.85,,20112-2Ply,,20x112,20,112,,MERV 9,8
+,Active,Inventory Part,20117-2ply,"20x117 MERV 9, 2-Ply Poly Link w/Antimicrobial",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"20x117 MERV 9, 2-Ply Poly Link w/Antimicrobial",0,0,M.L. Filters,,44.77,,20117-2ply,,20x117,20,117,,MERV 9,8
+,Active,Inventory Part,20120-2Ply,20x120 2-Ply Poly Link,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x120 2-Ply Poly Link,-15,25.2,M.L. Filters,,38.77,,20120-2Ply,,20x120,20,120,,,8
+,Active,Inventory Part,20120W - 3PLY - 5L,"20"" X 120"" 3 PLY LINK FILTER",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"20"" X 120"" 3 PLY LINK FILTER",0,23.8,M.L. Filters,,32.62,,20120W - 3PLY - 5L,,"20"" X 120""",20,120,,,8
+,Active,Inventory Part,2020-2ply,20x20 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x20 2-Ply Poly Panel,1656,4,M.L. Filters,,6.15,,2020-2ply,,20x20,20,20,,,8
+,Active,Inventory Part,2020-3ply,20x20 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x20 MZP 3-Ply Poly Panel,430,5.02,M.L. Filters,,6.19,,2020-3ply,,20x20,20,20,,,8
+,Not-active,Inventory Part,2020-5050WW-P,20x20 2-Ply Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x20 2-Ply Panel,0,3.83,M.L. Filters,,8.14,,2020-5050WW-P,,20x20,20,20,,,8
+,Active,Inventory Part,2022-2ply,20x22 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x22 2-Ply Poly Panel,259,4.36,M.L. Filters,,6.4,,2022-2ply,,20x22,20,22,,,8
+,Active,Inventory Part,2022-3ply,2022-3ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,2022-3ply Poly Panel,70,4.74,M.L. Filters,,8.03,,2022-3ply,,,,,,,8
+,Active,Inventory Part,2022-5050WW-P,20x22 2-Ply Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x22 2-Ply Panel,50,2.67,M.L. Filters,,7.44,,2022-5050WW-P,,20x22,20,22,,,8
+,Active,Inventory Part,2024-2Ply,20x24 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x24 2-Ply Poly Panel,1067,4.69,M.L. Filters,,7.03,,2024-2Ply,,20x24,20,24,,,8
+,Active,Inventory Part,2024-3ply,20x24 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x24 MZP 3-Ply Poly Panel,970,4.86,M.L. Filters,,7.36,,2024-3ply,,20x24,20,24,,,8
+,Active,Inventory Part,2024-5050WW-P,20x24 Poly Panel 2 Ply,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x24 Poly Panel 2 Ply,56,4.14,M.L. Filters,,0,,,,20x24,20,24,,,8
+,Active,Inventory Part,2025-2ply,20x25 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x25 2-Ply Poly Panel,1075,4.55,M.L. Filters,,6.8,,2025-2ply,,20x25,20,25,,,8
+,Active,Inventory Part,2025-3ply,20x25 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x25 3-Ply Poly Panel,618,5.2,M.L. Filters,,7.09,,2025-3ply,,20x25,20,25,,,8
+,Active,Inventory Part,2025-5050WW-P,20x25 Poly Panels 2 Ply,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x25 Poly Panels 2 Ply,0,4.1,M.L. Filters,,0,,,,20x25,20,25,,,8
+,Active,Inventory Part,2026-2ply,20x26 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x26 2-Ply Poly Panel,54,5.27,M.L. Filters,,8.11,,2026-2ply,,20x26,20,26,,,8
+,Active,Inventory Part,2029-3ply,20.5x29.25 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20.5 x 29.25 MZP 3-Ply Poly Panel,0,4.49,M.L. Filters,,9.6,,2029-3ply,,20.5x29.25,20.5,29.25,,,8
+,Active,Inventory Part,2030-2Ply,20x30 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x30 2-Ply Poly Panel,276,5.65,M.L. Filters,,8.37,,2030-2Ply,,20x30,20,30,,,8
+,Active,Inventory Part,2030-2Ply FB Gold Panel,20x30 2-Ply Gold Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x30 2-Ply Gold Panel,216,11.8,Fiber Bond Corporation,,0,,2030-2Ply FB Gold Panel,,20x30,20,30,,,8
+,Active,Inventory Part,2030-3Ply,20x30 - 3 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x30 - 3 Ply Poly Panel,0,6.74,M.L. Filters,,7.83,,2030-3Ply,,20x30 ,20,30,,,8
+,Active,Inventory Part,2030-5050WW-P,20x30 2-Ply Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x30 2-Ply Panel,0,4.42,M.L. Filters,,7.44,,2030-5050WW-P,,20x30,20,30,,,8
+,Active,Inventory Part,2032-2Ply,20x32 2Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x32 2Ply Poly Panel,101,5.8,M.L. Filters,,8.92,,2032-2Ply,,20x32,20,32,,,8
+,Active,Inventory Part,2032-3Ply,2032 - 3 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,2032 - 3 Ply Poly Panel,50,7.9,M.L. Filters,,7.93,,2032-3Ply,,,20,32,,,8
+,Active,Inventory Part,2036-2ply,20x36 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x36 2-Ply Poly Panel,4,6.2,M.L. Filters,,9.53,,2036-2ply,,20x36,20,36,,,8
+,Active,Inventory Part,2036-3ply,20x36 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x36 MZP 3-Ply Poly Panel,0,6.46,M.L. Filters,,9.95,,2036-3ply,,20x36,20,36,,,8
+,Active,Inventory Part,2040-2Ply,20x40 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x40 2-Ply Poly Panel,8,9.05,M.L. Filters,,13.92,,2040-2Ply,,20x40,20,40,,,8
+,Active,Inventory Part,2040-3Ply,20x40 3 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x40 3 Ply Poly Panel,0,0,M.L. Filters,,18.76,,2040-3Ply,,20x40,20,40,,,8
+,Active,Inventory Part,2040W-2PLY-2L,20x40 2 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x40 2 Ply Poly Panel,0,0,M.L. Filters,,0,,,,20x40,20,40,,,8
+,Active,Inventory Part,2050-2Ply,20x50 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x50 2-Ply Poly Panel,0,9.1,M.L. Filters,,14.33,,2050-2Ply,,20x50,20,50,,,8
+,Active,Inventory Part,2050-3Ply,20x50 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x50 3-Ply Poly Panel,2,10.34,M.L. Filters,,17.55,,2050-3Ply,,20x50,20,50,,,8
+,Active,Inventory Part,2060-2Ply,20x60 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x60 2-Ply Poly Panel,0,12,M.L. Filters,,18.46,,2060-2Ply,,20x60,20,60,,,8
+,Active,Inventory Part,2060-3Ply,20x60 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x60 3-Ply Poly Panel,0,13.47,M.L. Filters,,21.02,,2060-3Ply,,20x60,20,60,,,8
+,Active,Inventory Part,2064-2PLY-3L,20x64 2-Ply Poly Link,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x64 2-Ply Poly Link,0,8.97,M.L. Filters,,19.02,,2064-2PLY-3L,,20x64,20,64,,,8
+,Active,Inventory Part,2072-2ply,20x72 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x72 2-Ply Poly Panel,5,13.41,M.L. Filters,,20.63,,2072-2ply,,20x72,20,72,,,8
+,Active,Inventory Part,2072-3ply,20x72 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x72 MZP 3-Ply Poly Panel,0,14.76,M.L. Filters,,26.14,,2072-3ply,,20x72,20,72,,,8
+,Active,Inventory Part,2075-2Ply,20x75 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x75 2-Ply Poly Panel,0,13.65,M.L. Filters,,21,,2075-2Ply,,20x75,20,75,,,8
+,Active,Inventory Part,2075W-2PLY-3L,20x75 2 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,,0,0,M.L. Filters,,22.62,,,,20x75,20,75,,,8
+,Active,Inventory Part,2075W-3PLY-3L,20x75 3 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,,0,0,M.L. Filters,,22.62,,,,20x75,20,75,,,8
+,Active,Inventory Part,2080-2ply,20x80 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x80 2-Ply Poly Panel,-4,14.4,M.L. Filters,,22.45,,2080-2ply,,20x80,20,80,,,8
+,Active,Inventory Part,2084-2PLY-4L,20x84 2-Ply Poly Link,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x84 2-Ply Poly Link,0,18.97,M.L. Filters,,37.94,,2084-2PLY-4L,,20x84,20,84,,,8
 ,Active,Inventory Part,2094-2Ply,"20x94 MERV 9, 2-Ply Poly Link w/Antimicrobial",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"20x94 MERV 9, 2-Ply Poly Link w/Antimicrobial",0,0,M.L. Filters,,39.94,,2094-2Ply,,20x94,20,94,,MERV 9,9
 ,Active,Inventory Part,2098-2Ply,"20x98 MERV 9, 2-Ply Poly Link w/Antimicrobial",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"20x98 MERV 9, 2-Ply Poly Link w/Antimicrobial",0,0,M.L. Filters,,36.85,,2098-2Ply,,20x98,20,98,,MERV 9,9
-,Active,Inventory Part,2121-2ply,21x21 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,21x21 2-Ply Poly Panel,2,5.6,M.L. Filters,,7.34,,2121-2ply,,21x21,21,21,,,
-,Active,Inventory Part,2121-3ply,21x21 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,21x21 MZP 3-Ply Poly Panel,0,5.6,M.L. Filters,,7.34,,2121-3ply,,21x21,21,21,,,
-,Active,Inventory Part,2123-2ply,21x23 1/2 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,21x23 1/2 2-Ply Poly Panel,34,5.7,M.L. Filters,,7.65,,2123-2ply,,21x23 1/2,21,23.5,,,
-,Active,Inventory Part,2123-3ply,21x23 1/2 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,21x23 1/2 3-Ply Poly Panel,0,5.6,M.L. Filters,,9.83,,2123-3ply,,21x23 1/2,21,23.5,,,
-,Active,Inventory Part,2224-2PLY,22x24 2-Ply Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,22x24 2-Ply Panel,64,4.97,M.L. Filters,,7.44,,2224-2PLY,,22x24,22,24,,,
-,Active,Inventory Part,2226-2ply,22x26 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,22x26 2-Ply Poly Panel,0,5.8,M.L. Filters,,9.22,,2226-2ply,,22x26,22,26,,,
-,Not-active,Inventory Part,2236-5050WW-P,22x36 2-Ply Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,22x36 2-Ply Panel,0,2.67,M.L. Filters,,7.44,,2236-5050WW-P,,22x36,22,36,,,
+,Active,Inventory Part,2121-2ply,21x21 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,21x21 2-Ply Poly Panel,2,5.6,M.L. Filters,,7.34,,2121-2ply,,21x21,21,21,,,8
+,Active,Inventory Part,2121-3ply,21x21 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,21x21 MZP 3-Ply Poly Panel,0,5.6,M.L. Filters,,7.34,,2121-3ply,,21x21,21,21,,,8
+,Active,Inventory Part,2123-2ply,21x23 1/2 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,21x23 1/2 2-Ply Poly Panel,34,5.7,M.L. Filters,,7.65,,2123-2ply,,21x23 1/2,21,23.5,,,8
+,Active,Inventory Part,2123-3ply,21x23 1/2 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,21x23 1/2 3-Ply Poly Panel,0,5.6,M.L. Filters,,9.83,,2123-3ply,,21x23 1/2,21,23.5,,,8
+,Active,Inventory Part,2224-2PLY,22x24 2-Ply Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,22x24 2-Ply Panel,64,4.97,M.L. Filters,,7.44,,2224-2PLY,,22x24,22,24,,,8
+,Active,Inventory Part,2226-2ply,22x26 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,22x26 2-Ply Poly Panel,0,5.8,M.L. Filters,,9.22,,2226-2ply,,22x26,22,26,,,8
+,Not-active,Inventory Part,2236-5050WW-P,22x36 2-Ply Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,22x36 2-Ply Panel,0,2.67,M.L. Filters,,7.44,,2236-5050WW-P,,22x36,22,36,,,8
 ,Active,Inventory Part,24.24.2 Nova Pleat,24x24x2 NovaPleat No Wire,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x24x2 NovaPleat No Wire,0,6.35,Commercial Filters Sales,,6.41,,24.24.2 Nova Pleat,,24x24x2,24,24,2,,
-,Active,Inventory Part,24105-2Ply,24x105 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x105 2-Ply Poly Panel,0,,M.L. Filters,,37.24,,24105-2Ply,,24x105,24,105,,,
-,Active,Inventory Part,24110-2ply,24x110 2Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x110 2Ply Poly Panel,2,24.85,M.L. Filters,,40.24,,24110-2ply,,24x110,24,110,,,
-,Active,Inventory Part,24110-3ply,24x110 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x110 3-Ply Poly Panel,0,34.19,M.L. Filters,,48.84,,24110-3ply,,24x110,24,110,,,
-,Active,Inventory Part,24114-2ply,24x114 2 Ply Poly Link,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x114 2 Ply Poly Link,0,,M.L. Filters,,33.55,,24114-2ply,,24x114,24,114,,,
-,Active,Inventory Part,24120-2Ply,120x24 2-Ply Poly Link,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,120x24 2-Ply Poly Link,27,24.85,M.L. Filters,,38.23,,24120-2Ply,,120x24,120,24,,,
-,Active,Inventory Part,24120-3ply,24x120 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x120 MZP 3-Ply Poly Panel,0,32.66,M.L. Filters,,50.24,,24120-3ply,,24x120,24,120,,,
-,Active,Inventory Part,24120W-3PLY-5L,24x120 3 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,,0,0,M.L. Filters,,36.78,,,,24x120,24,120,,,
-,Active,Inventory Part,24140W-2PLY-7L,24x140 2 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x140 2 Ply Poly Panel,0,0,M.L. Filters,,37.02,,,,24x140,24,140,,,
-,Active,Inventory Part,24140W-3PLY-7L,24x140 3 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x140 3 Ply Poly Panel,0,0,M.L. Filters,,37.02,,,,24x140,24,140,,,
-,Active,Inventory Part,24144-2PLY-6L,24x144 2 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x144 2 Ply Poly Panel,0,0,M.L. Filters,,40.32,,,,24x144,24,144,,,
-,Active,Inventory Part,24144-3PLY-6L,24x144 3 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x144 3 Ply Poly Panel,0,0,M.L. Filters,,40.32,,,,24x144,24,144,,,
-,Active,Inventory Part,24192W-2PLY-6L,24x192 2 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x192 2 Ply Poly Panel,0,0,M.L. Filters,,53.76,,,,24x192,24,192,,,
-,Active,Inventory Part,24192W-3PLY-6L,24x192 3 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x192 3 Ply Poly Panel,0,0,M.L. Filters,,53.76,,,,24x192,24,192,,,
-,Active,Inventory Part,2424-2ply,24x24 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x24 MZP 2-Ply Poly Panel,3547,5.74,M.L. Filters,,7.75,,2424-2ply,,24x24,24,24,,,
-,Active,Inventory Part,2424-3ply,24x24 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x24 MZP 3-Ply Poly Panel,1988,5.6,M.L. Filters,,7.67,,2424-3ply,,24x24,24,24,,,
-,Active,Inventory Part,2424-5050WW-P,24x24 Poly Panels 2 Ply,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x24 Poly Panels 2 Ply,0,4.68,M.L. Filters,,0,,,,24x24,24,24,,,
-,Active,Inventory Part,2424W-3PLY-P,24x24-  3 Ply Poly Panels,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x24-  3 Ply Poly Panels,0,0,M.L. Filters,,0,,,,24x24,24,24,,,
-,Active,Inventory Part,2430-2ply,24x30 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x30 MZP 2-Ply Poly Panel,0,6.02,M.L. Filters,,9.56,,2430-2ply,,24x30,24,30,,,
-,Active,Inventory Part,2435-2ply,24 1/2 x 35 1/2  2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24 1/2 x 35 1/2  2-Ply Poly Panel,0,8.5,M.L. Filters,,13.08,,2435-2ply,,24 1/2 x 35 1/2 ,24.5,35.5,,,
-,Active,Inventory Part,2448-2ply,24x48 2 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x48 2 Ply Poly Panel,-4,9.94,M.L. Filters,,16.83,,2448-2ply,,24x48,24,48,,,
-,Active,Inventory Part,2448W - 3PLY - 2L,24x48 3 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x48 3 Ply Poly Panel,0,12.12,M.L. Filters,,12.12,,2448W - 3PLY - 2L,,24x48,24,48,,,
-,Active,Inventory Part,2460-2Ply,24x60 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x60 2-Ply Poly Panel,0,13.8,M.L. Filters,,21.23,,2460-2Ply,,24x60,24,60,,,
-,Active,Inventory Part,2460-3Ply,24x60 3-Ply Poly Panel Special,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x60 3-Ply Poly Panel Special,0,16.8,M.L. Filters,,26.14,,2460-3Ply,,24x60,24,60,,,
-,Active,Inventory Part,2472-3Ply,24x72 3-Ply Poly Panel Special,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x72 3-Ply Poly Panel Special,0,16.8,M.L. Filters,,25.73,,2472-3Ply,,24x72,24,72,,,
-,Active,Inventory Part,2480-3ply-4L,"24"" X 80"" 3 PLY LINK FILTER",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"24"" X 80"" 3 PLY LINK FILTER ( 4 PANELS 24X20)",0,20.44,M.L. Filters,,31.44,,2480-3ply-4L,,"24"" X 80""",24,80,,,
-,Active,Inventory Part,2484-3ply,24x84 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x84 MZP 3-Ply Poly Panel,0,22.64,M.L. Filters,,34.85,,2484-3ply,,24x84,24,84,,,
-,Active,Inventory Part,2496-2ply,24x96 2Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x96 2Ply Poly Panel,6,19.88,M.L. Filters,,31.62,,2496-2ply,,24x96,24,96,,,
-,Active,Inventory Part,2496-3Ply,24x96 3-Ply Poly Panel Special,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x96 3-Ply Poly Panel Special,0,22.4,M.L. Filters,,33.2,,2496-3Ply,,24x96,24,96,,,
-,Active,Inventory Part,2496W - 3PLY - 4L,"24"" X 96"" 3 PLY LINK FILTER",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"24"" X 96"" 3 PLY LINK FILTER",0,22.12,M.L. Filters,,34.03,,2496W - 3PLY - 4L,,"24"" X 96""",24,96,,,
-,Active,Inventory Part,251/2361/2-2ply,24 1/2 x 35 1/2  2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24 1/2 x 35 1/2  2-Ply Poly Panel,0,9.44,M.L. Filters,,14.82,,251/2361/2-2ply,,24 1/2 x 35 1/2 ,24.5,35.5,,,
-,Active,Inventory Part,25100-2ply,25x100  2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x100  2-Ply Poly Panel,-2,23.77,M.L. Filters,,36.86,,25100-2ply,,25x100 ,25,100,,,
-,Active,Inventory Part,25140-2PLY-7L,25x140 2-Ply Poly Link-7L,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x140 2-Ply Poly Link-7L,-2,0,M.L. Filters,,65.33,,25140-2PLY-7L,,25x140,25,140,,,
-,Active,Inventory Part,2525-2Ply,25x25 2-Ply Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x25 2-Ply Panel,382,5.35,M.L. Filters,,8.65,,2525-2Ply,,25x25,25,25,,,
-,Active,Inventory Part,2525-3ply,25x25 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x25 MZP 3-Ply Poly Panel,230,6.53,M.L. Filters,,8.08,,2525-3ply,,25x25,25,25,,,
-,Active,Inventory Part,2527-2Ply,25x27 2-Ply Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x27 2-Ply Panel,67,5.62,M.L. Filters,,9.66,,2527-2Ply,,25x27,25,27,,,
-,Active,Inventory Part,2527-5050WW-P,25x27 2-Ply Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x27 2-Ply Panel,0,4.83,M.L. Filters,,7.44,,2527-5050WW-P,,25x27,25,27,,,
-,Active,Inventory Part,2530-2ply,25x30 MZP 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x30 MZP 2-Ply Poly Panel,0,6.29,M.L. Filters,,5.01,,2530-2ply,,25x30,25,30,,,
-,Active,Inventory Part,2532-2ply,25x32 2ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x32 2ply Poly Panel,37,8.12,M.L. Filters,,12.74,,2532-2ply,,25x32,25,32,,,
-,Active,Inventory Part,2532-3ply,25x32-3ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x32-3ply Poly Panel,0,9,M.L. Filters,,14.14,,2532-3ply,,25x32,25,32,,,
-,Active,Inventory Part,2548-2ply,25x48 2 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x48 2 Ply Poly Panel,3,11.01,M.L. Filters,,16.83,,2448-2ply,,25x48,25,48,,,
-,Active,Inventory Part,2548-3ply,25x48 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x48 3-Ply Poly Panel,2,,M.L. Filters,,19.3,,2548-3ply,,25x48,25,48,,,
-,Active,Inventory Part,2552-2ply,25x52 2ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x52 2ply Poly Panel,0,11.05,M.L. Filters,,17.32,,2552-2ply,,25x52,25,52,,,
-,Active,Inventory Part,2552-3Ply,25x52 3-Ply Poly Panel Special,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x52 3-Ply Poly Panel Special,0,16.8,M.L. Filters,,26.14,,2552-3Ply,,25x52,25,52,,,
-,Active,Inventory Part,2560-2ply,25x60 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x60 2-Ply Poly Panel,21,15.28,M.L. Filters,,23.5,,2560-2ply,,25x60,25,60,,,
-,Active,Inventory Part,2560-3ply,25x60 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x60 3-Ply Poly Panel,0,,M.L. Filters,,21.96,,2560-3ply,,25x60,25,60,,,
+,Active,Inventory Part,24105-2Ply,24x105 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x105 2-Ply Poly Panel,0,,M.L. Filters,,37.24,,24105-2Ply,,24x105,24,105,,,8
+,Active,Inventory Part,24110-2ply,24x110 2Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x110 2Ply Poly Panel,2,24.85,M.L. Filters,,40.24,,24110-2ply,,24x110,24,110,,,8
+,Active,Inventory Part,24110-3ply,24x110 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x110 3-Ply Poly Panel,0,34.19,M.L. Filters,,48.84,,24110-3ply,,24x110,24,110,,,8
+,Active,Inventory Part,24114-2ply,24x114 2 Ply Poly Link,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x114 2 Ply Poly Link,0,,M.L. Filters,,33.55,,24114-2ply,,24x114,24,114,,,8
+,Active,Inventory Part,24120-2Ply,120x24 2-Ply Poly Link,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,120x24 2-Ply Poly Link,27,24.85,M.L. Filters,,38.23,,24120-2Ply,,120x24,120,24,,,8
+,Active,Inventory Part,24120-3ply,24x120 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x120 MZP 3-Ply Poly Panel,0,32.66,M.L. Filters,,50.24,,24120-3ply,,24x120,24,120,,,8
+,Active,Inventory Part,24120W-3PLY-5L,24x120 3 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,,0,0,M.L. Filters,,36.78,,,,24x120,24,120,,,8
+,Active,Inventory Part,24140W-2PLY-7L,24x140 2 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x140 2 Ply Poly Panel,0,0,M.L. Filters,,37.02,,,,24x140,24,140,,,8
+,Active,Inventory Part,24140W-3PLY-7L,24x140 3 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x140 3 Ply Poly Panel,0,0,M.L. Filters,,37.02,,,,24x140,24,140,,,8
+,Active,Inventory Part,24144-2PLY-6L,24x144 2 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x144 2 Ply Poly Panel,0,0,M.L. Filters,,40.32,,,,24x144,24,144,,,8
+,Active,Inventory Part,24144-3PLY-6L,24x144 3 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x144 3 Ply Poly Panel,0,0,M.L. Filters,,40.32,,,,24x144,24,144,,,8
+,Active,Inventory Part,24192W-2PLY-6L,24x192 2 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x192 2 Ply Poly Panel,0,0,M.L. Filters,,53.76,,,,24x192,24,192,,,8
+,Active,Inventory Part,24192W-3PLY-6L,24x192 3 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x192 3 Ply Poly Panel,0,0,M.L. Filters,,53.76,,,,24x192,24,192,,,8
+,Active,Inventory Part,2424-2ply,24x24 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x24 MZP 2-Ply Poly Panel,3547,5.74,M.L. Filters,,7.75,,2424-2ply,,24x24,24,24,,,8
+,Active,Inventory Part,2424-3ply,24x24 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x24 MZP 3-Ply Poly Panel,1988,5.6,M.L. Filters,,7.67,,2424-3ply,,24x24,24,24,,,8
+,Active,Inventory Part,2424-5050WW-P,24x24 Poly Panels 2 Ply,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x24 Poly Panels 2 Ply,0,4.68,M.L. Filters,,0,,,,24x24,24,24,,,8
+,Active,Inventory Part,2424W-3PLY-P,24x24-  3 Ply Poly Panels,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x24-  3 Ply Poly Panels,0,0,M.L. Filters,,0,,,,24x24,24,24,,,8
+,Active,Inventory Part,2430-2ply,24x30 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x30 MZP 2-Ply Poly Panel,0,6.02,M.L. Filters,,9.56,,2430-2ply,,24x30,24,30,,,8
+,Active,Inventory Part,2435-2ply,24 1/2 x 35 1/2  2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24 1/2 x 35 1/2  2-Ply Poly Panel,0,8.5,M.L. Filters,,13.08,,2435-2ply,,24 1/2 x 35 1/2 ,24.5,35.5,,,8
+,Active,Inventory Part,2448-2ply,24x48 2 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x48 2 Ply Poly Panel,-4,9.94,M.L. Filters,,16.83,,2448-2ply,,24x48,24,48,,,8
+,Active,Inventory Part,2448W - 3PLY - 2L,24x48 3 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x48 3 Ply Poly Panel,0,12.12,M.L. Filters,,12.12,,2448W - 3PLY - 2L,,24x48,24,48,,,8
+,Active,Inventory Part,2460-2Ply,24x60 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x60 2-Ply Poly Panel,0,13.8,M.L. Filters,,21.23,,2460-2Ply,,24x60,24,60,,,8
+,Active,Inventory Part,2460-3Ply,24x60 3-Ply Poly Panel Special,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x60 3-Ply Poly Panel Special,0,16.8,M.L. Filters,,26.14,,2460-3Ply,,24x60,24,60,,,8
+,Active,Inventory Part,2472-3Ply,24x72 3-Ply Poly Panel Special,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x72 3-Ply Poly Panel Special,0,16.8,M.L. Filters,,25.73,,2472-3Ply,,24x72,24,72,,,8
+,Active,Inventory Part,2480-3ply-4L,"24"" X 80"" 3 PLY LINK FILTER",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"24"" X 80"" 3 PLY LINK FILTER ( 4 PANELS 24X20)",0,20.44,M.L. Filters,,31.44,,2480-3ply-4L,,"24"" X 80""",24,80,,,8
+,Active,Inventory Part,2484-3ply,24x84 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x84 MZP 3-Ply Poly Panel,0,22.64,M.L. Filters,,34.85,,2484-3ply,,24x84,24,84,,,8
+,Active,Inventory Part,2496-2ply,24x96 2Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x96 2Ply Poly Panel,6,19.88,M.L. Filters,,31.62,,2496-2ply,,24x96,24,96,,,8
+,Active,Inventory Part,2496-3Ply,24x96 3-Ply Poly Panel Special,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x96 3-Ply Poly Panel Special,0,22.4,M.L. Filters,,33.2,,2496-3Ply,,24x96,24,96,,,8
+,Active,Inventory Part,2496W - 3PLY - 4L,"24"" X 96"" 3 PLY LINK FILTER",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"24"" X 96"" 3 PLY LINK FILTER",0,22.12,M.L. Filters,,34.03,,2496W - 3PLY - 4L,,"24"" X 96""",24,96,,,8
+,Active,Inventory Part,251/2361/2-2ply,24 1/2 x 35 1/2  2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24 1/2 x 35 1/2  2-Ply Poly Panel,0,9.44,M.L. Filters,,14.82,,251/2361/2-2ply,,24 1/2 x 35 1/2 ,24.5,35.5,,,8
+,Active,Inventory Part,25100-2ply,25x100  2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x100  2-Ply Poly Panel,-2,23.77,M.L. Filters,,36.86,,25100-2ply,,25x100 ,25,100,,,8
+,Active,Inventory Part,25140-2PLY-7L,25x140 2-Ply Poly Link-7L,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x140 2-Ply Poly Link-7L,-2,0,M.L. Filters,,65.33,,25140-2PLY-7L,,25x140,25,140,,,8
+,Active,Inventory Part,2525-2Ply,25x25 2-Ply Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x25 2-Ply Panel,382,5.35,M.L. Filters,,8.65,,2525-2Ply,,25x25,25,25,,,8
+,Active,Inventory Part,2525-3ply,25x25 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x25 MZP 3-Ply Poly Panel,230,6.53,M.L. Filters,,8.08,,2525-3ply,,25x25,25,25,,,8
+,Active,Inventory Part,2527-2Ply,25x27 2-Ply Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x27 2-Ply Panel,67,5.62,M.L. Filters,,9.66,,2527-2Ply,,25x27,25,27,,,8
+,Active,Inventory Part,2527-5050WW-P,25x27 2-Ply Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x27 2-Ply Panel,0,4.83,M.L. Filters,,7.44,,2527-5050WW-P,,25x27,25,27,,,8
+,Active,Inventory Part,2530-2ply,25x30 MZP 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x30 MZP 2-Ply Poly Panel,0,6.29,M.L. Filters,,5.01,,2530-2ply,,25x30,25,30,,,8
+,Active,Inventory Part,2532-2ply,25x32 2ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x32 2ply Poly Panel,37,8.12,M.L. Filters,,12.74,,2532-2ply,,25x32,25,32,,,8
+,Active,Inventory Part,2532-3ply,25x32-3ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x32-3ply Poly Panel,0,9,M.L. Filters,,14.14,,2532-3ply,,25x32,25,32,,,8
+,Active,Inventory Part,2548-2ply,25x48 2 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x48 2 Ply Poly Panel,3,11.01,M.L. Filters,,16.83,,2448-2ply,,25x48,25,48,,,8
+,Active,Inventory Part,2548-3ply,25x48 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x48 3-Ply Poly Panel,2,,M.L. Filters,,19.3,,2548-3ply,,25x48,25,48,,,8
+,Active,Inventory Part,2552-2ply,25x52 2ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x52 2ply Poly Panel,0,11.05,M.L. Filters,,17.32,,2552-2ply,,25x52,25,52,,,8
+,Active,Inventory Part,2552-3Ply,25x52 3-Ply Poly Panel Special,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x52 3-Ply Poly Panel Special,0,16.8,M.L. Filters,,26.14,,2552-3Ply,,25x52,25,52,,,8
+,Active,Inventory Part,2560-2ply,25x60 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x60 2-Ply Poly Panel,21,15.28,M.L. Filters,,23.5,,2560-2ply,,25x60,25,60,,,8
+,Active,Inventory Part,2560-3ply,25x60 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x60 3-Ply Poly Panel,0,,M.L. Filters,,21.96,,2560-3ply,,25x60,25,60,,,8
 ,Active,Inventory Part,2563-2Ply,"25x63 MERV 9, 2-Ply Poly Link w/Antimicrobial",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"25x63 MERV 9, 2-Ply Poly Link w/Antimicrobial",0,0,M.L. Filters,,29.75,,2563-2Ply,,25x63,25,63,,MERV 9,9
-,Active,Inventory Part,2575-2ply,25x75 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x75 2-Ply Poly Panel,-2,,M.L. Filters,,38.93,,2575-2ply,,25x75,25,75,,,
+,Active,Inventory Part,2575-2ply,25x75 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x75 2-Ply Poly Panel,-2,,M.L. Filters,,38.93,,2575-2ply,,25x75,25,75,,,8
 ,Active,Inventory Part,2578-2Ply,"25x78 MERV 9, 2-Ply Poly Link w/Antimicrobial",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"25x78 MERV 9, 2-Ply Poly Link w/Antimicrobial",0,0,M.L. Filters,,38.93,,2578-2Ply,,25x78,25,78,,MERV 9,9
-,Active,Inventory Part,2590-2PLY-5L,25x90 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x90 2-Ply Poly Panel,-8,0,M.L. Filters,,42.36,,2590-2PLY-5L,,25x90,25,90,,,
-,Active,Inventory Part,2596W-2PLY-4L,25x96 2 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x96 2 Ply Poly Panel,0,0,M.L. Filters,,33.52,,,,25x96,25,96,,,
-,Active,Inventory Part,2596W-3PLY-4L,25x96 3 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x96 3 Ply Poly Panel,0,0,M.L. Filters,,33.52,,,,25x96,25,96,,,
+,Active,Inventory Part,2590-2PLY-5L,25x90 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x90 2-Ply Poly Panel,-8,0,M.L. Filters,,42.36,,2590-2PLY-5L,,25x90,25,90,,,8
+,Active,Inventory Part,2596W-2PLY-4L,25x96 2 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x96 2 Ply Poly Panel,0,0,M.L. Filters,,33.52,,,,25x96,25,96,,,8
+,Active,Inventory Part,2596W-3PLY-4L,25x96 3 Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,25x96 3 Ply Poly Panel,0,0,M.L. Filters,,33.52,,,,25x96,25,96,,,8
 ,Active,Inventory Part,2597-2Ply,"25x97 MERV 9, 2-Ply Poly Link w/Antimicrobial",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"25x97 MERV 9, 2-Ply Poly Link w/Antimicrobial",0,0,M.L. Filters,,45.35,,2597-2Ply,,25x97,25,97,,MERV 9,9
-,Active,Inventory Part,2634-2Ply,26x34 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,26x34 2-Ply Poly Panel,29,9.55,M.L. Filters,,25.26,,2634-2Ply,,26x34,26,34,,,
-,Active,Inventory Part,280001224,12x24 2-Ply FB Gold Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x24 2-Ply FB Gold Panel,1496,2.89,Fiber Bond Corporation,,4.23,,280001224,,12x24,12,24,,,
-,Active,Inventory Part,280001625,16x25 2-Ply Gold Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x25 2-Ply Gold Panel,24,3.58,Fiber Bond Corporation,,5.23,,280001625,,16x25,16,25,,,
-,Active,Inventory Part,280002020,20x20 2-Ply Gold Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x20 2-Ply Gold Panel,595,3.69,Fiber Bond Corporation,,5.4,,280002020,,20x20,20,20,,,
-,Active,Inventory Part,280002024,20x24 2-Ply Gold Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x24 2-Ply Gold Panel,515,4.04,Fiber Bond Corporation,,5.92,,280002024,,20x24,20,24,,,
-,Active,Inventory Part,280002025,20x25 2-Ply Gold Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x25 2-Ply Gold Panel,504,4.2,Fiber Bond Corporation,,6.15,,280002025,,20x25,20,25,,,
-,Active,Inventory Part,280002424,24x24 2-Ply Gold Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x24 2-Ply Gold Panel,4758,4.72,Fiber Bond Corporation,,6.9,,280002424,,24x24,24,24,,,
-,Active,Inventory Part,2829-3ply,28.5x29.5 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,28.5x29.5 3-Ply Poly Panel,0,4.49,M.L. Filters,,14.6,,2829-3ply,,28.5x29.5,28.5,29.5,,,
-,Active,Inventory Part,3045-3ply,30x45 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,30x45 3-Ply Poly Panel,0,,M.L. Filters,,21.96,,3045-3ply,,30x45,30,45,,,
+,Active,Inventory Part,2634-2Ply,26x34 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,26x34 2-Ply Poly Panel,29,9.55,M.L. Filters,,25.26,,2634-2Ply,,26x34,26,34,,,8
+,Active,Inventory Part,280001224,12x24 2-Ply FB Gold Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x24 2-Ply FB Gold Panel,1496,2.89,Fiber Bond Corporation,,4.23,,280001224,,12x24,12,24,,,8
+,Active,Inventory Part,280001625,16x25 2-Ply Gold Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,16x25 2-Ply Gold Panel,24,3.58,Fiber Bond Corporation,,5.23,,280001625,,16x25,16,25,,,8
+,Active,Inventory Part,280002020,20x20 2-Ply Gold Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x20 2-Ply Gold Panel,595,3.69,Fiber Bond Corporation,,5.4,,280002020,,20x20,20,20,,,8
+,Active,Inventory Part,280002024,20x24 2-Ply Gold Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x24 2-Ply Gold Panel,515,4.04,Fiber Bond Corporation,,5.92,,280002024,,20x24,20,24,,,8
+,Active,Inventory Part,280002025,20x25 2-Ply Gold Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20x25 2-Ply Gold Panel,504,4.2,Fiber Bond Corporation,,6.15,,280002025,,20x25,20,25,,,8
+,Active,Inventory Part,280002424,24x24 2-Ply Gold Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x24 2-Ply Gold Panel,4758,4.72,Fiber Bond Corporation,,6.9,,280002424,,24x24,24,24,,,8
+,Active,Inventory Part,2829-3ply,28.5x29.5 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,28.5x29.5 3-Ply Poly Panel,0,4.49,M.L. Filters,,14.6,,2829-3ply,,28.5x29.5,28.5,29.5,,,8
+,Active,Inventory Part,3045-3ply,30x45 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,30x45 3-Ply Poly Panel,0,,M.L. Filters,,21.96,,3045-3ply,,30x45,30,45,,,8
 ,Active,Inventory Part,331-946-148,24x24x12 VARICEL SH MERV 14,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x24x12 VARICEL SH MERV 14,0,99.43,AAF/Flanders Corporation,,153.96,,331-946-148,,24x24x12,24,24,12,MERV 14,14
 ,Active,Inventory Part,331-946-150,12x24x12 VARICEL SH MERV 14,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,12x24x12 VARICEL SH MERV 14,0,68.51,AAF/Flanders Corporation,,97.88,,331-946-150,,12x24x12,12,24,12,MERV 14,14
 ,Active,Inventory Part,40-2160,"102"" Galv. Strut",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"102"" Galv. Strut",9,259.2,"UVDI UltraViolet Devices, Inc.",,784,,40-2160,,,,,,,
@@ -272,18 +272,18 @@ Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Accou
 ,Active,Inventory Part,40-6334-05,"UV Bulb 33"" Standard Dual",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"UV Bulb 33"" Standard Dual",0,385.2,"UVDI UltraViolet Devices, Inc.",,784,,40-6334-05,,,,,,,
 ,Active,Inventory Part,40-6611-20,"40-6611-20 Single 61"" Encapsulated..V MAX SST. 61"" w/ 10' lead",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"40-6611-20 Single 61"" Encapsulated..V MAX SST. 61"" w/ 10' lead",0,470.4,"UVDI UltraViolet Devices, Inc.",,784,,40-6611-20,,,,,,,
 ,Active,Inventory Part,40-6612-05,"UV Bulb 61"" Standard Single",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"UV Bulb 61"" Standard Single",0,366,"UVDI UltraViolet Devices, Inc.",,784,,40-6612-05,,,,,,,
-,Active,Inventory Part,4040-2ply,40x40 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,40x40 2-Ply Poly Panel,0,16.36,M.L. Filters,,25.16,,4040-2ply,,40x40,40,40,,,
+,Active,Inventory Part,4040-2ply,40x40 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,40x40 2-Ply Poly Panel,0,16.36,M.L. Filters,,25.16,,4040-2ply,,40x40,40,40,,,8
 ,Active,Inventory Part,42-1000-02,20 AMP Door Switch,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,20 AMP Door Switch,0,481.8,"UVDI UltraViolet Devices, Inc.",,784,,42-1000-02,,,,,,,
-,Active,Inventory Part,4250-2Ply,42x50 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,42x50 2-Ply Poly Panel,9,14.38,M.L. Filters,,35.32,,4250-2Ply,,42x50,42,50,,,
-,Active,Inventory Part,810-2ply,8x10 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,8x10 2-Ply Poly Panel,50,3.28,M.L. Filters,,,,810-2ply,,8x10,8,10,,,
-,Active,Inventory Part,814-2ply,8x14 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,8x14 2-Ply Poly Panel,25,3.41,M.L. Filters,,,,814-2ply,,8x14,8,14,,,
-,Active,Inventory Part,820-2ply,8x20 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,8x20 2-Ply Poly Panel,0,3.51,M.L. Filters,,5.4,,820-2ply,,8x20,8,20,,,
-,Active,Inventory Part,820-3ply,8x20 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,8x20 MZP 3-Ply Poly Panel,0,3.69,M.L. Filters,,5.27,,820-3ply,,8x20,8,20,,,
-,Active,Inventory Part,934-2ply,9x34 Special 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,9x34 Special 2-Ply Poly Panel,0,6.48,M.L. Filters,,9.96,,934-2ply,,9x34,9,34,,,
-,Active,Inventory Part,961-3ply,9x61.25 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,9x61.25 3-Ply Poly Panel,0,4.49,M.L. Filters,,16.3,,961-3ply,,9x61.25,9,61.25,,,
-,Active,Inventory Part,962-2ply,9x62 MZP 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,9x62 MZP 2-Ply Poly Panel,8,10.04,M.L. Filters,,8.2,,962-2ply,,9x62,9,62,,,
-,Active,Inventory Part,963-2ply,9x63 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,9x63 2-Ply Poly Panel,16,11.2,M.L. Filters,,16.42,,963-2ply,,9x63,9,63,,,
-,Active,Inventory Part,99-2ply,9x9x1 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,9x9x1 2-Ply Poly Panel,0,5,M.L. Filters,,5,,99-2ply,,9x9x1,9,9,1,,
+,Active,Inventory Part,4250-2Ply,42x50 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,42x50 2-Ply Poly Panel,9,14.38,M.L. Filters,,35.32,,4250-2Ply,,42x50,42,50,,,8
+,Active,Inventory Part,810-2ply,8x10 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,8x10 2-Ply Poly Panel,50,3.28,M.L. Filters,,,,810-2ply,,8x10,8,10,,,8
+,Active,Inventory Part,814-2ply,8x14 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,8x14 2-Ply Poly Panel,25,3.41,M.L. Filters,,,,814-2ply,,8x14,8,14,,,8
+,Active,Inventory Part,820-2ply,8x20 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,8x20 2-Ply Poly Panel,0,3.51,M.L. Filters,,5.4,,820-2ply,,8x20,8,20,,,8
+,Active,Inventory Part,820-3ply,8x20 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,8x20 MZP 3-Ply Poly Panel,0,3.69,M.L. Filters,,5.27,,820-3ply,,8x20,8,20,,,8
+,Active,Inventory Part,934-2ply,9x34 Special 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,9x34 Special 2-Ply Poly Panel,0,6.48,M.L. Filters,,9.96,,934-2ply,,9x34,9,34,,,8
+,Active,Inventory Part,961-3ply,9x61.25 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,9x61.25 3-Ply Poly Panel,0,4.49,M.L. Filters,,16.3,,961-3ply,,9x61.25,9,61.25,,,8
+,Active,Inventory Part,962-2ply,9x62 MZP 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,9x62 MZP 2-Ply Poly Panel,8,10.04,M.L. Filters,,8.2,,962-2ply,,9x62,9,62,,,8
+,Active,Inventory Part,963-2ply,9x63 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,9x63 2-Ply Poly Panel,16,11.2,M.L. Filters,,16.42,,963-2ply,,9x63,9,63,,,8
+,Active,Inventory Part,99-2ply,9x9x1 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,9x9x1 2-Ply Poly Panel,0,5,M.L. Filters,,5,,99-2ply,,9x9x1,9,9,1,,8
 ,Active,Inventory Part,99-4-00-00-36,RSE15 Puracarb Equivalent,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,RSE15 Puracarb Media equiv,2250,2.235,RSE Incorporated,,4.47,,99-4-00-00-36,,,,,,,
 ,Active,Inventory Part,99-4-00-00-58,"PCBAM, Puracarb AM Media",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"PCBAM, Puracarb AM Media",1200,2.2,RSE Incorporated,,4.4,,99-4-00-00-58,,,,,,,
 ,Active,Inventory Part,A-5 Aluminum, Aluminum Metal Mesh Filter,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,A-5 Aluminum Metal Mesh Filter,-1,18.75,"Aircon Filter Mfg. Co., Inc.",,25,,A-5 Aluminum,,,,,,,
@@ -930,12 +930,12 @@ Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Accou
 ,Active,Inventory Part,MINIRF-4/44,24x24x4  Mini Roughing Filter,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,24x24x4  Mini Roughing Filter,78,62.5,"Freudenberg Filtration Technologies, L.P.",,125,,,,24x24x4 ,24,24,4,,
 ,Active,Inventory Part,MKF8V2-2024,20x24x12 MV-2VF MiniPleat V2/MERV 14 MW,Tax,Sales,Cost of Goods Sold,Inventory Asset,0,20x24x12 MV-2VF MiniPleat V2/MERV 14 MW,300,47.88,Mikropor America,,0,,MW-F8-02-2024,,20x24x12,20,24,12,MERV 14,14
 ,Active,Inventory Part,MKF8V2-2424,24X24X12 MV-2VF MiniPleat 2V/ MERV 13 MW,Tax,Sales,Cost of Goods Sold,Inventory Asset,0,P/N MW-F7-03: 24X24X12 MV-2VF MiniPleat 2V/ MERV 13 MW,280,54.74,Mikropor America,,0,,MW-F8-02-2424,,24X24X12,24,24,12,MERV 13,13
-,Active,Inventory Part,ML-122410-3PLY-C,"12x24x10, 3-Ply Cube Filter",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"12x24x10, 3-Ply Cube Filter",0,19.52,M.L. Filters,,30.05,,ML-122410-3PLY-C,,12x24x10,12,24,10,,
-,Active,Inventory Part,ML-122415-3PLY-C,"12x24x15, 3-Ply Cube Filter",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"12x24x15, 3-Ply Cube Filter",,14.41,M.L. Filters,,19.57,,,,12x24x15,12,24,15,,
+,Active,Inventory Part,ML-122410-3PLY-C,"12x24x10, 3-Ply Cube Filter",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"12x24x10, 3-Ply Cube Filter",0,19.52,M.L. Filters,,30.05,,ML-122410-3PLY-C,,12x24x10,12,24,10,,8
+,Active,Inventory Part,ML-122415-3PLY-C,"12x24x15, 3-Ply Cube Filter",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"12x24x15, 3-Ply Cube Filter",,14.41,M.L. Filters,,19.57,,,,12x24x15,12,24,15,,8
 ,Active,Inventory Part,ML-122415-OA-C,"12"" x 24"" x 15""  Cube Filter w/Antimicrobial",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"12"" x 24"" x 15""  Cube Filter w/Antimicrobial",0,19.9,M.L. Filters,,,, ML-122415-OA-C,,"12"" x 24"" x 15""",12,24,15,,
 ,Active,Inventory Part,ML-122424-OA-C,"12"" x 24"" x 25""  Cube Filter w/Antimicrobial",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"12"" x 24"" x 25""  Cube Filter w/Antimicrobial",0,25.18,M.L. Filters,,38.73,,ML-122424-OA-C,,"12"" x 24"" x 25""",12,24,25,,
-,Active,Inventory Part,ML-242410-3PLY-C,"24x24x10, 3-Ply Cube Filter",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"24x24x10, 3-Ply Cube Filter",0,20.95,M.L. Filters,,32.23,,ML-242410-3PLY-C,,24x24x10,24,24,10,,
-,Active,Inventory Part,ML-242415-3PLY-C,"24x24x15, 3-Ply Cube Filter",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"24x24x15, 3-Ply Cube Filter",,16.98,M.L. Filters,,23.01,,,,24x24x15,24,24,15,,
+,Active,Inventory Part,ML-242410-3PLY-C,"24x24x10, 3-Ply Cube Filter",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"24x24x10, 3-Ply Cube Filter",0,20.95,M.L. Filters,,32.23,,ML-242410-3PLY-C,,24x24x10,24,24,10,,8
+,Active,Inventory Part,ML-242415-3PLY-C,"24x24x15, 3-Ply Cube Filter",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"24x24x15, 3-Ply Cube Filter",,16.98,M.L. Filters,,23.01,,,,24x24x15,24,24,15,,8
 ,Active,Inventory Part,ML-242415-OA-C,"24"" x 24"" x 15""  Cube Filter w/Antimicrobial",Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,"24"" x 24"" x 15""  Cube Filter w/Antimicrobial",0,20.46,M.L. Filters,,27.5,,ML-242415-OA-C,,"24"" x 24"" x 15""",24,24,15,,
 ,Active,Inventory Part,MP1320242,M13 Mini Pleat MPF 20x24x2,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,M13 Mini Pleat MPF 20x24x2,384,4,Mikropor America,,6.97,,MP1320242,,20x24x2,20,24,2,,
 ,Active,Inventory Part,MP1324242,M13 Mini Pleat MPF 24x24x2,Tax,Sales,Cost of Goods Sold,Inventory:Inventory Asset,0,M13 Mini Pleat MPF 24x24x2,493,4,Mikropor America,,6.97,,MP1324242,,24x24x2,24,24,2,,
@@ -1395,32 +1395,32 @@ Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Accou
 ,Active,Non-inventory Part,1224-SPORAX,12x24 Rigid Pad w/Sporax,Tax,Sales,Cost of Goods Sold,,0,12x24 Rigid Pad w/Sporax,,3.9,Fiber Bond Corporation,,5.78,,1224-SPORAX,,12x24,12,24,,,
 ,Active,Non-inventory Part,12243SS3401NoHoles,3401 Style Frame (No Holes) 12x24x3 A-8 Stainless Steel Frame,Tax,Sales,Cost of Goods Sold,,0,3401 Style Frame (No Holes) 12x24x3 A-8 Stainless Steel Frame,,34.5,"Aircon Filter Mfg. Co., Inc.",,49.29,,,,12x24x3,12,24,3,,
 ,Active,Non-inventory Part,122Cx96,"122Cx96, BAG IN BAG OUT",Tax,Sales,Cost of Goods Sold,,0,"122Cx96, BAG IN BAG OUT",,115,P & G Manufacturing,,176.92,,122Cx96,,,,,,,
-,Active,Non-inventory Part,1230-2Ply,12x30 2-Ply Panel,Tax,Sales,Cost of Goods Sold,,0,12x30 2-Ply Panel,,0,M.L. Filters,,8.15,,1230-2Ply,,12x30,12,30,,,
+,Active,Non-inventory Part,1230-2Ply,12x30 2-Ply Panel,Tax,Sales,Cost of Goods Sold,,0,12x30 2-Ply Panel,,0,M.L. Filters,,8.15,,1230-2Ply,,12x30,12,30,,,8
 ,Active,Non-inventory Part,1256-01-009-T,OIL SEAL,Tax,Sales,Cost of Goods Sold,,0,OIL SEAL,,34,Hilliard Corporation,,56.67,,1256-01-009-T,,,,,,,
 ,Active,Non-inventory Part,1260753,1260753 ..Hydac Repair Kit DFDK160/240/280 G1.1 NBR,Tax,Sales,Cost of Goods Sold,,0,1260753 ..Hydac Repair Kit DFDK160/240/280 G1.1 NBR,,144.04,"Precision Filter Products, LLC",,221.6,,1260753,,,,,,,
 ,Active,Non-inventory Part,1279-00-053-T,RETAINING RING INPUT SHAFT BEARING,Tax,Sales,Cost of Goods Sold,,0,RETAINING RING INPUT SHAFT BEARING,,10,Hilliard Corporation,,16.66,,1279-00-053-T,,,,,,,
-,Active,Non-inventory Part,1280-2ply,12x80 2-Ply Poly Link,Tax,Sales,Cost of Goods Sold,,0,12x80 2-Ply Poly Link,,14.22,M.L. Filters,,0,,,,12x80,12,80,,,
-,Active,Non-inventory Part,1280-3-Ply,12x80 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,,0,12x80 3-Ply Poly Panel,,0,M.L. Filters,,,,,,12x80,12,80,,,
-,Active,Non-inventory Part,1430-2ply,14x30 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,,0,14x30 2-Ply Poly Panel,,5.08,M.L. Filters,,7.55,,,,14x30,14,30,,,
+,Active,Non-inventory Part,1280-2ply,12x80 2-Ply Poly Link,Tax,Sales,Cost of Goods Sold,,0,12x80 2-Ply Poly Link,,14.22,M.L. Filters,,0,,,,12x80,12,80,,,8
+,Active,Non-inventory Part,1280-3-Ply,12x80 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,,0,12x80 3-Ply Poly Panel,,0,M.L. Filters,,,,,,12x80,12,80,,,8
+,Active,Non-inventory Part,1430-2ply,14x30 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,,0,14x30 2-Ply Poly Panel,,5.08,M.L. Filters,,7.55,,,,14x30,14,30,,,8
 ,Active,Non-inventory Part,1550M1950V380U2P0,1550M1950V380U2P0 16x20x4  HM Modules,Tax,Sales,Cost of Goods Sold,,0,1550M1950V380U2P0 16x20x4  HM Modules,,630.2,"Freudenberg Filtration Technologies, L.P.",,977.44,,1550M1950V380U2P0,,16x20x4 ,16,20,4,,
-,Active,Non-inventory Part,1640-2ply,16x40 2-Ply Panel,Tax,Sales,Cost of Goods Sold,,0,16x40 2-Ply Panel,,8.03,M.L. Filters,,12.35,,,,16x40,16,40,,,
-,Active,Non-inventory Part,1648-3-Ply,16x48 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,,0,16x48 3-Ply Poly Panel,,0,M.L. Filters,,0,,,,16x48,16,48,,,
-,Active,Non-inventory Part,1690-3ply,16x90 3-Ply Poly Link,Tax,Sales,Cost of Goods Sold,,0,16x90 3-Ply Poly Link,,16.3,M.L. Filters,,0,,1690-3ply,,16x90,16,90,,,
-,Active,Non-inventory Part,1831-2Ply,18x31 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,,0,18x31 2-Ply Panel,,0,M.L. Filters,,0,,,,18x31,18,31,,,
+,Active,Non-inventory Part,1640-2ply,16x40 2-Ply Panel,Tax,Sales,Cost of Goods Sold,,0,16x40 2-Ply Panel,,8.03,M.L. Filters,,12.35,,,,16x40,16,40,,,8
+,Active,Non-inventory Part,1648-3-Ply,16x48 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,,0,16x48 3-Ply Poly Panel,,0,M.L. Filters,,0,,,,16x48,16,48,,,8
+,Active,Non-inventory Part,1690-3ply,16x90 3-Ply Poly Link,Tax,Sales,Cost of Goods Sold,,0,16x90 3-Ply Poly Link,,16.3,M.L. Filters,,0,,1690-3ply,,16x90,16,90,,,8
+,Active,Non-inventory Part,1831-2Ply,18x31 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,,0,18x31 2-Ply Panel,,0,M.L. Filters,,0,,,,18x31,18,31,,,8
 ,Active,Non-inventory Part,1835396-006,"1835396-006:..17.5"" OD (18.5"" W/ LIP) x 14.00"" ID X 26"" DuraShield Composite Air Filter Cartridge Assembly, Open / Closed End Caps, Gasket - Includes Inner Pre-Filter Liner & Retainer Strip..",Tax,Sales,Cost of Goods Sold,,0,"1835396-006:..17.5"" OD (18.5"" W/ LIP) x 14.00"" ID X 26"" DuraShield Composite Air Filter Cartridge Assembly, Open / Closed End Caps, Gasket - Includes Inner Pre-Filter Liner & Retainer Strip..",,105,AAF/Flanders Corporation,,0,,,,,,,,,
-,Active,Non-inventory Part,1848- 3-Ply Poly Panel,18x48 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,,0,18x48 3-Ply Poly Panel,,9.3,M.L. Filters,,0,,,,18x48,18,48,,,
-,Active,Non-inventory Part,1848-2 Ply Link,18x48-2 Ply Link,Tax,Sales,Cost of Goods Sold,,0,18x48-2 Ply Link,,0,M.L. Filters,,0,,1848-2 Ply Link,,18x48,18,48,,,
+,Active,Non-inventory Part,1848- 3-Ply Poly Panel,18x48 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,,0,18x48 3-Ply Poly Panel,,9.3,M.L. Filters,,0,,,,18x48,18,48,,,8
+,Active,Non-inventory Part,1848-2 Ply Link,18x48-2 Ply Link,Tax,Sales,Cost of Goods Sold,,0,18x48-2 Ply Link,,0,M.L. Filters,,0,,1848-2 Ply Link,,18x48,18,48,,,8
 ,Not-active,Non-inventory Part,1CCC-2SPLUS,"Coupon, Copper/ Silver, Logger",Tax,Sales,Cost of Goods Sold,,0,"Coupon, Copper/ Silver, Logger",,150,"Freudenberg Filtration Technologies, L.P.",,214.28,,1CCC-2SPLUS,,,,,,,
 ,Active,Non-inventory Part,"2"" Long Nose Clip",2” Long Nose clip,Tax,Sales,Cost of Goods Sold,,0,11S000004-99 2” Long Nose clip,,0.84,EFC International,,1.29,,"2"" Long Nose Clip",,,,,,,
 ,Active,Non-inventory Part,200-75-R,200-75-R Balston Filter Cartridge (Box of 15),Tax,Sales,Cost of Goods Sold,,0,Balston Filter Cartridges (Box of 15),,1535,"Precision Filter Products, LLC",,2421.59,,200-75-R,,,,,,,
 ,Active,Non-inventory Part,20000400-30,GTD 34 VO - DOUBLE ENDED..EMITTER FOR DE 361,Tax,Sales,Cost of Goods Sold,,0,GTD 34 VO - DOUBLE ENDED..EMITTER FOR DE 361 - 30 PACK,,3791,UV Resources (Steril-Aire),,92.48,,20000400-30,,,,,,,
-,Active,Non-inventory Part,2045-2ply,20x45 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,,0,20x45  2-Ply Poly Panel,,0,M.L. Filters,,0,,,,20x45,20,45,,,
-,Active,Non-inventory Part,2045-3Ply,20x45 3-Ply Panel,Tax,Sales,Cost of Goods Sold,,0,20x45 3-Ply Panel,,0,M.L. Filters,,0,,,,20x45,20,45,,,
-,Active,Non-inventory Part,2048-2ply,20x48 2-Ply Poly Link,Tax,Sales,Cost of Goods Sold,,0,20x48 2-Ply Poly Link,,8.94,M.L. Filters,,13.75,,,,20x48,20,48,,,
-,Active,Non-inventory Part,2048-3-Ply,20x48 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,,0,20x48 3-Ply Poly Panel,,0,M.L. Filters,,0,,,,20x48,20,48,,,
-,Active,Non-inventory Part,2053-2Ply,20x53 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,,0,20x53 2-Ply Poly Panel,,11.3,M.L. Filters,,18.04,,2053-2Ply,,20x53,20,53,,,
+,Active,Non-inventory Part,2045-2ply,20x45 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,,0,20x45  2-Ply Poly Panel,,0,M.L. Filters,,0,,,,20x45,20,45,,,8
+,Active,Non-inventory Part,2045-3Ply,20x45 3-Ply Panel,Tax,Sales,Cost of Goods Sold,,0,20x45 3-Ply Panel,,0,M.L. Filters,,0,,,,20x45,20,45,,,8
+,Active,Non-inventory Part,2048-2ply,20x48 2-Ply Poly Link,Tax,Sales,Cost of Goods Sold,,0,20x48 2-Ply Poly Link,,8.94,M.L. Filters,,13.75,,,,20x48,20,48,,,8
+,Active,Non-inventory Part,2048-3-Ply,20x48 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,,0,20x48 3-Ply Poly Panel,,0,M.L. Filters,,0,,,,20x48,20,48,,,8
+,Active,Non-inventory Part,2053-2Ply,20x53 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,,0,20x53 2-Ply Poly Panel,,11.3,M.L. Filters,,18.04,,2053-2Ply,,20x53,20,53,,,8
 ,Active,Non-inventory Part,2065621,2065621..Hydac Replacement Element 0160D025W/HC,Tax,Sales,Cost of Goods Sold,,0,2065621..Hydac Replacement Element 0160D025W/HC,,206.98,"Precision Filter Products, LLC",,295.69,,2065621,,,,,,,
-,Active,Non-inventory Part,2090-3-Ply,20x90 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,,0,20x90 3-Ply Poly Panel,,0,M.L. Filters,,0,,,,20x90,20,90,,,
+,Active,Non-inventory Part,2090-3-Ply,20x90 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,,0,20x90 3-Ply Poly Panel,,0,M.L. Filters,,0,,,,20x90,20,90,,,8
 ,Active,Non-inventory Part,21000110 EGTS16 VO,21000110 EGTS 16 VO EMITTER 1 PACK | 21000110,Tax,Sales,Cost of Goods Sold,,0,21000110 EGTS 16 VO EMITTER 1 PACK | 21000110,,113.4,UV Resources (Steril-Aire),,87.23,,21000110 EGTS16 VO,,,,,,,
 ,Active,Non-inventory Part,210924102,"24"" x 24"" Poly Shield XI Panel",Tax,Sales,Cost of Goods Sold,,0,"24"" x 24"" 95-102 Poly Shield XI Panel",,35.65,Fiber Bond Corporation,,0,,210924102,,"24"" x 24""",24,24,,,
 ,Active,Non-inventory Part,21ME01-30820130,HILCO HYDROGEN FILTER ASSEMBLY..(HILCO DWG #3082-01-030-C) similar too DWG..- 4” -150# ANSI RF Flanged Inlet/Outlet Connections...- ½” FNPT Vent/Drain Connections...- 15psi design...- Stainless Steel Construction...- Buna-N Seals...- HILCO Hydrogen Car...,Tax,Sales,Cost of Goods Sold,,0,HILCO HYDROGEN FILTER ASSEMBLY..(HILCO DWG #3082-01-030-C) similar too DWG..- 4” -150# ANSI RF Flanged Inlet/Outlet Connections...- ½” FNPT Vent/Drain Connections...- 15psi design...- Stainless Steel Construction...- Buna-N Seals...- HILCO Hydrogen Car...,,8917,Hilliard Corporation,,11146.25,,21ME01-30820130,,,,,,,
@@ -1429,23 +1429,23 @@ Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Accou
 ,Active,Non-inventory Part,228374001,"Campulse HemiPleat 1.18"" bolt hole /E10/GTC/Galv./Small CYL 26L",Tax,Sales,Cost of Goods Sold,,0,"Campulse HemiPleat 1.18"" bolt hole /E10/GTC/Galv./Small CYL 26L",,127.15,Camfill USA INC,,198.55,,,,,,,,,
 ,Active,Non-inventory Part,22HMF-496012006,HILCO GAS COMPRESSOR FILTER SEPARATOR..(HILCO DWG #4960-12-006-D)..- 6” -600# ANSI RFLWN Flanged Inlet/Outlet Connections...- 1” 300# NPT Gauge/Drain/Equalizer Connections...- ¾” – 600# NPT PSV Connection...- 12” Top Flange Connection...- 900PSI Design...,Tax,Sales,Cost of Goods Sold,,0,HILCO GAS COMPRESSOR FILTER SEPARATOR..(HILCO DWG #4960-12-006-D)..- 6” -600# ANSI RFLWN Flanged Inlet/Outlet Connections...- 1” 300# NPT Gauge/Drain/Equalizer Connections...- ¾” – 600# NPT PSV Connection...- 12” Top Flange Connection...- 900PSI Design...,,89990,Hilliard Corporation,,99988.88,,22HMF-496012006,,,,,,,
 ,Active,Non-inventory Part,231P,"231P ..SOLBERG Filter Element: Polyester, 9.5 in Overall Ht, 3 5/8 in Inside Dia, 5..3/4 in Outside Dia",Tax,Sales,Cost of Goods Sold,,0,"231P ..SOLBERG Filter Element: Polyester, 9.5 in Overall Ht, 3 5/8 in Inside Dia, 5..3/4 in Outside Dia",,35.89,"Precision Filter Products, LLC",,55.22,,231P,,,,,,,
-,Active,Non-inventory Part,24114-3ply,24x114 3 Ply Poly Link,Tax,Sales,Sales,,0,24x114 3 Ply Poly Link,,28,M.L. Filters,,43.03,,,,24x114,24,114,,,
+,Active,Non-inventory Part,24114-3ply,24x114 3 Ply Poly Link,Tax,Sales,Sales,,0,24x114 3 Ply Poly Link,,28,M.L. Filters,,43.03,,,,24x114,24,114,,,8
 ,Active,Non-inventory Part,2424-SPORAX,24x24 Rigid Pad w/Sporax,Tax,Sales,Cost of Goods Sold,,0,24x24 Rigid Pad w/Sporax,,3.9,Fiber Bond Corporation,,7.2,,2424-SPORAX,,24x24,24,24,,,
 ,Active,Non-inventory Part,24242C140,"24x24x2 Class 1 Pleat, 40% Metal Frame",Tax,Sales,Cost of Goods Sold,,0,"24x24x2 Class 1 Pleat, 40% Metal Frame",,22.2208,Commercial Filters Sales,,0,,,,24x24x2,24,24,2,40%,7
 ,Active,Non-inventory Part,24243SS3401NoHoles,3401 Style Frame (No Holes) 24x24x3  A-8 Stainless Steel Frame,Tax,Sales,Cost of Goods Sold,,0,3401 Style Frame (No Holes) 24x24x3  A-8 Stainless Steel Frame,,37.5,"Aircon Filter Mfg. Co., Inc.",,53.57,,24243SS3401NoHoles,,24x24x3 ,24,24,3,,
-,Active,Non-inventory Part,2436-2ply,24x36 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,,0,24x36 2-Ply Poly Panel,,0,M.L. Filters,,0,,,,24x36,24,36,,,
-,Active,Non-inventory Part,2436-3ply,24x36 3- Ply Poly Panel,Tax,Sales,Cost of Goods Sold,,0,24x36 3- Ply Poly Pane,,0,M.L. Filters,,0,,,,24x36,24,36,,,
-,Active,Non-inventory Part,2472-2ply,24x72 2Ply Poly Panel,Tax,Sales,Cost of Goods Sold,,0,24x72 2Ply Poly Panel,,14.91,M.L. Filters,,22.94,,2472-2ply,,24x72,24,72,,,
-,Active,Non-inventory Part,2480-2ply,24x80 2-Ply Poly Link,Tax,Sales,Cost of Goods Sold,,0,24x80 2-Ply Poly Link,,0,M.L. Filters,,0,,,,24x80,24,80,,,
-,Active,Non-inventory Part,2484-2ply,24x84 2Ply Poly Panel,Tax,Sales,Cost of Goods Sold,,0,24x84 2Ply Poly Panel,,18.4,M.L. Filters,,28.31,,2484-2ply,,24x84,24,84,,,
-,Active,Non-inventory Part,2490-2ply,24x90 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,,0,24x90 2-Ply Poly Panel,,0,M.L. Filters,,0,,,,24x90,24,90,,,
-,Active,Non-inventory Part,25120-2ply,25x120 2-Ply Poly Link,Tax,Sales,Cost of Goods Sold,,0,25x120 2-Ply Poly Link,,0,M.L. Filters,,42.46,,,,25x120,25,120,,,
-,Active,Non-inventory Part,25120-3-Ply,25x120 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,,0,25x120 3-Ply Poly Panel,,0,M.L. Filters,,0,,,,25x120,25,120,,,
+,Active,Non-inventory Part,2436-2ply,24x36 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,,0,24x36 2-Ply Poly Panel,,0,M.L. Filters,,0,,,,24x36,24,36,,,8
+,Active,Non-inventory Part,2436-3ply,24x36 3- Ply Poly Panel,Tax,Sales,Cost of Goods Sold,,0,24x36 3- Ply Poly Pane,,0,M.L. Filters,,0,,,,24x36,24,36,,,8
+,Active,Non-inventory Part,2472-2ply,24x72 2Ply Poly Panel,Tax,Sales,Cost of Goods Sold,,0,24x72 2Ply Poly Panel,,14.91,M.L. Filters,,22.94,,2472-2ply,,24x72,24,72,,,8
+,Active,Non-inventory Part,2480-2ply,24x80 2-Ply Poly Link,Tax,Sales,Cost of Goods Sold,,0,24x80 2-Ply Poly Link,,0,M.L. Filters,,0,,,,24x80,24,80,,,8
+,Active,Non-inventory Part,2484-2ply,24x84 2Ply Poly Panel,Tax,Sales,Cost of Goods Sold,,0,24x84 2Ply Poly Panel,,18.4,M.L. Filters,,28.31,,2484-2ply,,24x84,24,84,,,8
+,Active,Non-inventory Part,2490-2ply,24x90 2-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,,0,24x90 2-Ply Poly Panel,,0,M.L. Filters,,0,,,,24x90,24,90,,,8
+,Active,Non-inventory Part,25120-2ply,25x120 2-Ply Poly Link,Tax,Sales,Cost of Goods Sold,,0,25x120 2-Ply Poly Link,,0,M.L. Filters,,42.46,,,,25x120,25,120,,,8
+,Active,Non-inventory Part,25120-3-Ply,25x120 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,,0,25x120 3-Ply Poly Panel,,0,M.L. Filters,,0,,,,25x120,25,120,,,8
 ,Active,Non-inventory Part,"26"" Crank","PN 3580 26"" Assembly Crank",Tax,Sales,Cost of Goods Sold,,0,"PN 3580 26"" Assembly Crank",,11.04,Riverfront Machine,,0,,"26"" Crank",,,,,,,
 ,Active,Non-inventory Part,26718-530401118,"HILCO EHC OIL CONDITIONING SYSTEM..(HILCO DWG #5304-01-118-C)..- -16 SAE Inlet/Outlet Connections...- ¼” FNPT Drain Connection...- 100psi design...- ASME Code Construction...- Carbon Steel Construction Housings, with Zinc Coated Bolting and Stainless-S...",Tax,Sales,Cost of Goods Sold,,0,"HILCO EHC OIL CONDITIONING SYSTEM..(HILCO DWG #5304-01-118-C)..- -16 SAE Inlet/Outlet Connections...- ¼” FNPT Drain Connection...- 100psi design...- ASME Code Construction...- Carbon Steel Construction Housings, with Zinc Coated Bolting and Stainless-S...",,5466,Hilliard Corporation,,6430.6,,26718-530401118,,,,,,,
 ,Active,Non-inventory Part,28-0012PH-3-04-11-23,28-0012PH-3-04-11-23..Equivalent PK12-CHS,Tax,Sales,Cost of Goods Sold,,0,28-0012PH-3-04-11-23..#12PH HALF SIZE PLASTIC MODULE FILLED (Equivalent to Purafil CHS Media),,192.28,RSE Incorporated,,293.2,,28-0012PH-3-04-11-23,,,,,,,
-,Active,Non-inventory Part,3040-2ply,30x40 2-Ply Poly Link,Tax,Sales,Cost of Goods Sold,,0,30x40 2-Ply Poly Link,,0,M.L. Filters,,0,,,,30x40,30,40,,,
-,Active,Non-inventory Part,3040-3Ply,30x40 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,,0,30x40 3-Ply Poly Panel,,14.2,M.L. Filters,,0,,,,30x40,30,40,,,
+,Active,Non-inventory Part,3040-2ply,30x40 2-Ply Poly Link,Tax,Sales,Cost of Goods Sold,,0,30x40 2-Ply Poly Link,,0,M.L. Filters,,0,,,,30x40,30,40,,,8
+,Active,Non-inventory Part,3040-3Ply,30x40 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,,0,30x40 3-Ply Poly Panel,,14.2,M.L. Filters,,0,,,,30x40,30,40,,,8
 ,Active,Non-inventory Part,31-036-055-S.3,"Absolute Separator..4½ x 5½ x 36"" L",Tax,Cost of Goods Sold,,,0,,,0,,,322,,,,,,,,,
 ,Active,Non-inventory Part,3143-T,"3143-T Rolled Cotton and Wood with Spiral Seamed Tin Plated Steel Center..Tube, 10-15 Micron, 4"" OD x 28 3/4"" L with Acrylic Sock Cover",Tax,Sales,Cost of Goods Sold,,0,"3143-T Rolled Cotton and Wood with Spiral Seamed Tin Plated Steel Center..Tube, 10-15 Micron, 4"" OD x 28 3/4"" L with Acrylic Sock Cover",,50,"Precision Filter Products, LLC",,103.75,,3143-T,,,,,,,
 ,Active,Non-inventory Part,326-7584,326-7584..Same as Clark Reliance PN 2710H9V,Tax,Sales,Cost of Goods Sold,,0,326-7584..Same as Clark Reliance PN 2710H9V,,679.55,Cleanova,,1278.08,,,,,,,,,
@@ -1523,8 +1523,8 @@ Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Accou
 ,Active,Non-inventory Part,80-24B/50124yyy,with stainless steel lobe pump,Tax,Sales,Cost of Goods Sold,,0,,,,Hilliard Corporation,,237526.67,,80-24B/50124yyy,,,,,,,
 ,Active,Non-inventory Part,80Cx96,"80Cx96, BAG IN BAG OUT",Tax,Sales,Cost of Goods Sold,,0,"80Cx96, BAG IN BAG OUT",,120,P & G Manufacturing,,176.92,,80Cx96,,,,,,,
 ,Active,Non-inventory Part,82604A,82604A  Fleetguard Winslow Rolled Cotton Sock Filter,Tax,Sales,Cost of Goods Sold,,0,82604A  Fleetguard Winslow Rolled Cotton Sock Filter,,115.44,"Precision Filter Products, LLC",,153.92,,82604A,,,,,,,
-,Active,Non-inventory Part,832-2ply,8x32 2-Ply Panel,Tax,Sales,Cost of Goods Sold,,0,8x32 2-Ply Panel,,4.34,M.L. Filters,,0,,,,8x32,8,32,,,
-,Active,Non-inventory Part,832-3Ply,8x32 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,,0,8x32 3-Ply Poly Panel,,5.13,M.L. Filters,,0,,,,8x32,8,32,,,
+,Active,Non-inventory Part,832-2ply,8x32 2-Ply Panel,Tax,Sales,Cost of Goods Sold,,0,8x32 2-Ply Panel,,4.34,M.L. Filters,,0,,,,8x32,8,32,,,8
+,Active,Non-inventory Part,832-3Ply,8x32 3-Ply Poly Panel,Tax,Sales,Cost of Goods Sold,,0,8x32 3-Ply Poly Panel,,5.13,M.L. Filters,,0,,,,8x32,8,32,,,8
 ,Active,Non-inventory Part,84Cx96,"84Cx96, BAG IN BAG OUT",Tax,Sales,Cost of Goods Sold,,0,"84Cx96, BAG IN BAG OUT",,125,P & G Manufacturing,,192.3,,84Cx96,,,,,,,
 ,Active,Non-inventory Part,90Cx96,"90Cx96, BAG IN BAG OUT",Tax,Sales,Cost of Goods Sold,,0,"90Cx96, BAG IN BAG OUT",,135,P & G Manufacturing,,207.69,,90Cx96,,,,,,,
 ,Active,Non-inventory Part,9107M23P02,9107M23P02  Gasket Drive Clutch Back,Tax,Sales,Cost of Goods Sold,,0,9107M23P02  Gasket Drive Clutch Back,,25,OEM Parts Network,,0,,9107M23P02,,,,,,,
@@ -1558,8 +1558,8 @@ Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Accou
 ,Active,Non-inventory Part,ACCNA:P15/350S-2520,"620 x 510 (25"" x 20”) Cut Piece P15/350S",Tax,Sales,Cost of Goods Sold,,0,"620 x 510 (25"" x 20”) Cut Piece P15/350S",,,AFC Manufacturing,,14.76,,,,620 x 510 ,620,510,,,
 ,Active,Non-inventory Part,ACCNA:P15/350S-4120,"1025 x 510 (41"" x 20”) Cut Piece P15/350S",Tax,Sales,Cost of Goods Sold,,0,"1025 x 510 (41"" x 20”) Cut Piece P15/350S",,,AFC Manufacturing,,25.41,,P15/350S-4120,,"41"" x 20”",41,20,,,
 ,Active,Non-inventory Part,ACRYCLR0.118LCGM48x96,"118x48x96 Clear Acrylic LCFM....- cut 4,050* pieces 1"" x 42-3/16""....(*approx. 75 strips per piece)....*** PLEASE NOTE***..PULL OFF ALL PLASTIC COVERING BEFORE CUTTING INTO 1"" STRIPS..NO PLASTIC SHEETING ON STRIPS",Tax,Sales,Cost of Goods Sold,,0,"118x48x96 Clear Acrylic LCFM....- cut 4,050* pieces 1"" x 42-3/16""....(*approx. 75 strips per piece)....*** PLEASE NOTE***..PULL OFF ALL PLASTIC COVERING BEFORE CUTTING INTO 1"" STRIPS..NO PLASTIC SHEETING ON STRIPS",,60,Orange County Industrial Plastics,,72.43,,,,118x48x96,118,48,96,,
-,Active,Non-inventory Part,AFC-1031CRBN-,"SHW ..Activated Carbon Filtration Media ..1.20M x 20M (0.40"" x 4' x 66' Roll)",Tax,Sales,,,0,,,0,,,0,,,,"0.40"" x 4",0.4,4,,,
-,Active,Non-inventory Part,AFC-1031CRBN5,,Tax,Cost of Goods Sold,,,0,,,0,,,0,,,,,,,,,
+,Active,Non-inventory Part,AFC-1031CRBN-,"SHW ..Activated Carbon Filtration Media ..1.20M x 20M (0.40"" x 4' x 66' Roll)",Tax,Sales,,,0,,,0,AFC Manufacturing,,0,,,,"0.40"" x 4",0.4,4,,,
+,Active,Non-inventory Part,AFC-1031CRBN5,,Tax,Cost of Goods Sold,,,0,,,0,AFC Manufacturing,,0,,,,,,,,,
 ,Active,Non-inventory Part,AFC-12024-2P-M10,"FILTER, INLET AIR, 24"" X 120"" (5, 24"" PANELS)..TWO LAYER PROGRESSIVE DENSITY POLYESTER",Tax,Sales,Cost of Goods Sold,,0,"FILTER, INLET AIR, 24"" X 120"" (5, 24"" PANELS)..TWO LAYER PROGRESSIVE DENSITY POLYESTER",,0,AFC Manufacturing,,32.39,,AFC-12024-2P-M10,,"24"" X 120""",24,120,,,
 ,Active,Non-inventory Part,AFC-12120-CPP,12x120 Carbon Poly Link,Tax,Sales,Cost of Goods Sold,,0,12x120 Carbon Poly Link,,0,AFC Manufacturing,,43.48,,AFC-12120-CPP,,12x120,12,120,,,
 ,Active,Non-inventory Part,AFC-1224-CPP,12x24 Carbon Poly Panel,Tax,Sales,Cost of Goods Sold,,0,"AFC-1224..12x24, 2-ply, Poly Panels, with Carbon media added on....Poly panels from ML (pn: 1224W-2PLY-P); Carbon media from McMaster Carr (pn: 3722T33)",,9,AFC Manufacturing,,18.59,,AFC-1224-CPP,,12x24,12,24,,,
@@ -1582,10 +1582,10 @@ Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Accou
 ,Active,Non-inventory Part,AFC-2626-CPP,26x26 Carbon Poly Panel,Tax,Sales,Cost of Goods Sold,,0,,,,AFC Manufacturing,,24.8,,AFC-2626-CPP,,26x26,26,26,,,
 ,Active,Non-inventory Part,AFC-2628-CPP,26x28 Carbon Poly Panel,Tax,Sales,Cost of Goods Sold,,0,,,,AFC Manufacturing,,25.36,,AFC-2628-CPP,,26x28,26,28,,,
 ,Active,Non-inventory Part,AFC-2636-CPP,26x36 Carbon Poly Panel,Tax,Sales,Cost of Goods Sold,,0,,,,AFC Manufacturing,,27.93,,AFC-2636-CPP,,26x36,26,36,,,
-,Active,Non-inventory Part,AFC-4Ply,AFC-4Ply,Tax,Sales,Cost of Goods Sold,,0,AFC-4Ply,,0,M.L. Filters,,0,,AFC-4Ply,,,,,,,
-,Not-active,Non-inventory Part,AFC-AHC,Internal Air Handler Clean Service,Tax,Sales,Cost of Goods Sold,,0,Internal Air Handler Clean Service,,0,,,0,,AFC-AHC,,,,,,,
+,Active,Non-inventory Part,AFC-4Ply,AFC-4Ply,Tax,Sales,Cost of Goods Sold,,0,AFC-4Ply,,0,M.L. Filters,,0,,AFC-4Ply,,,,,,,8
+,Not-active,Non-inventory Part,AFC-AHC,Internal Air Handler Clean Service,Tax,Sales,Cost of Goods Sold,,0,Internal Air Handler Clean Service,,0,AFC Manufacturing,,0,,AFC-AHC,,,,,,,
 ,Active,Non-inventory Part,AFC-CP-48-C-065,INTERMEDIATE FILTER MAT FOR SLUDGE FILTER PRESS HOESCH INDUSTRIES,Tax,Sales,Cost of Goods Sold,,0,INTERMEDIATE FILTER MAT FOR SLUDGE FILTER PRESS HOESCH INDUSTRIES..,,56.75,Hilliard Corporation,,284,,AFC-CP-48-C-065,,,,,,,
-,Active,Non-inventory Part,AFC-DFCC,Deep Cleansing of Coils,Non,Sales,,,0,,,0,,,0,,AFC-DFCC,,,,,,,
+,Active,Non-inventory Part,AFC-DFCC,Deep Cleansing of Coils,Non,Sales,,,0,,,0,AFC Manufacturing,,0,,AFC-DFCC,,,,,,,
 ,Active,Non-inventory Part,AFC-HH-205x46,METRO 20½x48 Natural Fiber Material,Tax,Sales,Cost of Goods Sold,,0,Hogs Hair Material 46 x 20½,,21,AFC Manufacturing,,43.5,,,,,,,,,
 ,Active,Non-inventory Part,AFC-HH-265x46,"46-1/2""L x 26.5""H x 3/4""W Filter- Air Return .. A/C Evaporator, Blue Media",Tax,Sales,Cost of Goods Sold,,0,"46-1/2""L x 26.5""H x 3/4""W Filter- Air Return .. A/C Evaporator, Blue Media",,0,AFC Manufacturing,,17.9,,AFC-HH-265x46,,,,,,,
 ,Active,Non-inventory Part,AFC-HH-265x46-BLUE,"46-1/2""L x 26.5""H x 3/4""W Filter- Air Return .. A/C Evaporator, Blue Media",Tax,Sales,Cost of Goods Sold,,0,"46-1/2""L x 26.5""H x 3/4""W Filter- Air Return .. A/C Evaporator, Blue Media",,0,AFC Manufacturing,,17.9,,AFC-HH-265x46-BLUE,,,,,,,
@@ -1593,21 +1593,21 @@ Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Accou
 ,Active,Non-inventory Part,AFC-HH-BLUE,Hogs Hair Blue,Tax,Sales,Cost of Goods Sold,,0,Hogs Hair,,0,AFC Manufacturing,,,,AFC-HH-BLUE,,,,,,,
 ,Active,Non-inventory Part,AFC-HH-GREEN,"48"" x 22"" Media Cut - Hogs Hair Green",Tax,Sales,Cost of Goods Sold,,0,"48"" x 22"" Media Cut - Hogs Hair Green",,0,AFC Manufacturing,,49,,,,"48"" x 22""",48,22,,,
 ,Not-active,Non-inventory Part,AFC-NN1588,"8½x17""—0.085"" Square PP Mesh 0.05"" Thickness, Polypropylene, Strand 7x6/in. Min Purchase of 100 Pieces **REMOVE THIS price that populated is for 100 total, not each )",Tax,Sales,Cost of Goods Sold,,0,"XN1588 - 0.085"" Square PP Mesh 0.05"" Thickness  Price is per Lineal ft (43½ W) ..43½ x 30'",,179.4,AFC Manufacturing,,1076.4,,NN1588,,,,,,,
-,Not-active,Non-inventory Part,AFC-PPE,AFC-PPE,Non,Sales,Cost of Goods Sold,,0,AFC-PPE,,0,,,0,,AFC-PPE,,,,,,,
+,Not-active,Non-inventory Part,AFC-PPE,AFC-PPE,Non,Sales,Cost of Goods Sold,,0,AFC-PPE,,0,AFC Manufacturing,,0,,AFC-PPE,,,,,,,
 ,Active,Non-inventory Part,AFC-S15/500- Poly Panel,AFC-S15/500- Poly Panel,Tax,Sales,Cost of Goods Sold,,0,AFC-S15/500- Poly Panel,,26.88,AFC Manufacturing,,31.62,,AFC-S15/500- Poly Panel,,,,,,,
 ,Not-active,Non-inventory Part,AFCCGST-ISO-32,10 DRUMS/550 GALLONS,Tax,Sales,Cost of Goods Sold,,0,10 DRUMS/550 GALLONS,,972.95,Hilliard Corporation,,1144.65,,AFCCGST-ISO-32,,,,,,,
-,Not-active,Non-inventory Part,AIR TRACKS FRAME,5H x 5W Framing,Tax,Sales,Cost of Goods Sold,,0,AIR TRACKS FRAME,,,,,2983.33,,AIR TRACKS FRAME,,,,,,,
+,Not-active,Non-inventory Part,AIR TRACKS FRAME,5H x 5W Framing,Tax,Sales,Cost of Goods Sold,,0,AIR TRACKS FRAME,,,MISC,,2983.33,,AIR TRACKS FRAME,,,,,,,
 ,Active,Non-inventory Part,AMI-ZLP8141-SP,8x14x1 EXACT Special Standard Capacity Pleat,Tax,Sales,Cost of Goods Sold,,0,8x14x1 ZLP Exact Pleat Merv 10,,3.5,"AMI Filtration Products, Inc.",,7.98,,,,8x14x1,8,14,1,,
 ,Active,Non-inventory Part,AMZ,,Tax,Sales,Cost of Goods Sold,,0,,,0,AFC Manufacturing,,0,,,,,,,,,
 ,Active,Non-inventory Part,AMZ:FP 200-3116,"31""x16"" Blue/White media Air Intake Filters",Tax,Sales,Cost of Goods Sold,,0,"31""x16"" Blue/White media Air Intake Filters",,1.35,AFC Manufacturing,,7.8,,,,"31""x16""",31,16,,,
 ,Active,Non-inventory Part,AMZ:P15/350S-1111,11x11  Hoffman IDF Filters,Tax,Sales,Cost of Goods Sold,,0,11x11 P15/350S,,2,AFC Manufacturing,,7.53,,,,11x11 ,11,11,,,
 ,Active,Non-inventory Part,AMZ:P15/350S-1212,12x12  Schneider IDF Filters,Tax,Sales,Cost of Goods Sold,,0,12x12 P15/350S,,2,AFC Manufacturing,,7.8,,,,12x12 ,12,12,,,
-,Active,Non-inventory Part,ASC Panel,,Tax,Cost of Goods Sold,,,0,,,0,,,286.04,,FA 2448107-2V-CP,,,,,,,
+,Active,Non-inventory Part,ASC Panel,,Tax,Cost of Goods Sold,,,0,,,0,MISC,,286.04,,FA 2448107-2V-CP,,,,,,,
 ,Active,Non-inventory Part,AT511-00-C, HILCO Filter Cartridge,Tax,Sales,Cost of Goods Sold,,0,HILCO Filter Cartridge,,195.84,Hilliard Corporation,,299,,AT511-00-C,,,,,,,
 ,Active,Non-inventory Part,AWCT09702-CF150MAX,CF150MAX-15  8’  x  1’,Tax,Sales,Cost of Goods Sold,,0,AWCT09702..CF150MAX-15-5.25 x 12 x 96- RPVC-DG,,48.64,Brentwood Industries,,74.83,,,,,,,,,
 ,Active,Non-inventory Part,AWCT09702S-CF150MAX,CF150MAX- 15  4’  x 1’,Tax,Sales,Cost of Goods Sold,,0,AWCT09702S..CF150MAX-15-5.25 x 12 x 96-RPVC-DG..CUT TO: 96 PCS 5.25 x 12 x 48,,50.24,Brentwood Industries,,77.29,,AWCT09702S,,,,,,,
 ,Active,Non-inventory Part,B-150B-150S-NC1,"HILCO TRANSFER VALVE ASSEMBY..(GE Part #272A5794P034)..- 5” Sch. 40 Butt Weld Connections (Inlet/Outlet Connections...- 150psi design...- Top Cover...- Carbon Steel Construction, with HILCO Epoxy Paint.",Tax,Sales,Cost of Goods Sold,,0,"HILCO TRANSFER VALVE ASSEMBY..(GE Part #272A5794P034)..- 5” Sch. 40 Butt Weld Connections (Inlet/Outlet Connections...- 150psi design...- Top Cover...- Carbon Steel Construction, with HILCO Epoxy Paint.",,9982,Hilliard Corporation,,11091.2,,B-150B-150S-NC1,,,,,,,
-,Not-active,Non-inventory Part,BALDWIN,,Tax,Sales,Cost of Goods Sold,,0,,,0,,,0,,,,,,,,,
+,Not-active,Non-inventory Part,BALDWIN,,Tax,Sales,Cost of Goods Sold,,0,,,0,MISC,,0,,,,,,,,,
 ,Active,Non-inventory Part,BELTS,BELTS,Tax,Sales,Cost of Goods Sold,,0,BELTS,,53.02,Bestorq Power Transmission Belts,,75.74,,,,,,,,,
 ,Active,Non-inventory Part,BLUE MEDIA  RIGID - CUT,"1"" BLUE RIGID MEDIA",Tax,Sales,Cost of Goods Sold,,0,"1"" BLUE RIGID MEDIA",,0,Fiber Bond Corporation,,0,,215019-206475,,,,,,,
 ,Active,Non-inventory Part,BLUE RIGID MEDIA,"1"" BLUE RIGID MEDIA  20/64"" X 75' BULK ROLL",Tax,Sales,Cost of Goods Sold,,0,"1"" BLUE RIGID MEDIA 20/64"" X 75' BULK ROLL",,581.28,Fiber Bond Corporation,,1123.5,,215019-206475,,"20/64"" X 75",0.3125,75,,,
@@ -1656,20 +1656,20 @@ Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Accou
 ,Active,Non-inventory Part,CI-MP415P-SPECIAL,SPECIAL MERV 15 Mini Pleat Plastic Frame,Tax,Sales,Cost of Goods Sold,,0,SPECIAL MERV 15 Mini Pleat Plastic Frame,,0,"Columbus Industries, Inc.",,0,,CI-MP415P-SPECIAL,,,,,,MERV 15,15
 ,Active,Non-inventory Part,Cleanova,,Tax,Sales,Cost of Goods Sold,,0,,,0,Cleanova,,0,,,,,,,,,
 ,Active,Non-inventory Part,CMBF 3-40NN,CMBF 3-40NN ..40' CMBF Filter 3Mic MLT-BLWM..PP Cut End no Gskt,Tax,Sales,Cost of Goods Sold,,0,CMBF 3-40NN ..40' CMBF Filter 3Mic MLT-BLWM..PP Cut End no Gskt,,13.31,Harrington Industrial Plastics,,20,,CMBF 3-40NN,,,,,,,
-,Active,Non-inventory Part,CONICAL,,Tax,Sales,Cost of Goods Sold,,0,,,96.46,,,0,,CONICAL,,,,,,,
+,Active,Non-inventory Part,CONICAL,,Tax,Sales,Cost of Goods Sold,,0,,,96.46,MISC,,0,,CONICAL,,,,,,,
 ,Active,Non-inventory Part,Coupon CC _ CS,Copper & Silver Coupon  73045233,Tax,Sales,Cost of Goods Sold,,0,Copper & Silver Coupon  73045233,,200,"Freudenberg Filtration Technologies, L.P.",,550,,73045233,,,,,,,
 ,Active,Non-inventory Part,CPS-PL,CP MEDIA in Pails,Tax,Sales,Cost of Goods Sold,,0,CP MEDIA in Pails,,2.314,RSE Incorporated,,0,,,,,,,,,
 ,Active,Non-inventory Part,Cranks,"XX"" Crank w/washer & gaskets / No Nuts",Tax,Sales,Cost of Goods Sold,,0,"XX"" Crank w/washer & gaskets / No Nuts",,11.71,Riverfront Machine,,0,,P524742  Cranks,,,,,,,
-,Not-active,Non-inventory Part,CUMMINS,,Tax,Sales,Cost of Goods Sold,,0,,,0,,,0,,,,,,,,,
+,Not-active,Non-inventory Part,CUMMINS,,Tax,Sales,Cost of Goods Sold,,0,,,0,MISC,,0,,,,,,,,,
 ,Active,Non-inventory Part,CWF-0754830,"0.75 oz x 48.0"" x 30 Yards @ 1"" Thickness",Tax,Sales,Cost of Goods Sold,,0,"0.75 oz x 48.0"" x 30 Yards @ 1"" Thickness",,25.08,"Elements Fiber, Inc.",,0,,CWF-0754830,,"48.0"" x 30",48,30,,,
-,Active,Non-inventory Part,CYLINDRICAL,,Tax,Sales,Cost of Goods Sold,,0,,,70.63,,,0,,CYLINDRICAL,,,,,,,
+,Active,Non-inventory Part,CYLINDRICAL,,Tax,Sales,Cost of Goods Sold,,0,,,70.63,MISC,,0,,CYLINDRICAL,,,,,,,
 ,Active,Non-inventory Part,D045240-20G,D045240-20G  PECO FG 324 FACET,Tax,Sales,Cost of Goods Sold,,0,Gas Filter Element..(Direct drop-in replacement for PECO FG324)..,,31.75,Fluitek Corporation. (PAID BY CC),,48.84,,D045240-20G,,,,,,,
 ,Not-active,Non-inventory Part,D15 DE,,Tax,Sales,Cost of Goods Sold,,0,,,174.7,Brentwood Industries,,0,,,,,,,,,
 ,Active,Non-inventory Part,D15 Drif Dek,,Tax,Sales,Cost of Goods Sold,,0,,,101.08,Brentwood Industries,,0,,,,,,,,,
 ,Active,Non-inventory Part,DC-3,DC-3 Disposable Breather,Tax,Sales,Cost of Goods Sold,,0,DC-3 Disposable Breather,,112.20167,Motion Industries,,140.26036,,DC-3,,,,,,,
 ,Active,Non-inventory Part,DD718-05-060000,HILCO Stacked Disk Cartridge,Tax,Sales,Cost of Goods Sold,,0,HILCO Stacked Disk Cartridge,,55.76,Hilliard Corporation,,66.38,,DD718-05-060000,,,,,,,
-,Not-active,Non-inventory Part,DE4-SA2,,Tax,Sales,Cost of Goods Sold,,0,,,,,,,,DE4-SA2,,,,,,,
-,Active,Non-inventory Part,Delivery Fee,Delivery Fee,Tax,Sales,,,0,,,0,,,0,,,,,,,,,
+,Not-active,Non-inventory Part,DE4-SA2,,Tax,Sales,Cost of Goods Sold,,0,,,,MISC,,,,DE4-SA2,,,,,,,
+,Active,Non-inventory Part,Delivery Fee,Sales Delivery Fee,Tax,Sales,,,0,,,0,,,0,,,,,,,,,
 ,Active,Non-inventory Part,DGT839-00,HILCO DEMISTER CARTRIDGE,Tax,Sales,Cost of Goods Sold,,0,HILCO DEMISTER CARTRIDGE,,237.32,Hilliard Corporation,,365.2,,DGT839-00,,,,,,,
 ,Active,Non-inventory Part,DM1222-00-C,HILCO Demister Cartridge,Tax,Sales,Cost of Goods Sold,,0,HILCO Demister Cartridge,,820.08,Hilliard Corporation,,732,,DM1222-00-C,,,,,,,
 ,Active,Non-inventory Part,DM1436-00-C,HILCO Mist Eliminator Filter Element..(Direct OEM replacement for Dollinger #3508094)..,Tax,Sales,Cost of Goods Sold:Material,,0,HILCO Mist Eliminator Filter Element..(Direct OEM replacement for Dollinger #3508094)..,,1590,Caldwell Gasket,,1944,,DM1436-00-C,,,,,,,
@@ -1679,14 +1679,14 @@ Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Accou
 ,Active,Non-inventory Part,DM820-00-CGVSS,HILCO Demister Filter Element,Tax,Sales,Cost of Goods Sold,,0,HILCO Demister Filter Element,,559.64,Hilliard Corporation,,823,,DM820-00-CGVSS,,,,,,,
 ,Active,Non-inventory Part,DM839-00-C,HILCO Demister Filter Cartridge,Tax,Sales,Cost of Goods Sold,,0,HILCO Demister Filter Cartridge,,262.48,Hilliard Corporation,,318.25,,DM839-00-C,,,,,,,
 ,Active,Non-inventory Part,DM839-00-CGB,HILCO HYDROGEN CARTRIDGE..(Replacement Pricing),Tax,Sales,Cost of Goods Sold,,0,HILCO HYDROGEN CARTRIDGE..(Replacement Pricing),,1210,Hilliard Corporation,,1779,,DM839-00-CGB,,,,,,,
-,Not-active,Non-inventory Part,DONALDSON,,Tax,Sales,Cost of Goods Sold,,0,,,0,,,0,,,,,,,,,
-,Active,Non-inventory Part,Donaldson.,,Tax,Cost of Goods Sold,,,0,,,0,,,0,,,,,,,,,
+,Not-active,Non-inventory Part,DONALDSON,Sales Fee,Tax,Sales,Cost of Goods Sold,,0,,,0,,,0,,,,,,,,,
+,Active,Non-inventory Part,Donaldson.,Sales Fee,Tax,Cost of Goods Sold,,,0,,,0,,,0,,,,,,,,,
 ,Active,Non-inventory Part,DP95 1/1,DP95 1/1 24.24.12,Tax,Sales,Cost of Goods Sold,,0,DP95 1/1 24.24.12,,270,"Freudenberg Filtration Technologies, L.P.",,590,,6904468,,,,,,,
 ,Active,Non-inventory Part,DP95 1/2,DP95 1/2 12.24.12,Tax,Sales,Cost of Goods Sold,,0,DP95 1/2 12.24.12,,218,"Freudenberg Filtration Technologies, L.P.",,424,,6904464,,,,,,,
 ,Active,Non-inventory Part,DPx95 1/1,DPx95 1/1 24.24.12,Tax,Sales,Cost of Goods Sold,,0,DPx95 1/1 24.24.12,,348.5,"Freudenberg Filtration Technologies, L.P.",,590,,,,,,,,,
 ,Active,Non-inventory Part,DPx95 1/2,DPx95 1/2 12.24.12,Tax,Sales,Cost of Goods Sold,,0,DPx95 1/2 12.24.12,,218,"Freudenberg Filtration Technologies, L.P.",,424,,,,,,,,,
 ,Not-active,Non-inventory Part,DUP F-WRAP-26S-TP,"Pre-filter wrap for 26"" canister filters Sewn Moisture Tolerant Media for TurboPulse",Tax,Sales,Cost of Goods Sold,,0,"Pre-filter wrap for 26"" canister filters Sewn Moisture Tolerant Media for TurboPulse",,7.45,AFC Manufacturing,,19.1,,F-WRAP-26S-TP,,,,,,,
-,Not-active,Non-inventory Part,DWYER,,Tax,Sales,Cost of Goods Sold,,0,,,9.52,,,14,,DWYER,,,,,,,
+,Not-active,Non-inventory Part,DWYER,Sales,Tax,Sales,Cost of Goods Sold,,0,,,9.52,,,14,,DWYER,,,,,,,
 ,Active,Non-inventory Part,E15/400,"White Pre-filtration Media for GT ..(40"" x 46')",Tax,Sales,Cost of Goods Sold,,0,"White Pre-filtration Media for GT ..(40"" x 46')",,102,AFC Manufacturing,,0,,E15/400,,"40"" x 46",40,46,,,
 ,Active,Non-inventory Part,ECube 24x24 F7,F7 ECube Pocket Filter..24x24x24 8P DownStream Gasket 592x592x600-8P Plastic Frame,Tax,Sales,Cost of Goods Sold,,0,F7 ECube Pocket Filter..24x24x24 8P DownStream Gasket 592x592x600-8p Plastic Frame,,24.3,"Wetzel Technologies Co., Ltd",,48.6,,,,.24x24x24,0.24,24,24,,
 ,Active,Non-inventory Part,ED101E00000SF00,AmerKleen M80 Pad 24x24x4 in...Impregnated Glass Fiber Filter Pad,Tax,Sales,Cost of Goods Sold,,0,AmerKleen M80 Pad 24x24x4 in...Impregnated Glass Fiber Filter Pad,,10.37,AAF/Flanders Corporation,,13.89,,,,24x24x4,24,24,4,,
@@ -1697,7 +1697,7 @@ Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Accou
 ,Active,Non-inventory Part,EFS M8Cube -1/2,White Cube 12x24x15,Tax,Sales,Cost of Goods Sold,,0,White Cube 12x24x15,,0,AFC Manufacturing,,18.2,,EFS M8Cube -1/2,,12x24x15,12,24,15,,
 ,Active,Non-inventory Part,EFS MNPO LVCube -1/1,White Cube 16x16x16,Tax,Sales,Cost of Goods Sold,,0,White Cube 16x16x16,,2.25,AFC Manufacturing,,7.23,, EFS MNPO LVCube -1/1,,16x16x16,16,16,16,,
 ,Active,Non-inventory Part,EFS030648-016-190HV,HV HEPA Filter..(Exceed Performance of Donaldson P030648-016-190),Tax,Sales,Cost of Goods Sold,,0,HV HEPA Filter..(Exceed Performance of Donaldson P030648-016-190),,0,Hilliard Corporation,,230,,,,,,,,,
-,Active,Non-inventory Part,Elec Panel Media,,Tax,Sales,,,0,,,0,,,0,,,,,,,,,
+,Active,Non-inventory Part,Elec Panel Media,,Tax,Sales,,,0,,,0,MISC,,0,,,,,,,,,
 ,Not-active,Non-inventory Part,eMaxx E-10 1/1 DSGP,"24"" x 24"" x 17"" eMaxx High Efficiency Cassette Filter w/DSG Foamed-on PU",Tax,Sales,Cost of Goods Sold,,0,"24"" x 24"" x 17"" eMaxx High Efficiency Cassette Filter w/DSG Foamed-on PU",,184.17,"Freudenberg Filtration Technologies, L.P.",,245.56,,73072349,,"24"" x 24"" x 17""",24,24,17,,
 ,Active,Non-inventory Part,EMAXX E10 1/1,Viledon V08-25-N19S-K27-30m²,Tax,Sales,Cost of Goods Sold,,0,Viledon V08-25-N19S-K27-30m²,,204.19,Hilliard Corporation,,387.45,,EMAXX E10 1/1,,,,,,,
 ,Active,Non-inventory Part,EMAXX E12 1/1,Viledon EMaxx E12 24x24x17,Tax,Sales,Cost of Goods Sold,,0,Viledon EMAXX  E12 592.592.422,,204.19,Hilliard Corporation,,387.45,,EMAXX E12 1/1,,24x24x17,24,24,17,,
@@ -1705,7 +1705,7 @@ Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Accou
 ,Active,Non-inventory Part,ET718-DR-03ZXC0,HILCO ION EXCHANGE CARTRIDGE-ACID REMOVAL,Tax,Sales,Cost of Goods Sold,,0,HILCO ION EXCHANGE CARTRIDGE-ACID REMOVAL,,281.52,Hilliard Corporation,,414.1,,ET718-DR-03ZXC0,,,,,,,
 ,Active,Non-inventory Part,ET718-DR-CN,HILCO Ion Exchange Filter Element,Tax,Sales,Cost of Goods Sold,,0,HILCO Ion Exchange Filter Element,,242.76,Hilliard Corporation,,325,,,,,,,,,
 ,Active,Non-inventory Part,ET718-DR-CRN,HILCO Dry Ion Exchange Resin Cartridge,Tax,Sales,Cost of Goods Sold,,0,HILCO Dry Ion Exchange Resin Cartridge,,255,Hilliard Corporation,,337.5,,ET718-DR-CRN,,,,,,,
-,Active,Non-inventory Part,EVAPCO PARTS,,Tax,Cost of Goods Sold,,,0,,,0,,,0,,,,,,,,,
+,Active,Non-inventory Part,EVAPCO PARTS,,Tax,Cost of Goods Sold,,,0,,,0,MISC,,0,,,,,,,,,
 ,Active,Non-inventory Part,F-020E-150T-003,"HILCO Transfer Valve..(HILCO DWG #3804-04-176-C)..-	2” -150# ANSI RF Flanged Inlet/Outlet Connections...-	Stainless Steel Construction Body...-	Zero-Leak Design...-	Stainless Steel Pads/Shaft/Springs",Tax,Sales,Cost of Goods Sold,,0,"HILCO Transfer Valve..(HILCO DWG #3804-04-176-C)..-	2” -150# ANSI RF Flanged Inlet/Outlet Connections...-	Stainless Steel Construction Body...-	Zero-Leak Design...-	Stainless Steel Pads/Shaft/Springs",,6000,Hilliard Corporation,,8000,,,,,,,,,
 ,Active,Non-inventory Part,F-020E-600P-001,   HILCO TRANSFER VALVE..                                             (HILCO DWG #3804-04-254)..                                             2” 600# RFSO Connections..                                             Carbon Steel Body Construction with ..  ...,Tax,Sales,Cost of Goods Sold,,0,   HILCO TRANSFER VALVE..                                             (HILCO DWG #3804-04-254)..                                             2” 600# RFSO Connections..                                             Carbon Steel Body Construction with ..  ...,,,Hilliard Corporation,,,,F-020E-600P-001,,,,,,,
 ,Active,Non-inventory Part,F-030E-150S,HILCO TRANSFER VALVE,Tax,Sales,Cost of Goods Sold,,0,HILCO TRANSFER VALVE,,5242,Hilliard Corporation,,6167.06,,F-030E-150S,,,,,,,
@@ -1726,7 +1726,7 @@ Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Accou
 ,Active,Non-inventory Part,F-SOCK-GDX15,Gas Turbine Pre-filter 1 Piece Sock for GDX style filters -..Freudenberg P15/500 - Filtrair C15/500 media,Tax,Sales,Cost of Goods Sold,,0,Gas Turbine Pre-filter 1 Piece Sock for GDX style filters -..Freudenberg P15/500 - Filtrair C15/500 media,,0,AFC Manufacturing,,0,,F-SOCK-GDX,,,,,,,
 ,Active,Non-inventory Part,F-SOCK-V1224,Pre-Filter sock for 12x24x12 V4-Bank Filters,Tax,Sales,Cost of Goods Sold,,0,Pre-Filter sock for 12x24x12 V4-Bank Filters,,0,AFC Manufacturing,,0,,,,12x24x12,12,24,12,,
 ,Active,Non-inventory Part,F-SOCK-V2424,Pre-Filter sock for 24x24x12 V4-Bank Filters,Tax,Sales,Cost of Goods Sold,,0,Pre-Filter sock for 24x24x12 V4-Bank Filters,,9,AFC Manufacturing,,22.45,,,,24x24x12,24,24,12,,
-,Active,Non-inventory Part,F-STRAP-CMPST,Pre-Filter Velcro Strap for Composite Style Filters,Tax,Sales,Cost of Goods Sold,,0,Pre-Filter Velcro Strap for Composite Style Filters,,0,,,3.43,,,,,,,,,
+,Active,Non-inventory Part,F-STRAP-CMPST,Pre-Filter Velcro Strap for Composite Style Filters,Tax,Sales,Cost of Goods Sold,,0,Pre-Filter Velcro Strap for Composite Style Filters,,0,AFC Manufacturing,,3.43,,,,,,,,,
 ,Active,Non-inventory Part,F-WRAP-22V,"Pre-filter wrap for 22"" canister filters with Velcro strap",Tax,Sales,Cost of Goods Sold,,0,"Pre-filter wrap for 22"" canister filters with Velcro strap",,0,AFC Manufacturing,,0,,,,,,,,,
 ,Active,Non-inventory Part,F-WRAP-26-CYN,"Pre-filter wrap for 26"" Cylindrical filters with Velcro strap",Tax,Sales,Cost of Goods Sold,,0,"Pre-filter wrap for 26"" Cylindrical filters with Velcro strap",,0,AFC Manufacturing,,0,,F-WRAP-26-CYN,,,,,,,
 ,Active,Non-inventory Part,F-WRAP-26S,"Pre-filter wrap for 26"" canister filters Sewn",Tax,Sales,Cost of Goods Sold,,0,"Pre-filter wrap for 26"" canister filters Sewn",,0,AFC Manufacturing,,0,,F-WRAP-26S,,,,,,,
@@ -1746,13 +1746,13 @@ Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Accou
 ,Active,Non-inventory Part,F-WRAP-V1612,"Cartridge Filter wrap w/Velcro; 16""OD x 12""H; Equiv to P191016-016-340",Tax,Sales,Cost of Goods Sold,,0,"Cartridge Filter wrap w/Velcro; 16""OD x 12""H",,4.5,AFC Manufacturing,,11,,F-WRAP-V2541,,,,,,,
 ,Active,Non-inventory Part,F-WRAP-V2541,"Cartridge Filter wrap w/Velcro; 25"" x 41""",Tax,Sales,Cost of Goods Sold,,0,"Cartridge Filter wrap w/Velcro; 25"" x 41""",,0,AFC Manufacturing,,8.15,,F-WRAP-V2541,,"25"" x 41""",25,41,,,
 ,Active,Non-inventory Part,F31S36412 / PO-25-P02E-WW-30L,F31S36412 / PO-25-P02E-WW-30L..Eaton Sentinel Bag Filter,Tax,Sales,Cost of Goods Sold,,0,F31S36412 / PO-25-P02E-WW-30L FILTER..ITEM NO: 08749605 Eaton Sentinel Bag Filter,,11.6,Motion Industries,,16.5,,,,,,,,,
-,Not-active,Non-inventory Part,F5SC-242418-6FM,"24x24x18, 50%, Synthetic Pocket Filter",Tax,Sales,,,0,,,0,,,61.25,,,,24x24x18,24,24,18,50%,7
+,Not-active,Non-inventory Part,F5SC-242418-6FM,"24x24x18, 50%, Synthetic Pocket Filter",Tax,Sales,,,0,,,0,"Wetzel Technologies Co., Ltd",,61.25,,,,24x24x18,24,24,18,50%,7
 ,Active,Non-inventory Part,F6HT-3618,"High Temp. Air Filter, M6, 18"" x 36"" x 2"" (457x915x55mm) with Aluminum Frame, Glass Fiber media; no header",Tax,Sales,Cost of Goods Sold,,0,"High Temp. Air Filter, M6, 18"" x 36"" x 2"" (457x915x55mm) with Aluminum Frame, Glass Fiber media; no header",,38.9,"Wetzel Technologies Co., Ltd",,0,,,,"18"" x 36"" x 2""",18,36,2,,
-,Active,Non-inventory Part,F7-08BAG122422,"EFS 12x24x22, F7/MERV 13, 4 Pocket Bag Filter with Aluminum Frame",Tax,Sales,Cost of Goods Sold,,0,"EFS 12x24x22, F7/MERV 13, 4 Pocket Bag Filter with Aluminum Frame",,10,,,,,,,12x24x22,12,24,22,MERV 13,13
-,Active,Non-inventory Part,F7-08BAG242422,"EFS 24x24x22, F7/MERV 13, 8 Pocket Bag Filter with Aluminum Frame",Tax,Sales,Cost of Goods Sold,,0,"EFS 24x24x22, F7/MERV 13, 8 Pocket Bag Filter with Aluminum Frame",,15,,,,,,,24x24x22,24,24,22,MERV 13,13
-,Not-active,Non-inventory Part,F7V4-1224-W,MERV 13 4V-Bank Filter (12x24x12) No gasket,Tax,Sales,Cost of Goods Sold,,0,MERV 13 4V-Bank Filter (12x24x12) No gasket,,32.4,,,89.14,,F7V4-1224-W,,12x24x12,12,24,12,MERV 13,13
+,Active,Non-inventory Part,F7-08BAG122422,"EFS 12x24x22, F7/MERV 13, 4 Pocket Bag Filter with Aluminum Frame",Tax,Sales,Cost of Goods Sold,,0,"EFS 12x24x22, F7/MERV 13, 4 Pocket Bag Filter with Aluminum Frame",,10,"Wetzel Technologies Co., Ltd",,,,,,12x24x22,12,24,22,MERV 13,13
+,Active,Non-inventory Part,F7-08BAG242422,"EFS 24x24x22, F7/MERV 13, 8 Pocket Bag Filter with Aluminum Frame",Tax,Sales,Cost of Goods Sold,,0,"EFS 24x24x22, F7/MERV 13, 8 Pocket Bag Filter with Aluminum Frame",,15,"Wetzel Technologies Co., Ltd",,,,,,24x24x22,24,24,22,MERV 13,13
+,Not-active,Non-inventory Part,F7V4-1224-W,MERV 13 4V-Bank Filter (12x24x12) No gasket,Tax,Sales,Cost of Goods Sold,,0,MERV 13 4V-Bank Filter (12x24x12) No gasket,,32.4,"Wetzel Technologies Co., Ltd",,89.14,,F7V4-1224-W,,12x24x12,12,24,12,MERV 13,13
 ,Active,Non-inventory Part,F8-Bag Filter,"24x24x???, F8 (95%), ** Pocket, Synthetic Bag Filter with Extruded Aluminum Frame",Tax,Sales,Cost of Goods Sold,,0,F8 (95%)  Synthetic Bag Filter (24x24x???) with Extruded Aluminum Frame,,0,AFC Manufacturing,,0,,,,,,,,95%,16
-,Not-active,Non-inventory Part,F8V4GL,,Tax,Sales,Cost of Goods Sold,,0,,,0,,,0,,,,,,,,,
+,Not-active,Non-inventory Part,F8V4GL,,Tax,Sales,Cost of Goods Sold,,0,,,0,"Wetzel Technologies Co., Ltd",,0,,,,,,,,,
 ,Active,Non-inventory Part,FA-191234,"22"" L GT Cansiter Blended M11",Tax,Sales,Cost of Goods Sold,,0,"22"" L GT Cansiter Blended M11",,44.67,"Fleetlife, Inc.",,109.16,,,,,,,,,
 ,Active,Non-inventory Part,FA-191236,"26"" L GT Cansiter Blended M11",Tax,Sales,Cost of Goods Sold,,0,"26"" L GT Cansiter Blended M11",,46.49,"Fleetlife, Inc.",,119.52,,,,,,,,,
 ,Active,Non-inventory Part,FA-644-2A,"Facet 44"" Length 2 Micron FA Series Microfilter EI 1590 Qualified",Tax,Sales,Cost of Goods Sold,,0,"Facet 44"" Length 2 Micron FA Series Microfilter EI 1590 Qualified",,222.76,"Precision Filter Products, LLC",,279.03,,FA-644-2A,,,,,,,
@@ -1772,7 +1772,7 @@ Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Accou
 ,Not-active,Non-inventory Part,FC-80255.04599,"80255.032424.. 24"" x 24"" 3.5"" High Capacity Pleat- NO LABELS ON BEVERAGE BOARD OR FILTERS",Tax,Sales,Cost of Goods Sold,,0,"80255.032424.. 24"" x 24"" 3.5"" High Capacity Pleat- NO LABELS ON BEVERAGE BOARD OR FILTERS",,18.73,AAF/Flanders Corporation,,15.7,,FC-80255.04599,,"24"" x 24""",24,24,,,
 ,Active,Non-inventory Part,FCC-N,Washer for Canister (withlip),Tax,Sales,Cost of Goods Sold,,0,Washer for Canister (withlip),,0.4597,"Wetzel Technologies Co., Ltd",,1.3,,FCC-N,,,,,,,
 ,Active,Non-inventory Part,FF,Filter Frame,Tax,Sales,Cost of Goods Sold,,0,Filter Frame,,48,,,0,,,,,,,,,
-,Active,Non-inventory Part,FGP-CARB,,Tax,Sales,Cost of Goods Sold,,0,,,0,,,0,,,,,,,,,
+,Active,Non-inventory Part,FGP-CARB,,Tax,Sales,Cost of Goods Sold,,0,,,0,"Wetzel Technologies Co., Ltd",,0,,,,,,,,,
 ,Active,Non-inventory Part,FHT-F8-18362W,FHT-F8-18362W,Tax,Sales,Cost of Goods Sold,,0,FHT-F8-18362W,,0,"Wetzel Technologies Co., Ltd",,0,,,,,,,,,
 ,Active,Non-inventory Part,FHT-F8-457915,FHT-F8-,Tax,Sales,Cost of Goods Sold,,0,FHT-F8-,,0,"Wetzel Technologies Co., Ltd",,0,,,,,,,,,
 ,Active,Non-inventory Part,FHT-F8-592592,FHT-F8-,Tax,Sales,Cost of Goods Sold,,0,FHT-F8-,,0,"Wetzel Technologies Co., Ltd",,0,,,,,,,,,
@@ -1808,8 +1808,8 @@ Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Accou
 ,Not-active,Non-inventory Part,FPKTSP,EFS Pocket Separator,Tax,Sales,Cost of Goods Sold,,0,EFS Pocket Separator,,0.55,,,0,,,,,,,,,
 ,Active,Non-inventory Part,Freight - PP & Add,Freight from factory of origin paid by buyer;..Prepaid & Added (TBD),Non,Sales,,,0,,,0,,,0,,Freight - PP & Add,,,,,,,
 ,Active,Non-inventory Part,Freight AFC Truck,Freight Charge,Tax,Sales,,,0,,,0,,,0,,,,,,,,,
-,Active,Non-inventory Part,G-02-1-QC-2-001,"Gerber 2500 Static Q-Belt; 74"" x..24'; Hole Pattern: Chevron; Hole Size: .024""-.026"";..V-guide: No; Glue Kit: No",Non,Cost of Goods Sold:Material,,,0,,,0,,,3702.72,,,,,,,,,
-,Active,Non-inventory Part,G36T5L/4P-NORM,"39W T5 GERMICIDAL UV TUBE SINGLE ENDED..4-PIN 10,000HR 33.31""L X 0.63""D",Tax,Sales,Cost of Goods Sold,,0,"39W T5 GERMICIDAL UV TUBE SINGLE ENDED..4-PIN 10,000HR 33.31""L X 0.63""D",,44.38,,,,,G36T5L/4P-NORM,,,,,,,
+,Active,Non-inventory Part,G-02-1-QC-2-001,"Gerber 2500 Static Q-Belt; 74"" x..24'; Hole Pattern: Chevron; Hole Size: .024""-.026"";..V-guide: No; Glue Kit: No",Non,Cost of Goods Sold:Material,,,0,,,0,MISC,,3702.72,,,,,,,,,
+,Active,Non-inventory Part,G36T5L/4P-NORM,"39W T5 GERMICIDAL UV TUBE SINGLE ENDED..4-PIN 10,000HR 33.31""L X 0.63""D",Tax,Sales,Cost of Goods Sold,,0,"39W T5 GERMICIDAL UV TUBE SINGLE ENDED..4-PIN 10,000HR 33.31""L X 0.63""D",,44.38,MISC,,,,G36T5L/4P-NORM,,,,,,,
 ,Active,Non-inventory Part,G8 Cube,Poly Shield Cube 20x20x10,Tax,Sales,Cost of Goods Sold,,0,Poly Shield Cube 20x20x10,,11,Fiber Bond Corporation,,36.55,,,,20x20x10,20,20,10,,
 ,Active,Non-inventory Part,G8 Cube 1/1,"Poly Shield Cube 24x24x15, 12/box",Tax,Sales,Cost of Goods Sold,,0,"Poly Shield Cube 24x24x15, 12/box, Self-Sealing",,11.33,Fiber Bond Corporation,,32.37,,301070115,,24x24x15,24,24,15,,
 ,Active,Non-inventory Part,G8 Cube 1/2,"Poly Shield Cube 12x24x15, 12/box",Tax,Sales,Cost of Goods Sold,,0,"Poly Shield Cube 12x24x15, 12/box, Self-Sealing",,9.46,Fiber Bond Corporation,,27.04,,301010115,,12x24x15,12,24,15,,
@@ -1845,10 +1845,10 @@ Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Accou
 ,Active,Non-inventory Part,HG6439HSBV,Pentair GENESIS Coreless Element,Tax,Sales,Cost of Goods Sold,,0,Pentair GENESIS Coreless Element,,399.16,"Precision Filter Products, LLC",,570,,HG6439HSBV,,,,,,,
 ,Active,Non-inventory Part,HIA-Metal,HIA-Metal,Tax,Sales,Cost of Goods Sold,,0,HIA-Metal,,0,"Aircon Filter Mfg. Co., Inc.",,0,,,,,,,,,
 ,Active,Non-inventory Part,HIAS-Aluminum,Aluminum Screen Air Filter,Tax,Sales,Cost of Goods Sold,,0,Aluminum Screen Air Filter,,0,American Metal Filter Company,,0,,HIAS,,,,,,,
-,Active,Non-inventory Part,HILCO,HILCO,Tax,Sales,,,0,,,0,,,0,,,,,,,,,
+,Active,Non-inventory Part,HILCO,HILCO,Tax,Sales,,,0,,,0,Hilliard Corporation,,0,,,,,,,,,
 ,Active,Non-inventory Part,HL90D-EFS,72 “  x 31.5”  x 3.8”  EFS Synthetic Media Coalescer,Tax,Sales,Cost of Goods Sold,,0,72 “  x 31.5”  x 3.8”  EFS Synthetic Media Coalescer,,0,AFC Manufacturing,,39.55,,HL90D-EFS,,31.5”  x 3.8”,31.5,3.8,,,
 ,Active,Non-inventory Part,HOUSING,,Tax,Sales,Cost of Goods Sold,,0,,,0,"Applied Air Filters, Inc",,0,,,,,,,,,
-,Active,Non-inventory Part,HP200,,Tax,Sales,Cost of Goods Sold,,0,,,0,,,0,,,,,,,,,
+,Active,Non-inventory Part,HP200,,Tax,Sales,Cost of Goods Sold,,0,,,0,Hilliard Corporation,,0,,,,,,,,,
 ,Active,Non-inventory Part,HP311-12-GE,HP311-12-GE Cartridge,Tax,Sales,Cost of Goods Sold,,0,HP311-12-GE Cartridge,,120.36,Hilliard Corporation,,135,,HP311-12-GE,,,,,,,
 ,Active,Non-inventory Part,HP4B-530101077,HP4B PORTABLE FILTER..(HILCO DWG #5301-01-077-C)..- 4GPM Process Flow...- Portable Design...- Viton O-Rings..- 1/3 HP Motor/Pump Set...- Pressure Gauge..- Vent Valve...- 3000SUS Max...- HILCO Moisture/Water Adsorbing Cartridge-See pricing.,Tax,Sales,Cost of Goods Sold,,0,HP4B PORTABLE FILTER..(HILCO DWG #5301-01-077-C)..- 4GPM Process Flow...- Portable Design...- Viton O-Rings..- 1/3 HP Motor/Pump Set...- Pressure Gauge..- Vent Valve...- 3000SUS Max...- HILCO Moisture/Water Adsorbing Cartridge-See pricing.,,2225,Hilliard Corporation,,2617.65,,HP4B-530101077,,,,,,,
 ,Active,Non-inventory Part,HPB-101,HPB-101  Breather,Tax,Sales,Cost of Goods Sold,,0,HPB-101  Breather,,86,Webster Associates,,107.5,,HPB-101,,,,,,,
@@ -1861,14 +1861,14 @@ Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Accou
 ,Active,Non-inventory Part,HVP-SPECIAL,Special High Capacity Pleat,Tax,Sales,Cost of Goods Sold,,0,Special High Capacity Pleat,,11.38,Glasfloss Industries,,0,,HVP-SPECIAL,,,,,,,
 ,Not-active,Non-inventory Part,HVPSP727M2E,HVPSP727M2E/03 ..Special Pleat CTO Model..7.000 x 27.750 x 2.000 Special HV Pleat..Exact Size Using .5-HVP20302-PRD..Special/Special,Tax,Sales,Cost of Goods Sold,,0,HVPSP727M2E/03 ..Special Pleat CTO Model..7.000 x 27.750 x 2.000 Special HV Pleat..Exact Size Using .5-HVP20302-PRD..Special/Special,,7.11,Glasfloss Industries,,10.76,,HVPSP727M2E,,7.000 x 27.750 x 2.000,7,27.75,2,,
 ,Active,Non-inventory Part,HVPXM-SPECIAL,HVPXM SPECIAL,Tax,Sales,Cost of Goods Sold,,0,HVPXM SPECIAL,,7,Glasfloss Industries,,4.55,,HVPXM-SPECIAL,,,,,,,
-,Active,Non-inventory Part,HYDAC,,Tax,Sales,,,0,,,0,,,0,,HYDAC,,,,,,,
+,Active,Non-inventory Part,HYDAC,,Tax,Sales,,,0,,,0,Hilliard Corporation,,0,,HYDAC,,,,,,,
 ,Active,Non-inventory Part,HZ9021K12RW1,"ASSEMBLY, HOUSING, FOR FILTER ELEMENT KIND.",Tax,Sales,Cost of Goods Sold,,0,"ASSEMBLY, HOUSING, FOR FILTER ELEMENT KIND.",,559.53,"Flodraulic Group, Inc.",,801.23,,HZ9021K12RW1,,,,,,,
 ,Active,Non-inventory Part,Incidental Fund,Incidental Fund,Tax,Sales,Cost of Goods Sold,,0,Incidental Fund,,0,AFC Manufacturing,,0,,Incidental Fund,,,,,,,
-,Not-active,Non-inventory Part,INGERSOLL-RAND,,Tax,Sales,Cost of Goods Sold,,0,,,0,,,0,,,,,,,,,
-,Active,Non-inventory Part,Ingersoll Rand,,Tax,Sales,,,0,,,0,,,0,,,,,,,,,
+,Not-active,Non-inventory Part,INGERSOLL-RAND,Sales,Tax,Sales,Cost of Goods Sold,,0,,,0,,,0,,,,,,,,,
+,Active,Non-inventory Part,Ingersoll Rand,Sales,Tax,Sales,,,0,,,0,,,0,,,,,,,,,
 ,Active,Non-inventory Part,J10,J10 Schroeder Filter Element..,Tax,Sales,Cost of Goods Sold,,0,J10 ..Schroeder Filter Element 10 Micron ..,,25.97,Hydraulic Controls Inc.,,33.75,,,,,,,,,
 ,Active,Non-inventory Part,JHF 205-PAB-PP,"JHF 205-PAB-PP..Jonell LiquiPleat HF Series Filter Cartridge, 5 Micron at 99.98%..efficiency, Polypropylene Media and outer cage, SOE, 6.3"" OD x 20.5""..Length..",Tax,Sales,Cost of Goods Sold,,0,"JHF 205-PAB-PP..Jonell LiquiPleat HF Series Filter Cartridge, 5 Micron at 99.98%..efficiency, Polypropylene Media and outer cage, SOE, 6.3"" OD x 20.5""..Length..",,222.98,"Precision Filter Products, LLC",,297.83,,JHF 205-PAB-PP,,,,,,99.98%,17
-,Active,Non-inventory Part,JONELL,,Tax,Sales,Cost of Goods Sold,,0,,,0,,,0,,,,,,,,,
+,Active,Non-inventory Part,JONELL,Sales,Tax,Sales,Cost of Goods Sold,,0,,,0,,,0,,,,,,,,,
 ,Active,Non-inventory Part,JPMC 2509-03AB-D-S,"Jonell LiquiPleat C Series, 2.5"" OD x 9.75"" Length, Cellulose Media,..Tinned Steel Core, Supports, and End Caps",Tax,Sales,Cost of Goods Sold,,0,"Jonell LiquiPleat C Series, 2.5"" OD x 9.75"" Length, Cellulose Media,..Tinned Steel Core, Supports, and End Caps",,46.36,"Precision Filter Products, LLC",,114,,JPMC 2509-03AB-D-S,,,,,,,
 ,Active,Non-inventory Part,JPMC 2509-30AB-D-SS,"JPMC 2509-30AB-D-SS ..Direct Equivalent to: MCS1001EEH13 Pall Epocel Series Industrial Filter Element, EE Grade..Jonell LiquiPleat C Series Filter Cartridge 30 Micron..Rating @ 99% Efficiency, DOE, Cellulose Media w/..Stainless Steel Supports and Core",Tax,Sales,Cost of Goods Sold,,0,"JPMC 2509-30AB-D-SS ..Direct Equivalent to: MCS1001EEH13 Pall Epocel Series Industrial Filter Element, EE Grade..Jonell LiquiPleat C Series Filter Cartridge 30 Micron..Rating @ 99% Efficiency, DOE, Cellulose Media w/..Stainless Steel Supports and Core",,70.62,"Precision Filter Products, LLC",,114,,JPMC 2509-30AB-D-SS,,,,,,99%,17
 ,Active,Non-inventory Part,JPME 618-25,"JPME 618-25 ..Jonell LiquiPleat E Series Filter Cartridge, 25 Micron @ 98% Efficiency,..DOE Configuration, 6""OD x 18"" Length, includes belly band (3” section of..nylon netting to contain the pleats)",Tax,Sales,Cost of Goods Sold,,0,"JPME 618-25 ..Jonell LiquiPleat E Series Filter Cartridge, 25 Micron @ 98% Efficiency,..DOE Configuration, 6""OD x 18"" Length, includes belly band (3” section of..nylon netting to contain the pleats)",,72.19,"Precision Filter Products, LLC",,96.78,,JPME 618-25,,,,,,98%,17
@@ -1880,11 +1880,11 @@ Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Accou
 ,Active,Non-inventory Part,Kuul Pad 60,Kuul Control PowerGT  w/DuraPro Edge 60x12x12,Tax,Sales,Cost of Goods Sold,,0,Kuul Control PowerGT  w/DuraPro Edge 60x12x12,,52.7,Portacool,,0,,Kuul Pad 60,,60x12x12,60,12,12,,
 ,Active,Non-inventory Part,Kuul Pad 72,Kuul Control PowerGT w/DuraPro Edge 72x12x12,Tax,Sales,Cost of Goods Sold,,0,Kuul Control PowerGT w/DuraPro Edge 72x12x12,,63.24,Portacool,,0,,Kuul Pad 72,,72x12x12,72,12,12,,
 ,Active,Non-inventory Part,LA03372-50,"Airlay3 0.33 OZ x 0.25"" x 72.0 x 50.0 Yard",Tax,Sales,Cost of Goods Sold,,0,"Airlay3 0.33 OZ x 0.25"" x 72.0 x 50.0 Yard",,48.481,"American Nonwoven, Inc. / VFT INC.",,58.84,,LA03372-50,,"0.25"" x 72.0 x 50.0",0.25,72,50,,
-,Active,Non-inventory Part,LABOR,LABOR,Non,Labor,,,0,,,0,,,0,,LABOR,,,,,,,
-,Active,Non-inventory Part,LABOR-FF,Final Filter Removal/ Installation/ Disposal,Non,Labor,,,0,,,0,,,6.5,,LABOR-FF,,,,,,,
-,Active,Non-inventory Part,LABOR-INSP,,Non,Labor,,,0,,,0,,,1.85,,LABOR-INSP,,,,,,,
-,Active,Non-inventory Part,LABOR-PF,Pre Filter Removal/ Installation/ Disposal,Non,Labor,,,0,,,0,,,1.85,,LABOR-PF,,,,,,,
-,Active,Non-inventory Part,LATCH ASSY LM6000,"LATCH ASSEMBLY for Composite Filters LM6000 S.S. 304, 3129502",Tax,Cost of Goods Sold,,,0,,,0,,,24,,3129502,,,,,,,
+,Active,Non-inventory Part,LABOR,Sales LABOR,Non,Labor,,,0,,,0,,,0,,LABOR,,,,,,,
+,Active,Non-inventory Part,LABOR-FF,Sales FinalRemoval/ Installation/ Disposal,Non,Labor,,,0,,,0,,,6.5,,LABOR-FF,,,,,,,
+,Active,Non-inventory Part,LABOR-INSP,Sales,Non,Labor,,,0,,,0,,,1.85,,LABOR-INSP,,,,,,,
+,Active,Non-inventory Part,LABOR-PF,Sales Pre  Removal/ Installation/ Disposal,Non,Labor,,,0,,,0,,,1.85,,LABOR-PF,,,,,,,
+,Active,Non-inventory Part,LATCH ASSY LM6000,"LATCH ASSEMBLY for Composite Filters LM6000 S.S. 304, 3129502",Tax,Cost of Goods Sold,,,0,,,0,MISC,,24,,3129502,,,,,,,
 ,Active,Non-inventory Part,LD10005072,"0.5"" x 55"" x 180' White Media",Tax,Sales,Cost of Goods Sold,,0,"V-Deck 1oz 0.5"" x 74"" x 60 Yards",,53.61,"American Nonwoven, Inc. / VFT INC.",,76.59,,LD10005072,,"0.5"" x 55"" x 180",0.5,55,180,,
 ,Active,Non-inventory Part,LD10005074,"V-Deck 1oz 0.5"" x 74"" x 60 Yards",Tax,Sales,Cost of Goods Sold,,0,"V-Deck 1oz 0.5"" x 74"" x 60 Yards",,53.61,"American Nonwoven, Inc. / VFT INC.",,76.59,,LD10005074,,"0.5"" x 74"" x 60",0.5,74,60,,
 ,Active,Non-inventory Part,LD12005040-50,"V-Deck 1.20 OZ x 0.50"" x 40 x 50 YARD",Tax,Sales,Cost of Goods Sold,,0,"V-Deck 1.20 OZ x 0.50"" x 40 x 50 YARD",,78.62,"American Nonwoven, Inc. / VFT INC.",,78.62,,LD12005040-50,,"0.50"" x 40 x 50",0.5,40,50,,
@@ -1918,11 +1918,11 @@ Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Accou
 ,Active,Non-inventory Part,LH10072-60,"LowMelt H 1.00 oz x 0.50"" x 72.0"" x 60.0 YARD",Tax,Sales,Cost of Goods Sold,,0,"LowMelt H 1.00 oz x 0.50"" x 72.0"" x 60.0 YARD",,114.16,"American Nonwoven, Inc. / VFT INC.",,163.08,,LH10072-60,,"0.50"" x 72.0"" x 60.0",0.5,72,60,,
 ,Active,Non-inventory Part,LH75090-Media Cut,"24"" x 24"" x 2"" White Media 90/90",Tax,Sales,Cost of Goods Sold,,0,"24"" x 24"" x 2"" White Media 90/90",,6.87,"American Nonwoven, Inc. / VFT INC.",,0,,LH75090-Media Cut,,"24"" x 24"" x 2""",24,24,2,,
 ,Active,Non-inventory Part,LHD07507548-30,"D Lowmelt 0.75 OZ X 0.75"" X 48.000"" X 30.0 YARD",Tax,Sales,Cost of Goods Sold,,0,"D Lowmelt 0.75 OZ X 0.75"" X 48.000"" X 30.0 YARD",,35.35,"American Nonwoven, Inc. / VFT INC.",,0,,LHD07507548-30,,"0.75"" X 48.000"" X 30.0",0.75,48,30,,
-,Active,Non-inventory Part,LM2500 Spares,,Tax,Cost of Goods Sold,,,0,,,0,,,0,,,,,,,,,
+,Active,Non-inventory Part,LM2500 Spares,,Tax,Cost of Goods Sold,,,0,,,0,MISC,,0,,,,,,,,,
 ,Active,Non-inventory Part,M-MVH-Gel-122412,12x24x11.5 Galv 99.999% w/Gel Seal,Tax,Sales,Cost of Goods Sold,,0,MVH-610/610/292-5/6-14GJ..12x24x11.5 Galv 99.999% w/Gel Seal,,140.43,Mikropor America,,227.1,,M-MVH-Gel-122412,,12x24x11.5,12,24,11.5,100.00%,18
 ,Active,Non-inventory Part,M-MVH-Gel-242412,"MVH-610/610/292-5/6-13AJNG-32-NT-BIBO..HEPA Gel Seal Extractor Clips..Size 24x24x11.5, 99.99% @ 0.3 micron..Galvanized Frame, 1.0"" w.g. @ 2,400 CFM",Tax,Sales,Cost of Goods Sold,,0,"MVH-610/610/292-5/6-13AJNG-32-NT-BIBO..HEPA Gel Seal Extractor Clips..Size 24x24x11.5, 99.99% @ 0.3 micron..Galvanized Frame, 1.0"" w.g. @ 2,400 CFM",,241.69,Mikropor America,,622,,MVH-610/610/292-5/6-13AJNG-32-N,,24x24x11.5,24,24,11.5,99.99%,17
 ,Active,Non-inventory Part,M11-SPECIAL,M11-SPECIAL,Tax,Sales,Cost of Goods Sold,,0,M11-SPECIAL,,5.75,Glasfloss Industries,,0,,M11-SPECIAL,,,,,,,
-,Active,Non-inventory Part,M1120254,20x25x4 (MERV 11) High Capacity Pleat,Tax,Sales,,,0,,,0,,,0,,,,20x25x4 ,20,25,4,MERV 11,11
+,Active,Non-inventory Part,M1120254,20x25x4 (MERV 11) High Capacity Pleat,Tax,Sales,,,0,,,0,Glasfloss Industries,,0,,,,20x25x4 ,20,25,4,MERV 11,11
 ,Active,Non-inventory Part,M13-SPECIAL,SPECIAL MERV 13 Pleated Filter,Tax,Sales,Cost of Goods Sold,,0,SPECIAL MERV 13 Pleated Filter,,23.64,Glasfloss Industries,,0,,M13-SPECIAL,,,,,,MERV 13,13
 ,Active,Non-inventory Part,MAGAH2424B3H35,"24.0 x 24.0 x 12- MERV 14 MAGNA HT SERIES 500, HEADER STYLE, GASKETING AIR EXIT, FACE GUARDS AIR ENTRY AND EXIT, NOMINAL SIZE",Tax,Sales,Cost of Goods Sold,,0,"24.0 x 24.0 x 12- MERV 14 MAGNA HT SERIES 500, HEADER STYLE, GASKETING AIR EXIT, FACE GUARDS AIR ENTRY AND EXIT, NOMINAL SIZE",,193.56,Glasfloss Industries,,0,,MAGAH2424B3H35,,24.0 x 24.0 x 12,24,24,12,MERV 14,14
 ,Active,Non-inventory Part,MAGGD1625A3OX,16 x 25 x 6 MERV 14 - 900 Series Metal Dbl HDR Nominal Magna Std Cap,Tax,Sales,Cost of Goods Sold,,0,16.0 x 25.0 x 6.0 MERV 14 - 900 Series Metal Dbl HDR Nominal Magna Std Cap,,87.3,Glasfloss Industries,,149.66,,MAGGD1625A3OX,,16 x 25 x 6,16,25,6,MERV 14,14
@@ -1934,18 +1934,18 @@ Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Accou
 ,Active,Non-inventory Part,MBE5-40,MBE5-40; Equivalent to AVS5M40 PARKER,Tax,Sales,Cost of Goods Sold,,0,MBE5-40; Equivalent to AVS5M40 PARKER,,9.81,Fluitek Corporation. (PAID BY CC),,13.72,,,,,,,,,
 ,Active,Non-inventory Part,MC-292/592/130-8PKN,12x24x6 Headered Merv 14,Tax,Sales,Cost of Goods Sold,,0,12x24x6 Headered Merv 14,,31.43,Mikropor America,,48.35,,MC-292/592/130-8PKN,,12x24x6,12,24,6,Merv 14,14
 ,Active,Non-inventory Part,MC-592/592/130-8PKN,24x24x6 Headered Merv 14,Tax,Sales,Cost of Goods Sold,,0, 24x24x6 Headered Merv 14,,54.62,Mikropor America,,84.03,,MC-592/592/130-8PKN,,24x24x6,24,24,6,Merv 14,14
-,Not-active,Non-inventory Part,ME,,Tax,Sales,Cost of Goods Sold,,0,,,0,,,0,,,,,,,,,
+,Not-active,Non-inventory Part,ME,,Tax,Sales,Cost of Goods Sold,,0,,,0,MISC,,0,,,,,,,,,
 ,Active,Non-inventory Part,MEDIA,,Tax,Sales,Cost of Goods Sold,,0,,,50,AFC Manufacturing,,0,,,,,,,,,
 ,Active,Non-inventory Part,MF0062323,MF0062323 Element Lube oil filter ..Equivalent TE55CD1 Element Filter,Tax,Sales,Cost of Goods Sold,,0,MF0062323 Element Lube oil filter ..Equivalent TE55CD1 Element Filter,,20.29,Main Filter,,0,,MF0062323,,,,,,,
 ,Active,Non-inventory Part,MFK-032-39,FRANKIE FILTER MFK-032-39,Tax,Sales,Cost of Goods Sold,,0,FRANKIE FILTER MFK-032-39,,14.85,"Fleetlife, Inc.",,40.92,,MFK-032-39,,,,,,,
 ,Active,Non-inventory Part,MG Hydro Pre 23233½,PANFIL G4 592x592 (23.3x23.3x3½),Tax,Sales,Cost of Goods Sold,,0,PANFIL G4 592x592 (23.3x23.3x3½) Plastic Frame Mini Pleat PF4PS18WO-592-592-88,,17,MGT Air Filters,,42.77,,PF4PS18WO-592-592-88,,592x592 ,592,592,,,
 ,Active,Non-inventory Part,MIKROPOR,,Tax,Sales,Cost of Goods Sold,,0,,,0,Mikropor America,,0,,,,,,,,,
-,Not-active,Non-inventory Part,MINI Special,,Tax,Sales,Cost of Goods Sold,,0,,,0,,,0,,,,,,,,,
+,Not-active,Non-inventory Part,MINI Special,,Tax,Sales,Cost of Goods Sold,,0,,,0,Glasfloss Industries,,0,,,,,,,,,
 ,Active,Non-inventory Part,MINI24244-EFS,MERV 11 24x24x4 Plastic Frame MINI Pleat,Tax,Sales,Cost of Goods Sold,,0,MERV 11 24x24x4 Plastic Frame MINI Pleat,,41.5,"Columbus Industries, Inc.",,67.42,,MINI24244-EFS,,24x24x4,24,24,4,MERV 11,11
 ,Active,Non-inventory Part,MINI85H-4/04,VILEDON 20x24x4  MiniPleat 85% Header,Tax,Sales,Cost of Goods Sold,,0,VILEDON 20x24x4  MiniPleat 85% Header,,0,"Freudenberg Filtration Technologies, L.P.",,134.2,,,,20x24x4 ,20,24,4,85%,13
 ,Active,Non-inventory Part,MINI95-2/00,VILEDON 20x20x2 MiniPleat 95%,Tax,Sales,Cost of Goods Sold,,0,VILEDON 20x20x2 MiniPleat 95%,,59.5,"Freudenberg Filtration Technologies, L.P.",,85.5,,,,20x20x2,20,20,2,95%,16
 ,Active,Non-inventory Part,MINICP-2/44,Viledon 24x24x2 Carbon Mini CP Filter,Tax,Sales,Cost of Goods Sold,,0,Viledon 24x24x2 Carbon Mini CP Filter,,92.5,"Freudenberg Filtration Technologies, L.P.",,127.3,,MINICP-2/44,,24x24x2,24,24,2,,
-,Active,Non-inventory Part,MISC,MISC,Tax,Sales,Cost of Goods Sold,,0,MISC,,4.59,,,0,,,,,,,,,
+,Active,Non-inventory Part,MISC,MISC,Tax,Sales,Cost of Goods Sold,,0,MISC,,4.59,MISC,,0,,,,,,,,,
 ,Active,Non-inventory Part,MODULE,99-0018PH-3-04-11-22..#18PH HALF SIZE PLASTIC MODULE FILLED,Tax,Sales,Cost of Goods Sold,,0,99-0018PH-3-04-11-22..#18PH HALF SIZE PLASTIC MODULE FILLED,,138.69,RSE Incorporated,,136.55,,MODULE,,,,,,,
 ,Not-active,Non-inventory Part,MRM8-1/1-PF,LM6000 Guard Door Coalescer Prefilter G4 23.3 x 23.3 x 3.75 Plastic Frame Mini Pleat,Tax,Sales,Cost of Goods Sold,,0,LM6000 Guard Door Coalescer Prefilter G4 23.3 x 23.3 x 3.75 Plastic Frame Mini Pleat,,27.3,MGT Air Filters,,40.15,,MRM8-1/1-PF,,23.3 x 23.3 x 3.75,23.3,23.3,3.75,,
 ,Not-active,Non-inventory Part,MRM8-1/2-PF,LM6000 Guard Door Coalescer Prefilter G4 11.3 x 23.3 x 3½ Plastic Frame Mini Pleat,Tax,Sales,Cost of Goods Sold,,0,LM6000 Guard Door Coalescer Prefilter G4 11.3 x 23.3 x 3½ Plastic Frame Mini Pleat,,0,MGT Air Filters,,0,,MRM8-1/2-PF,,11.3 x 23.3,11.3,23.3,,,
@@ -1976,7 +1976,7 @@ Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Accou
 ,Active,Non-inventory Part,NXT-GT Canister,,Tax,Sales,Cost of Goods Sold,,0,,,158.5,"NXTNANO, LLC",,0,,,,,,,,,
 ,Active,Non-inventory Part,NXT-N934,"Composite filter for LM6000L, 80/20 blend",Tax,Sales,Cost of Goods Sold,,0,"Composite filter for LM6000L, 80/20 blend",,63,"NXTNANO, LLC",,90.9,,,,,,,,,
 ,Active,Non-inventory Part,NXT-VEE-SOCK 1/1,4V SOCK 24x24x12 V-Bank Filters ..for NxtNano V Cell,Tax,Sales,Cost of Goods Sold,,0,,,0,"NXTNANO, LLC",,14.4,,NXT-VEE-SOCK 1/1,,24x24x12,24,24,12,,
-,Active,Non-inventory Part,P-Clips,P- Clips,Tax,Sales,,,0,,,0,,,0,,,,,,,,,
+,Active,Non-inventory Part,P-Clips,P- Clips,Tax,Sales,,,0,,,0,MISC,,0,,,,,,,,,
 ,Active,Non-inventory Part,P 2605-10B6,P 2605-10B6..Equivalent PT43410,Tax,Sales,Cost of Goods Sold,,0,P 2605-10B6,,9.99,Fluitek Corporation. (PAID BY CC),,20.37,,,,,,,,,
 ,Active,Non-inventory Part,P12108-058,"P12108-058 Mahle Duplex Pressure Filter, Aluminum Construction, NBR Seals,..63 Bar Max Operating Pressure w/ Differential Pressure indicator",Tax,Sales,Cost of Goods Sold,,0,"P12108-058 Mahle Duplex Pressure Filter, Aluminum Construction, NBR Seals,..63 Bar Max Operating Pressure w/ Differential Pressure indicator",,1709.99,"Precision Filter Products, LLC",,2630.75,,P12108-058,,,,,,,
 ,Active,Non-inventory Part,P15/150S Cut Pad,Cut Piece P15/150S,Tax,Sales,Cost of Goods Sold,,0,Cut Piece P15/150S,,0,AFC Manufacturing,,0,,,,,,,,,
@@ -2002,7 +2002,7 @@ Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Accou
 ,Active,Non-inventory Part,PBG2424221810,"24x24x22 MERV 13 (85%) 10 Pocket Fiberglass Bag Filter, Standard Header",Tax,Sales,Cost of Goods Sold,,0,"24x24x22 MERV 13 (85%) 10 Pocket Fiberglass Bag Filter, Standard Header",,40.42,Glasfloss Industries,,58.17,,,,24x24x22,24,24,22,MERV 13,13
 ,Active,Non-inventory Part,PBG24242288,"24x24x22 MERV 13 (85%) 8 Pocket Fiberglass Bag Filter, Standard Header",Tax,Sales,Cost of Goods Sold,,0,"24x24x22 MERV 13 (85%) 8 Pocket Fiberglass Bag Filter, Standard Header",,32.43,Glasfloss Industries,,46.76,,,,24x24x22,24,24,22,MERV 13,13
 ,Active,Non-inventory Part,PBG24242298,"24x24x22 MERV 15 (95%) 8 Pocket Fiberglass Bag Filter, Standard Header",Tax,Sales,Cost of Goods Sold,,0,"24x24x22 MERV 15 (95%) 8 Pocket Fiberglass Bag Filter, Standard Header",,34.38,Glasfloss Industries,,49.54,,,,24x24x22,24,24,22,MERV 15,15
-,Not-active,Non-inventory Part,PCB-BX,Puracarb Media,Tax,Sales,Cost of Goods Sold,,0,Puracarb Media,,0,,,0,,PCB-BX,,,,,,,
+,Not-active,Non-inventory Part,PCB-BX,Puracarb Media,Tax,Sales,Cost of Goods Sold,,0,Puracarb Media,,0,MISC,,0,,PCB-BX,,,,,,,
 ,Active,Non-inventory Part,PCHG-336,"PCHG-336..PECO Conical Helix Gas 4.5"" O.D. x 36"" L 1 Micron Polyester..",Tax,Sales,Cost of Goods Sold,,0,"PCHG-336..PECO Conical Helix Gas 4.5"" O.D. x 36"" L 1 Micron Polyester (4 per case)",,36.1,"Precision Filter Products, LLC",,48.53,,PCHG-336,,,,,,,
 ,Active,Non-inventory Part,PCHG-336-10,"PECO Conical Helix Gas Separator 4.5"" O.D. x 36"" L, 10 Micron,..Polyester PEACH Media",Tax,Sales,Cost of Goods Sold,,0,"PECO Conical Helix Gas Separator 4.5"" O.D. x 36"" L, 10 Micron,..Polyester PEACH Media",,38.09,"Precision Filter Products, LLC",,49.74,,PCHG-336-10,,,,,,,
 ,Active,Non-inventory Part,PD312-12-CG,HILCO Absorbing Filter,Tax,Sales,Cost of Goods Sold,,0,HILCO Absorbing Filter,,180.2,Hilliard Corporation,,265,,PD312-12-CG,,,,,,,
@@ -2011,7 +2011,7 @@ Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Accou
 ,Active,Non-inventory Part,PD718-12-CRN,HILCO Filter Cartridge,Tax,Sales,Cost of Goods Sold,,0,HILCO Filter Cartridge,,55.08,Hilliard Corporation,,85.1,,PD718-12-CRN,,,,,,,
 ,Active,Non-inventory Part,PE 50 P2S,"Polyester SRB 7"" dia x 32"" Long..CS Ring",Tax,Sales,Cost of Goods Sold,,0,"Polyester SRB 7"" dia x 32"" Long..CS Ring (75 per case)",,3.2,"Industrial Filtration, Inc.",,16.06,,PE 50 P2S,,,,,,,
 ,Active,Non-inventory Part,PE10X29,"PE10X29 ..10u Pleated Polyester Filter L=29""  I=1""",Tax,Sales,Cost of Goods Sold,,0,"PE10X29 ..10u Pleated Polyester Filter L=29""  I=1""",,0,United Filters,,15.16,,PE10X29,,,,,,,
-,Not-active,Non-inventory Part,PECO,,Tax,Sales,Cost of Goods Sold,,0,,,0,,,0,,,,,,,,,
+,Not-active,Non-inventory Part,PECO,,Tax,Sales,Cost of Goods Sold,,0,,,0,MISC,,0,,,,,,,,,
 ,Active,Non-inventory Part,PELLET MEDIA,,Tax,Sales,Cost of Goods Sold,,0,,,50,AFC Manufacturing,,0,,,,,,,,,
 ,Active,Non-inventory Part,PES5P1F  Water Filter,PES5P1F-WE 5  Water Filter .. 5 mic..,Tax,Sales,Cost of Goods Sold,,0,PES5P1F-WE 5  Water Filter .. 5 mic..,,3.98,"Industrial Filtration, Inc.",,8,,PES5P1F-WE 5,,,,,,,
 ,Active,Non-inventory Part,PF12242N,"12x24x2, Galvanized Frame, Expanded Metal Mesh One Side",Tax,Sales,Cost of Goods Sold,,0,12 x 24 x 2 Perm-A-Foam Filter,,29.79,Smith Filter,,59.18,,,,12x24x2,12,24,2,,
@@ -2072,8 +2072,8 @@ Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Accou
 ,Active,Non-inventory Part,PH739-12-CG,HILCO Filter Cartridge,Tax,Sales,Cost of Goods Sold,,0,HILCO Filter Cartridge,,201.96,Hilliard Corporation,,271,,PH739-12-CG,,,,,,,
 ,Active,Non-inventory Part,PH739-12-CGV,HILCO Filter Element,Tax,Sales,Cost of Goods Sold,,0,HILCO Filter Element,,253.64,Hilliard Corporation,,310,,PH739-12-CGV,,,,,,,
 ,Active,Non-inventory Part,PHX/006157F,"V-Cell, ClearCurrent PHX, 23.3x23.3x17.1"" (593H x 593W x 435D)mm, DS Gasketed",Tax,Sales,Cost of Goods Sold,,0,"Filter, V-Cell, clearcurrent PHX, 593mmH x 593mmW x 435mmD, Seals",,170,Parker Hannifin Corporation - GT,,340,,,,"23.3x23.3x17.1""",23.3,23.3,17.1,,
-,Not-active,Non-inventory Part,PKA-BX,Purokal AM Media,Tax,Sales,Cost of Goods Sold,,0,Purokal AM Media,,0,,,6.11,,PKA-BX,,,,,,,
-,Not-active,Non-inventory Part,PKL-BX,Purakol Media,Tax,Sales,Cost of Goods Sold,,0,Purakol Media,,0,,,4.1,,PKL-BX,,,,,,,
+,Not-active,Non-inventory Part,PKA-BX,Purokal AM Media,Tax,Sales,Cost of Goods Sold,,0,Purokal AM Media,,0,MISC,,6.11,,PKA-BX,,,,,,,
+,Not-active,Non-inventory Part,PKL-BX,Purakol Media,Tax,Sales,Cost of Goods Sold,,0,Purakol Media,,0,MISC,,4.1,,PKL-BX,,,,,,,
 ,Active,Non-inventory Part,PL310-10-C,HILCO Filter Cartridge,Tax,Sales,Cost of Goods Sold,,0,HILCO Filter Cartridge,,40.8,Hilliard Corporation,,27,,,,,,,,,
 ,Active,Non-inventory Part,PL310-12-BC,HILCO Filter Cartridge,Tax,Sales,Cost of Goods Sold,,0,HILCO Filter Cartridge..(4 per cases),,42.16,Hilliard Corporation,,50,,PL310-12-BC,,,,,,,
 ,Active,Non-inventory Part,PL310-12-C,HILCO Filter Cartridge,Tax,Sales,Cost of Goods Sold,,0,HILCO Filter Cartridge,,39.44,Hilliard Corporation,,58,,PL310-12-C,,,,,,,
@@ -2095,7 +2095,7 @@ Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Accou
 ,Active,Non-inventory Part,POG5P2SH,"5u #2 Bag Polypro/Felt Glzd	POG5P2SH",Tax,Sales,Cost of Goods Sold,,0,"5u #2 Bag Polypro/Felt Glzd	POG5P2SH..",,3.69,"Industrial Filtration, Inc.",,14.25,,POG5P2SH,,,,,,,
 ,Active,Non-inventory Part,Poly Panel-Special,Poly Panel Special,Tax,Sales,Cost of Goods Sold,,0,Poly Panel Special,,0,M.L. Filters,,0,,Poly Panel-Special,,,,,,,
 ,Active,Non-inventory Part,PPSG-010-WS-PD2 Water Filter,PPSG-010-WS-PD2 Water Filter ..aka USA Blue Book P/N 66231 (10 mic)..,Tax,Sales,Cost of Goods Sold,,0,PPSG-010-WS-PD2 Water Filter ..aka USA Blue Book P/N 66231 (10 mic)..,,9.6,"Industrial Filtration, Inc.",,17.81,,PPSG-010-WS-PD2,,,,,,,
-,Active,Non-inventory Part,PRINTER FILTER,,Tax,Sales,,,0,,,0,,,0,,,,,,,,,
+,Active,Non-inventory Part,PRINTER FILTER,,Tax,Sales,,,0,,,0,MISC,,0,,,,,,,,,
 ,Active,Non-inventory Part,PS 718-104-CNVSS,HILCO Filter Element,Tax,Sales,Cost of Goods Sold,,0,HILCO Filter Element,,421.85,Hilliard Corporation,,649,,PS 718-104-CNVSS,,,,,,,
 ,Active,Non-inventory Part,PS511-040-CRF,HILCO Filter Element,Tax,Sales,Cost of Goods Sold,,0,HILCO Filter Element,,328.44,Hilliard Corporation,,440,,PS511-040-CRF,,,,,,,
 ,Active,Non-inventory Part,PS518-025-CG,HILCO Filter Cartridge,Tax,Sales,Cost of Goods Sold,,0,HILCO Filter Cartridge,,438.6,Hilliard Corporation,,534,,PS518-025-CG,,,,,,,
@@ -2116,7 +2116,7 @@ Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Accou
 ,Active,Non-inventory Part,PUPSLRH122449O,12x24x4 Puracell Plastic Frames MERV 15- WITH HEADER,Tax,Sales,Cost of Goods Sold,,0,12x24x4 Puracell Plastic Frames MERV 15- WITH HEADER,,39.47,Glasfloss Industries,,0,,PUPSLRH122449O,,12x24x4,12,24,4,MERV 15,15
 ,Active,Non-inventory Part,PUPSLRH202549O,20x25x4 Puracell Plastic Frames MERV 15- WITH HEADER,Tax,Sales,Cost of Goods Sold,,0,20x25x4 Puracell Plastic Frames MERV 15- WITH HEADER,,55.75,Glasfloss Industries,,0,,PUPSLRH202549O,,20x25x4,20,25,4,MERV 15,15
 ,Active,Non-inventory Part,PUPSLRH242449O,24x24x4 Puracell Plastic Frames MERV 15- WITH HEADER,Tax,Sales,Cost of Goods Sold,,0,24x24x4 Puracell Plastic Frames MERV 15- WITH HEADER,,49.5,Glasfloss Industries,,0,,PUPSLRH242449O,,24x24x4,24,24,4,MERV 15,15
-,Active,Non-inventory Part,PURAFILTERS,,Tax,Sales,Cost of Goods Sold,,0,,,0,,,0,,,,,,,,,
+,Active,Non-inventory Part,PURAFILTERS,,Tax,Sales,Cost of Goods Sold,,0,,,0,MISC,,0,,,,,,,,,
 ,Active,Non-inventory Part,PURII242446,"24x24x4 Puracell II Mini Pleat MERV 11, Fiberglass",Tax,Sales,Cost of Goods Sold,,0,"24x24x4 Puracell II Mini Pleat MERV 11, Fiberglass",,49.78,Glasfloss Industries,,76.58,,,,24x24x4,24,24,4,MERV 11,11
 ,Active,Non-inventory Part,PUVXH1224B3O,12x24x12 MERV 14 Puracell VX Header Style,Tax,Sales,Cost of Goods Sold,,0,12x24x12 MERV 14 Puracell VX Header Style,,71.88,Glasfloss Industries,,110.64,,PUVXH1224B3O,,12x24x12,12,24,12,MERV 14,14
 ,Active,Non-inventory Part,PUVXH2424B3O,24x24x12 MERV 14 Puracell VX Header Style,Tax,Sales,Cost of Goods Sold,,0,24x24x12 MERV 14 Puracell VX Header Style,,98.05,Glasfloss Industries,,150.84,,PUVXH2424B3O,,24x24x12,24,24,12,MERV 14,14
@@ -2130,7 +2130,7 @@ Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Accou
 ,Active,Non-inventory Part,R244P,R2 24X24 PANEL 20/CASE,Tax,Sales,Cost of Goods Sold,,0,73038749 - R2 24X24 PANEL 20/CASE,,6.7,"Freudenberg Filtration Technologies, L.P.",,10.31,,R244P,,24X24,24,24,,,
 ,Active,Non-inventory Part,RBGC75A3.75,"RBGC75A3.75 Resin Bonded Filter Cartridge, 75 Micron, 3.75"" Length..Replacement for Cuno OFE-U30Q8",Tax,Sales,Cost of Goods Sold,,0,"RBGC75A3.75 Resin Bonded Filter Cartridge, 75 Micron, 3.75"" Length..Replacement for Cuno OFE-U30Q8",,8.13,"Precision Filter Products, LLC",,14.25,,RBGC75A3.75,,,,,,,
 ,Active,Non-inventory Part,RC860MZ097ZSS,Visual Kind Indicator,Tax,Sales,Cost of Goods Sold,,0,Visual Kind Indicator,,187.85,"Flodraulic Group, Inc.",,243.55,,RC860MZ097ZSS,,,,,,,
-,Active,Non-inventory Part,ROYAL,,Tax,Cost of Goods Sold,,,0,,,0,,,0,,,,,,,,,
+,Active,Non-inventory Part,ROYAL,,Tax,Cost of Goods Sold,,,0,,,0,MISC,,0,,,,,,,,,
 ,Active,Non-inventory Part,RT09B-16G20NN,RT09B-16G20NN Cuno Filter Replacement,Tax,Sales,Cost of Goods Sold,,0,RT09B-16G20NN Cuno Filter Replacement,,8.79,Killer Filter-PPD CREDIT CARD,,18.8,,RT09B-16G20NN,,,,,,,
 ,Active,Non-inventory Part,S15-2522,"S15 Media 25.5 x 22.75..Equivalent to  FILTER, PRE, PAD, SNGF  Pre Filter SNGF/000230F",Tax,Sales,Cost of Goods Sold,,0,S15 Media 25.5 x 22.75,,0,AFC Manufacturing,,18.59,,S15-2522,,25.5 x 22.75,25.5,22.75,,,
 ,Active,Non-inventory Part,S15 Media pads SHW20,,Tax,Sales,Cost of Goods Sold,,0,,,0,SHW FILTER-Guangzhou Sun,,0,,,,,,,,,
@@ -2147,7 +2147,7 @@ Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Accou
 ,Active,Non-inventory Part,SBG12241594,"12x24x15, MERV 15 Depth Loading Synthetic Pocket Filter (4 pocket)",Tax,Sales,Cost of Goods Sold,,0,"12x24x15, MERV 15 Depth Loading Synthetic Pocket Filter (4 pocket)",,21.6,Glasfloss Industries,,,,,,12x24x15,12,24,15,MERV 15,15
 ,Active,Non-inventory Part,SBG122421-95,12x24x21 3 Pocket Bag Filter 95% Synthetic Special Bag Filter,Tax,Sales,Cost of Goods Sold,,0,12x24x21 3 Pocket Bag Filter 95% Synthetic Special Bag Filter,,21.14,Glasfloss Industries,,32.2,,SBG122421-95,,12x24x21,12,24,21,95%,16
 ,Active,Non-inventory Part,SBG16201286,16x20x12 85% 6 Pocket Bag Filter,Tax,Sales,Cost of Goods Sold,,0,16x20x12 85% 6 Pocket Bag Filter,,25.47,Glasfloss Industries,,67.04,,SBG16201286,,16x20x12,16,20,12,85%,13
-,Not-active,Non-inventory Part,SBG20201244,"20x20x12, 40% Depth Loading Synthetic Pocket Filter (4 pockets)",Tax,Sales,,,0,,,0,,,29.28,,,,20x20x12,20,20,12,40%,7
+,Not-active,Non-inventory Part,SBG20201244,"20x20x12, 40% Depth Loading Synthetic Pocket Filter (4 pockets)",Tax,Sales,,,0,,,0,Glasfloss Industries,,29.28,,,,20x20x12,20,20,12,40%,7
 ,Active,Non-inventory Part,SBG20201286,"Synthetic Bag, 20x20x12 Merv 13 6P",Tax,Sales,Cost of Goods Sold,,0,20x20x12 Synthetic Bag Filter Merv13 6P,,27.22,Glasfloss Industries,,47.49,,,,20x20x12,20,20,12,Merv 13,13
 ,Active,Non-inventory Part,SBG202015,"Synthetic Bag, 20x20x15 MERV 15 8 Pockets, Gasket None, Loops None, Std Header, Nom Size",Tax,Sales,Cost of Goods Sold,,0,"Synthetic Bag, 20.0 (19.375) in X 20.0 (19.375) in X 15.0 in MERV 15 8 Pockets, Gasket None, Loops None, Std Header, Nom Size",,34.81,Glasfloss Industries,,44.36,,SBG20201596,,20x20x15,20,20,15,MERV 15,15
 ,Active,Non-inventory Part,SBG202021-95,20x20x21 6 Pocket Bag Filter 95% Synthetic Special Bag Filter,Tax,Sales,Cost of Goods Sold,,0,20x20x21 6 Pocket Bag Filter 95% Synthetic Special Bag Filter,,28.42,Glasfloss Industries,,54.96,,SBG202021-95,,20x20x21,20,20,21,95%,16
@@ -2179,14 +2179,14 @@ Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Accou
 ,Active,Non-inventory Part,SBG252010957,SBG252010957..20x25x10 Merv 15 7 Pocket Bag Filter with Aluminum Frame,Tax,Sales,Cost of Goods Sold,,0,25x20x10 MERV 15 7 PKT Excel Bag,,41.05,Glasfloss Industries,,96.64,,,,.20x25x10,0.2,25,10,Merv 15,15
 ,Active,Non-inventory Part,SCF14.314.32EHTHCSS,14 1/4 x 14 1/4 x 2 Special Construction Filter HIGH TEMP PLEATED FILTER..WITH 304 SS FRAME AND 1 X 1 WIRE..MERV 10 HIGH CAPACITY,Tax,Sales,Cost of Goods Sold,,0,4 1/4 x 14 1/4 x 2 Special Construction Filter HIGH TEMP PLEATED FILTER..WITH 304 SS FRAME AND 1 X 1 WIRE..MERV 10 HIGH CAPACITY,,40.38,Smith Filter,,89.15,,,,14 1/4 x 14 1/4 x 2,14.25,14.25,2,MERV 10,10
 ,Active,Non-inventory Part,SCF36394EHTPSS,36 x 39 x 4 HIGH TEMP PLEATED FILTER Each 1 241.83 241.83..W/ STAINLESS STEEL FRAME..AND STAINLESS STEEL 1 X 1 WIRE..(actual dims: 36 x 39 x 3 7/8),Tax,Sales,Sales,,0,36 x 39 x 4 HIGH TEMP PLEATED FILTER Each 1 241.83 241.83..W/ STAINLESS STEEL FRAME..AND STAINLESS STEEL 1 X 1 WIRE..(actual dims: 36 x 39 x 3 7/8),,241.83,Smith Filter,,335.19,,,,36 x 39 x 4,36,39,4,,
-,Not-active,Non-inventory Part,SENSTD244849302A10,2x4 Sentinel Fan Filter Unit,Tax,Sales,Cost of Goods Sold,,0,2x4 Sentinel Fan Filter Unit,,0,,,1171.5,,SENSTD244849302A10,,2x4,2,4,,,
+,Not-active,Non-inventory Part,SENSTD244849302A10,2x4 Sentinel Fan Filter Unit,Tax,Sales,Cost of Goods Sold,,0,2x4 Sentinel Fan Filter Unit,,0,MISC,,1171.5,,SENSTD244849302A10,,2x4,2,4,,,
 ,Active,Non-inventory Part,SHW-20-432,"S-15, White Synthetic Media ..6' x 72' Roll (432 ft²)",Tax,Sales,Cost of Goods Sold,,0,,,186,AFC Manufacturing,,231.52,,SHW-20-432,,,,,,,
 ,Active,Non-inventory Part,SHW-CRBN4-SLIT,Carbon Media,Tax,Sales,Cost of Goods Sold,,0,Carbon Media,,0,AFC Manufacturing,,0,,SHW-CRBN4-SLIT,,,,,,,
 ,Active,Non-inventory Part,SMP-11AT-MINIPLEAT,SMP-11AT-MINIPLEAT,Tax,Sales,Cost of Goods Sold,,0,SMP-11AT-MINIPLEAT,,0,Aeolus Corporation,,0,,,,,,,,,
 ,Active,Non-inventory Part,SMP-16204-60,16x20x4 Mini MERV 12 Plastic Frame,Tax,Sales,Cost of Goods Sold,,0,16x20x4 Mini MERV 12 Plastic Frame,,37.62,Aeolus Corporation,,64.02,,SMP-16204-60,,16x20x4,16,20,4,MERV 12,12
 ,Active,Non-inventory Part,SMP-20254-60,20x25x4 Mini MERV 12 Plastic Frame,Tax,Sales,Cost of Goods Sold,,0,20x25x4 Mini MERV 12 Plastic Frame,,44.68,Aeolus Corporation,,74.88,,SMP-20254-60,,20x25x4,20,25,4,MERV 12,12
 ,Active,Non-inventory Part,SMP-24244-60,24x24x4 Mini MERV 12 Plastic Frame,Tax,Sales,Cost of Goods Sold,,0,24x24x4 Mini MERV 12 Plastic Frame,,49.09,Aeolus Corporation,,81.67,,SMP-24244-60,,24x24x4,24,24,4,MERV 12,12
-,Active,Non-inventory Part,SMP-6020254,20x24x4 inch MERV 12 (70-75%) Synthetic Mini Pleat Panel Filter,Tax,Cost of Goods Sold:Material,,,0,,,0,,,44.68,,SMP-6020254,,20x24x4,20,24,4,MERV 12,12
+,Active,Non-inventory Part,SMP-6020254,20x24x4 inch MERV 12 (70-75%) Synthetic Mini Pleat Panel Filter,Tax,Cost of Goods Sold:Material,,,0,,,0,Glasfloss Industries,,44.68,,SMP-6020254,,20x24x4,20,24,4,MERV 12,12
 ,Active,Non-inventory Part,SMP-8024242,MERV 13 24x24x2 Plastic Frame Pleat,Tax,Sales,Cost of Goods Sold,,0,MERV 13 24x24x2 Plastic Frame Pleat,,30.46,Aeolus Corporation,,48.52,,SMP-8024242,,24x24x2,24,24,2,MERV 13,13
 ,Active,Non-inventory Part,SMP-95AT20204,20x20x4 MERV 15 (95-100%) Synthetic Mini Pleat Filter,Tax,Sales,Cost of Goods Sold,,0,20x20x4 MERV 15 (95-100%) Synthetic Mini Pleat Filter,,60.07,Aeolus Corporation,,92.42,,,,20x20x4,20,20,4,MERV 15,15
 ,Active,Non-inventory Part,SN3P,"Filter, Panel, SN3P, 580mmH x 650mmW x 98mmD (3.88"")",Tax,Sales,Cost of Goods Sold,,0,"Filter, Panel, SN3P, 580mmH x 650mmW x 98mmD (3.88"")",,61,Parker-Hannifin Corporation,,122,,SN3P,,,,,,,
@@ -2196,8 +2196,8 @@ Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Accou
 ,Not-active,Non-inventory Part,Special Mini95-12122,12x12x2 M-15 Nexfil MINI Pleat,Tax,Sales,Cost of Goods Sold,,0,12x12x2 M-15 Nexfil MINI Pleat,,44.42,Commercial Filters Sales,,63.45,,Special Mini95-12122,,12x12x2,12,12,2,,
 ,Active,Non-inventory Part,SS633-FD-5,"SS633-FD-5 ..Facet SS-5 Series Separator Cartridges..6"" OD x 33-1/4"" L, Qualified to El-1581, Fifth Edition",Tax,Sales,Cost of Goods Sold,,0,"SS633-FD-5 ..Facet SS-5 Series Separator Cartridges..6"" OD x 33-1/4"" L, Qualified to El-1581, Fifth Edition",,168.18,"Precision Filter Products, LLC",,210.81,,SS633-FD-5,,,,,,,
 ,Active,Non-inventory Part,ST718-00-03ZXC0,HILCO Filter Cartridge,Tax,Sales,Cost of Goods Sold,,0,HILCO Filter Cartridge,,357.68,Hilliard Corporation,,413,,,,,,,,,
-,Active,Non-inventory Part,Sub-Contractor Labor,,Non,Labor,,,0,,,0,,,0,,,,,,,,,
-,Active,Non-inventory Part,Surcharge,,Tax,Sales,,,0,,,0,,,0,,,,,,,,,
+,Active,Non-inventory Part,Sub-Contractor Labor,Sales Tax,Non,Labor,,,0,,,0,,,0,,,,,,,,,
+,Active,Non-inventory Part,Surcharge,Sales Tax,Tax,Sales,,,0,,,0,,,0,,,,,,,,,
 ,Active,Non-inventory Part,T60 1/1,Viledon  24x24x26  60% Pocket,Tax,Sales,Cost of Goods Sold,,0,6901172   24x24x26  60% Pocket,,95,"Freudenberg Filtration Technologies, L.P.",,204,,T60 1/1,,24x24x26 ,24,24,26,60%,8
 ,Active,Non-inventory Part,T60 1/2,Viledon 12x24x26 6 Pocket,Tax,Sales,Cost of Goods Sold,,0,Viledon 12x24x26 6 Pocket,,72.5,"Freudenberg Filtration Technologies, L.P.",,102.14,,,,12x24x26,12,24,26,,
 ,Active,Non-inventory Part,T60S 1/1,Viledon  24x24x20  60% Pocket,Tax,Sales,Cost of Goods Sold,,0,6901175   24x24x20  60% Pocket,,110.5,"Freudenberg Filtration Technologies, L.P.",,204,,T60S 1/1,,24x24x20 ,24,24,20,60%,8
@@ -2211,9 +2211,9 @@ Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Accou
 ,Active,Non-inventory Part,TPA-020,Plastic Bracket for Pre-Filter for 24.24.4,Tax,Sales,Cost of Goods Sold,,0,Plastic Bracket for Pre-Filter for 24.24.4,,35,"W.L Gore & Associates, Inc",,71,,,,,,,,,
 ,Active,Non-inventory Part,TPP-010,G2 Pre-Filter Wrap 24.24.4,Tax,Sales,Cost of Goods Sold,,0,G2 Pre-Filter Wrap 24.24.4,,0,AFC Manufacturing,,0,,,,,,,,,
 ,Active,Non-inventory Part,TPV-002,"TPV002 V Panels 16"" Deep 24x24x16 H12",Tax,Sales,Cost of Goods Sold,,0,"TPV002 V Panels 16"" Deep 24x24x16 H12",,575,"W.L Gore & Associates, Inc",,684.55,,,,24x24x16,24,24,16,,
-,Active,Non-inventory Part,Travel Expense,Travel Expense,Tax,Travel Expense,,,0,,,0,,,0,,Travel Expense,,,,,,,
+,Active,Non-inventory Part,Travel Expense,Sales TaxTravel Expense,Tax,Travel Expense,,,0,,,0,,,0,,Travel Expense,,,,,,,
 ,Active,Non-inventory Part,UF3201NSD,"UF3201NSD Uniflow Series Single Cartridge Liquid Vessel, 300 psi, 20""..Length, 1"" FNPT, 316SS MOC..",Tax,Sales,Cost of Goods Sold,,0,"UF3201NSD Uniflow Series Single Cartridge Liquid Vessel, 300 psi, 20""..Length, 1"" FNPT, 316SS MOC..",,532.59,"Precision Filter Products, LLC",,712.2,,UF3201NSD,,,,,,,
-,Active,Non-inventory Part,ULPA,,Tax,Cost of Goods Sold,,,0,,,0,,,0,,,,,,,,,
+,Active,Non-inventory Part,ULPA,ULPA,Tax,Cost of Goods Sold,,,0,,,0,"Wetzel Technologies Co., Ltd",,0,,,,,,,,,
 ,Active,Non-inventory Part,UVC,,Tax,Sales,Cost of Goods Sold,,0,,,2.25,Hilliard Corporation,,0,,UVC,,,,,,,
 ,Active,Non-inventory Part,V-CUBE 202515,V-CUBE 20x25x15,Tax,Sales,Cost of Goods Sold,,0,V-CUBE 20x25x15,,17,AFC Manufacturing,,17,,V-CUBE 20255,,20x25x15,20,25,15,,
 ,Active,Non-inventory Part,V-SOCK-2V1224,2V SOCK 12x24x12 V-Bank Filters,Tax,Sales,Cost of Goods Sold,,0,2V SOCK 12x24x12 V-Bank Filters,,0,AFC Manufacturing,,0,,V-SOCK-2V1224,,12x24x12,12,24,12,,
@@ -2223,11 +2223,11 @@ Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Accou
 ,Active,Non-inventory Part,V-SOCK-4V2424,4V SOCK 24x24x12 V-Bank Filters,Tax,Sales,Cost of Goods Sold,,0,4V SOCK 24x24x12 V-Bank Filters,,0,AFC Manufacturing,,0,,V-SOCK-4V2424,,24x24x12,24,24,12,,
 ,Active,Non-inventory Part,VABORSORB,,Tax,Sales,Cost of Goods Sold,,0,,,0,RSE Incorporated,,0,,,,,,,,,
 ,Active,Non-inventory Part,Vacuum Mesh,"Vacuum Underlayment Mesh; 72"" wide x LF;",Tax,Cost of Goods Sold:Material,,,0,,,0,,,11.59,,,,,,,,,
-,Active,Non-inventory Part,VEE-CUBE,VEE CUBE,Tax,Sales,,,0,,,0,,,19,,,,,,,,,
-,Active,Non-inventory Part,VEE-CUBE 1/1,VEE CUBE for 24x24x12 F7/F8,Tax,Sales,,,0,,,0,,,19.39,,,,24x24x12,24,24,12,,
-,Active,Non-inventory Part,VEE-CUBE 1/1-R,"Reverse VEE CUBE for 24x24x12 F7/F8 , w/Extra Flaps on each side",Tax,Sales,,,0,,,0,,,19.39,,,,24x24x12,24,24,12,,
-,Active,Non-inventory Part,VEE-CUBE 1/2,VEE CUBE for 12x24x12 F7/F8,Tax,Sales,,,0,,,0,,,17.14,,,,12x24x12,12,24,12,,
-,Active,Non-inventory Part,VEE-CUBE 1/2-R,Reverse VEE CUBE for 12x24x12 F7/F8 w/ Extra Flaps on each side,Tax,Sales,,,0,,,0,,,17.14,,,,12x24x12,12,24,12,,
+,Active,Non-inventory Part,VEE-CUBE,VEE CUBE,Tax,Sales,,,0,,,0,Glasfloss Industries,,19,,,,,,,,,
+,Active,Non-inventory Part,VEE-CUBE 1/1,VEE CUBE for 24x24x12 F7/F8,Tax,Sales,,,0,,,0,Glasfloss Industries,,19.39,,,,24x24x12,24,24,12,,
+,Active,Non-inventory Part,VEE-CUBE 1/1-R,"Reverse VEE CUBE for 24x24x12 F7/F8 , w/Extra Flaps on each side",Tax,Sales,,,0,,,0,Glasfloss Industries,,19.39,,,,24x24x12,24,24,12,,
+,Active,Non-inventory Part,VEE-CUBE 1/2,VEE CUBE for 12x24x12 F7/F8,Tax,Sales,,,0,,,0,Glasfloss Industries,,17.14,,,,12x24x12,12,24,12,,
+,Active,Non-inventory Part,VEE-CUBE 1/2-R,Reverse VEE CUBE for 12x24x12 F7/F8 w/ Extra Flaps on each side,Tax,Sales,,,0,,,0,Glasfloss Industries,,17.14,,,,12x24x12,12,24,12,,
 ,Active,Non-inventory Part,VEE-SOCK 1/1,24x24x12 MV/RP Moisture Coalescer,Tax,Sales,Cost of Goods Sold,,0,,,0,AFC Manufacturing,,17.4,,VEE-SOCK 1/1,,24x24x12,24,24,12,,
 ,Active,Non-inventory Part,VEE-SOCK 1/2,12x24x12 MV/RP Moisture Coalescer,Tax,Sales,Cost of Goods Sold,,0,,,0,AFC Manufacturing,,14.4,,VEE-SOCK 1/2,,12x24x12,12,24,12,,
 ,Active,Non-inventory Part,VEE-SOCK 5/6,20x24x12  MV/RP Moisture Coalesce,Tax,Sales,Cost of Goods Sold,,0,,,0,AFC Manufacturing,,14.4,,VEE-SOCK 5/6,,20x24x12 ,20,24,12,,
@@ -2235,12 +2235,12 @@ Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Accou
 ,Active,Non-inventory Part,VF80M,VORTOX A 061085-C,Tax,Sales,Cost of Goods Sold,,0,VORTOX A 061085-C,,44.93,Fluitek Corporation. (PAID BY CC),,69.13,,VF80M,,,,,,,
 ,Active,Non-inventory Part,W 70X Paint Mist,"W 70X Secondary Separator 26.8""x23.3""x23.6""  (682x592x600) 9-Pocket  DownStream Gasket;  Plastic Frame",Tax,Sales,Cost of Goods Sold,,0,W 70X Secondary Separator 682x592x600 F7  9-P  DownStream Gasket;  Plastic Frame,,26.1,"Wetzel Technologies Co., Ltd",,52.2,,W70X,,"26.8""x23.3""x23.6""",26.8,23.3,23.6,,
 ,Active,Non-inventory Part,XP-L-2100E,"XP-L-2100E..Parker XtreamPure Pleated Polypropylene Cartridge, 10 Micron, 6.2"" OD..x 20"" Length, Polypropylene Cage and End Caps, EPDM Seal, Temp..Limit: 180° F",Tax,Sales,Cost of Goods Sold,,0,"XP-L-2100E..Parker XtreamPure Pleated Polypropylene Cartridge, 10 Micron, 6.2"" OD..x 20"" Length, Polypropylene Cage and End Caps, EPDM Seal, Temp..Limit: 180° F",,210.55,"Precision Filter Products, LLC",,280.53,,XP-L-2100E,,,,,,,
-,Not-active,Non-inventory Part,ZII-NT303664,"Twill Tape 1"" White Cotton (China) 50YDS per roll",Tax,Sales,Cost of Goods Sold,,0,"Twill Tape 1"" White Cotton (China) 50YDS per roll",,20,,,13.5,,ZII-NT303664,,,,,,,
+,Not-active,Non-inventory Part,ZII-NT303664,"Twill Tape 1"" White Cotton (China) 50YDS per roll",Tax,Sales,Cost of Goods Sold,,0,"Twill Tape 1"" White Cotton (China) 50YDS per roll",,20,Glasfloss Industries,,13.5,,ZII-NT303664,,,,,,,
 ,Active,Non-inventory Part,ZLN-SPECIAL,Special Carbon Impregnated Pleat,Tax,Sales,Cost of Goods Sold,,0,Special Carbon Impregnated Pleat,,0,Glasfloss Industries,,0,,ZLN-SPECIAL,,,,,,,
 ,Active,Non-inventory Part,ZLN162564AC,16x25x6 Cabrotron Pleat,Tax,Sales,Cost of Goods Sold,,0,16x25x6 Cabrotron Pleat,,23.99,Glasfloss Industries,,36.29,,,,16x25x6,16,25,6,,
 ,Active,Non-inventory Part,ZLN202564AC,20x25x6 Carbotron Pleat,Tax,Sales,Cost of Goods Sold,,0,20x25x6 Carbotron Pleat,,28.89,Glasfloss Industries,,44.08,,,,20x25x6,20,25,6,,
 ,Active,Non-inventory Part,ZLP-SPECIAL,Special Standard Capacity Pleat,Tax,Sales,Cost of Goods Sold,,0,Special Standard Capacity Pleat,,18.55,Glasfloss Industries,,0,,ZLP-SPECIAL,,,,,,,
-,Active,Non-inventory Part,ZLP22271SP,"22x27x1 MERV10 Standard Capacity Pleat, Special",Tax,Sales,,,0,,,0,,,0,,,,22x27x1,22,27,1,MERV10,10
+,Active,Non-inventory Part,ZLP22271SP,"22x27x1 MERV10 Standard Capacity Pleat, Special",Tax,Sales,,,0,,,0,Glasfloss Industries,Glassfloss,0,,,,22x27x1,22,27,1,MERV10,10
 ,Active,Non-inventory Part,ZPK2424695HO,24x24x6 Rigid Box Filter 95% Fiberglass HEADER,Tax,Sales,Cost of Goods Sold,,0,24x24x6 Rigid Box Filter 95% Fiberglass HEADER,,55.55,Glasfloss Industries,,112.51,,ZPK2424695HO,,24x24x6,24,24,6,95%,16
 ,Active,Non-inventory Part,ZPS-SPECIAL,Special Synthetic Rigid Box Filter,Tax,Sales,Cost of Goods Sold,,0,Special Synthetic Rigid Box Filter,,76.35,Glasfloss Industries,,0,,ZPS-SPECIAL,,,,,,,
 ,Active,Non-inventory Part,ZPS122412-85H,12x24x12 Synthetic Media 85% Rigid Box Filter Headered,Tax,Sales,Cost of Goods Sold:Tools,,0,12x24x12 Synthetic Media 85% Rigid Box Filter Headered,,47.02,Glasfloss Industries,,74.31,,,,12x24x12,12,24,12,85%,13
@@ -2254,10 +2254,10 @@ Unnamed: 0,Active Status,Type,Item,Description,Sales Tax Code,Account,COGS Accou
 ,Active,Non-inventory Part,ZPS24241265HO,24x24x12 Rigid Box Filter 65% Header,Tax,Sales,Cost of Goods Sold,,0,24x24x12 Synthetic Z-PAK MERV 11 (65%) Header Nominal,,65.82,Glasfloss Industries,,0,,ZPS24241265HO,,24x24x12,24,24,12,65%,11
 ,Active,Non-inventory Part,ZPS24241295HO,24x24x12 Rigid Box Filter 95% Header,Tax,Sales,Cost of Goods Sold,,0,24x24x12 Synthetic Z-PAK MERV 14 (95%) Header Nominal,,71.27,Glasfloss Industries,,122.6,,ZPS24241295HO,,24x24x12,24,24,12,95%,16
 ,Active,Non-inventory Part,ZPS2520685HO,25.0 X 20.0 X 6 in Synthetic Z-PAK MERV 13 (85%) Header Nominal,Tax,Sales,Cost of Goods Sold,,0,25.0 X 20.0 X 6 in Synthetic Z-PAK MERV 13 (85%) Header Nominal,,43.36,Glasfloss Industries,,0,,ZPS2520685HO,,25.0 X 20.0 X 6,25,20,6,MERV 13,13
-,Active,Other Charge,COGS- Freight,Freight,Tax,Cost of Goods Sold:Freight,,,0,,,0,,,0,,,,,,,,,
-,Active,Other Charge,Contract Billing,Contract Billing,Tax,Sales,,,0,,,0,,,0,,,,,,,,,
-,Active,Other Charge,Credit Card Fee,Credit Card Fee,Non,Bank Service Charges:Bank Merchant,,,0,,,0,,,0,,,,,,,,,
-,Active,Other Charge,Wire Fees,Wire Fees,Non,Bank Service Charges:Bank Fees,,,0,,,0,,,0,,,,,,,,,
+,Active,Other Charge,COGS- Freight,Sales Tax Freight,Tax,Cost of Goods Sold:Freight,,,0,,,0,,,0,,,,,,,,,
+,Active,Other Charge,Contract Billing,Sales Tax Contract Billing,Tax,Sales,,,0,,,0,,,0,,,,,,,,,
+,Active,Other Charge,Credit Card Fee,Sales Tax Credit Card Fee,Non,Bank Service Charges:Bank Merchant,,,0,,,0,,,0,,,,,,,,,
+,Active,Other Charge,Wire Fees,Wire Fees Sales Tax,Non,Bank Service Charges:Bank Fees,,,0,,,0,,,0,,,,,,,,,
 ,Active,Sales Tax Item,Agoura Hills,Sales Tax,,Sales Tax Payable.,,,0,,,0,,California Dept. of Tax and Fee Admin,0.095,,,,,,,,,
 ,Active,Sales Tax Item,Alameda,Sales Tax,,Sales Tax Payable.,,,0,,,0,,California Dept. of Tax and Fee Admin,0.1075,,,,,,,,,
 ,Active,Sales Tax Item,Alameda County,Sales Tax,,Sales Tax Payable.,,,0,,,0,,California Dept. of Tax and Fee Admin,0.1025,,,,,,,,,

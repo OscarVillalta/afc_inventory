@@ -125,7 +125,7 @@ export default function MDTable({
           <span className="text-gray-500">Rows per page:</span>
           {onPageSizeChange ? (
             <input
-              type="number"
+              type="numeric"
               min={1}
               max={500}
               className="w-14 bg-gray-800 border border-gray-700 text-gray-300 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"

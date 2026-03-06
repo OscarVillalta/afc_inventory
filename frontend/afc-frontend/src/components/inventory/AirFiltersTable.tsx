@@ -556,14 +556,6 @@ export default function AirFiltersTable({
           );
         })}
 
-        {loading && (
-          <tr>
-            <td colSpan={columns.length} className="text-center py-8 text-gray-400 text-sm">
-              Loading air filters…
-            </td>
-          </tr>
-        )}
-
         {!loading && groupedProducts.length === 0 && (
           <tr>
             <td colSpan={columns.length} className="text-center py-8 text-gray-400 text-sm">
