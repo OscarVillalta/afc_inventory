@@ -12,7 +12,6 @@ interface MDTableProps {
   sortLabel?: string;
 }
 
-const PAGE_SIZE_OPTIONS = [10, 12, 25, 50];
 
 /** Build a compact list of page-number tokens including ellipsis. */
 function buildPageTokens(current: number, total: number): (number | "…")[] {
@@ -125,18 +124,20 @@ export default function MDTable({
         <div className="flex items-center gap-2 shrink-0">
           <span className="text-gray-500">Rows per page:</span>
           {onPageSizeChange ? (
-            <select
-              className="bg-gray-800 border border-gray-700 text-gray-300 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+            <input
+              type="number"
+              min={1}
+              max={500}
+              className="w-14 bg-gray-800 border border-gray-700 text-gray-300 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
               value={pageSize}
               onChange={(e) => {
-                onPageSizeChange(Number(e.target.value));
-                handlePageChange(1);
+                const val = parseInt(e.target.value, 10);
+                if (!isNaN(val) && val >= 1 && val <= 500) {
+                  onPageSizeChange(val);
+                  handlePageChange(1);
+                }
               }}
-            >
-              {PAGE_SIZE_OPTIONS.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
+            />
           ) : (
             <span className="bg-gray-800 border border-gray-700 text-gray-300 rounded px-2 py-1">{pageSize}</span>
           )}

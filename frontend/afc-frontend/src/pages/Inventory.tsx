@@ -34,6 +34,7 @@ export default function Inventory() {
   const [filterSupplier, setFilterSupplier] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
   const [filterMerv, setFilterMerv] = useState("");
+  const [filterDescription, setFilterDescription] = useState("");
   const [compact, setCompact] = useState(false);
 
   /* ── Dropdown data ── */
@@ -54,6 +55,7 @@ export default function Inventory() {
     setFilterSupplier("");
     setFilterCategory("");
     setFilterMerv("");
+    setFilterDescription("");
     setQuickView("all");
   };
 
@@ -62,6 +64,7 @@ export default function Inventory() {
     filterSupplier !== "" ||
     filterCategory !== "" ||
     filterMerv !== "" ||
+    filterDescription !== "" ||
     quickView !== "all";
 
   const categories = tab === "filters" ? airFilterCategories : stockItemCategories;
@@ -194,6 +197,18 @@ export default function Inventory() {
             )}
           </div>
 
+          {/* Description Search */}
+          <div className="flex flex-col gap-0.5 min-w-[160px]">
+            <label className="text-xs text-gray-400 font-medium uppercase tracking-wide">Description</label>
+            <input
+              type="text"
+              className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+              placeholder="Search description…"
+              value={filterDescription}
+              onChange={(e) => setFilterDescription(e.target.value)}
+            />
+          </div>
+
           {/* Trailing utilities */}
           <div className="flex items-center gap-3 ml-auto">
             {hasActiveFilters && (
@@ -267,8 +282,11 @@ export default function Inventory() {
               filterSupplier={filterSupplier}
               filterCategory={filterCategory}
               filterMerv={filterMerv ? Number(filterMerv) : undefined}
+              filterDescription={filterDescription}
               quickView={quickView}
               compact={compact}
+              suppliers={suppliers}
+              airFilterCategories={airFilterCategories}
             />
           )}
           {tab === "stock" && (
@@ -277,8 +295,11 @@ export default function Inventory() {
               globalSearch={globalSearch}
               filterSupplier={filterSupplier}
               filterCategory={filterCategory}
+              filterDescription={filterDescription}
               quickView={quickView}
               compact={compact}
+              suppliers={suppliers}
+              stockItemCategories={stockItemCategories}
             />
           )}
         </div>

@@ -1,10 +1,11 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import MDTable from "../table/MDtable";
-import { fetchStockItems } from "../../api/stockItems";
-import type { StockItemResponse, StockItemPayload } from "../../api/stockItems";
+import { fetchStockItems, patchStockItem } from "../../api/stockItems";
+import type { StockItemResponse, StockItemPayload, StockItemCategory } from "../../api/stockItems";
 import { autocommitTxn } from "../../api/transactions";
 import type { createTxnRequest } from "../../api/transactions";
+import type { Supplier } from "../../api/suppliers";
 
 /* ============================================================
    TYPES
@@ -21,13 +22,21 @@ interface EditFormState {
   reserved: number;
 }
 
+interface InlineEdit {
+  rowId: number;
+  field: "supplier" | "category";
+}
+
 interface Props {
   refreshToken?: number;
   globalSearch?: string;
   filterSupplier?: string;
   filterCategory?: string;
+  filterDescription?: string;
   quickView?: "all" | "low_stock" | "backordered" | "has_orders";
   compact?: boolean;
+  suppliers?: Supplier[];
+  stockItemCategories?: StockItemCategory[];
 }
 
 /* ============================================================
@@ -88,12 +97,15 @@ export default function StockItemsTable({
   globalSearch = "",
   filterSupplier = "",
   filterCategory = "",
+  filterDescription = "",
   quickView = "all",
   compact = false,
+  suppliers = [],
+  stockItemCategories = [],
 }: Props) {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
-  const pageSize = 12;
+  const [pageSize, setPageSize] = useState(12);
 
   const [data, setData] = useState<StockItemResponse>();
   const [loading, setLoading] = useState(false);
@@ -107,6 +119,9 @@ export default function StockItemsTable({
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
 
+  /* ===================== INLINE EDIT ===================== */
+  const [inlineEdit, setInlineEdit] = useState<InlineEdit | null>(null);
+
   const REASONS = ["shipment", "receive", "adjustment", "rollback"];
 
   const rowPadding = compact ? "py-1 px-3" : "py-3 px-4";
@@ -118,17 +133,18 @@ export default function StockItemsTable({
     setError(null);
     fetchStockItems(page, pageSize, {
       name: globalSearch || undefined,
+      description: filterDescription || undefined,
       supplier: filterSupplier || undefined,
       category: filterCategory || undefined,
     })
       .then((res) => setData(res))
       .catch(() => setError("Failed to load stock items"))
       .finally(() => setLoading(false));
-  }, [page, pageSize, globalSearch, filterSupplier, filterCategory]);
+  }, [page, pageSize, globalSearch, filterDescription, filterSupplier, filterCategory]);
 
   useEffect(() => {
     setPage(1);
-  }, [globalSearch, filterSupplier, filterCategory, quickView]);
+  }, [globalSearch, filterDescription, filterSupplier, filterCategory, quickView, pageSize]);
 
   useEffect(() => {
     loadData();
@@ -197,6 +213,31 @@ export default function StockItemsTable({
 
   const columns = ["Name", "Description", "Category", "Supplier", "", "On Hand", "Ordered", "Reserved", "Available", "Backord.", "Actions"];
 
+  /* ===================== INLINE EDIT HANDLERS ===================== */
+
+  const handleInlineSave = async (
+    row: StockItemPayload,
+    field: InlineEdit["field"],
+    value: string
+  ) => {
+    setInlineEdit(null);
+    if (!value) return;
+    try {
+      if (field === "supplier") {
+        const sup = suppliers.find((s) => s.name === value);
+        if (!sup) return;
+        await patchStockItem(row.id, { supplier_id: sup.id });
+      } else if (field === "category") {
+        const cat = stockItemCategories.find((c) => c.name === value);
+        if (!cat) return;
+        await patchStockItem(row.id, { category_id: cat.id });
+      }
+      loadData();
+    } catch {
+      alert("Failed to update field.");
+    }
+  };
+
   /* ===================== RENDER ===================== */
 
   return (
@@ -214,6 +255,7 @@ export default function StockItemsTable({
         pageSize={pageSize}
         total={data?.total ?? 0}
         onPageChange={setPage}
+        onPageSizeChange={setPageSize}
       >
         {filteredRows.map((row) => (
           <tr
@@ -239,16 +281,52 @@ export default function StockItemsTable({
             {/* Category */}
             <td
               className={`${rowPadding} text-sm text-gray-700`}
-              onClick={() => navigate(`/products/${row.product_id}`)}
+              onClick={(e) => { e.stopPropagation(); setInlineEdit({ rowId: row.id, field: "category" }); }}
             >
-              {row.category_name ?? "—"}
+              {inlineEdit?.rowId === row.id && inlineEdit.field === "category" ? (
+                <select
+                  autoFocus
+                  className="border border-blue-400 rounded px-1 py-0.5 text-xs text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400"
+                  defaultValue={row.category_name ?? ""}
+                  onBlur={(e) => handleInlineSave(row, "category", e.target.value)}
+                  onChange={(e) => handleInlineSave(row, "category", e.target.value)}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <option value="">— Select —</option>
+                  {stockItemCategories.map((c) => (
+                    <option key={c.id} value={c.name}>{c.name}</option>
+                  ))}
+                </select>
+              ) : (
+                <span className="cursor-pointer hover:text-blue-600 hover:underline" title="Click to edit">
+                  {row.category_name ?? "—"}
+                </span>
+              )}
             </td>
             {/* Supplier */}
             <td
               className={`${rowPadding} text-sm text-gray-700 whitespace-nowrap`}
-              onClick={() => navigate(`/products/${row.product_id}`)}
+              onClick={(e) => { e.stopPropagation(); setInlineEdit({ rowId: row.id, field: "supplier" }); }}
             >
-              {row.supplier_name ?? "—"}
+              {inlineEdit?.rowId === row.id && inlineEdit.field === "supplier" ? (
+                <select
+                  autoFocus
+                  className="border border-blue-400 rounded px-1 py-0.5 text-xs text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400"
+                  defaultValue={row.supplier_name ?? ""}
+                  onBlur={(e) => handleInlineSave(row, "supplier", e.target.value)}
+                  onChange={(e) => handleInlineSave(row, "supplier", e.target.value)}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <option value="">— Select —</option>
+                  {suppliers.map((s) => (
+                    <option key={s.id} value={s.name}>{s.name}</option>
+                  ))}
+                </select>
+              ) : (
+                <span className="cursor-pointer hover:text-blue-600 hover:underline" title="Click to edit">
+                  {row.supplier_name ?? "—"}
+                </span>
+              )}
             </td>
             {/* spacer */}
             <td className="w-4" />

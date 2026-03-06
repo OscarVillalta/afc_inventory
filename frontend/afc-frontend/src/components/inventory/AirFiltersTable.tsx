@@ -1,10 +1,11 @@
 import { useEffect, useState, useMemo, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
 import MDTable from "../table/MDtable";
-import { fetchAirFilters, deleteAirFilter } from "../../api/airfilters";
-import type { AirFilterResponse, AirFilterPayload } from "../../api/airfilters";
+import { fetchAirFilters, deleteAirFilter, patchAirFilter } from "../../api/airfilters";
+import type { AirFilterResponse, AirFilterPayload, AirFilterCategory } from "../../api/airfilters";
 import { autocommitTxn } from "../../api/transactions";
 import type { createTxnRequest } from "../../api/transactions";
+import type { Supplier } from "../../api/suppliers";
 
 /* ============================================================
    TYPES
@@ -30,14 +31,22 @@ interface GroupedProduct {
   children: AirFilterPayload[];
 }
 
+interface InlineEdit {
+  rowId: number;
+  field: "merv_rating" | "supplier" | "category";
+}
+
 interface Props {
   refreshToken?: number;
   globalSearch?: string;
   filterSupplier?: string;
   filterCategory?: string;
   filterMerv?: number;
+  filterDescription?: string;
   quickView?: "all" | "low_stock" | "backordered" | "has_orders" | "recently_updated";
   compact?: boolean;
+  suppliers?: Supplier[];
+  airFilterCategories?: AirFilterCategory[];
 }
 
 /* ============================================================
@@ -127,12 +136,15 @@ export default function AirFiltersTable({
   filterSupplier = "",
   filterCategory = "",
   filterMerv,
+  filterDescription = "",
   quickView = "all",
   compact = false,
+  suppliers = [],
+  airFilterCategories = [],
 }: Props) {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
-  const pageSize = 12;
+  const [pageSize, setPageSize] = useState(12);
 
   const [data, setData] = useState<AirFilterResponse>();
   const [loading, setLoading] = useState(false);
@@ -151,6 +163,9 @@ export default function AirFiltersTable({
   const [deleteTarget, setDeleteTarget] = useState<AirFilterPayload | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  /* ===================== INLINE EDIT ===================== */
+  const [inlineEdit, setInlineEdit] = useState<InlineEdit | null>(null);
+
   const REASONS = ["shipment", "receive", "adjustment", "rollback"];
 
   const rowPadding = compact ? "py-1 px-3" : "py-3 px-4";
@@ -161,6 +176,7 @@ export default function AirFiltersTable({
     setLoading(true);
     fetchAirFilters(page, pageSize, {
       part_number: globalSearch || undefined,
+      description: filterDescription || undefined,
       supplier: filterSupplier || undefined,
       category: filterCategory || undefined,
       merv: filterMerv || undefined,
@@ -182,12 +198,12 @@ export default function AirFiltersTable({
 
   useEffect(() => {
     setPage(1);
-  }, [globalSearch, filterSupplier, filterCategory, filterMerv, quickView]);
+  }, [globalSearch, filterDescription, filterSupplier, filterCategory, filterMerv, quickView, pageSize]);
 
   useEffect(() => {
     loadData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, globalSearch, filterSupplier, filterCategory, filterMerv, refreshToken]);
+  }, [page, pageSize, globalSearch, filterDescription, filterSupplier, filterCategory, filterMerv, refreshToken]);
 
   const rows: AirFilterPayload[] = data?.results ?? [];
 
@@ -265,6 +281,40 @@ export default function AirFiltersTable({
     }
   };
 
+  /* ===================== INLINE EDIT HANDLERS ===================== */
+
+  const handleInlineSave = async (
+    row: AirFilterPayload,
+    field: InlineEdit["field"],
+    value: string
+  ) => {
+    setInlineEdit(null);
+    if (!value) return;
+    try {
+      if (field === "merv_rating") {
+        await patchAirFilter(row.id, { merv_rating: Number(value) });
+      } else if (field === "supplier") {
+        const sup = suppliers.find((s) => s.name === value);
+        if (!sup) return;
+        await patchAirFilter(row.id, { supplier_id: sup.id });
+      } else if (field === "category") {
+        const cat = airFilterCategories.find((c) => c.name === value);
+        if (!cat) return;
+        await patchAirFilter(row.id, { category_id: cat.id });
+      }
+      loadData();
+    } catch {
+      alert("Failed to update field.");
+    }
+  };
+
+  /* MERV label helper */
+  const mervLabel = (rating: number) => {
+    if (rating === 17) return "99.99%";
+    if (rating === 18) return "99.999%";
+    return `MERV ${rating}`;
+  };
+
   /* ===================== DELETE HANDLERS ===================== */
 
   const handleDeleteConfirm = async () => {
@@ -322,6 +372,7 @@ export default function AirFiltersTable({
         pageSize={pageSize}
         total={data?.total ?? 0}
         onPageChange={setPage}
+        onPageSizeChange={setPageSize}
       >
         {/* ── DATA ROWS ── */}
         {groupedProducts.map((group) => {
@@ -361,16 +412,52 @@ export default function AirFiltersTable({
                 {/* Supplier */}
                 <td
                   className={`${rowPadding} text-sm text-gray-700 whitespace-nowrap`}
-                  onClick={() => navigate(`/products/${group.parent.product_id}`)}
+                  onClick={(e) => { e.stopPropagation(); setInlineEdit({ rowId: group.parent.id, field: "supplier" }); }}
                 >
-                  {group.parent.supplier_name ?? "—"}
+                  {inlineEdit?.rowId === group.parent.id && inlineEdit.field === "supplier" ? (
+                    <select
+                      autoFocus
+                      className="border border-blue-400 rounded px-1 py-0.5 text-xs text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400"
+                      defaultValue={group.parent.supplier_name ?? ""}
+                      onBlur={(e) => handleInlineSave(group.parent, "supplier", e.target.value)}
+                      onChange={(e) => handleInlineSave(group.parent, "supplier", e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <option value="">— Select —</option>
+                      {suppliers.map((s) => (
+                        <option key={s.id} value={s.name}>{s.name}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <span className="cursor-pointer hover:text-blue-600 hover:underline" title="Click to edit">
+                      {group.parent.supplier_name ?? "—"}
+                    </span>
+                  )}
                 </td>
                 {/* Category */}
                 <td
                   className={`${rowPadding} text-sm text-gray-700`}
-                  onClick={() => navigate(`/products/${group.parent.product_id}`)}
+                  onClick={(e) => { e.stopPropagation(); setInlineEdit({ rowId: group.parent.id, field: "category" }); }}
                 >
-                  {group.parent.filter_category}
+                  {inlineEdit?.rowId === group.parent.id && inlineEdit.field === "category" ? (
+                    <select
+                      autoFocus
+                      className="border border-blue-400 rounded px-1 py-0.5 text-xs text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400"
+                      defaultValue={group.parent.filter_category ?? ""}
+                      onBlur={(e) => handleInlineSave(group.parent, "category", e.target.value)}
+                      onChange={(e) => handleInlineSave(group.parent, "category", e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <option value="">— Select —</option>
+                      {airFilterCategories.map((c) => (
+                        <option key={c.id} value={c.name}>{c.name}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <span className="cursor-pointer hover:text-blue-600 hover:underline" title="Click to edit">
+                      {group.parent.filter_category}
+                    </span>
+                  )}
                 </td>
                 {/* Dimensions */}
                 <td
@@ -382,11 +469,31 @@ export default function AirFiltersTable({
                 {/* MERV */}
                 <td
                   className={`${rowPadding} text-sm text-center`}
-                  onClick={() => navigate(`/products/${group.parent.product_id}`)}
+                  onClick={(e) => { e.stopPropagation(); setInlineEdit({ rowId: group.parent.id, field: "merv_rating" }); }}
                 >
-                  <span className="px-2 py-0.5 text-xs rounded bg-gray-100 text-gray-600 font-medium">
-                    {group.parent.merv_rating}
-                  </span>
+                  {inlineEdit?.rowId === group.parent.id && inlineEdit.field === "merv_rating" ? (
+                    <select
+                      autoFocus
+                      className="border border-blue-400 rounded px-1 py-0.5 text-xs text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400"
+                      defaultValue={group.parent.merv_rating}
+                      onBlur={(e) => handleInlineSave(group.parent, "merv_rating", e.target.value)}
+                      onChange={(e) => handleInlineSave(group.parent, "merv_rating", e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {Array.from({ length: 16 }, (_, i) => i + 1).map((m) => (
+                        <option key={m} value={m}>MERV {m}</option>
+                      ))}
+                      <option value={17}>99.99%</option>
+                      <option value={18}>99.999%</option>
+                    </select>
+                  ) : (
+                    <span
+                      className="px-2 py-0.5 text-xs rounded bg-gray-100 text-gray-600 font-medium cursor-pointer hover:bg-blue-100 hover:text-blue-700"
+                      title="Click to edit"
+                    >
+                      {mervLabel(group.parent.merv_rating)}
+                    </span>
+                  )}
                 </td>
                 {/* spacer */}
                 <td className="w-4" />
