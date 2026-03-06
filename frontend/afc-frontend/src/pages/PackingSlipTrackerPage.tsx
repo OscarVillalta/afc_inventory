@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import React from "react";
+import { Link } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import {
   fetchPackingSlips,
@@ -45,11 +46,12 @@ export type PackingSlipRow = {
   packingSlipNo: string;
   customer: string;
   type: string;
-  status: string;         // order fulfillment status (Pending / Partially Fulfilled / Completed)
-  stockState: string;     // "Reserved" | "Delivered"
-  trackerStatus: string;  // derived from tracker step
-  trackerDept: string;    // current department label for "IN X" badge
+  status: string;                    // order fulfillment status (Pending / Partially Fulfilled / Completed)
+  stockState: string;                // "Reserved" | "Delivered"
+  trackerStatus: string;             // derived from tracker step
+  trackerDept: string;               // current department label for "IN X" badge
   lastUpdated: string;
+  externalOrderNumber?: string | null;
   notes?: string;
   is_paid: boolean;
   is_invoiced: boolean;
@@ -139,6 +141,7 @@ function toPackingSlipRow(r: PackingSlipResult): PackingSlipRow {
     trackerStatus,
     trackerDept,
     lastUpdated,
+    externalOrderNumber: r.external_order_number ?? null,
     notes: r.description ?? undefined,
     is_paid: r.is_paid ?? false,
     is_invoiced: r.is_invoiced ?? false,
@@ -411,85 +414,10 @@ function PaidInvoicedToggle({
 }
 
 // ─────────────────────────────────────────────
-// FilterBar
+// Filter types
 // ─────────────────────────────────────────────
 
 type FilterTab = "All" | "Not Started" | "In Progress" | "Completed";
-
-interface FilterBarProps {
-  statusCounts: { All: number; "Not Started": number; "In Progress": number; Completed: number };
-  activeTab: FilterTab;
-  onTabChange: (tab: FilterTab) => void;
-  search: string;
-  onSearchChange: (v: string) => void;
-  onCreateClick: () => void;
-}
-
-function FilterBar({
-  statusCounts,
-  activeTab,
-  onTabChange,
-  search,
-  onSearchChange,
-  onCreateClick,
-}: FilterBarProps) {
-  const tabs: FilterTab[] = ["All", "Not Started", "In Progress", "Completed"];
-
-  return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-      <div className="flex flex-wrap gap-3 items-center justify-between">
-        {/* Filter chips */}
-        <div className="flex flex-wrap gap-2">
-          {tabs.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => onTabChange(tab)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition border ${
-                activeTab === tab
-                  ? "bg-blue-100 text-blue-700 border-blue-300 shadow-sm"
-                  : "text-gray-600 border-gray-200 hover:bg-gray-100"
-              }`}
-            >
-              {tab}{" "}
-              <span
-                className={`ml-1 text-xs rounded-full px-1.5 py-0.5 ${
-                  activeTab === tab
-                    ? "bg-blue-200 text-blue-800"
-                    : "bg-gray-100 text-gray-500"
-                }`}
-              >
-                {statusCounts[tab as keyof typeof statusCounts]}
-              </span>
-            </button>
-          ))}
-        </div>
-
-        {/* Search + button */}
-        <div className="flex flex-wrap gap-2 items-center">
-          <div className="relative">
-            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
-              🔍
-            </span>
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Search slip, customer…"
-              className="input input-sm border border-gray-200 rounded-lg pl-8 text-sm w-52"
-            />
-          </div>
-
-          <button
-            onClick={onCreateClick}
-            className="btn btn-primary btn-sm w-full sm:w-auto"
-          >
-            + Create Shipment
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ─────────────────────────────────────────────
 // Expanded Detail Panel
@@ -539,17 +467,36 @@ function ExpandedPanel({
         <div className="bg-slate-50/60 mx-3 my-2 rounded-xl border border-slate-200/60 p-4 sm:p-5">
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
-            <div>
-              <span className="text-base font-bold text-slate-900">{row.packingSlipNo}</span>
-              <span className="mx-2 text-slate-400">·</span>
+            <div className="flex flex-wrap items-center gap-3">
+              <Link
+                to={`/orders/${row.id}`}
+                onClick={(e) => e.stopPropagation()}
+                className="text-base font-bold text-blue-700 hover:underline"
+              >
+                {row.packingSlipNo}
+              </Link>
+              <span className="text-slate-400">·</span>
               <span className="text-base font-semibold text-slate-600">{row.customer}</span>
+              {row.externalOrderNumber && (
+                <>
+                  <span className="text-slate-400">·</span>
+                  <span className="text-xs text-slate-400 font-medium uppercase tracking-wide">Ext #</span>
+                  <Link
+                    to={`/orders/${row.id}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-sm font-semibold text-blue-700 hover:underline"
+                  >
+                    {row.externalOrderNumber}
+                  </Link>
+                </>
+              )}
             </div>
           </div>
 
-          {/* Two-column layout */}
+          {/* Three-column layout */}
           <div className="flex flex-col lg:flex-row gap-6">
 
-            {/* ── Left Section: Financials & Notes ── */}
+            {/* ── Left Section: Financials ── */}
             <div className="lg:w-48 shrink-0 flex flex-col gap-4">
               <div>
                 <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-2">
@@ -562,23 +509,12 @@ function ExpandedPanel({
                   onUpdate={(field, value) => onPaidInvoicedUpdate(row.id, field, value)}
                 />
               </div>
-
-              {row.notes && (
-                <div>
-                  <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">
-                    Notes
-                  </p>
-                  <p className="text-sm text-slate-600 break-words leading-relaxed">
-                    {row.notes}
-                  </p>
-                </div>
-              )}
             </div>
 
             {/* Divider */}
             <div className="hidden lg:block w-px bg-slate-200 shrink-0" />
 
-            {/* ── Right Section: Installation Path ── */}
+            {/* ── Middle Section: Progress Tracker ── */}
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">
                 {row.type?.toLowerCase() === "installation" ? "6-Step Installation Path" : "Progress"}
@@ -594,6 +530,21 @@ function ExpandedPanel({
                 <p className="mt-2 text-xs text-red-600">{saveError}</p>
               )}
             </div>
+
+            {/* ── Right Section: Description/Notes ── */}
+            {row.notes && (
+              <>
+                <div className="hidden lg:block w-px bg-slate-200 shrink-0" />
+                <div className="lg:w-56 shrink-0">
+                  <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">
+                    Notes
+                  </p>
+                  <p className="text-sm text-slate-600 break-words leading-relaxed">
+                    {row.notes}
+                  </p>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </td>
@@ -730,6 +681,11 @@ export default function PackingSlipTrackerPage() {
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
+  /* ── Additional filter state ── */
+  const [filterOrderType, setFilterOrderType] = useState("");
+  const [filterDepartment, setFilterDepartment] = useState("");
+  const [filterStockState, setFilterStockState] = useState("");
+
   // Debounce search to reduce API calls
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 400);
@@ -838,6 +794,33 @@ export default function PackingSlipTrackerPage() {
     (statusCounts["In Progress"] ?? 0) +
     (statusCounts["Completed"] ?? 0);
 
+  /* ── Client-side filtering on top of paginated results ── */
+  const filteredRows = rows.filter((row) => {
+    if (filterOrderType && row.type.toLowerCase() !== filterOrderType.toLowerCase()) return false;
+    if (filterDepartment && row.tracker?.current_department !== filterDepartment) return false;
+    if (filterStockState && row.stockState !== filterStockState) return false;
+    return true;
+  });
+
+  const hasActiveFilters =
+    filterOrderType !== "" || filterDepartment !== "" || filterStockState !== "" || search !== "";
+
+  const handleClearFilters = () => {
+    setFilterOrderType("");
+    setFilterDepartment("");
+    setFilterStockState("");
+    setSearch("");
+    setPage(1);
+  };
+
+  const STATUS_TABS: FilterTab[] = ["All", "Not Started", "In Progress", "Completed"];
+  const statusTabCounts: Record<FilterTab, number> = {
+    All: allCount,
+    "Not Started": statusCounts["Not Started"] ?? 0,
+    "In Progress": statusCounts["In Progress"] ?? 0,
+    Completed: statusCounts["Completed"] ?? 0,
+  };
+
   return (
     <MainLayout>
       <div className="p-4 sm:p-6 space-y-6">
@@ -852,15 +835,113 @@ export default function PackingSlipTrackerPage() {
           </div>
         </div>
 
-        {/* ── Filter Bar ──────────────────────────── */}
-        <FilterBar
-          statusCounts={{ All: allCount, ...statusCounts }}
-          activeTab={activeTab}
-          onTabChange={handleTabChange}
-          search={search}
-          onSearchChange={handleSearch}
-          onCreateClick={() => alert("Create Shipment — coming soon")}
-        />
+        {/* ── Global Filter Bar (Inventory.tsx style) ─── */}
+        <div className="flex flex-wrap items-center gap-3 bg-white border border-gray-200 rounded-xl px-4 py-3 shadow-sm">
+
+          {/* Search */}
+          <div className="flex flex-col gap-0.5 min-w-[160px]">
+            <label className="text-xs text-gray-400 font-medium uppercase tracking-wide">Search</label>
+            <div className="relative">
+              <div className="pointer-events-none absolute inset-y-0 left-2 flex items-center">
+                <svg className="h-3.5 w-3.5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => handleSearch(e.target.value)}
+                placeholder="Slip #, customer…"
+                className="border border-gray-200 rounded-lg pl-7 pr-2 py-1.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 w-full"
+              />
+            </div>
+          </div>
+
+          {/* Order Type */}
+          <div className="flex flex-col gap-0.5 min-w-[140px]">
+            <label className="text-xs text-gray-400 font-medium uppercase tracking-wide">Order Type</label>
+            <select
+              className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+              value={filterOrderType}
+              onChange={(e) => { setFilterOrderType(e.target.value); setPage(1); }}
+            >
+              <option value="">All Types</option>
+              <option value="Installation">Installation</option>
+              <option value="Delivery">Delivery</option>
+              <option value="Shipment">Shipment</option>
+              <option value="Will Call">Will Call</option>
+            </select>
+          </div>
+
+          {/* Department */}
+          <div className="flex flex-col gap-0.5 min-w-[140px]">
+            <label className="text-xs text-gray-400 font-medium uppercase tracking-wide">Department</label>
+            <select
+              className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+              value={filterDepartment}
+              onChange={(e) => { setFilterDepartment(e.target.value); setPage(1); }}
+            >
+              <option value="">All Departments</option>
+              <option value="SALES">Sales</option>
+              <option value="LOGISTICS">Logistics</option>
+              <option value="DELIVERY_DEPT">Delivery</option>
+              <option value="SERVICE">Service</option>
+              <option value="ACCOUNTING">Accounting</option>
+            </select>
+          </div>
+
+          {/* Stock State */}
+          <div className="flex flex-col gap-0.5 min-w-[140px]">
+            <label className="text-xs text-gray-400 font-medium uppercase tracking-wide">Stock State</label>
+            <select
+              className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+              value={filterStockState}
+              onChange={(e) => { setFilterStockState(e.target.value); setPage(1); }}
+            >
+              <option value="">All States</option>
+              <option value="Reserved">Reserved</option>
+              <option value="Delivered">Delivered</option>
+            </select>
+          </div>
+
+          {/* Clear All */}
+          <div className="flex items-center ml-auto">
+            {hasActiveFilters && (
+              <button
+                onClick={handleClearFilters}
+                className="text-xs text-blue-600 hover:text-blue-800 font-medium transition"
+              >
+                Clear All
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* ── Quick-Filter Status Pills ──────────────── */}
+        <div className="flex flex-wrap gap-2">
+          {STATUS_TABS.map((tab) => (
+            <button
+              key={tab}
+              onClick={() => handleTabChange(tab)}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition border ${
+                activeTab === tab
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "bg-white text-gray-600 border-gray-200 hover:bg-gray-100"
+              }`}
+            >
+              {tab}{" "}
+              <span
+                className={`ml-1 rounded-full px-1.5 py-0.5 text-xs ${
+                  activeTab === tab
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-100 text-gray-500"
+                }`}
+              >
+                {statusTabCounts[tab]}
+              </span>
+            </button>
+          ))}
+        </div>
 
         {/* ── KPI Cards ───────────────────────────── */}
         <KpiCards total={allCount} statusCounts={statusCounts} />
@@ -882,9 +963,9 @@ export default function PackingSlipTrackerPage() {
                 <col className="w-44" />
                 <col className="w-32" />
                 <col className="w-32" />
+                <col className="w-32" />
                 <col className="w-40" />
                 <col className="w-36" />
-                <col className="w-14" />
                 <col className="w-12" />
               </colgroup>
               <thead>
@@ -897,6 +978,9 @@ export default function PackingSlipTrackerPage() {
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600 bg-slate-50 border-b border-slate-200/70 border-r border-slate-200/60">
                     Type
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600 bg-slate-50 border-b border-slate-200/70 border-r border-slate-200/60">
+                    External Order #
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600 bg-slate-50 border-b border-slate-200/70 border-r border-slate-200/60">
                     Stock State
@@ -912,9 +996,6 @@ export default function PackingSlipTrackerPage() {
                       </svg>
                     </span>
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600 bg-slate-50 border-b border-slate-200/70 border-r border-slate-200/60">
-                    Notes
-                  </th>
                   <th className="px-4 py-3 bg-slate-50 border-b border-slate-200/70 rounded-tr-xl w-12" />
                 </tr>
               </thead>
@@ -928,7 +1009,7 @@ export default function PackingSlipTrackerPage() {
                   </tr>
                 )}
 
-                {!loading && rows.length === 0 && (
+                {!loading && filteredRows.length === 0 && (
                   <tr>
                     <td colSpan={8} className="py-12 text-center text-slate-400">
                       No records found.
@@ -937,7 +1018,7 @@ export default function PackingSlipTrackerPage() {
                 )}
 
                 {!loading &&
-                  rows.map((row, rowIndex) => (
+                  filteredRows.map((row, rowIndex) => (
                     <React.Fragment key={row.id}>
                       <tr
                         role="button"
@@ -958,7 +1039,13 @@ export default function PackingSlipTrackerPage() {
                         }}
                       >
                         <td className="px-4 py-3 border-b border-slate-200/60 border-r border-slate-200/50">
-                          <span className="font-semibold text-slate-900">{row.packingSlipNo}</span>
+                          <Link
+                            to={`/orders/${row.id}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="font-semibold text-blue-700 hover:underline"
+                          >
+                            {row.packingSlipNo}
+                          </Link>
                         </td>
                         <td className="px-4 py-3 border-b border-slate-200/60 border-r border-slate-200/50 font-medium text-slate-800">
                           <span className="truncate block" title={row.customer}>
@@ -967,6 +1054,20 @@ export default function PackingSlipTrackerPage() {
                         </td>
                         <td className="px-4 py-3 border-b border-slate-200/60 border-r border-slate-200/50">
                           <TypePill type={row.type} />
+                        </td>
+                        {/* External Order # */}
+                        <td className="px-4 py-3 border-b border-slate-200/60 border-r border-slate-200/50">
+                          {row.externalOrderNumber ? (
+                            <Link
+                              to={`/orders/${row.id}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="font-medium text-blue-700 hover:underline text-sm"
+                            >
+                              {row.externalOrderNumber}
+                            </Link>
+                          ) : (
+                            <span className="text-slate-400">—</span>
+                          )}
                         </td>
                         {/* Stock State */}
                         <td className="px-4 py-3 border-b border-slate-200/60 border-r border-slate-200/50">
@@ -981,24 +1082,6 @@ export default function PackingSlipTrackerPage() {
                         </td>
                         <td className="px-4 py-3 border-b border-slate-200/60 border-r border-slate-200/50 text-slate-700 font-medium">
                           {row.lastUpdated}
-                        </td>
-                        <td className="px-4 py-3 border-b border-slate-200/60 border-r border-slate-200/50 text-center">
-                          {row.notes ? (
-                            <div
-                              className="w-8 h-8 rounded-lg bg-slate-200 flex items-center justify-center text-slate-600 mx-auto"
-                              title={row.notes}
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                              </svg>
-                            </div>
-                          ) : (
-                            <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-300 mx-auto">
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                              </svg>
-                            </div>
-                          )}
                         </td>
                         <td className="px-4 py-3 border-b border-slate-200/60 text-center">
                           <button
