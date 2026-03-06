@@ -1,7 +1,7 @@
 from flask import Blueprint, g, jsonify, request
 from sqlalchemy import select, func, or_, case, and_
 from sqlalchemy.exc import IntegrityError, DatabaseError
-from database.models import Order, OrderTracker, OrderHistory, OrderTrackerStage, Department, OutgoingOrderType, Customer, OrderType, OUTGOING_TYPES
+from database.models import Order, OrderTracker, OrderHistory, OrderTrackerStage, Department, OutgoingOrderType, Customer, Supplier, OrderType, OUTGOING_TYPES
 from datetime import datetime, timezone
 from typing import Tuple, Any
 
@@ -256,10 +256,11 @@ def get_packing_slips() -> Tuple[Any, int]:
         _completed_stages_subq < _total_steps_expr,
     )
 
-    # Base query: all tracker-eligible orders joined with customer and tracker
+    # Base query: all tracker-eligible orders joined with customer, supplier and tracker
     base_query = (
         select(Order)
         .outerjoin(Customer, Order.customer_id == Customer.id)
+        .outerjoin(Supplier, Order.supplier_id == Supplier.id)
         .outerjoin(OrderTracker, OrderTracker.order_id == Order.id)
         .where(Order.type.in_(TRACKER_TYPES))
     )
@@ -270,6 +271,7 @@ def get_packing_slips() -> Tuple[Any, int]:
                 Order.order_number.ilike(f"%{search}%"),
                 Order.external_order_number.ilike(f"%{search}%"),
                 Customer.name.ilike(f"%{search}%"),
+                Supplier.name.ilike(f"%{search}%"),
             )
         )
 
@@ -298,6 +300,7 @@ def get_packing_slips() -> Tuple[Any, int]:
             Order.order_number.ilike(f"%{search}%"),
             Order.external_order_number.ilike(f"%{search}%"),
             Customer.name.ilike(f"%{search}%"),
+            Supplier.name.ilike(f"%{search}%"),
         )
         if search
         else None
@@ -310,6 +313,7 @@ def get_packing_slips() -> Tuple[Any, int]:
         )
         .select_from(Order)
         .outerjoin(Customer, Order.customer_id == Customer.id)
+        .outerjoin(Supplier, Order.supplier_id == Supplier.id)
         .outerjoin(OrderTracker, OrderTracker.order_id == Order.id)
         .where(Order.type.in_(TRACKER_TYPES))
     )
@@ -335,6 +339,7 @@ def get_packing_slips() -> Tuple[Any, int]:
             "status": order.status,
             "description": order.description,
             "customer_name": order.customer.name if order.customer else None,
+            "supplier_name": order.supplier.name if order.supplier else None,
             "created_at": order.created_at.isoformat() if order.created_at else None,
             "completed_at": order.completed_at.isoformat() if order.completed_at else None,
             "eta": order.eta.strftime("%Y-%m-%d") if order.eta else None,

@@ -5,6 +5,7 @@ type OrderStatus = "Pending" | "Partially Fulfilled" | "Completed";
 
 interface Props {
   orderNumber: string;
+  externalOrderNumber?: string | null;
   type: OrderType;
   status: OrderStatus;
   currentDepartment?: string | null;
@@ -15,6 +16,7 @@ interface Props {
 
 export default function OrderHeader({
   orderNumber,
+  externalOrderNumber,
   type,
   status,
   onCopyOrder,
@@ -37,10 +39,18 @@ export default function OrderHeader({
   return (
     <div className="bg-[#3A3F51] text-white px-4 sm:px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 rounded-xl shadow-sm">
       {/* LEFT: Order Number */}
-      <div>
+      <div className="flex flex-col gap-1">
         <h1 className="text-lg font-semibold tracking-widest">
           Order #{orderNumber}
         </h1>
+        {externalOrderNumber && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">Ext #</span>
+            <span className="text-2xl font-bold tracking-tight text-yellow-300">
+              {externalOrderNumber}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* RIGHT: Type + Status + Copy */}
