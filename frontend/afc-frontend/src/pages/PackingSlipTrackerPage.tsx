@@ -1001,12 +1001,12 @@ export default function PackingSlipTrackerPage() {
             <table className="w-full table-fixed border-separate border-spacing-0 text-sm">
               <colgroup>
                 <col className="w-36" />
-                <col className="w-44" />
                 <col className="w-32" />
+                <col className="w-64" />
                 <col className="w-32" />
                 <col className="w-32" />
                 <col className="w-40" />
-                <col className="w-36" />
+                <col className="w-28" />
                 <col className="w-28" />
                 <col className="w-28" />
                 <col className="w-12" />
@@ -1034,9 +1034,6 @@ export default function PackingSlipTrackerPage() {
                   <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600 bg-slate-50 border-b border-slate-200/70 border-r border-slate-200/60">
                     <span className="inline-flex items-center gap-1">
                       Last Updated
-                      <svg className="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                      </svg>
                     </span>
                   </th>
                   <th className="px-4 py-3 text-center text-sm font-semibold text-slate-600 bg-slate-50 border-b border-slate-200/70 border-r border-slate-200/60">
