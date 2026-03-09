@@ -6,6 +6,7 @@ import {
   fetchPackingSlips,
   toggleTrackerStage,
   initOrderTracker,
+  updateOrderTracker,
   patchOrderPaidInvoiced,
   type PackingSlipResult,
   type Department,
@@ -122,7 +123,10 @@ function toPackingSlipRow(r: PackingSlipResult): PackingSlipRow {
 
   let trackerStatus: string;
   let trackerDept: string;
-  if (completedCount === 0 && !r.tracker) {
+  if (r.tracker?.is_backordered) {
+    trackerStatus = "Backordered";
+    trackerDept = "";
+  } else if (completedCount === 0 && !r.tracker) {
     trackerStatus = "Not Started";
     trackerDept = "";
   } else if (completedCount >= totalSteps) {
@@ -130,8 +134,12 @@ function toPackingSlipRow(r: PackingSlipResult): PackingSlipRow {
     trackerDept = "";
   } else if (completedCount > 0 || r.tracker) {
     trackerStatus = "In Progress";
-    trackerDept = r.tracker?.current_department
-      ? `IN ${deptLabel(r.tracker.current_department).toUpperCase()}`
+    // Find the earliest step that has not been completed
+    const stageMap = new Map((stages ?? []).map((s) => [s.stage_index, s]));
+    const firstIncompleteIdx = stepsTemplate.findIndex((_, i) => !stageMap.get(i)?.is_completed);
+    const firstIncompleteDept = firstIncompleteIdx >= 0 ? stepsTemplate[firstIncompleteIdx].dept : null;
+    trackerDept = firstIncompleteDept
+      ? `IN ${deptLabel(firstIncompleteDept).toUpperCase()}`
       : "IN PROGRESS";
   } else {
     trackerStatus = "Not Started";
@@ -231,6 +239,13 @@ function TrackerStatusBadge({ status, deptLabel: dept }: { status: string; deptL
     return (
       <span className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-bold bg-green-100 text-green-700 uppercase tracking-wide">
         ✓ COMPLETED
+      </span>
+    );
+  }
+  if (status === "Backordered") {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-bold bg-orange-100 text-orange-700 uppercase tracking-wide">
+        ⚠ BACKORDERED
       </span>
     );
   }
@@ -474,7 +489,7 @@ function PaidInvoicedToggle({
 // Filter types
 // ─────────────────────────────────────────────
 
-type FilterTab = "All" | "Not Started" | "In Progress" | "Completed";
+type FilterTab = "All" | "Not Started" | "In Progress" | "Completed" | "Backordered";
 
 // ─────────────────────────────────────────────
 // Expanded Detail Panel
@@ -483,12 +498,15 @@ type FilterTab = "All" | "Not Started" | "In Progress" | "Completed";
 function ExpandedPanel({
   row,
   onStagesUpdate,
+  onBackorderedUpdate,
 }: {
   row: PackingSlipRow;
   onStagesUpdate: (orderId: number, updatedStage: OrderTrackerStagePayload) => void;
+  onBackorderedUpdate: (orderId: number, isBackordered: boolean) => void;
 }) {
   const [savingIndex, setSavingIndex] = useState<number | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [savingBackordered, setSavingBackordered] = useState(false);
   const steps = buildSteps(row);
 
   const handleToggleStep = async (index: number) => {
@@ -513,6 +531,27 @@ function ExpandedPanel({
       setSaveError(err instanceof Error ? err.message : "Failed to update step.");
     } finally {
       setSavingIndex(null);
+    }
+  };
+
+  const handleToggleBackordered = async () => {
+    setSavingBackordered(true);
+    setSaveError(null);
+    try {
+      const newValue = !row.tracker?.is_backordered;
+      if (!row.tracker) {
+        const template = getStepsTemplate(row.type ?? "");
+        await initOrderTracker(row.id, {
+          current_department: template[0].dept,
+          step_index: 0,
+        });
+      }
+      await updateOrderTracker(row.id, { is_backordered: newValue });
+      onBackorderedUpdate(row.id, newValue);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Failed to update backordered status.");
+    } finally {
+      setSavingBackordered(false);
     }
   };
 
@@ -546,6 +585,17 @@ function ExpandedPanel({
                 </>
               )}
             </div>
+            <button
+              disabled={savingBackordered}
+              onClick={(e) => { e.stopPropagation(); handleToggleBackordered(); }}
+              className={`px-3 py-1 rounded-full text-xs font-semibold transition-all border ${
+                row.tracker?.is_backordered
+                  ? "bg-orange-500 text-white border-orange-500 shadow-sm"
+                  : "bg-white text-gray-500 border-gray-300 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-400"
+              }`}
+            >
+              {savingBackordered ? "…" : row.tracker?.is_backordered ? "⚠ BACKORDERED" : "Set Backordered"}
+            </button>
           </div>
 
           {/* Three-column layout */}
@@ -677,17 +727,18 @@ function KpiCards({
   statusCounts,
 }: {
   total: number;
-  statusCounts: { "Not Started": number; "In Progress": number; Completed: number };
+  statusCounts: { "Not Started": number; "In Progress": number; Completed: number; Backordered: number };
 }) {
   const cards = [
     { label: "Total Orders", value: total, color: "text-gray-800" },
     { label: "Not Started", value: statusCounts["Not Started"], color: "text-slate-600" },
     { label: "In Progress", value: statusCounts["In Progress"], color: "text-yellow-600" },
     { label: "Completed", value: statusCounts["Completed"], color: "text-green-600" },
+    { label: "Backordered", value: statusCounts["Backordered"], color: "text-orange-600" },
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
       {cards.map((c) => (
         <div
           key={c.label}
@@ -707,7 +758,7 @@ function KpiCards({
 
 const PAGE_SIZE = 10;
 
-const DEFAULT_STATUS_COUNTS = { "Not Started": 0, "In Progress": 0, Completed: 0 };
+const DEFAULT_STATUS_COUNTS = { "Not Started": 0, "In Progress": 0, Completed: 0, Backordered: 0 };
 
 export default function PackingSlipTrackerPage() {
   const [activeTab, setActiveTab] = useState<FilterTab>("All");
@@ -733,7 +784,7 @@ export default function PackingSlipTrackerPage() {
     return () => clearTimeout(t);
   }, [search]);
 
-  const loadData = useCallback(async (p: number, s: string, tab: FilterTab) => {
+  const loadData = useCallback(async (p: number, s: string, tab: FilterTab, orderType: string) => {
     setLoading(true);
     setFetchError(null);
     try {
@@ -742,6 +793,7 @@ export default function PackingSlipTrackerPage() {
         limit: PAGE_SIZE,
         search: s,
         tracker_status: tab === "All" ? undefined : tab,
+        order_type: orderType || undefined,
       });
       setRows(resp.results.map(toPackingSlipRow));
       setTotal(resp.total);
@@ -754,8 +806,8 @@ export default function PackingSlipTrackerPage() {
   }, []);
 
   useEffect(() => {
-    loadData(page, debouncedSearch, activeTab);
-  }, [page, debouncedSearch, activeTab, loadData]);
+    loadData(page, debouncedSearch, activeTab, filterOrderType);
+  }, [page, debouncedSearch, activeTab, filterOrderType, loadData]);
 
   // Reset page when search or tab changes
   const handleSearch = (v: string) => {
@@ -780,12 +832,16 @@ export default function PackingSlipTrackerPage() {
           ? row.stages.map((s) => s.stage_index === updatedStage.stage_index ? updatedStage : s)
           : [...row.stages, updatedStage];
 
-        const totalSteps = getStepsTemplate(row.type ?? "").length;
+        const stepsTemplate = getStepsTemplate(row.type ?? "");
+        const totalSteps = stepsTemplate.length;
         const completedCount = newStages.filter((s) => s.is_completed).length;
+
+        // Clear backordered when a stage is toggled (mirrors backend behaviour)
+        const newTracker = row.tracker ? { ...row.tracker, is_backordered: false } : row.tracker;
 
         let trackerStatus: string;
         let trackerDept: string;
-        if (completedCount === 0 && !row.tracker) {
+        if (completedCount === 0 && !newTracker) {
           trackerStatus = "Not Started";
           trackerDept = "";
         } else if (completedCount >= totalSteps) {
@@ -793,8 +849,12 @@ export default function PackingSlipTrackerPage() {
           trackerDept = "";
         } else {
           trackerStatus = "In Progress";
-          trackerDept = row.tracker?.current_department
-            ? `IN ${deptLabel(row.tracker.current_department).toUpperCase()}`
+          // Find the earliest step that has not been completed
+          const stageMap = new Map(newStages.map((s) => [s.stage_index, s]));
+          const firstIncompleteIdx = stepsTemplate.findIndex((_, i) => !stageMap.get(i)?.is_completed);
+          const firstIncompleteDept = firstIncompleteIdx >= 0 ? stepsTemplate[firstIncompleteIdx].dept : null;
+          trackerDept = firstIncompleteDept
+            ? `IN ${deptLabel(firstIncompleteDept).toUpperCase()}`
             : "IN PROGRESS";
         }
 
@@ -805,11 +865,47 @@ export default function PackingSlipTrackerPage() {
 
         return {
           ...row,
+          tracker: newTracker,
           stages: newStages,
           trackerStatus,
           trackerDept,
           lastUpdated,
         };
+      })
+    );
+  }, []);
+
+  // Optimistic update for backordered toggle
+  const handleBackorderedUpdate = useCallback((orderId: number, isBackordered: boolean) => {
+    setRows((prev) =>
+      prev.map((row) => {
+        if (row.id !== orderId) return row;
+        const newTracker = row.tracker ? { ...row.tracker, is_backordered: isBackordered } : row.tracker;
+        const stepsTemplate = getStepsTemplate(row.type ?? "");
+        const totalSteps = stepsTemplate.length;
+        const completedCount = row.stages.filter((s) => s.is_completed).length;
+
+        let trackerStatus: string;
+        let trackerDept: string;
+        if (isBackordered) {
+          trackerStatus = "Backordered";
+          trackerDept = "";
+        } else if (completedCount === 0 && !newTracker) {
+          trackerStatus = "Not Started";
+          trackerDept = "";
+        } else if (completedCount >= totalSteps) {
+          trackerStatus = "Completed";
+          trackerDept = "";
+        } else {
+          trackerStatus = "In Progress";
+          const stageMap = new Map(row.stages.map((s) => [s.stage_index, s]));
+          const firstIncompleteIdx = stepsTemplate.findIndex((_, i) => !stageMap.get(i)?.is_completed);
+          const firstIncompleteDept = firstIncompleteIdx >= 0 ? stepsTemplate[firstIncompleteIdx].dept : null;
+          trackerDept = firstIncompleteDept
+            ? `IN ${deptLabel(firstIncompleteDept).toUpperCase()}`
+            : "IN PROGRESS";
+        }
+        return { ...row, tracker: newTracker, trackerStatus, trackerDept };
       })
     );
   }, []);
@@ -832,33 +928,35 @@ export default function PackingSlipTrackerPage() {
 
   const allCount = (statusCounts["Not Started"] ?? 0) +
     (statusCounts["In Progress"] ?? 0) +
-    (statusCounts["Completed"] ?? 0);
+    (statusCounts["Completed"] ?? 0) +
+    (statusCounts["Backordered"] ?? 0);
 
-  /* ── Client-side filtering on top of paginated results ── */
+  /* ── Client-side filtering for department and stock state (not sent to server) ── */
   const filteredRows = rows.filter((row) => {
-    if (filterOrderType && row.type.toLowerCase() !== filterOrderType.toLowerCase()) return false;
     if (filterDepartment && row.tracker?.current_department !== filterDepartment) return false;
     if (filterStockState && row.stockState !== filterStockState) return false;
     return true;
   });
 
   const hasActiveFilters =
-    filterOrderType !== "" || filterDepartment !== "" || filterStockState !== "" || search !== "";
+    filterOrderType !== "" || filterDepartment !== "" || filterStockState !== "" || search !== "" || activeTab !== "All";
 
   const handleClearFilters = () => {
     setFilterOrderType("");
     setFilterDepartment("");
     setFilterStockState("");
     setSearch("");
+    setActiveTab("All");
     setPage(1);
   };
 
-  const STATUS_TABS: FilterTab[] = ["All", "Not Started", "In Progress", "Completed"];
+  const STATUS_TABS: FilterTab[] = ["All", "Not Started", "In Progress", "Completed", "Backordered"];
   const statusTabCounts: Record<FilterTab, number> = {
     All: allCount,
     "Not Started": statusCounts["Not Started"] ?? 0,
     "In Progress": statusCounts["In Progress"] ?? 0,
     Completed: statusCounts["Completed"] ?? 0,
+    Backordered: statusCounts["Backordered"] ?? 0,
   };
 
   return (
@@ -906,11 +1004,27 @@ export default function PackingSlipTrackerPage() {
               onChange={(e) => { setFilterOrderType(e.target.value); setPage(1); }}
             >
               <option value="">All Types</option>
-              <option value="Installation">Installation</option>
-              <option value="Delivery">Delivery</option>
-              <option value="Shipment">Shipment</option>
-              <option value="Will Call">Will Call</option>
+              <option value="installation">Installation</option>
+              <option value="delivery">Delivery</option>
+              <option value="shipment">Shipment</option>
+              <option value="will_call">Will Call</option>
               <option value="incoming">Purchase Order</option>
+            </select>
+          </div>
+
+          {/* Tracker State */}
+          <div className="flex flex-col gap-0.5 min-w-[140px]">
+            <label className="text-xs text-gray-400 font-medium uppercase tracking-wide">Tracker State</label>
+            <select
+              className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+              value={activeTab}
+              onChange={(e) => { handleTabChange(e.target.value as FilterTab); }}
+            >
+              <option value="All">All States</option>
+              <option value="Not Started">Not Started</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+              <option value="Backordered">Backordered</option>
             </select>
           </div>
 
@@ -1171,6 +1285,7 @@ export default function PackingSlipTrackerPage() {
                         <ExpandedPanel
                           row={row}
                           onStagesUpdate={handleStagesUpdate}
+                          onBackorderedUpdate={handleBackorderedUpdate}
                         />
                       )}
                     </React.Fragment>

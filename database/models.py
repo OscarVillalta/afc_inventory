@@ -769,6 +769,7 @@ class OrderTracker(Base, SerializerMixin):
     order_id: Mapped[int] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"), nullable=False, unique=True)
     current_department: Mapped[str] = mapped_column(String, nullable=False)
     step_index: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    is_backordered: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, server_default="false")
     updated_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     order: Mapped["Order"] = relationship("Order", back_populates="tracker")
