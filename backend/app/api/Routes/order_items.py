@@ -194,12 +194,16 @@ def update_order_item(item_id):
         valid_types = [t.value for t in OrderItemType]
         if new_type not in valid_types:
             return jsonify({"error": f"Invalid type. Must be one of: {valid_types}"}), 400
-        # Only allow toggling between separator types
+        # Allow toggling between separator types
         separator_types = [OrderItemType.UNIT_SEPARATOR.value, OrderItemType.SECTION_SEPARATOR.value]
+        # Allow toggling between product item types (Product_Item <-> Media_Cut)
+        product_item_types = [OrderItemType.PRODUCT_ITEM.value, OrderItemType.MEDIA_CUT.value]
         if item.type in separator_types and new_type in separator_types:
             item.type = new_type
+        elif item.type in product_item_types and new_type in product_item_types:
+            item.type = new_type
         else:
-            return jsonify({"error": "Type change is only allowed between separator types"}), 400
+            return jsonify({"error": "Type change is only allowed between separator types or between Product_Item and Media_Cut"}), 400
 
     db.commit()
     return jsonify({
@@ -289,10 +293,36 @@ def allocate_remaining_order_items(item_id):
     if not order:
         return jsonify({"error": "Order not associated"}), 400
     
-    sign = 1 if order.type == "incoming" else -1
-    reason = "receive" if order.type == "incoming" else "shipment"
     body = request.get_json(silent=True) or {}
     note = body.get("note")
+
+    qty_to_fulfill = item.quantity_ordered - item.quantity_fulfilled
+
+    if qty_to_fulfill < 0:
+        return jsonify({
+            "error": "There is more fulfilled than ordered already.",
+            "ordered": item.quantity_ordered,
+            "fulfilled_so_far": item.quantity_fulfilled,
+        }), 400
+
+    if qty_to_fulfill == 0:
+        return jsonify({
+            "message": "Order item is already fully fulfilled.",
+        }), 203
+
+    # 🔹 MEDIA_CUT bypass: skip inventory transaction, directly mark as fulfilled
+    if item.type == OrderItemType.MEDIA_CUT.value:
+        item.quantity_fulfilled += qty_to_fulfill
+        item.quantity_fulfilled = max(0, min(item.quantity_fulfilled, item.quantity_ordered))
+        order.update_status()
+        db.commit()
+        return jsonify({
+            "message": f"Fulfilled {qty_to_fulfill} unit(s) for media cut order item {item_id} (no stock deduction).",
+            "order_status": order.status
+        }), 200
+
+    sign = 1 if order.type == "incoming" else -1
+    reason = "receive" if order.type == "incoming" else "shipment"
     
     existing_qty = db.scalar(
         select(func.coalesce(func.sum(Transaction.quantity_delta), 0))

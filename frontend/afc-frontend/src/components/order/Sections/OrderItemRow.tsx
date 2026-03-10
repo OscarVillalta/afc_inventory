@@ -14,6 +14,7 @@ import {
   rollbackTransaction,
   deleteOrderItem,
   updateOrderItem,
+  allocateOrderItem,
 } from "../../../api/orderDetail";
 import type { OrderType } from "../../../constants/orderTypes";
 import { isOutgoingType } from "../../../constants/orderTypes";
@@ -73,6 +74,8 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
   // Separator items don't need transactions
   const isSeparator = item.type === "Unit_Separator" || item.type === "Section_Separator";
   const isSectionSeparator = item.type === "Section_Separator";
+  const isMediaCut = item.type === "Media_Cut";
+  const showMediaToggle = item.is_media || isMediaCut;
 
   // Separator type toggle menu
   const [showTypeMenu, setShowTypeMenu] = useState(false);
@@ -101,6 +104,41 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
       setError("Failed to change separator type.");
     } finally {
       setSaving(false);
+    }
+  }
+
+  /* ===== Toggle Full Roll / Custom Cut ===== */
+  const [localType, setLocalType] = useState<OrderItemType>(item.type);
+
+  useEffect(() => {
+    setLocalType(item.type);
+  }, [item.type]);
+
+  async function handleToggleMediaCut(newType: "Product_Item" | "Media_Cut") {
+    if (localType === newType) return;
+    setLocalType(newType);
+    try {
+      await updateOrderItem(item.id, { type: newType });
+      await onRefresh();
+    } catch {
+      setLocalType(item.type);
+      setError("Failed to change item type.");
+    }
+  }
+
+  /* ===== Fulfill Custom Cut (no inventory deduction) ===== */
+  async function handleFulfillCut(e: React.MouseEvent) {
+    e.stopPropagation();
+    setSubmitting(true);
+    setError(null);
+    try {
+      await allocateOrderItem(item.id);
+      await onRefresh();
+    } catch (err: unknown) {
+      const parsed = JSON.parse((err as Error)?.message || "{}");
+      setError(parsed["error"] || "Failed to fulfill custom cut item.");
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -498,13 +536,38 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
                 disabled={saving}
               />
             ) : (
-              <span
-                className="cursor-pointer hover:bg-gray-100 px-2 py-1 rounded inline-block"
-                onClick={() => setIsEditingNote(true)}
-                title="Click to edit"
-              >
-                {item.note || "—"}
-              </span>
+              <div className="flex flex-col gap-1">
+                <span
+                  className="cursor-pointer hover:bg-gray-100 px-2 py-1 rounded inline-block"
+                  onClick={() => setIsEditingNote(true)}
+                  title="Click to edit"
+                >
+                  {item.note || "—"}
+                </span>
+                {showMediaToggle && (
+                  <div className="flex items-center gap-1 flex-wrap">
+                    <div className="join">
+                      <button
+                        className={`join-item btn btn-xs ${localType !== "Media_Cut" ? "btn-primary" : "btn-ghost border border-gray-300"}`}
+                        onClick={() => handleToggleMediaCut("Product_Item")}
+                        title="Full Roll: deducts inventory on fulfillment"
+                      >
+                        Full Roll
+                      </button>
+                      <button
+                        className={`join-item btn btn-xs ${localType === "Media_Cut" ? "btn-primary" : "btn-ghost border border-gray-300"}`}
+                        onClick={() => handleToggleMediaCut("Media_Cut")}
+                        title="Custom Cut: no inventory deduction on fulfillment"
+                      >
+                        Custom Cut
+                      </button>
+                    </div>
+                    {localType === "Media_Cut" && (
+                      <span className="badge badge-sm badge-info whitespace-nowrap">No Stock Deduction</span>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
           </td>
           <td 
@@ -605,8 +668,25 @@ export default function OrderItemRow({ item, orderType, onRefresh, txnRefreshKey
       {expanded && !isSeparator && (
         <tr style={expandedStyle}>
           <td colSpan={8} className="bg-gray-50 px-6 py-4 space-y-3" style={{ pointerEvents: isDragging ? 'none' : 'auto' }}>
-            {/* ===== CREATE PENDING ===== */}
-            {remainingSafe > 0 && (
+            {/* ===== MEDIA CUT FULFILLMENT (bypass) ===== */}
+            {isMediaCut && remainingSafe > 0 && (
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="badge badge-info badge-sm">Custom Cut — No Stock Deduction</span>
+                <span className="text-sm text-gray-500">
+                  Remaining: {remainingSafe}
+                </span>
+                <button
+                  className="btn btn-xs btn-success"
+                  onClick={handleFulfillCut}
+                  disabled={submitting}
+                >
+                  {submitting ? "Saving…" : "Fulfill Cut"}
+                </button>
+              </div>
+            )}
+
+            {/* ===== CREATE PENDING (regular items only) ===== */}
+            {!isMediaCut && remainingSafe > 0 && (
               <div className="flex flex-wrap items-center gap-3">
                 <span className="text-sm text-gray-500">
                   {isOutgoingType(orderType)
