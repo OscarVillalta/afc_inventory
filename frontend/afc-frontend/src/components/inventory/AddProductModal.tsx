@@ -280,7 +280,7 @@ export default function AddProductModal({
                 ))}
               </select>
             </div>
-          ) : (
+          ) : productType === "media" ? (
             <div>
               <label className="text-sm font-medium text-gray-600">
                 Category
@@ -299,7 +299,7 @@ export default function AddProductModal({
                 ))}
               </select>
             </div>
-          )}
+          ) : null}
         </div>
 
         {productType === "air_filter" && (
