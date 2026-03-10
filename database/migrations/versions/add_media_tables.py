@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'add_media_tables'
-down_revision = 'e90d0c5cb61d'
+down_revision = 'add_is_backordered_order_tracker'
 branch_labels = None
 depends_on = None
 

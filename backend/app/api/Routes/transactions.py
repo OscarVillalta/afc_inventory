@@ -122,7 +122,7 @@ def get_transaction_on_hand(txn_id):
         select(func.coalesce(func.sum(Transaction.quantity_delta), 0))
         .where(
             product_filter,
-            Transaction.state == "committed",
+            or_(Transaction.state == "committed", Transaction.state == "rolled_back"),
             Transaction.ledger_sequence.isnot(None),
             Transaction.ledger_sequence <= txn.ledger_sequence,
         )

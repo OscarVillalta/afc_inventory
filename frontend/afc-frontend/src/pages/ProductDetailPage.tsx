@@ -1416,6 +1416,7 @@ export default function ProductDetailPage() {
                         <th className="px-4 py-2">Time</th>
                         <th className="px-4 py-2">Product</th>
                         <th className="px-4 py-2">Type</th>
+                        <th className="px-4 py-2">State</th>
                         <th className="px-4 py-2">Quantity</th>
                         <th className="px-4 py-2">Order</th>
                         <th className="px-4 py-2">Note</th>
@@ -1440,6 +1441,9 @@ export default function ProductDetailPage() {
                             }`}>
                               {txn.reason}
                             </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            {txn.state}
                           </td>
                           <td className="px-4 py-3">
                             <span className={`font-medium ${txn.quantity_delta > 0 ? "text-green-600" : "text-red-600"}`}>
