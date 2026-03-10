@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import AirFiltersTable from "../components/inventory/AirFiltersTable";
 import StockItemsTable from "../components/inventory/StockItemsTable";
+import MediaTable from "../components/inventory/MediaTable";
 import AddProductModal from "../components/inventory/AddProductModal";
 import ProduceProductModal from "../components/inventory/ProduceProductModal";
 import InventoryKpiRow from "../components/inventory/InventoryKpiRow";
@@ -8,11 +9,13 @@ import MainLayout from "../layouts/MainLayout";
 import { fetchSuppliers } from "../api/suppliers";
 import { fetchAirFilterCategories } from "../api/airfilters";
 import { fetchStockItemCategories } from "../api/stockItems";
+import { fetchMediaCategories } from "../api/media";
 import type { Supplier } from "../api/suppliers";
 import type { AirFilterCategory } from "../api/airfilters";
 import type { StockItemCategory } from "../api/stockItems";
+import type { MediaCategory } from "../api/media";
 
-type TabKey = "filters" | "stock";
+type TabKey = "filters" | "stock" | "media";
 type QuickView = "all" | "low_stock" | "backordered" | "has_orders";
 
 const QUICK_VIEWS: { key: QuickView; label: string; color: string }[] = [
@@ -41,11 +44,13 @@ export default function Inventory() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [airFilterCategories, setAirFilterCategories] = useState<AirFilterCategory[]>([]);
   const [stockItemCategories, setStockItemCategories] = useState<StockItemCategory[]>([]);
+  const [mediaCategories, setMediaCategories] = useState<MediaCategory[]>([]);
 
   useEffect(() => {
     fetchSuppliers().then(setSuppliers).catch(() => {});
     fetchAirFilterCategories().then(setAirFilterCategories).catch(() => {});
     fetchStockItemCategories().then(setStockItemCategories).catch(() => {});
+    fetchMediaCategories().then(setMediaCategories).catch(() => {});
   }, []);
 
   const triggerRefresh = () => setRefreshToken((prev) => prev + 1);
@@ -67,7 +72,7 @@ export default function Inventory() {
     filterDescription !== "" ||
     quickView !== "all";
 
-  const categories = tab === "filters" ? airFilterCategories : stockItemCategories;
+  const categories = tab === "filters" ? airFilterCategories : tab === "stock" ? stockItemCategories : mediaCategories;
 
   return (
     <MainLayout>
@@ -173,7 +178,7 @@ export default function Inventory() {
             </select>
           </div>
 
-          {/* MERV (air filters) or blank (stock items) */}
+          {/* MERV (air filters only) */}
           <div className="flex flex-col gap-0.5 min-w-[120px]">
             <label className="text-xs text-gray-400 font-medium uppercase tracking-wide">
               {tab === "filters" ? "MERV Rating" : "Type"}
@@ -256,6 +261,16 @@ export default function Inventory() {
             >
               Stock Items
             </button>
+            <button
+              onClick={() => { setTab("media"); setFilterCategory(""); setFilterMerv(""); }}
+              className={`px-5 py-2.5 text-sm font-medium border-b-2 transition -mb-px ${
+                tab === "media"
+                  ? "border-blue-600 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
+            >
+              Media Rolls
+            </button>
           </div>
 
           {/* Quick-filter pills */}
@@ -303,6 +318,19 @@ export default function Inventory() {
               compact={compact}
               suppliers={suppliers}
               stockItemCategories={stockItemCategories}
+            />
+          )}
+          {tab === "media" && (
+            <MediaTable
+              refreshToken={refreshToken}
+              globalSearch={globalSearch}
+              filterSupplier={filterSupplier}
+              filterCategory={filterCategory}
+              filterDescription={filterDescription}
+              quickView={quickView}
+              compact={compact}
+              suppliers={suppliers}
+              mediaCategories={mediaCategories}
             />
           )}
         </div>

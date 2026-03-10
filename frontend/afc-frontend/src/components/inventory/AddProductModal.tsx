@@ -10,9 +10,14 @@ import {
   fetchStockItemCategories,
   type StockItemCategory,
 } from "../../api/stockItems";
+import {
+  createMedia,
+  fetchMediaCategories,
+  type MediaCategory,
+} from "../../api/media";
 import { autocommitTxn } from "../../api/transactions";
 
-type ProductType = "air_filter" | "stock_item";
+type ProductType = "air_filter" | "stock_item" | "media";
 
 interface AddProductModalProps {
   open: boolean;
@@ -34,11 +39,15 @@ export default function AddProductModal({
   const [height, setHeight] = useState<number>(0);
   const [width, setWidth] = useState<number>(0);
   const [depth, setDepth] = useState<number>(0);
+  const [mediaLength, setMediaLength] = useState<number>(0);
+  const [mediaWidth, setMediaWidth] = useState<number>(0);
+  const [unitOfMeasure, setUnitOfMeasure] = useState<string>("");
   const [initialStock, setInitialStock] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [categories, setCategories] = useState<AirFilterCategory[]>([]);
   const [stockItemCategories, setStockItemCategories] = useState<StockItemCategory[]>([]);
+  const [mediaCategories, setMediaCategories] = useState<MediaCategory[]>([]);
 
   useEffect(() => {
     if (!open) return;
@@ -50,6 +59,9 @@ export default function AddProductModal({
     fetchStockItemCategories()
       .then(setStockItemCategories)
       .catch(() => setStockItemCategories([]));
+    fetchMediaCategories()
+      .then(setMediaCategories)
+      .catch(() => setMediaCategories([]));
   }, [open]);
 
   useEffect(() => {
@@ -62,6 +74,9 @@ export default function AddProductModal({
     setHeight(0);
     setWidth(0);
     setDepth(0);
+    setMediaLength(0);
+    setMediaWidth(0);
+    setUnitOfMeasure("");
     setInitialStock(0);
   }, [open, productType]);
 
@@ -73,6 +88,11 @@ export default function AddProductModal({
   const stockItemCategoryOptions = useMemo(
     () => stockItemCategories.map((c) => ({ label: c.name, value: String(c.id) })),
     [stockItemCategories]
+  );
+
+  const mediaCategoryOptions = useMemo(
+    () => mediaCategories.map((c) => ({ label: c.name, value: String(c.id) })),
+    [mediaCategories]
   );
 
   if (!open) return null;
@@ -111,7 +131,7 @@ export default function AddProductModal({
           depth: Number(depth) || 0,
         });
         productId = created?.product_id ?? null;
-      } else {
+      } else if (productType === "stock_item") {
         if (!categoryId) {
           alert("Category is required.");
           setLoading(false);
@@ -122,6 +142,22 @@ export default function AddProductModal({
           description: description || null,
           supplier_id: Number(supplierId),
           category_id: Number(categoryId),
+        });
+        productId = created?.product_id ?? null;
+      } else {
+        if (!categoryId) {
+          alert("Category is required.");
+          setLoading(false);
+          return;
+        }
+        const created = await createMedia({
+          part_number: partNumber.trim(),
+          description: description || null,
+          supplier_id: Number(supplierId),
+          category_id: Number(categoryId),
+          length: Number(mediaLength) || 0,
+          width: Number(mediaWidth) || 0,
+          unit_of_measure: unitOfMeasure || undefined,
         });
         productId = created?.product_id ?? null;
       }
@@ -168,6 +204,7 @@ export default function AddProductModal({
             >
               <option value="air_filter">Air Filter</option>
               <option value="stock_item">Stock Item</option>
+              <option value="media">Media Roll</option>
             </select>
           </div>
 
@@ -200,7 +237,7 @@ export default function AddProductModal({
               className="input input-bordered w-full mt-1"
               value={partNumber}
               onChange={(e) => setPartNumber(e.target.value)}
-              placeholder={productType === "air_filter" ? "AF-12345" : "Item name"}
+              placeholder={productType === "air_filter" ? "AF-12345" : productType === "media" ? "MR-12345" : "Item name"}
               disabled={disabled}
             />
           </div>
@@ -237,6 +274,25 @@ export default function AddProductModal({
               >
                 <option value="">Select category...</option>
                 {stockItemCategoryOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : productType === "media" ? (
+            <div>
+              <label className="text-sm font-medium text-gray-600">
+                Category
+              </label>
+              <select
+                className="select select-bordered w-full mt-1"
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+                disabled={disabled}
+              >
+                <option value="">Select category...</option>
+                {mediaCategoryOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
                   </option>
@@ -292,7 +348,44 @@ export default function AddProductModal({
           </div>
         )}
 
-        {(productType === "air_filter" || productType === "stock_item") && (
+        {productType === "media" && (
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="text-sm font-medium text-gray-600">Length</label>
+              <input
+                type="number"
+                className="input input-bordered w-full mt-1"
+                value={mediaLength}
+                onChange={(e) => setMediaLength(Number(e.target.value))}
+                disabled={disabled}
+                min={0}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-600">Width</label>
+              <input
+                type="number"
+                className="input input-bordered w-full mt-1"
+                value={mediaWidth}
+                onChange={(e) => setMediaWidth(Number(e.target.value))}
+                disabled={disabled}
+                min={0}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-600">Unit of Measure</label>
+              <input
+                className="input input-bordered w-full mt-1"
+                value={unitOfMeasure}
+                onChange={(e) => setUnitOfMeasure(e.target.value)}
+                disabled={disabled}
+                placeholder="e.g. inches"
+              />
+            </div>
+          </div>
+        )}
+
+        {(productType === "air_filter" || productType === "stock_item" || productType === "media") && (
           <div>
             <label className="text-sm font-medium text-gray-600">
               Description (optional)
@@ -302,7 +395,7 @@ export default function AddProductModal({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               disabled={disabled}
-              placeholder={productType === "air_filter" ? "e.g. High-efficiency pleated filter" : ""}
+              placeholder={productType === "air_filter" ? "e.g. High-efficiency pleated filter" : productType === "media" ? "e.g. High-capacity media roll" : ""}
             />
           </div>
         )}
