@@ -54,6 +54,7 @@ class OrderItemType(str, Enum):
     SECTION_SEPARATOR = "Section_Separator"
     PRODUCT_ITEM = "Product_Item"
     SALES_ITEM = "Sales_Item"
+    MEDIA_CUT = "Media_Cut"
 
 
 class TransactionState(str, Enum):
