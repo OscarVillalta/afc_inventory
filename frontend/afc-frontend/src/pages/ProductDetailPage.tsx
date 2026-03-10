@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   XAxis,
@@ -123,6 +123,9 @@ export default function ProductDetailPage() {
     cx: number;
     cy: number;
   } | null>(null);
+
+  const projContainerRef = useRef<HTMLDivElement>(null);
+  const histContainerRef = useRef<HTMLDivElement>(null);
 
   type ClickableDotProps<TPayload> = {
     cx?: number;
@@ -551,7 +554,7 @@ export default function ProductDetailPage() {
         month: "short",
         day: "numeric",
       });
-      data.push({ date: dateStr, level: Math.max(0, level), annotation, order_id: currentOrderId });
+      data.push({ date: dateStr, level, annotation, order_id: currentOrderId });
     }
 
     return data;
@@ -935,84 +938,113 @@ export default function ProductDetailPage() {
           </div>
 
           <div className="p-6">
-            {graphTab === "projected" && (
-              <>
-                <h2 className="text-xl font-semibold text-[#363b4c] mb-4">
-                  Projected Stock Level
-                </h2>
-                <div
-                  className="relative"
-                  onMouseLeave={() => setHoveredProjPoint(null)}
-                >
-                <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={stockProjection}>
-                    <defs>
-                      <linearGradient id="colorStock" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.05} />
-                      </linearGradient>
-                      <linearGradient id="colorBackorder" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2} />
-                        <stop offset="95%" stopColor="#ef4444" stopOpacity={0.05} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="date" style={{ fontSize: "12px" }} stroke="#6b7280" />
-                    <YAxis style={{ fontSize: "12px" }} stroke="#6b7280" />
-                    <ReferenceLine y={0} stroke="#363b4c" strokeWidth={2} />
-                    <Area
-                      type="monotone"
-                      dataKey="level"
-                      stroke="#363b4c"
-                      strokeWidth={2}
-                      fill="url(#colorStock)"
-                      dot={(props: ClickableDotProps<StockProjection>) => {
-                        const { cx, cy, payload } = props;
-                        if (cx == null || cy == null || !payload) return null;
-                        const hasOrder = Boolean(payload.order_id);
-                        const isHovered = hoveredProjPoint?.data.date === payload.date;
-                        return (
-                          <circle
-                            key={`proj-dot-${payload.date}`}
-                            cx={cx}
-                            cy={cy}
-                            r={isHovered ? (hasOrder ? 8 : 6) : (hasOrder ? 6 : 4)}
-                            fill={getDotFill(isHovered, hasOrder)}
-                            stroke="white"
-                            strokeWidth={2}
-                            style={{ cursor: hasOrder ? "pointer" : "default" }}
-                            onMouseEnter={() => setHoveredProjPoint({ data: payload, cx, cy })}
-                            onClick={() => {
-                              if (payload.order_id) window.open(`/orders/${payload.order_id}`, "_blank");
-                            }}
-                          />
-                        );
-                      }}
-                      activeDot={false}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-                {hoveredProjPoint && (
+            {graphTab === "projected" && (() => {
+              const projLevels = stockProjection.map(p => p.level);
+              const projMax = projLevels.length ? Math.max(...projLevels) : 0;
+              const projMin = projLevels.length ? Math.min(...projLevels) : 0;
+              const projGradientOffset =
+                projMax <= 0 ? 0 : projMin >= 0 ? 1 : projMax / (projMax - projMin);
+              return (
+                <>
+                  <h2 className="text-xl font-semibold text-[#363b4c] mb-4">
+                    Projected Stock Level
+                  </h2>
                   <div
-                    className="pointer-events-none absolute z-10 bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-sm whitespace-nowrap"
-                    style={{
-                      left: hoveredProjPoint.cx + 12,
-                      top: Math.max(4, hoveredProjPoint.cy - 60),
-                    }}
+                    ref={projContainerRef}
+                    className="relative"
+                    onMouseLeave={() => setHoveredProjPoint(null)}
                   >
-                    <p className="font-semibold text-gray-800">{hoveredProjPoint.data.date}</p>
-                    <p className="text-gray-600 mt-1">Stock level: {hoveredProjPoint.data.level}</p>
-                    {hoveredProjPoint.data.annotation && (
-                      <p className="text-blue-600 mt-1">{hoveredProjPoint.data.annotation}</p>
-                    )}
-                    {hoveredProjPoint.data.order_id && (
-                      <p className="text-blue-500 mt-1">Click dot to open order</p>
-                    )}
+                  <ResponsiveContainer width="100%" height={300}>
+                    <AreaChart data={stockProjection}>
+                      <defs>
+                        <linearGradient id="colorStock" x1="0" y1="0" x2="0" y2="1">
+                          {projGradientOffset >= 1 ? (
+                            // All positive — pure blue gradient
+                            <>
+                              <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.3} />
+                              <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.05} />
+                            </>
+                          ) : projGradientOffset <= 0 ? (
+                            // All negative — pure red gradient
+                            <>
+                              <stop offset="0%" stopColor="#ef4444" stopOpacity={0.2} />
+                              <stop offset="100%" stopColor="#ef4444" stopOpacity={0.05} />
+                            </>
+                          ) : (
+                            // Mixed — blue above zero, red below zero
+                            <>
+                              <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.3} />
+                              <stop offset={`${projGradientOffset * 100}%`} stopColor="#3b82f6" stopOpacity={0.1} />
+                              <stop offset={`${projGradientOffset * 100}%`} stopColor="#ef4444" stopOpacity={0.2} />
+                              <stop offset="100%" stopColor="#ef4444" stopOpacity={0.05} />
+                            </>
+                          )}
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <XAxis dataKey="date" style={{ fontSize: "12px" }} stroke="#6b7280" />
+                      <YAxis style={{ fontSize: "12px" }} stroke="#6b7280" />
+                      <ReferenceLine y={0} stroke="#363b4c" strokeWidth={2} />
+                      <Area
+                        type="monotone"
+                        dataKey="level"
+                        stroke="#363b4c"
+                        strokeWidth={2}
+                        fill="url(#colorStock)"
+                        dot={(props: ClickableDotProps<StockProjection>) => {
+                          const { cx, cy, payload } = props;
+                          if (cx == null || cy == null || !payload) return null;
+                          const hasOrder = Boolean(payload.order_id);
+                          const isHovered = hoveredProjPoint?.data.date === payload.date;
+                          return (
+                            <circle
+                              key={`proj-dot-${payload.date}`}
+                              cx={cx}
+                              cy={cy}
+                              r={isHovered ? (hasOrder ? 8 : 6) : (hasOrder ? 6 : 4)}
+                              fill={getDotFill(isHovered, hasOrder)}
+                              stroke="white"
+                              strokeWidth={2}
+                              style={{ cursor: hasOrder ? "pointer" : "default" }}
+                              onMouseEnter={() => setHoveredProjPoint({ data: payload, cx, cy })}
+                              onClick={() => {
+                                if (payload.order_id) window.open(`/orders/${payload.order_id}`, "_blank");
+                              }}
+                            />
+                          );
+                        }}
+                        activeDot={false}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                  {hoveredProjPoint && (() => {
+                    const containerWidth = projContainerRef.current?.offsetWidth ?? 0;
+                    const isRightThird = containerWidth > 0 && hoveredProjPoint.cx > (containerWidth * 2) / 3;
+                    return (
+                      <div
+                        className="pointer-events-none absolute z-10 bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-sm whitespace-nowrap"
+                        style={{
+                          ...(isRightThird
+                            ? { right: containerWidth - hoveredProjPoint.cx + 12 }
+                            : { left: hoveredProjPoint.cx + 12 }),
+                          top: Math.max(4, hoveredProjPoint.cy - 60),
+                        }}
+                      >
+                        <p className="font-semibold text-gray-800">{hoveredProjPoint.data.date}</p>
+                        <p className="text-gray-600 mt-1">Stock level: {hoveredProjPoint.data.level}</p>
+                        {hoveredProjPoint.data.annotation && (
+                          <p className="text-blue-600 mt-1">{hoveredProjPoint.data.annotation}</p>
+                        )}
+                        {hoveredProjPoint.data.order_id && (
+                          <p className="text-blue-500 mt-1">Click dot to open order</p>
+                        )}
+                      </div>
+                    );
+                  })()}
                   </div>
-                )}
-                </div>
-              </>
-            )}
+                </>
+              );
+            })()}
 
             {graphTab === "historical" && (
               <>
@@ -1079,6 +1111,7 @@ export default function ProductDetailPage() {
                   </div>
                 ) : (
                   <div
+                    ref={histContainerRef}
                     className="relative"
                     onMouseLeave={() => setHoveredHistPoint(null)}
                   >
@@ -1135,32 +1168,38 @@ export default function ProductDetailPage() {
                       />
                     </ComposedChart>
                   </ResponsiveContainer>
-                  {hoveredHistPoint && (
-                    <div
-                      className="pointer-events-none absolute z-10 bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-sm whitespace-nowrap"
-                      style={{
-                        left: hoveredHistPoint.cx + 12,
-                        top: Math.max(4, hoveredHistPoint.cy - 60),
-                      }}
-                    >
-                      <p className="font-semibold text-gray-800">
-                        {new Date(hoveredHistPoint.data.raw_date).toLocaleString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
-                      <p className={`font-medium mt-1 ${hoveredHistPoint.data.quantity_delta > 0 ? "text-green-600" : "text-red-600"}`}>
-                        {hoveredHistPoint.data.quantity_delta > 0 ? "+" : ""}{hoveredHistPoint.data.quantity_delta} units
-                      </p>
-                      <p className="text-gray-600">Stock level: {hoveredHistPoint.data.stock_level}</p>
-                      {hoveredHistPoint.data.order_id && (
-                        <p className="text-blue-600 mt-1">Order #{hoveredHistPoint.data.order_id} — click to open</p>
-                      )}
-                    </div>
-                  )}
+                  {hoveredHistPoint && (() => {
+                    const containerWidth = histContainerRef.current?.offsetWidth ?? 0;
+                    const isRightThird = containerWidth > 0 && hoveredHistPoint.cx > (containerWidth * 2) / 3;
+                    return (
+                      <div
+                        className="pointer-events-none absolute z-10 bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-sm whitespace-nowrap"
+                        style={{
+                          ...(isRightThird
+                            ? { right: containerWidth - hoveredHistPoint.cx + 12 }
+                            : { left: hoveredHistPoint.cx + 12 }),
+                          top: Math.max(4, hoveredHistPoint.cy - 60),
+                        }}
+                      >
+                        <p className="font-semibold text-gray-800">
+                          {new Date(hoveredHistPoint.data.raw_date).toLocaleString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
+                        <p className={`font-medium mt-1 ${hoveredHistPoint.data.quantity_delta > 0 ? "text-green-600" : "text-red-600"}`}>
+                          {hoveredHistPoint.data.quantity_delta > 0 ? "+" : ""}{hoveredHistPoint.data.quantity_delta} units
+                        </p>
+                        <p className="text-gray-600">Stock level: {hoveredHistPoint.data.stock_level}</p>
+                        {hoveredHistPoint.data.order_id && (
+                          <p className="text-blue-600 mt-1">Order #{hoveredHistPoint.data.order_id} — click to open</p>
+                        )}
+                      </div>
+                    );
+                  })()}
                   </div>
                 )}
               </>
