@@ -15,6 +15,7 @@ from backend.app.api.Routes.child_products import child_product_bp
 from backend.app.api.Routes.inventory_stats import inventory_stats_bp
 from backend.app.api.Routes.tracker import tracker_bp
 from backend.app.api.Routes.blocked_items import blocked_item_bp
+from backend.app.api.Routes.media import media_bp
 from flask_cors import CORS
 
 
@@ -38,6 +39,7 @@ def create_app():
     app.register_blueprint(inventory_stats_bp, url_prefix="/api")
     app.register_blueprint(tracker_bp, url_prefix="/api")
     app.register_blueprint(blocked_item_bp, url_prefix="/api")
+    app.register_blueprint(media_bp, url_prefix="/api")
 
 
     #Db_session wrappers

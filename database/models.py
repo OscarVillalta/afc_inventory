@@ -3,7 +3,7 @@ from typing import List, Optional
 from datetime import datetime, timezone
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship, foreign
-from sqlalchemy import ForeignKey, String, Integer, BigInteger, Boolean, Index, Sequence, func, text, Text, UniqueConstraint
+from sqlalchemy import ForeignKey, String, Integer, BigInteger, Boolean, Float, Index, Sequence, func, text, Text, UniqueConstraint
 from sqlalchemy.inspection import inspect
 from sqlalchemy.ext.hybrid import hybrid_property
 
@@ -146,6 +146,7 @@ class Supplier(Base, SerializerMixin):
 
     air_filters: Mapped[List["AirFilter"]] = relationship(back_populates="supplier")
     stock_items: Mapped[List["StockItem"]] = relationship(back_populates="supplier")
+    media: Mapped[List["Media"]] = relationship(back_populates="supplier")
     orders: Mapped[List["Order"]] = relationship(back_populates="supplier")
 
 
@@ -178,6 +179,15 @@ class StockItemCategory(Base, SerializerMixin):
     name: Mapped[str] = mapped_column(unique=True, nullable=False)
 
     stock_items: Mapped[List["StockItem"]] = relationship("StockItem", back_populates="category")
+
+
+class MediaCategory(Base, SerializerMixin):
+    __tablename__ = "media_categories"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(unique=True, nullable=False)
+
+    media: Mapped[List["Media"]] = relationship("Media", back_populates="category")
 
 
 # =====================================================
@@ -252,6 +262,41 @@ class StockItem(Base, SerializerMixin):
     )
 
 
+class Media(Base, SerializerMixin):
+    __tablename__ = "media"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    part_number: Mapped[str] = mapped_column(unique=True, nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    length: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    width: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    unit_of_measure: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+
+    category_id: Mapped[int] = mapped_column(ForeignKey("media_categories.id"), nullable=False)
+    supplier_id: Mapped[int] = mapped_column(ForeignKey("suppliers.id"), nullable=False)
+
+    supplier: Mapped["Supplier"] = relationship(back_populates="media")
+    category: Mapped["MediaCategory"] = relationship(back_populates="media")
+
+    product: Mapped[Optional["Product"]] = relationship(
+        "Product",
+        primaryjoin=lambda: Product.reference_id == foreign(Media.id),
+        foreign_keys=lambda: [Product.reference_id],
+        back_populates="media",
+        uselist=False,
+        viewonly=True,
+    )
+
+    child_product: Mapped[Optional["ChildProduct"]] = relationship(
+        "ChildProduct",
+        primaryjoin=lambda: ChildProduct.reference_id == foreign(Media.id),
+        foreign_keys=lambda: [ChildProduct.reference_id],
+        back_populates="media",
+        uselist=False,
+        viewonly=True,
+    )
+
+
 # =====================================================
 # 🔹 Blocked Items
 # =====================================================
@@ -289,6 +334,14 @@ class Product(Base, SerializerMixin):
     stock_item: Mapped[Optional["StockItem"]] = relationship(
         "StockItem",
         primaryjoin=lambda: Product.reference_id == foreign(StockItem.id),
+        foreign_keys=lambda: [Product.reference_id],
+        back_populates="product",
+        uselist=False,
+    )
+
+    media: Mapped[Optional["Media"]] = relationship(
+        "Media",
+        primaryjoin=lambda: Product.reference_id == foreign(Media.id),
         foreign_keys=lambda: [Product.reference_id],
         back_populates="product",
         uselist=False,
@@ -352,6 +405,14 @@ class ChildProduct(Base, SerializerMixin):
     stock_item: Mapped[Optional["StockItem"]] = relationship(
         "StockItem",
         primaryjoin=lambda: ChildProduct.reference_id == foreign(StockItem.id),
+        foreign_keys=lambda: [ChildProduct.reference_id],
+        back_populates="child_product",
+        uselist=False,
+    )
+
+    media: Mapped[Optional["Media"]] = relationship(
+        "Media",
+        primaryjoin=lambda: ChildProduct.reference_id == foreign(Media.id),
         foreign_keys=lambda: [ChildProduct.reference_id],
         back_populates="child_product",
         uselist=False,
