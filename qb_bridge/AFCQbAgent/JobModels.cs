@@ -24,6 +24,10 @@ public sealed class JobDto
     // (otherwise QbSdk can use its configured/default behavior)
     public string? CompanyFilePath { get; set; }
 
+    // Optional: pass raw QBXML directly, bypassing the QbxmlBuilder.
+    // When set, Op/Entity/Params are ignored and this QBXML is sent to QuickBooks as-is.
+    public string? RawQbxml { get; set; }
+
     // Optional: allow toggling includeLineItems or similar flags per job
     public Dictionary<string, object>? Options { get; set; }
 }
