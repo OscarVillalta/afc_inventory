@@ -1,15 +1,18 @@
 using AfcQbAgent;
 using Microsoft.AspNetCore.RateLimiting;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Set the URL to listen on
-builder.WebHost.UseUrls("http://127.0.0.1:5055");
+// Support running as a Windows Service (24/7 background service)
+builder.Host.UseWindowsService();
 
-// Configure request size limits
+// Configure Kestrel to listen strictly on localhost:5000 (behind Cloudflare Tunnel)
 builder.WebHost.ConfigureKestrel(options =>
 {
+    options.ListenLocalhost(5000);
     options.Limits.MaxRequestBodySize = 10 * 1024 * 1024; // 10MB max
 });
 
@@ -74,35 +77,39 @@ app.UseCors();
 // Enable rate limiting
 app.UseRateLimiter();
 
-// API Key authentication middleware (if enabled)
-var enableAuth = builder.Configuration.GetValue<bool>("Security:EnableAuthentication");
-var apiKey = builder.Configuration["Security:ApiKey"];
+// API Key authentication middleware (Bearer token required on all non-health endpoints)
+var agentApiKey = builder.Configuration["AgentApiKey"];
 
-if (enableAuth && !string.IsNullOrWhiteSpace(apiKey))
+app.Use(async (context, next) =>
 {
-    app.Use(async (context, next) =>
+    // Skip auth for health endpoint (monitoring/uptime probes)
+    if (context.Request.Path.StartsWithSegments("/health"))
     {
-        // Skip auth for health endpoint
-        if (context.Request.Path.StartsWithSegments("/health"))
-        {
-            await next();
-            return;
-        }
-
-        var providedKey = context.Request.Headers["X-API-Key"].FirstOrDefault();
-        if (string.IsNullOrWhiteSpace(providedKey) || providedKey != apiKey)
-        {
-            context.Response.StatusCode = 401;
-            await context.Response.WriteAsJsonAsync(new
-            {
-                error = "Unauthorized. Valid X-API-Key header required."
-            });
-            return;
-        }
-
         await next();
-    });
-}
+        return;
+    }
+
+    // Require "Authorization: Bearer <token>" header
+    var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
+    var token = authHeader?.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase) == true
+        ? authHeader["Bearer ".Length..].Trim()
+        : null;
+
+    if (string.IsNullOrWhiteSpace(token) || string.IsNullOrWhiteSpace(agentApiKey) ||
+        !CryptographicOperations.FixedTimeEquals(
+            Encoding.UTF8.GetBytes(token),
+            Encoding.UTF8.GetBytes(agentApiKey)))
+    {
+        context.Response.StatusCode = 401;
+        await context.Response.WriteAsJsonAsync(new
+        {
+            error = "Unauthorized. Valid 'Authorization: Bearer <token>' header required."
+        });
+        return;
+    }
+
+    await next();
+});
 
 // ---------- Health (no QB call) ----------
 app.MapGet("/health", () => Results.Ok(new
@@ -149,6 +156,23 @@ app.MapPost("/jobs", async (JobDto job, JobRouter router, CancellationToken ct) 
 
     // Always 200 with structured payload (Flask can decide what to do)
     // If you prefer HTTP error codes, we can change this later.
+    return Results.Ok(result);
+});
+
+// ---------- Execute endpoint (Cloudflare Tunnel / Python backend) ----------
+app.MapPost("/api/qb/execute", async (JobDto job, JobRouter router, CancellationToken ct) =>
+{
+    // Guarantee JobId exists for correlation
+    if (string.IsNullOrWhiteSpace(job.JobId))
+        job.JobId = Guid.NewGuid().ToString("N");
+
+    var result = await router.ExecuteJobAsync(job, ct);
+
+    if (!result.Success)
+    {
+        return Results.Json(result, statusCode: result.ErrorCode?.StartsWith("QBSDK_COM") == true ? 500 : 400);
+    }
+
     return Results.Ok(result);
 });
 

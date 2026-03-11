@@ -41,9 +41,20 @@ public sealed class JobRouter
 
         try
         {
-            // 1) Build QBXML request
-            _logger?.LogDebug("Building QBXML request for job {JobId}", job.JobId);
-            var requestXml = _qbxmlBuilder.Build(job);
+            string requestXml;
+
+            if (!string.IsNullOrWhiteSpace(job.RawQbxml))
+            {
+                // Caller provided raw QBXML — send it directly to QuickBooks
+                _logger?.LogDebug("Using raw QBXML for job {JobId}", job.JobId);
+                requestXml = job.RawQbxml;
+            }
+            else
+            {
+                // 1) Build QBXML request from Op/Entity/Params
+                _logger?.LogDebug("Building QBXML request for job {JobId}", job.JobId);
+                requestXml = _qbxmlBuilder.Build(job);
+            }
 
             // 2) Execute against QuickBooks (raw QBXML in / raw QBXML out)
             _logger?.LogDebug("Executing QBXML request for job {JobId}", job.JobId);
