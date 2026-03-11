@@ -14,6 +14,9 @@ class Config:
     QB_AGENT_URL = os.getenv("QB_AGENT_URL", "http://127.0.0.1:5055")
     QB_API_KEY = os.getenv("QB_API_KEY", "")
     QB_REQUEST_TIMEOUT = int(os.getenv("QB_REQUEST_TIMEOUT", "30"))
+    # Shared secret used to authenticate the polling agent on all /api/qb/ routes.
+    # Set to a strong random value in production; leave empty to disable auth.
+    QB_AGENT_API_KEY = os.getenv("QB_AGENT_API_KEY", "")
     
     # QuickBooks Supplier
     # Auto-created supplier for products imported from QuickBooks
