@@ -1,5 +1,6 @@
 using AfcQbAgent;
 using Microsoft.AspNetCore.RateLimiting;
+using System.Net.Http.Headers;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,10 +14,38 @@ builder.WebHost.ConfigureKestrel(options =>
     options.Limits.MaxRequestBodySize = 10 * 1024 * 1024; // 10MB max
 });
 
-// DI
+// ---- Agent configuration (polling / outbound) --------------------------------
+var agentConfig = builder.Configuration.GetSection("Agent").Get<AgentConfig>() ?? new AgentConfig();
+
+// Enforce HTTPS for the backend URL
+if (!string.IsNullOrWhiteSpace(agentConfig.BackendBaseUrl) &&
+    !agentConfig.BackendBaseUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+{
+    throw new InvalidOperationException(
+        $"Agent:BackendBaseUrl must use HTTPS. Got: {agentConfig.BackendBaseUrl}");
+}
+
+builder.Services.AddSingleton(agentConfig);
+
+// ---- Named HttpClient for outbound calls to the Python backend ---------------
+builder.Services.AddHttpClient("Backend", client =>
+{
+    if (!string.IsNullOrWhiteSpace(agentConfig.BackendBaseUrl))
+        client.BaseAddress = new Uri(agentConfig.BackendBaseUrl);
+
+    if (!string.IsNullOrWhiteSpace(agentConfig.AgentApiKey))
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", agentConfig.AgentApiKey);
+});
+
+// ---- DI ----------------------------------------------------------------------
 builder.Services.AddSingleton<QbSdk>();
 builder.Services.AddSingleton<QbxmlBuilder>();
 builder.Services.AddSingleton<JobRouter>();
+builder.Services.AddSingleton<PollingPolicy>();
+
+// Register the polling background service
+builder.Services.AddHostedService<PollingWorker>();
 
 // CORS configuration
 var allowedOrigins = builder.Configuration.GetSection("Security:AllowedOrigins").Get<string[]>() 
