@@ -1,8 +1,8 @@
 import { useEffect, useState, useMemo, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
 import MDTable from "../table/MDtable";
-import { fetchAirFilters, deleteAirFilter, patchAirFilter } from "../../api/airfilters";
-import type { AirFilterResponse, AirFilterPayload, AirFilterCategory } from "../../api/airfilters";
+import { fetchMedia, deleteMedia, patchMedia } from "../../api/media";
+import type { MediaResponse, MediaPayload, MediaCategory } from "../../api/media";
 import { autocommitTxn } from "../../api/transactions";
 import type { createTxnRequest } from "../../api/transactions";
 import type { Supplier } from "../../api/suppliers";
@@ -16,24 +16,23 @@ interface EditFormState {
   part_number: string;
   product_id: number;
   supplier_name: string;
-  filter_category: string;
-  height: number;
+  media_category: string;
+  length: number;
   width: number;
-  depth: number;
-  merv_rating: number;
+  unit_of_measure: string;
   on_hand: number;
   ordered: number;
   reserved: number;
 }
 
 interface GroupedProduct {
-  parent: AirFilterPayload;
-  children: AirFilterPayload[];
+  parent: MediaPayload;
+  children: MediaPayload[];
 }
 
 interface InlineEdit {
   rowId: number;
-  field: "merv_rating" | "supplier" | "category";
+  field: "supplier" | "category";
 }
 
 interface Props {
@@ -41,21 +40,20 @@ interface Props {
   globalSearch?: string;
   filterSupplier?: string;
   filterCategory?: string;
-  filterMerv?: number;
   filterDescription?: string;
   quickView?: "all" | "low_stock" | "backordered" | "has_orders" | "recently_updated";
   compact?: boolean;
   suppliers?: Supplier[];
-  airFilterCategories?: AirFilterCategory[];
+  mediaCategories?: MediaCategory[];
 }
 
 /* ============================================================
    HELPER: group products by parent-child
 ============================================================ */
 
-function groupProducts(products: AirFilterPayload[]): GroupedProduct[] {
+function groupProducts(products: MediaPayload[]): GroupedProduct[] {
   const parentMap = new Map<number, GroupedProduct>();
-  const childProducts: AirFilterPayload[] = [];
+  const childProducts: MediaPayload[] = [];
 
   products.forEach((product) => {
     if (product.parent_product_id) {
@@ -130,23 +128,22 @@ function AvailableBar({ available, onHand }: { available: number; onHand: number
    COMPONENT
 ============================================================ */
 
-export default function AirFiltersTable({
+export default function MediaTable({
   refreshToken,
   globalSearch = "",
   filterSupplier = "",
   filterCategory = "",
-  filterMerv,
   filterDescription = "",
   quickView = "all",
   compact = false,
   suppliers = [],
-  airFilterCategories = [],
+  mediaCategories = [],
 }: Props) {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
 
-  const [data, setData] = useState<AirFilterResponse>();
+  const [data, setData] = useState<MediaResponse>();
   const [loading, setLoading] = useState(false);
 
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
@@ -160,7 +157,7 @@ export default function AirFiltersTable({
   const [saving, setSaving] = useState(false);
 
   /* ===================== DELETE CONFIRM ===================== */
-  const [deleteTarget, setDeleteTarget] = useState<AirFilterPayload | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<MediaPayload | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   /* ===================== INLINE EDIT ===================== */
@@ -174,12 +171,11 @@ export default function AirFiltersTable({
 
   const loadData = () => {
     setLoading(true);
-    fetchAirFilters(page, pageSize, {
+    fetchMedia(page, pageSize, {
       part_number: globalSearch || undefined,
       description: filterDescription || undefined,
       supplier: filterSupplier || undefined,
       category: filterCategory || undefined,
-      merv: filterMerv || undefined,
     })
       .then((res) => {
         setData(res);
@@ -198,14 +194,14 @@ export default function AirFiltersTable({
 
   useEffect(() => {
     setPage(1);
-  }, [globalSearch, filterDescription, filterSupplier, filterCategory, filterMerv, quickView, pageSize]);
+  }, [globalSearch, filterDescription, filterSupplier, filterCategory, quickView, pageSize]);
 
   useEffect(() => {
     loadData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, pageSize, globalSearch, filterDescription, filterSupplier, filterCategory, filterMerv, refreshToken]);
+  }, [page, pageSize, globalSearch, filterDescription, filterSupplier, filterCategory, refreshToken]);
 
-  const rows: AirFilterPayload[] = data?.results ?? [];
+  const rows: MediaPayload[] = data?.results ?? [];
 
   /* ── client-side quick-view filter ── */
   const filteredRows = useMemo(() => {
@@ -235,17 +231,16 @@ export default function AirFiltersTable({
 
   /* ===================== EDIT HANDLERS ===================== */
 
-  const handleEdit = (row: AirFilterPayload) => {
+  const handleEdit = (row: MediaPayload) => {
     setEditRow({
       id: row.id,
       product_id: row.product_id,
       part_number: row.part_number,
       supplier_name: row.supplier_name ?? "—",
-      filter_category: row.filter_category,
-      height: row.height,
+      media_category: row.media_category,
+      length: row.length,
       width: row.width,
-      depth: row.depth,
-      merv_rating: row.merv_rating,
+      unit_of_measure: row.unit_of_measure,
       on_hand: row.on_hand,
       ordered: row.ordered,
       reserved: row.reserved,
@@ -284,35 +279,26 @@ export default function AirFiltersTable({
   /* ===================== INLINE EDIT HANDLERS ===================== */
 
   const handleInlineSave = async (
-    row: AirFilterPayload,
+    row: MediaPayload,
     field: InlineEdit["field"],
     value: string
   ) => {
     setInlineEdit(null);
     if (!value) return;
     try {
-      if (field === "merv_rating") {
-        await patchAirFilter(row.id, { merv_rating: Number(value) });
-      } else if (field === "supplier") {
+      if (field === "supplier") {
         const sup = suppliers.find((s) => s.name === value);
         if (!sup) return;
-        await patchAirFilter(row.id, { supplier_id: sup.id });
+        await patchMedia(row.id, { supplier_id: sup.id });
       } else if (field === "category") {
-        const cat = airFilterCategories.find((c) => c.name === value);
+        const cat = mediaCategories.find((c) => c.name === value);
         if (!cat) return;
-        await patchAirFilter(row.id, { category_id: cat.id });
+        await patchMedia(row.id, { category_id: cat.id });
       }
       loadData();
     } catch {
       alert("Failed to update field.");
     }
-  };
-
-  /* MERV label helper */
-  const mervLabel = (rating: number) => {
-    if (rating === 17) return "99.99%";
-    if (rating === 18) return "99.999%";
-    return `MERV ${rating}`;
   };
 
   /* ===================== DELETE HANDLERS ===================== */
@@ -321,7 +307,7 @@ export default function AirFiltersTable({
     if (!deleteTarget) return;
     try {
       setDeleting(true);
-      await deleteAirFilter(deleteTarget.id);
+      await deleteMedia(deleteTarget.id);
       setDeleteTarget(null);
       loadData();
     } catch {
@@ -333,11 +319,11 @@ export default function AirFiltersTable({
 
   /* ===================== TABLE COLUMNS ===================== */
 
-  const columns = ["Part Number", "Description", "Supplier", "Category", "Dimensions", "MERV", "", "On Hand", "Ordered", "Reserved", "Available", "Backord.", "Actions"];
+  const columns = ["Part Number", "Description", "Supplier", "Category", "Dimensions", "UOM", "", "On Hand", "Ordered", "Reserved", "Available", "Backord.", "Actions"];
 
   /* ===================== ROW RENDER HELPER ===================== */
 
-  const renderStockCells = (row: AirFilterPayload, isChild = false) => (
+  const renderStockCells = (row: MediaPayload, isChild = false) => (
     <>
       <td className={`${rowPadding} text-center text-sm ${isChild ? "text-gray-400" : ""}`}>{isChild ? "—" : row.on_hand}</td>
       <td className={`${rowPadding} text-center text-sm ${isChild ? "text-gray-400" : ""}`}>{isChild ? "—" : row.ordered}</td>
@@ -366,7 +352,7 @@ export default function AirFiltersTable({
   return (
     <div>
       <MDTable
-        title="Air Filters"
+        title="Media Rolls"
         columns={columns}
         page={page}
         pageSize={pageSize}
@@ -443,19 +429,19 @@ export default function AirFiltersTable({
                     <select
                       autoFocus
                       className="border border-blue-400 rounded px-1 py-0.5 text-xs text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400"
-                      defaultValue={group.parent.filter_category ?? ""}
+                      defaultValue={group.parent.media_category ?? ""}
                       onBlur={(e) => handleInlineSave(group.parent, "category", e.target.value)}
                       onChange={(e) => handleInlineSave(group.parent, "category", e.target.value)}
                       onClick={(e) => e.stopPropagation()}
                     >
                       <option value="">— Select —</option>
-                      {airFilterCategories.map((c) => (
+                      {mediaCategories.map((c) => (
                         <option key={c.id} value={c.name}>{c.name}</option>
                       ))}
                     </select>
                   ) : (
                     <span className="cursor-pointer hover:text-blue-600 hover:underline" title="Click to edit">
-                      {group.parent.filter_category}
+                      {group.parent.media_category}
                     </span>
                   )}
                 </td>
@@ -464,36 +450,16 @@ export default function AirFiltersTable({
                   className={`${rowPadding} text-sm text-gray-700 whitespace-nowrap`}
                   onClick={() => navigate(`/products/${group.parent.product_id}`)}
                 >
-                  {group.parent.height} × {group.parent.width} × {group.parent.depth}
+                  {group.parent.length} × {group.parent.width}
                 </td>
-                {/* MERV */}
+                {/* UOM */}
                 <td
                   className={`${rowPadding} text-sm text-center`}
-                  onClick={(e) => { e.stopPropagation(); setInlineEdit({ rowId: group.parent.id, field: "merv_rating" }); }}
+                  onClick={() => navigate(`/products/${group.parent.product_id}`)}
                 >
-                  {inlineEdit?.rowId === group.parent.id && inlineEdit.field === "merv_rating" ? (
-                    <select
-                      autoFocus
-                      className="border border-blue-400 rounded px-1 py-0.5 text-xs text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400"
-                      defaultValue={group.parent.merv_rating}
-                      onBlur={(e) => handleInlineSave(group.parent, "merv_rating", e.target.value)}
-                      onChange={(e) => handleInlineSave(group.parent, "merv_rating", e.target.value)}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {Array.from({ length: 16 }, (_, i) => i + 1).map((m) => (
-                        <option key={m} value={m}>MERV {m}</option>
-                      ))}
-                      <option value={17}>99.99%</option>
-                      <option value={18}>99.999%</option>
-                    </select>
-                  ) : (
-                    <span
-                      className="px-2 py-0.5 text-xs rounded bg-gray-100 text-gray-600 font-medium cursor-pointer hover:bg-blue-100 hover:text-blue-700"
-                      title="Click to edit"
-                    >
-                      {mervLabel(group.parent.merv_rating)}
-                    </span>
-                  )}
+                  <span className="px-2 py-0.5 text-xs rounded bg-gray-100 text-gray-600 font-medium">
+                    {group.parent.unit_of_measure || <span className="text-gray-300">—</span>}
+                  </span>
                 </td>
                 {/* spacer */}
                 <td className="w-4" />
@@ -542,10 +508,10 @@ export default function AirFiltersTable({
                       </span>
                     </td>
                     <td className={`${rowPadding} text-sm text-gray-500`} onClick={() => navigate(`/products/${child.product_id}`)}>{child.supplier_name ?? "—"}</td>
-                    <td className={`${rowPadding} text-sm text-gray-500`} onClick={() => navigate(`/products/${child.product_id}`)}>{child.filter_category}</td>
-                    <td className={`${rowPadding} text-sm text-gray-500 whitespace-nowrap`} onClick={() => navigate(`/products/${child.product_id}`)}>{child.height} × {child.width} × {child.depth}</td>
+                    <td className={`${rowPadding} text-sm text-gray-500`} onClick={() => navigate(`/products/${child.product_id}`)}>{child.media_category}</td>
+                    <td className={`${rowPadding} text-sm text-gray-500 whitespace-nowrap`} onClick={() => navigate(`/products/${child.product_id}`)}>{child.length} × {child.width}</td>
                     <td className={`${rowPadding} text-center`} onClick={() => navigate(`/products/${child.product_id}`)}>
-                      <span className="px-2 py-0.5 text-xs rounded bg-gray-100 text-gray-500">{child.merv_rating}</span>
+                      <span className="px-2 py-0.5 text-xs rounded bg-gray-100 text-gray-500">{child.unit_of_measure}</span>
                     </td>
                     <td className="w-4" />
                     {renderStockCells(child, true)}
@@ -581,15 +547,15 @@ export default function AirFiltersTable({
               </div>
               <div>
                 <label className="font-medium">Category</label>
-                <div className="p-2 bg-gray-100 rounded">{editRow.filter_category}</div>
+                <div className="p-2 bg-gray-100 rounded">{editRow.media_category}</div>
               </div>
               <div>
                 <label className="font-medium">Dimensions</label>
-                <div className="p-2 bg-gray-100 rounded">{editRow.height} × {editRow.width} × {editRow.depth}</div>
+                <div className="p-2 bg-gray-100 rounded">{editRow.length} × {editRow.width}</div>
               </div>
               <div>
-                <label className="font-medium">MERV</label>
-                <div className="p-2 bg-gray-100 rounded">{editRow.merv_rating}</div>
+                <label className="font-medium">Unit of Measure</label>
+                <div className="p-2 bg-gray-100 rounded">{editRow.unit_of_measure || "—"}</div>
               </div>
             </div>
 
@@ -639,7 +605,7 @@ export default function AirFiltersTable({
       {deleteTarget && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-40">
           <div className="bg-white w-[420px] rounded-xl shadow-xl p-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-2">Delete Air Filter</h2>
+            <h2 className="text-lg font-semibold text-gray-800 mb-2">Delete Media Roll</h2>
             <p className="text-sm text-gray-600 mb-6">
               Are you sure you want to delete{" "}
               <strong>{deleteTarget.part_number}</strong>? This action cannot be undone.

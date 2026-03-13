@@ -82,131 +82,163 @@ export default function OrderItemsTable({
 
   // Filter and paginate items (memoized for performance)
   const { filteredItems, items: displayedItems, totalItems, totalPages } = useMemo(() => {
-    let filtered = [...localItems];
+    const hasItemFilters = !!(partNumberFilter || descriptionFilter || statusFilter);
+    const hasSectionFilter = !!sectionFilter;
+    const hasSectionSeparatorFilter = !!sectionSeparatorFilter;
 
-    // Apply Section_Separator filter first (shows all items between matching Section_Separator and next one)
-    if (sectionSeparatorFilter) {
-      const matchingSections: OrderItemPayload[] = [];
-      let i = 0;
-      
-      while (i < filtered.length) {
-        const item = filtered[i];
-        
-        if (item.type === "Section_Separator") {
-          const sectionName = item.note || "";
-          if (sectionName.toLowerCase().includes(sectionSeparatorFilter.toLowerCase())) {
-            // Add the matching Section_Separator
-            matchingSections.push(item);
-            i++;
-            
-            // Add all items until next Section_Separator (including Unit_Separators)
-            while (i < filtered.length && filtered[i].type !== "Section_Separator") {
-              matchingSections.push(filtered[i]);
-              i++;
-            }
-            continue;
-          }
-        }
-        i++;
-      }
-      
-      filtered = matchingSections;
+    // No filters: return everything
+    if (!hasItemFilters && !hasSectionFilter && !hasSectionSeparatorFilter) {
+      const totalItems = localItems.length;
+      const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const paginatedItems = localItems.slice(startIndex, startIndex + itemsPerPage);
+      return { filteredItems: localItems, items: paginatedItems, totalItems, totalPages };
     }
 
-    // Apply filters
-    if (partNumberFilter || descriptionFilter || statusFilter || sectionFilter) {
-      if (sectionFilter) {
-        // Special logic for section search
-        // Find matching Unit_Separator sections and include them plus their items
-        // Always include Section_Separators for structural context
-        const matchingSections: OrderItemPayload[] = [];
-        const addedIds = new Set<number>();
-        let i = 0;
-        
-        while (i < filtered.length) {
-          const item = filtered[i];
-          
-          // Always include Section_Separators for structural context
-          if (item.type === "Section_Separator" && !addedIds.has(item.id)) {
-            matchingSections.push(item);
-            addedIds.add(item.id);
-            i++;
-            continue;
-          }
+    // Build hierarchy maps: item id → parent separator ids
+    const unitToSection = new Map<number, number>();
+    const itemToUnit = new Map<number, number>();
+    const itemToSection = new Map<number, number>();
+    let currentSectionId: number | null = null;
+    let currentUnitId: number | null = null;
 
-          if (item.type === "Unit_Separator") {
-            // Check if section matches
-            const sectionName = item.note || "";
-            if (sectionName.toLowerCase().includes(sectionFilter.toLowerCase())) {
-              // Add the matching section
-              if (!addedIds.has(item.id)) {
-                matchingSections.push(item);
-                addedIds.add(item.id);
-              }
-              i++;
-              
-              // Add all items under this section (until next separator)
-              while (i < filtered.length && filtered[i].type !== "Unit_Separator" && filtered[i].type !== "Section_Separator") {
-                if (!addedIds.has(filtered[i].id)) {
-                  matchingSections.push(filtered[i]);
-                  addedIds.add(filtered[i].id);
-                }
-                i++;
-              }
-              
-              // Don't increment i here - let the loop check the next separator
-              continue;
-            }
-          }
-          i++;
-        }
-
-        filtered = matchingSections.filter((item) => {
-          // Separators are included if they pass the filters or if any filter is active
-          if (item.type === "Unit_Separator" || item.type === "Section_Separator") {
-            return true; // Keep separators to maintain structure
-          }
-
-          const matchesPartNumber = !partNumberFilter || 
-            item.part_number.toLowerCase().includes(partNumberFilter.toLowerCase());
-          
-          const matchesDescription = !descriptionFilter || 
-            (item.note && item.note.toLowerCase().includes(descriptionFilter.toLowerCase()));
-          
-          const matchesStatus = !statusFilter || 
-            item.status === statusFilter;
-
-          return matchesPartNumber && matchesDescription && matchesStatus;
-        });
-
+    for (const item of localItems) {
+      if (item.type === "Section_Separator") {
+        currentSectionId = item.id;
+        currentUnitId = null;
+      } else if (item.type === "Unit_Separator") {
+        currentUnitId = item.id;
+        if (currentSectionId !== null) unitToSection.set(item.id, currentSectionId);
       } else {
-        // Regular filtering for non-section searches
-        filtered = filtered.filter((item) => {
-          // Separators are included if they pass the filters or if any filter is active
-          if (item.type === "Unit_Separator" || item.type === "Section_Separator") {
-            return true; // Keep separators to maintain structure
-          }
-
-          const matchesPartNumber = !partNumberFilter || 
-            item.part_number.toLowerCase().includes(partNumberFilter.toLowerCase());
-          
-          const matchesDescription = !descriptionFilter || 
-            (item.note && item.note.toLowerCase().includes(descriptionFilter.toLowerCase()));
-          
-          const matchesStatus = !statusFilter || 
-            item.status === statusFilter;
-
-          return matchesPartNumber && matchesDescription && matchesStatus;
-        });
+        if (currentUnitId !== null) itemToUnit.set(item.id, currentUnitId);
+        if (currentSectionId !== null) itemToSection.set(item.id, currentSectionId);
       }
     }
+
+    // Determine matching Section_Separators (null = no filter = all allowed)
+    const matchingSectionSepIds: Set<number> | null = hasSectionSeparatorFilter
+      ? new Set(
+          localItems
+            .filter(
+              (i) =>
+                i.type === "Section_Separator" &&
+                (i.note || "").toLowerCase().includes(sectionSeparatorFilter.toLowerCase())
+            )
+            .map((i) => i.id)
+        )
+      : null;
+
+    // Determine matching Unit_Separators (null = no filter = all allowed)
+    // When sectionSeparatorFilter is also active, restrict units to those inside matching sections
+    const matchingUnitSepIds: Set<number> | null = hasSectionFilter
+      ? new Set(
+          localItems
+            .filter((i) => {
+              if (i.type !== "Unit_Separator") return false;
+              if (!(i.note || "").toLowerCase().includes(sectionFilter.toLowerCase())) return false;
+              if (matchingSectionSepIds !== null) {
+                const parentSec = unitToSection.get(i.id);
+                return parentSec !== undefined && matchingSectionSepIds.has(parentSec);
+              }
+              return true;
+            })
+            .map((i) => i.id)
+        )
+      : null;
+
+    // Determine matching leaf items
+    // When hierarchy filters are active, restrict to items inside the matching hierarchy
+    const matchingLeafIds: Set<number> | null = hasItemFilters
+      ? new Set(
+          localItems
+            .filter((i) => {
+              if (i.type === "Unit_Separator" || i.type === "Section_Separator") return false;
+              const matchesPartNumber =
+                !partNumberFilter ||
+                i.part_number.toLowerCase().includes(partNumberFilter.toLowerCase());
+              const matchesDescription =
+                !descriptionFilter ||
+                (i.note || "").toLowerCase().includes(descriptionFilter.toLowerCase());
+              const matchesStatus = !statusFilter || i.status === statusFilter;
+              if (!matchesPartNumber || !matchesDescription || !matchesStatus) return false;
+              // Hierarchy constraints
+              if (matchingUnitSepIds !== null) {
+                const unitId = itemToUnit.get(i.id);
+                return unitId !== undefined && matchingUnitSepIds.has(unitId);
+              }
+              if (matchingSectionSepIds !== null) {
+                const sectionId = itemToSection.get(i.id);
+                return sectionId !== undefined && matchingSectionSepIds.has(sectionId);
+              }
+              return true;
+            })
+            .map((i) => i.id)
+        )
+      : null;
+
+    // Build the sets of separator ids to include
+    const includedUnitIds = new Set<number>();
+    const includedSectionIds = new Set<number>();
+    const includedLeafIds = new Set<number>();
+
+    if (matchingLeafIds !== null) {
+      // Item-level filters active: include matching leaves + their parent separators
+      for (const id of matchingLeafIds) {
+        includedLeafIds.add(id);
+        const unitId = itemToUnit.get(id);
+        if (unitId !== undefined) {
+          includedUnitIds.add(unitId);
+          const secId = unitToSection.get(unitId);
+          if (secId !== undefined) includedSectionIds.add(secId);
+        }
+        const secId = itemToSection.get(id);
+        if (secId !== undefined) includedSectionIds.add(secId);
+      }
+    } else if (matchingUnitSepIds !== null) {
+      // Only section (Unit_Separator) filter active: include matching units, their parent sections, and all items within
+      for (const unitId of matchingUnitSepIds) {
+        includedUnitIds.add(unitId);
+        const secId = unitToSection.get(unitId);
+        if (secId !== undefined) includedSectionIds.add(secId);
+      }
+      for (const item of localItems) {
+        if (item.type === "Unit_Separator" || item.type === "Section_Separator") continue;
+        const unitId = itemToUnit.get(item.id);
+        if (unitId !== undefined && includedUnitIds.has(unitId)) {
+          includedLeafIds.add(item.id);
+        }
+      }
+    } else if (matchingSectionSepIds !== null) {
+      // Only section separator filter active: include matching sections and all their content
+      for (const secId of matchingSectionSepIds) {
+        includedSectionIds.add(secId);
+      }
+      for (const item of localItems) {
+        if (item.type === "Unit_Separator") {
+          const secId = unitToSection.get(item.id);
+          if (secId !== undefined && includedSectionIds.has(secId)) {
+            includedUnitIds.add(item.id);
+          }
+        } else if (item.type !== "Section_Separator") {
+          const secId = itemToSection.get(item.id);
+          if (secId !== undefined && includedSectionIds.has(secId)) {
+            includedLeafIds.add(item.id);
+          }
+        }
+      }
+    }
+
+    const filtered = localItems.filter((item) => {
+      if (item.type === "Section_Separator") return includedSectionIds.has(item.id);
+      if (item.type === "Unit_Separator") return includedUnitIds.has(item.id);
+      return includedLeafIds.has(item.id);
+    });
 
     // Calculate pagination
     const totalItems = filtered.length;
     const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
     const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const paginatedItems = filtered.slice(startIndex, endIndex);
+    const paginatedItems = filtered.slice(startIndex, startIndex + itemsPerPage);
 
     return {
       filteredItems: filtered,
@@ -486,14 +518,68 @@ export default function OrderItemsTable({
         )}
       </div>
 
+      {activeTab === "lineItems" && totalPages > 1 && (
+        <div className="flex justify-center items-center gap-2 flex-wrap py-2 px-4 border-t bg-gray-50">
+          <button
+            className="btn btn-sm btn-outline"
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(currentPage - 1)}
+            aria-label="Go to previous page"
+          >
+            Previous
+          </button>
+          <div className="flex gap-1">
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter((page) => {
+                if (page === 1 || page === totalPages) return true;
+                if (Math.abs(page - currentPage) <= 1) return true;
+                return false;
+              })
+              .map((page, idx, arr) => {
+                const prevPage = arr[idx - 1];
+                const showEllipsis = prevPage && page - prevPage > 1;
+                return (
+                  <div key={page} className="flex items-center gap-1">
+                    {showEllipsis && (
+                      <span className="px-2 text-gray-400" aria-hidden="true">...</span>
+                    )}
+                    <button
+                      className={`btn btn-sm ${currentPage === page ? "btn-primary" : "btn-outline"}`}
+                      onClick={() => setCurrentPage(page)}
+                      aria-label={`Go to page ${page}`}
+                      aria-current={currentPage === page ? "page" : undefined}
+                    >
+                      {page}
+                    </button>
+                  </div>
+                );
+              })}
+          </div>
+          <button
+            className="btn btn-sm btn-outline"
+            disabled={currentPage === totalPages || totalPages === 0}
+            onClick={() => setCurrentPage(currentPage + 1)}
+            aria-label="Go to next page"
+          >
+            Next
+          </button>
+          <span className="text-xs text-gray-500">
+            {totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems}
+          </span>
+        </div>
+      )}
+
       {!isCompleted && showAddForm && (
         <dialog className="modal modal-open">
           <div className="modal-box w-11/12 max-w-2xl">
             <button
               className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
               onClick={() => setShowAddForm(false)}
+              aria-label="Close"
             >
-              ✕
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
             <AddOrderItemForm
               orderId={orderId}

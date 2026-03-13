@@ -13,7 +13,7 @@ interface KpiCardProps {
 function KpiCard({ label, value, borderColor, valueColor, trend }: KpiCardProps) {
   return (
     <div
-      className={`flex-1 bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden min-w-[150px] border-t-4 ${borderColor}`}
+      className={`flex-1 bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden min-w-[150px] border-t-4 ${borderColor} mt-5`}
     >
       <div className="px-5 py-4">
         <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-1">

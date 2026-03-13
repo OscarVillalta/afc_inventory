@@ -8,6 +8,7 @@ from database.models import Order, OrderItem, Product, AirFilter, StockItem, Sto
 from marshmallow import ValidationError
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any, List, Tuple
+import re
 import requests
 
 from app.config import Config
@@ -153,6 +154,8 @@ def get_order(order_id: int) -> Tuple[Any, int]:
                 order.eta.strftime(Config.DATE_FORMAT)
                 if order.eta else None
             ),
+            "is_paid": order.is_paid,
+            "is_invoiced": order.is_invoiced,
         }), 200
         
     except ResourceNotFoundError as e:
@@ -199,11 +202,14 @@ def get_order_items(order_id):
             reserved = None
             available = None
             quantity_pending = 0
+            is_media = False
         else:
             product = item.product
 
             if product and product.category.name == "Air Filters":
                 part_number = product.air_filter.part_number
+            elif product and product.media is not None:
+                part_number = product.media.part_number
             elif product:
                 part_number = f"Product #{product.id}"
             else:
@@ -214,6 +220,7 @@ def get_order_items(order_id):
             reserved = qty_record.reserved if qty_record else None
             available = qty_record.available if qty_record else None
             quantity_pending = pending_by_item.get(item.id, 0)
+            is_media = product is not None and product.media is not None
 
         items.append({
             "id": item.id,
@@ -230,6 +237,7 @@ def get_order_items(order_id):
             "on_hand": on_hand,
             "reserved": reserved,
             "available": available,
+            "is_media": is_media,
         })
 
     return jsonify(items), 200
@@ -1040,7 +1048,11 @@ def create_order_from_qb():
                 separator_type = OrderItemType.UNIT_SEPARATOR.value
                 if description:
                     desc_lower = description.lower()
-                    if "building" in desc_lower or "bldg" in desc_lower or "•" in description:
+                    replaced, count = re.subn(r'(?:&#149;?|\x95)', '•', description)
+                    if count:
+                        separator_type = OrderItemType.SECTION_SEPARATOR.value
+                        description = replaced
+                    elif "building" in desc_lower or "bldg" in desc_lower or "•" in description:
                         separator_type = OrderItemType.SECTION_SEPARATOR.value
 
                 # Create separator item
@@ -1138,11 +1150,19 @@ def create_order_from_qb():
                 if quantity < 0:
                     quantity = 0
                 
+                # Determine order item type: detect media cut by comparing descriptions
+                item_type = OrderItemType.PRODUCT_ITEM.value
+                if product.media is not None:
+                    media_default_desc = (product.media.description or "").strip()
+                    qb_desc = (qb_line.get("description") or "").strip()
+                    if qb_desc.lower() != media_default_desc.lower():
+                        item_type = OrderItemType.MEDIA_CUT.value
+
                 # Create order item
                 order_item = OrderItem(
                     order_id=order.id,
                     product_id=product.id,
-                    type=OrderItemType.PRODUCT_ITEM.value,
+                    type=item_type,
                     quantity_ordered=int(quantity),
                     quantity_fulfilled=0,
                     note=qb_line.get("description"),

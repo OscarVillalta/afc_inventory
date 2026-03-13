@@ -3,10 +3,11 @@ import type { OrderWithTracking, Department, OrderTrackerStagePayload } from "..
 import { toggleTrackerStage, initOrderTracker } from "../../api/tracker";
 
 // ─────────────────────────────────────────────
-// 6-step Installation lifecycle path
+// Tracker step-path definitions (per order type)
 // ─────────────────────────────────────────────
 
-const TRACKER_STEPS: { dept: Department; label: string }[] = [
+/** 6-step path for Installation orders. */
+const INSTALLATION_STEPS: { dept: Department; label: string }[] = [
   { dept: "SALES",         label: "Sales" },
   { dept: "LOGISTICS",     label: "Logistics" },
   { dept: "DELIVERY_DEPT", label: "Delivery" },
@@ -14,6 +15,28 @@ const TRACKER_STEPS: { dept: Department; label: string }[] = [
   { dept: "SALES",         label: "Sales II" },
   { dept: "LOGISTICS",     label: "Logistics II" },
 ];
+
+/** 4-step path for Will Call, Delivery, and Shipment orders. */
+const WILL_CALL_STEPS: { dept: Department; label: string }[] = [
+  { dept: "SALES",         label: "Sales" },
+  { dept: "LOGISTICS",     label: "Logistics" },
+  { dept: "DELIVERY_DEPT", label: "Delivery" },
+  { dept: "LOGISTICS",     label: "Logistics II" },
+];
+
+/** 3-step path for Purchase Order (incoming) orders. */
+const PURCHASE_ORDER_STEPS: { dept: Department; label: string }[] = [
+  { dept: "LOGISTICS",     label: "Logistics" },
+  { dept: "DELIVERY_DEPT", label: "Delivery" },
+  { dept: "LOGISTICS",     label: "Logistics II" },
+];
+
+function getTrackerSteps(orderType: string): { dept: Department; label: string }[] {
+  const t = orderType?.toLowerCase();
+  if (t === "installation") return INSTALLATION_STEPS;
+  if (t === "incoming") return PURCHASE_ORDER_STEPS;
+  return WILL_CALL_STEPS;
+}
 
 // ─────────────────────────────────────────────
 // Types
@@ -83,6 +106,7 @@ export default function OrderTrackerControl({ trackingData, onRefresh }: Props) 
 
   const orderId = trackingData.order.id;
   const stages = trackingData.stages ?? [];
+  const TRACKER_STEPS = getTrackerSteps(trackingData.order.type ?? "");
 
   // Build a lookup map: stage_index → stage record
   const stageMap = new Map<number, OrderTrackerStagePayload>(

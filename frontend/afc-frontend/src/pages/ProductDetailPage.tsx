@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   XAxis,
@@ -28,6 +28,9 @@ import {
 } from "../api/productDetail";
 import { autocommitTxn } from "../api/transactions";
 import AddChildProductModal from "../components/inventory/AddChildProductModal";
+import { fetchSuppliers, type Supplier } from "../api/suppliers";
+import { patchAirFilter } from "../api/airfilters";
+import { patchStockItem } from "../api/stockItems";
 
 /* ============================================================
    TYPES
@@ -86,6 +89,18 @@ export default function ProductDetailPage() {
   // Add Child Product modal state
   const [addChildProductOpen, setAddChildProductOpen] = useState(false);
 
+  // Edit Details state
+  const [editingDetails, setEditingDetails] = useState(false);
+  const [editMerv, setEditMerv] = useState<number>(0);
+  const [editHeight, setEditHeight] = useState<number>(0);
+  const [editWidth, setEditWidth] = useState<number>(0);
+  const [editDepth, setEditDepth] = useState<number>(0);
+  const [editSupplierId, setEditSupplierId] = useState<number | null>(null);
+  const [editDescription, setEditDescription] = useState<string>("");
+  const [editPartNumber, setEditPartNumber] = useState<string>("");
+  const [editSaving, setEditSaving] = useState(false);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+
   // Transaction filter state
   const [txnTypeFilter, setTxnTypeFilter] = useState<"all" | "planned" | "executed" | "reversed" | "adjustments">("all");
   const [txnDateRange, setTxnDateRange] = useState<7 | 30 | 90 | null>(null);
@@ -108,6 +123,9 @@ export default function ProductDetailPage() {
     cx: number;
     cy: number;
   } | null>(null);
+
+  const projContainerRef = useRef<HTMLDivElement>(null);
+  const histContainerRef = useRef<HTMLDivElement>(null);
 
   type ClickableDotProps<TPayload> = {
     cx?: number;
@@ -313,6 +331,11 @@ export default function ProductDetailPage() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Load suppliers for edit mode
+  useEffect(() => {
+    fetchSuppliers().then(setSuppliers).catch(() => setSuppliers([]));
+  }, []);
 
   // Load ledger data when switching to historical tab or changing timeframe
   useEffect(() => {
@@ -531,7 +554,7 @@ export default function ProductDetailPage() {
         month: "short",
         day: "numeric",
       });
-      data.push({ date: dateStr, level: Math.max(0, level), annotation, order_id: currentOrderId });
+      data.push({ date: dateStr, level, annotation, order_id: currentOrderId });
     }
 
     return data;
@@ -582,6 +605,60 @@ export default function ProductDetailPage() {
     return "bg-yellow-100 text-yellow-700";
   };
 
+  // MERV rating label helper
+  // Percentages represent minimum particle filtration efficiency (ASHRAE 52.2)
+  const getMervLabel = (merv: number) => {
+    if (merv === 17) return `MERV 17 (99.99%)`;
+    if (merv === 18) return `MERV 18 (99.999%)`;
+    return `MERV ${merv}`;
+  };
+
+  // Open edit mode, pre-populate fields from current product
+  const openEditDetails = () => {
+    setEditMerv(product.details.merv_rating ?? 0);
+    setEditHeight(product.details.height ?? 0);
+    setEditWidth(product.details.width ?? 0);
+    setEditDepth(product.details.depth ?? 0);
+    setEditSupplierId(product.details.supplier_id ?? null);
+    setEditDescription(product.details.description ?? "");
+    setEditPartNumber(product.details.part_number ?? product.details.name ?? "");
+    setEditingDetails(true);
+  };
+
+  const cancelEditDetails = () => {
+    setEditingDetails(false);
+  };
+
+  const saveEditDetails = async () => {
+    setEditSaving(true);
+    try {
+      if (isAirFilter) {
+        await patchAirFilter(product.reference_id, {
+          merv_rating: editMerv,
+          height: editHeight,
+          width: editWidth,
+          depth: editDepth,
+          supplier_id: editSupplierId ?? undefined,
+          description: editDescription || null,
+        });
+      } else if (isStockItem) {
+        await patchStockItem(product.reference_id, {
+          name: editPartNumber,
+          supplier_id: editSupplierId ?? undefined,
+          description: editDescription || null,
+        });
+      }
+      setEditingDetails(false);
+      await loadData();
+    } catch (err) {
+      console.error("Failed to save product details:", err);
+      const message = err instanceof Error ? err.message : "Unknown error";
+      alert(`Failed to save changes: ${message}`);
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
   return (
     <MainLayout>
       <div className="p-6  mx-auto space-y-6 bg-white">
@@ -609,66 +686,210 @@ export default function ProductDetailPage() {
 
             <div className="flex-1">
               <div className="flex items-start justify-between">
-                <div>
-                  <h1 className="text-3xl font-bold text-[#363b4c]">{partNumber}</h1>
-
-                  {isAirFilter ? (
-                    <div className="mt-3 space-y-1">
-                      <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-                        <div>
-                          <span className="font-medium">Part #:</span> {partNumber}
-                        </div>
-                        <div>
-                          <span className="font-medium">Vendor:</span> {vendor}
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap gap-4 text-sm text-gray-600 mt-2">
-                        <div>
-                          <span className="font-medium">Dimensions:</span>{" "}
-                          {product.details.height} × {product.details.width} × {product.details.depth}
-                        </div>
-                        <div>
-                          <span className="font-medium">MERV Rating:</span>{" "}
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
-                            MERV {product.details.merv_rating}
-                          </span>
-                        </div>
-                      </div>
-                      {description && (
-                        <div className="mt-2 text-sm text-gray-600">
-                          <span className="font-medium">Description:</span>{" "}
-                          {description}
-                        </div>
-                      )}
-                    </div>
+                <h1 className="text-3xl font-bold text-[#363b4c]">{partNumber}</h1>
+                <div className="flex gap-2 flex-shrink-0">
+                  {!editingDetails ? (
+                    <button
+                      className="btn btn-sm btn-outline border-[#363b4c] text-[#363b4c] hover:bg-[#363b4c] hover:text-white"
+                      onClick={openEditDetails}
+                    >
+                      Edit Details
+                    </button>
                   ) : (
-                    <div className="flex gap-6 mt-4 text-sm text-gray-600">
-                      <div>
-                        <span className="font-medium">{isStockItem ? "Name:" : "Part #:"}</span> {partNumber}
-                      </div>
-                      {isStockItem && product.details.description && (
-                        <div>
-                          <span className="font-medium">Description:</span> {product.details.description}
-                        </div>
-                      )}
-                      <div>
-                        <span className="font-medium">{isStockItem ? "Supplier:" : "Vendor:"}</span> {vendor}
-                      </div>
-                    </div>
+                    <>
+                      <button
+                        className="btn btn-sm btn-ghost"
+                        onClick={cancelEditDetails}
+                        disabled={editSaving}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        className="btn btn-sm bg-[#363b4c] text-white hover:bg-[#4a5063] border-0"
+                        onClick={saveEditDetails}
+                        disabled={editSaving}
+                      >
+                        {editSaving ? "Saving…" : "Save"}
+                      </button>
+                    </>
                   )}
+                  <button
+                    className="btn btn-sm bg-[#363b4c] text-white hover:bg-[#4a5063] border-0"
+                    onClick={() => {
+                      setAdjustOnHand(on_hand);
+                      setAdjustReason("");
+                      setAdjustNotes("");
+                      setAdjustStockOpen(true);
+                    }}
+                  >
+                    Adjust Stock
+                  </button>
                 </div>
-                <button
-                  className="btn btn-sm bg-[#363b4c] text-white hover:bg-[#4a5063] border-0 flex-shrink-0"
-                  onClick={() => {
-                    setAdjustOnHand(on_hand);
-                    setAdjustReason("");
-                    setAdjustNotes("");
-                    setAdjustStockOpen(true);
-                  }}
-                >
-                  Adjust Stock
-                </button>
               </div>
+
+              {/* Prominent detail fields */}
+              {isAirFilter ? (
+                <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {/* MERV Rating */}
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">MERV Rating</p>
+                    {editingDetails ? (
+                      <select
+                        className="select select-bordered select-sm w-full"
+                        value={editMerv}
+                        onChange={(e) => setEditMerv(Number(e.target.value))}
+                        disabled={editSaving}
+                      >
+                        {Array.from({ length: 18 }, (_, i) => i + 1).map((m) => (
+                          <option key={m} value={m}>{getMervLabel(m)}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-bold bg-blue-100 text-blue-700">
+                        {getMervLabel(product.details.merv_rating ?? 0)}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Dimensions */}
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Dimensions</p>
+                    {editingDetails ? (
+                      <div className="flex gap-1 items-center">
+                        <input
+                          type="number"
+                          className="input input-bordered input-sm w-14"
+                          value={editHeight}
+                          onChange={(e) => setEditHeight(Number(e.target.value))}
+                          disabled={editSaving}
+                          min={0}
+                          aria-label="Height"
+                        />
+                        <span className="text-gray-400 text-sm">×</span>
+                        <input
+                          type="number"
+                          className="input input-bordered input-sm w-14"
+                          value={editWidth}
+                          onChange={(e) => setEditWidth(Number(e.target.value))}
+                          disabled={editSaving}
+                          min={0}
+                          aria-label="Width"
+                        />
+                        <span className="text-gray-400 text-sm">×</span>
+                        <input
+                          type="number"
+                          className="input input-bordered input-sm w-14"
+                          value={editDepth}
+                          onChange={(e) => setEditDepth(Number(e.target.value))}
+                          disabled={editSaving}
+                          min={0}
+                          aria-label="Depth"
+                        />
+                      </div>
+                    ) : (
+                      <p className="text-base font-semibold text-[#363b4c]">
+                        {product.details.height} × {product.details.width} × {product.details.depth}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Supplier */}
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Supplier</p>
+                    {editingDetails ? (
+                      <select
+                        className="select select-bordered select-sm w-full"
+                        value={editSupplierId ?? ""}
+                        onChange={(e) => setEditSupplierId(e.target.value ? Number(e.target.value) : null)}
+                        disabled={editSaving}
+                      >
+                        <option value="">Select supplier…</option>
+                        {suppliers.map((s) => (
+                          <option key={s.id} value={s.id}>{s.name}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <p className="text-base font-semibold text-[#363b4c]">{vendor}</p>
+                    )}
+                  </div>
+
+                  {/* Description */}
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Description</p>
+                    {editingDetails ? (
+                      <textarea
+                        className="textarea textarea-bordered textarea-sm w-full resize-none"
+                        rows={2}
+                        value={editDescription}
+                        onChange={(e) => setEditDescription(e.target.value)}
+                        disabled={editSaving}
+                        placeholder="Optional description…"
+                      />
+                    ) : (
+                      <p className="text-base font-semibold text-[#363b4c]">
+                        {description || <span className="text-gray-400 font-normal italic">None</span>}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  {/* Name (Stock Items) */}
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Name</p>
+                    {editingDetails ? (
+                      <input
+                        type="text"
+                        className="input input-bordered input-sm w-full"
+                        value={editPartNumber}
+                        onChange={(e) => setEditPartNumber(e.target.value)}
+                        disabled={editSaving}
+                      />
+                    ) : (
+                      <p className="text-base font-semibold text-[#363b4c]">{partNumber}</p>
+                    )}
+                  </div>
+
+                  {/* Supplier */}
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Supplier</p>
+                    {editingDetails ? (
+                      <select
+                        className="select select-bordered select-sm w-full"
+                        value={editSupplierId ?? ""}
+                        onChange={(e) => setEditSupplierId(e.target.value ? Number(e.target.value) : null)}
+                        disabled={editSaving}
+                      >
+                        <option value="">Select supplier…</option>
+                        {suppliers.map((s) => (
+                          <option key={s.id} value={s.id}>{s.name}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <p className="text-base font-semibold text-[#363b4c]">{vendor}</p>
+                    )}
+                  </div>
+
+                  {/* Description */}
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Description</p>
+                    {editingDetails ? (
+                      <textarea
+                        className="textarea textarea-bordered textarea-sm w-full resize-none"
+                        rows={2}
+                        value={editDescription}
+                        onChange={(e) => setEditDescription(e.target.value)}
+                        disabled={editSaving}
+                        placeholder="Optional description…"
+                      />
+                    ) : (
+                      <p className="text-base font-semibold text-[#363b4c]">
+                        {description || <span className="text-gray-400 font-normal italic">None</span>}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -717,84 +938,113 @@ export default function ProductDetailPage() {
           </div>
 
           <div className="p-6">
-            {graphTab === "projected" && (
-              <>
-                <h2 className="text-xl font-semibold text-[#363b4c] mb-4">
-                  Projected Stock Level
-                </h2>
-                <div
-                  className="relative"
-                  onMouseLeave={() => setHoveredProjPoint(null)}
-                >
-                <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={stockProjection}>
-                    <defs>
-                      <linearGradient id="colorStock" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.05} />
-                      </linearGradient>
-                      <linearGradient id="colorBackorder" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2} />
-                        <stop offset="95%" stopColor="#ef4444" stopOpacity={0.05} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="date" style={{ fontSize: "12px" }} stroke="#6b7280" />
-                    <YAxis style={{ fontSize: "12px" }} stroke="#6b7280" />
-                    <ReferenceLine y={0} stroke="#363b4c" strokeWidth={2} />
-                    <Area
-                      type="monotone"
-                      dataKey="level"
-                      stroke="#363b4c"
-                      strokeWidth={2}
-                      fill="url(#colorStock)"
-                      dot={(props: ClickableDotProps<StockProjection>) => {
-                        const { cx, cy, payload } = props;
-                        if (cx == null || cy == null || !payload) return null;
-                        const hasOrder = Boolean(payload.order_id);
-                        const isHovered = hoveredProjPoint?.data.date === payload.date;
-                        return (
-                          <circle
-                            key={`proj-dot-${payload.date}`}
-                            cx={cx}
-                            cy={cy}
-                            r={isHovered ? (hasOrder ? 8 : 6) : (hasOrder ? 6 : 4)}
-                            fill={getDotFill(isHovered, hasOrder)}
-                            stroke="white"
-                            strokeWidth={2}
-                            style={{ cursor: hasOrder ? "pointer" : "default" }}
-                            onMouseEnter={() => setHoveredProjPoint({ data: payload, cx, cy })}
-                            onClick={() => {
-                              if (payload.order_id) window.open(`/orders/${payload.order_id}`, "_blank");
-                            }}
-                          />
-                        );
-                      }}
-                      activeDot={false}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-                {hoveredProjPoint && (
+            {graphTab === "projected" && (() => {
+              const projLevels = stockProjection.map(p => p.level);
+              const projMax = projLevels.length ? Math.max(...projLevels) : 0;
+              const projMin = projLevels.length ? Math.min(...projLevels) : 0;
+              const projGradientOffset =
+                projMax <= 0 ? 0 : projMin >= 0 ? 1 : projMax / (projMax - projMin);
+              return (
+                <>
+                  <h2 className="text-xl font-semibold text-[#363b4c] mb-4">
+                    Projected Stock Level
+                  </h2>
                   <div
-                    className="pointer-events-none absolute z-10 bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-sm whitespace-nowrap"
-                    style={{
-                      left: hoveredProjPoint.cx + 12,
-                      top: Math.max(4, hoveredProjPoint.cy - 60),
-                    }}
+                    ref={projContainerRef}
+                    className="relative"
+                    onMouseLeave={() => setHoveredProjPoint(null)}
                   >
-                    <p className="font-semibold text-gray-800">{hoveredProjPoint.data.date}</p>
-                    <p className="text-gray-600 mt-1">Stock level: {hoveredProjPoint.data.level}</p>
-                    {hoveredProjPoint.data.annotation && (
-                      <p className="text-blue-600 mt-1">{hoveredProjPoint.data.annotation}</p>
-                    )}
-                    {hoveredProjPoint.data.order_id && (
-                      <p className="text-blue-500 mt-1">Click dot to open order</p>
-                    )}
+                  <ResponsiveContainer width="100%" height={300}>
+                    <AreaChart data={stockProjection}>
+                      <defs>
+                        <linearGradient id="colorStock" x1="0" y1="0" x2="0" y2="1">
+                          {projGradientOffset >= 1 ? (
+                            // All positive — pure blue gradient
+                            <>
+                              <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.3} />
+                              <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.05} />
+                            </>
+                          ) : projGradientOffset <= 0 ? (
+                            // All negative — pure red gradient
+                            <>
+                              <stop offset="0%" stopColor="#ef4444" stopOpacity={0.2} />
+                              <stop offset="100%" stopColor="#ef4444" stopOpacity={0.05} />
+                            </>
+                          ) : (
+                            // Mixed — blue above zero, red below zero
+                            <>
+                              <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.3} />
+                              <stop offset={`${projGradientOffset * 100}%`} stopColor="#3b82f6" stopOpacity={0.1} />
+                              <stop offset={`${projGradientOffset * 100}%`} stopColor="#ef4444" stopOpacity={0.2} />
+                              <stop offset="100%" stopColor="#ef4444" stopOpacity={0.05} />
+                            </>
+                          )}
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <XAxis dataKey="date" style={{ fontSize: "12px" }} stroke="#6b7280" />
+                      <YAxis style={{ fontSize: "12px" }} stroke="#6b7280" />
+                      <ReferenceLine y={0} stroke="#363b4c" strokeWidth={2} />
+                      <Area
+                        type="monotone"
+                        dataKey="level"
+                        stroke="#363b4c"
+                        strokeWidth={2}
+                        fill="url(#colorStock)"
+                        dot={(props: ClickableDotProps<StockProjection>) => {
+                          const { cx, cy, payload } = props;
+                          if (cx == null || cy == null || !payload) return null;
+                          const hasOrder = Boolean(payload.order_id);
+                          const isHovered = hoveredProjPoint?.data.date === payload.date;
+                          return (
+                            <circle
+                              key={`proj-dot-${payload.date}`}
+                              cx={cx}
+                              cy={cy}
+                              r={isHovered ? (hasOrder ? 8 : 6) : (hasOrder ? 6 : 4)}
+                              fill={getDotFill(isHovered, hasOrder)}
+                              stroke="white"
+                              strokeWidth={2}
+                              style={{ cursor: hasOrder ? "pointer" : "default" }}
+                              onMouseEnter={() => setHoveredProjPoint({ data: payload, cx, cy })}
+                              onClick={() => {
+                                if (payload.order_id) window.open(`/orders/${payload.order_id}`, "_blank");
+                              }}
+                            />
+                          );
+                        }}
+                        activeDot={false}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                  {hoveredProjPoint && (() => {
+                    const containerWidth = projContainerRef.current?.offsetWidth ?? 0;
+                    const isRightThird = containerWidth > 0 && hoveredProjPoint.cx > (containerWidth * 2) / 3;
+                    return (
+                      <div
+                        className="pointer-events-none absolute z-10 bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-sm whitespace-nowrap"
+                        style={{
+                          ...(isRightThird
+                            ? { right: containerWidth - hoveredProjPoint.cx + 12 }
+                            : { left: hoveredProjPoint.cx + 12 }),
+                          top: Math.max(4, hoveredProjPoint.cy - 60),
+                        }}
+                      >
+                        <p className="font-semibold text-gray-800">{hoveredProjPoint.data.date}</p>
+                        <p className="text-gray-600 mt-1">Stock level: {hoveredProjPoint.data.level}</p>
+                        {hoveredProjPoint.data.annotation && (
+                          <p className="text-blue-600 mt-1">{hoveredProjPoint.data.annotation}</p>
+                        )}
+                        {hoveredProjPoint.data.order_id && (
+                          <p className="text-blue-500 mt-1">Click dot to open order</p>
+                        )}
+                      </div>
+                    );
+                  })()}
                   </div>
-                )}
-                </div>
-              </>
-            )}
+                </>
+              );
+            })()}
 
             {graphTab === "historical" && (
               <>
@@ -861,6 +1111,7 @@ export default function ProductDetailPage() {
                   </div>
                 ) : (
                   <div
+                    ref={histContainerRef}
                     className="relative"
                     onMouseLeave={() => setHoveredHistPoint(null)}
                   >
@@ -917,32 +1168,38 @@ export default function ProductDetailPage() {
                       />
                     </ComposedChart>
                   </ResponsiveContainer>
-                  {hoveredHistPoint && (
-                    <div
-                      className="pointer-events-none absolute z-10 bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-sm whitespace-nowrap"
-                      style={{
-                        left: hoveredHistPoint.cx + 12,
-                        top: Math.max(4, hoveredHistPoint.cy - 60),
-                      }}
-                    >
-                      <p className="font-semibold text-gray-800">
-                        {new Date(hoveredHistPoint.data.raw_date).toLocaleString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
-                      <p className={`font-medium mt-1 ${hoveredHistPoint.data.quantity_delta > 0 ? "text-green-600" : "text-red-600"}`}>
-                        {hoveredHistPoint.data.quantity_delta > 0 ? "+" : ""}{hoveredHistPoint.data.quantity_delta} units
-                      </p>
-                      <p className="text-gray-600">Stock level: {hoveredHistPoint.data.stock_level}</p>
-                      {hoveredHistPoint.data.order_id && (
-                        <p className="text-blue-600 mt-1">Order #{hoveredHistPoint.data.order_id} — click to open</p>
-                      )}
-                    </div>
-                  )}
+                  {hoveredHistPoint && (() => {
+                    const containerWidth = histContainerRef.current?.offsetWidth ?? 0;
+                    const isRightThird = containerWidth > 0 && hoveredHistPoint.cx > (containerWidth * 2) / 3;
+                    return (
+                      <div
+                        className="pointer-events-none absolute z-10 bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-sm whitespace-nowrap"
+                        style={{
+                          ...(isRightThird
+                            ? { right: containerWidth - hoveredHistPoint.cx + 12 }
+                            : { left: hoveredHistPoint.cx + 12 }),
+                          top: Math.max(4, hoveredHistPoint.cy - 60),
+                        }}
+                      >
+                        <p className="font-semibold text-gray-800">
+                          {new Date(hoveredHistPoint.data.raw_date).toLocaleString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
+                        <p className={`font-medium mt-1 ${hoveredHistPoint.data.quantity_delta > 0 ? "text-green-600" : "text-red-600"}`}>
+                          {hoveredHistPoint.data.quantity_delta > 0 ? "+" : ""}{hoveredHistPoint.data.quantity_delta} units
+                        </p>
+                        <p className="text-gray-600">Stock level: {hoveredHistPoint.data.stock_level}</p>
+                        {hoveredHistPoint.data.order_id && (
+                          <p className="text-blue-600 mt-1">Order #{hoveredHistPoint.data.order_id} — click to open</p>
+                        )}
+                      </div>
+                    );
+                  })()}
                   </div>
                 )}
               </>
@@ -1198,6 +1455,7 @@ export default function ProductDetailPage() {
                         <th className="px-4 py-2">Time</th>
                         <th className="px-4 py-2">Product</th>
                         <th className="px-4 py-2">Type</th>
+                        <th className="px-4 py-2">State</th>
                         <th className="px-4 py-2">Quantity</th>
                         <th className="px-4 py-2">Order</th>
                         <th className="px-4 py-2">Note</th>
@@ -1222,6 +1480,9 @@ export default function ProductDetailPage() {
                             }`}>
                               {txn.reason}
                             </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            {txn.state}
                           </td>
                           <td className="px-4 py-3">
                             <span className={`font-medium ${txn.quantity_delta > 0 ? "text-green-600" : "text-red-600"}`}>

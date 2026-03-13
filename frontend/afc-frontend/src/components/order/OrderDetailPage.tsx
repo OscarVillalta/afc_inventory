@@ -40,6 +40,7 @@ type OrderStatus = "Pending" | "Partially Fulfilled" | "Completed";
 interface OrderDetailPayload {
   id: number;
   order_number: string;
+  external_order_number?: string | null;
   type: OrderType;
   cs_name: string;
   cs_id: number;
@@ -117,7 +118,7 @@ export default function OrderDetailPage() {
     setDeleting(true);
     try {
       await deleteOrder(orderId);
-      navigate("/order");
+      navigate("/orders/search");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to delete order";
       alert(msg);
@@ -406,6 +407,7 @@ export default function OrderDetailPage() {
         <div className="max-w-7xl space-y-4 lg:flex-3 w-full bg-slate-100 ">
           <OrderHeader
             orderNumber={order.order_number}
+            externalOrderNumber={order.external_order_number}
             type={order.type}
             status={order.status}
             currentDepartment={trackingData?.tracker?.current_department ?? null}
@@ -482,6 +484,7 @@ export default function OrderDetailPage() {
             isPaid={order.is_paid ?? false}
             isInvoiced={order.is_invoiced ?? false}
             orderId={order.id}
+            orderType={order.type}
             onRefresh={refreshOrder}
           />
 

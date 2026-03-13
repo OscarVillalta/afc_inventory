@@ -1,6 +1,6 @@
 import { apiRequest } from "./apiClient";
 
-export type OrderItemType = "Unit_Separator" | "Section_Separator" | "Product_Item" | "Sales_Item";
+export type OrderItemType = "Unit_Separator" | "Section_Separator" | "Product_Item" | "Sales_Item" | "Media_Cut";
 
 export interface OrderItemPayload {
   id: number;
@@ -17,6 +17,7 @@ export interface OrderItemPayload {
   on_hand: number | null;
   reserved: number | null;
   available: number | null;
+  is_media: boolean;
 }
 
 export interface OrderItemTransaction {
@@ -91,7 +92,6 @@ export function allocateOrderItem(itemId: number, note?: string) {
     body: JSON.stringify({ note }),
   });
 }
-
 export function commitAllOrderItemTransactions(itemId: number) {
   return apiRequest(`/order_items/${itemId}/commit_all`, {
     method: "PATCH",

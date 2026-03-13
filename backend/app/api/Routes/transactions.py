@@ -122,7 +122,7 @@ def get_transaction_on_hand(txn_id):
         select(func.coalesce(func.sum(Transaction.quantity_delta), 0))
         .where(
             product_filter,
-            Transaction.state == "committed",
+            or_(Transaction.state == "committed", Transaction.state == "rolled_back"),
             Transaction.ledger_sequence.isnot(None),
             Transaction.ledger_sequence <= txn.ledger_sequence,
         )
@@ -774,7 +774,7 @@ def _get_transaction_ledger(db, product_id=None, child_product_id=None):
         return {"error": "Invalid date format. Use ISO format (YYYY-MM-DD)."}, 400
     
     if not include_pending:
-        filters.append(Transaction.state == "committed")
+        filters.append(Transaction.state.in_(["committed", "rolled_back"]))
 
     # --- Define running balance (chronological)
     running_balance = func.sum(Transaction.quantity_delta).over(
@@ -810,7 +810,9 @@ def _get_transaction_ledger(db, product_id=None, child_product_id=None):
     ).scalar()
 
     # Build final balance query based on product type
-    balance_query = select(func.sum(Transaction.quantity_delta)).where(Transaction.state == "committed")
+    balance_query = select(func.sum(Transaction.quantity_delta)).where(
+        Transaction.state.in_(["committed", "rolled_back"])
+    )
     if balance_filter_product_id:
         balance_query = balance_query.where(Transaction.product_id == balance_filter_product_id)
     else:

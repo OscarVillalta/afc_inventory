@@ -1,23 +1,21 @@
 import { apiRequest } from "./apiClient";
 
 /* ============================================================
-   TYPES — match /air_filters/search
+   TYPES — match /media/search
 ============================================================ */
 
-export interface AirFilterPayload {
+export interface MediaPayload {
   id: number;
   product_id: number;
   child_product_id?: number | null;
   parent_product_id?: number | null;
   part_number: string;
   description?: string | null;
-  merv_rating: number;
-
-  height: number;
+  length: number;
   width: number;
-  depth: number;
+  unit_of_measure: string;
 
-  filter_category: string;
+  media_category: string;
   supplier_name: string;
 
   on_hand: number;
@@ -27,25 +25,25 @@ export interface AirFilterPayload {
   backordered: number;
 }
 
-export type CreateAirFilterPayload = Partial<AirFilterPayload> & {
+export type CreateMediaPayload = {
+  part_number: string;
   supplier_id: number;
   category_id: number;
-  description?: string;
-  merv_rating?: number;
-  height?: number;
+  description?: string | null;
+  length?: number;
   width?: number;
-  depth?: number;
+  unit_of_measure?: string;
 };
 
-export interface AirFilterResponse {
+export interface MediaResponse {
   page: number;
   limit: number;
   count: number;
   total: number;
-  results: AirFilterPayload[];
+  results: MediaPayload[];
 }
 
-export interface AirFilterCategory {
+export interface MediaCategory {
   id: number;
   name: string;
 }
@@ -54,15 +52,14 @@ export interface AirFilterCategory {
    SEARCH PARAMS
 ============================================================ */
 
-export interface AirFilterSearchParams {
+export interface MediaSearchParams {
   part_number?: string;
   description?: string;
   supplier?: string;
   category?: string;
-  merv?: number;
-  height?: number;
+  length?: number;
   width?: number;
-  depth?: number;
+  unit_of_measure?: string;
   location?: number;
 }
 
@@ -71,13 +68,13 @@ export interface AirFilterSearchParams {
 ============================================================ */
 
 /**
- * Server-side filtered + paginated air filter search
+ * Server-side filtered + paginated media search
  */
-export function fetchAirFilters(
+export function fetchMedia(
   page = 1,
   limit = 10,
-  filters: AirFilterSearchParams = {}
-): Promise<AirFilterResponse> {
+  filters: MediaSearchParams = {}
+): Promise<MediaResponse> {
   const params = new URLSearchParams();
 
   params.set("page", String(page));
@@ -87,67 +84,65 @@ export function fetchAirFilters(
   if (filters.description) params.set("description", filters.description);
   if (filters.supplier) params.set("supplier", filters.supplier);
   if (filters.category !== undefined) params.set("category", String(filters.category));
-  if (filters.merv !== undefined) params.set("merv", String(filters.merv));
-  if (filters.height !== undefined) params.set("height", String(filters.height));
+  if (filters.length !== undefined) params.set("length", String(filters.length));
   if (filters.width !== undefined) params.set("width", String(filters.width));
-  if (filters.depth !== undefined) params.set("depth", String(filters.depth));
+  if (filters.unit_of_measure) params.set("unit_of_measure", filters.unit_of_measure);
   if (filters.location !== undefined) params.set("location", String(filters.location));
 
-  return apiRequest(`/air_filters/search?${params.toString()}`, {
+  return apiRequest(`/media/search?${params.toString()}`, {
     method: "GET",
   });
 }
 
-export function fetchAirFilterCategories(): Promise<AirFilterCategory[]> {
-  return apiRequest("/air_filter_categories");
+export function fetchMediaCategories(): Promise<MediaCategory[]> {
+  return apiRequest("/media_categories");
 }
 
 /* ============================================================
-   CRUD (unchanged)
+   CRUD
 ============================================================ */
 
-export function fetchAirFilterById(id: string | number) {
-  return apiRequest(`/air_filters/${id}`);
+export function fetchMediaById(id: string | number) {
+  return apiRequest(`/media/${id}`);
 }
 
-export function createAirFilter(data: CreateAirFilterPayload) {
-  return apiRequest("/air_filters", {
+export function createMedia(data: CreateMediaPayload) {
+  return apiRequest("/media", {
     method: "POST",
     body: JSON.stringify(data),
   });
 }
 
-export function updateAirFilter(
+export function updateMedia(
   id: string | number,
-  data: Partial<AirFilterPayload>
+  data: Partial<MediaPayload>
 ) {
-  return apiRequest(`/air_filters/${id}`, {
+  return apiRequest(`/media/${id}`, {
     method: "PUT",
     body: JSON.stringify(data),
   });
 }
 
-export function patchAirFilter(
+export function patchMedia(
   id: string | number,
   data: {
     supplier_id?: number;
     category_id?: number;
-    merv_rating?: number;
-    height?: number;
+    length?: number;
     width?: number;
-    depth?: number;
+    unit_of_measure?: string;
     description?: string | null;
     part_number?: string;
   }
 ) {
-  return apiRequest(`/air_filters/${id}`, {
+  return apiRequest(`/media/${id}`, {
     method: "PATCH",
     body: JSON.stringify(data),
   });
 }
 
-export function deleteAirFilter(id: string | number) {
-  return apiRequest(`/air_filters/${id}`, {
+export function deleteMedia(id: string | number) {
+  return apiRequest(`/media/${id}`, {
     method: "DELETE",
   });
 }

@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import React from "react";
+import { Link } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import {
   fetchPackingSlips,
   toggleTrackerStage,
   initOrderTracker,
+  updateOrderTracker,
   patchOrderPaidInvoiced,
   type PackingSlipResult,
   type Department,
@@ -15,18 +17,10 @@ import {
 import { ORDER_TYPE_LABELS } from "../constants/orderTypes";
 
 // ─────────────────────────────────────────────
-// Constants
+// Tracker step-path definitions (one per order type group)
 // ─────────────────────────────────────────────
 
-const DEPT_STEPS: { dept: Department; label: string }[] = [
-  { dept: "SALES", label: "Sales" },
-  { dept: "LOGISTICS", label: "Logistics" },
-  { dept: "DELIVERY_DEPT", label: "Delivery" },
-  { dept: "SERVICE", label: "Service" },
-  { dept: "ACCOUNTING", label: "Accounting" },
-];
-
-/** 6-step path used exclusively for Installation order types. */
+/** 6-step path used exclusively for Installation orders. */
 const INSTALLATION_STEPS: { dept: Department; label: string; occurrence: number }[] = [
   { dept: "SALES",         label: "Sales",         occurrence: 0 },
   { dept: "LOGISTICS",     label: "Logistics",     occurrence: 0 },
@@ -35,6 +29,29 @@ const INSTALLATION_STEPS: { dept: Department; label: string; occurrence: number 
   { dept: "SALES",         label: "Sales II",      occurrence: 1 },
   { dept: "LOGISTICS",     label: "Logistics II",  occurrence: 1 },
 ];
+
+/** 4-step path used for Will Call, Delivery, and Shipment orders. */
+const WILL_CALL_STEPS: { dept: Department; label: string }[] = [
+  { dept: "SALES",         label: "Sales" },
+  { dept: "LOGISTICS",     label: "Logistics" },
+  { dept: "DELIVERY_DEPT", label: "Delivery" },
+  { dept: "LOGISTICS",     label: "Logistics II" },
+];
+
+/** 3-step path used for Purchase Order (incoming) orders. */
+const PURCHASE_ORDER_STEPS: { dept: Department; label: string }[] = [
+  { dept: "LOGISTICS",     label: "Logistics" },
+  { dept: "DELIVERY_DEPT", label: "Delivery" },
+  { dept: "LOGISTICS",     label: "Logistics II" },
+];
+
+/** Returns the correct step template for the given order type string. */
+function getStepsTemplate(orderType: string): { dept: Department; label: string }[] {
+  const t = orderType?.toLowerCase();
+  if (t === "installation") return INSTALLATION_STEPS;
+  if (t === "incoming") return PURCHASE_ORDER_STEPS;
+  return WILL_CALL_STEPS; // will_call, delivery, shipment
+}
 
 // ─────────────────────────────────────────────
 // Types
@@ -45,11 +62,12 @@ export type PackingSlipRow = {
   packingSlipNo: string;
   customer: string;
   type: string;
-  status: string;         // order fulfillment status (Pending / Partially Fulfilled / Completed)
-  stockState: string;     // "Reserved" | "Delivered"
-  trackerStatus: string;  // derived from tracker step
-  trackerDept: string;    // current department label for "IN X" badge
+  status: string;                    // order fulfillment status (Pending / Partially Fulfilled / Completed)
+  stockState: string;                // "Reserved" | "Delivered"
+  trackerStatus: string;             // derived from tracker step
+  trackerDept: string;               // current department label for "IN X" badge
   lastUpdated: string;
+  externalOrderNumber?: string | null;
   notes?: string;
   is_paid: boolean;
   is_invoiced: boolean;
@@ -98,14 +116,17 @@ function latestCompletedStage(stages: OrderTrackerStagePayload[]): OrderTrackerS
 // ─────────────────────────────────────────────
 
 function toPackingSlipRow(r: PackingSlipResult): PackingSlipRow {
-  const isInstallation = r.order_type?.toLowerCase() === "installation";
-  const totalSteps = isInstallation ? INSTALLATION_STEPS.length : DEPT_STEPS.length;
+  const stepsTemplate = getStepsTemplate(r.order_type ?? "");
+  const totalSteps = stepsTemplate.length;
   const stages = r.stages ?? [];
   const completedCount = stages.filter((s) => s.is_completed).length;
 
   let trackerStatus: string;
   let trackerDept: string;
-  if (completedCount === 0 && !r.tracker) {
+  if (r.tracker?.is_backordered) {
+    trackerStatus = "Backordered";
+    trackerDept = "";
+  } else if (completedCount === 0 && !r.tracker) {
     trackerStatus = "Not Started";
     trackerDept = "";
   } else if (completedCount >= totalSteps) {
@@ -113,8 +134,12 @@ function toPackingSlipRow(r: PackingSlipResult): PackingSlipRow {
     trackerDept = "";
   } else if (completedCount > 0 || r.tracker) {
     trackerStatus = "In Progress";
-    trackerDept = r.tracker?.current_department
-      ? `IN ${deptLabel(r.tracker.current_department).toUpperCase()}`
+    // Find the earliest step that has not been completed
+    const stageMap = new Map((stages ?? []).map((s) => [s.stage_index, s]));
+    const firstIncompleteIdx = stepsTemplate.findIndex((_, i) => !stageMap.get(i)?.is_completed);
+    const firstIncompleteDept = firstIncompleteIdx >= 0 ? stepsTemplate[firstIncompleteIdx].dept : null;
+    trackerDept = firstIncompleteDept
+      ? `IN ${deptLabel(firstIncompleteDept).toUpperCase()}`
       : "IN PROGRESS";
   } else {
     trackerStatus = "Not Started";
@@ -132,13 +157,14 @@ function toPackingSlipRow(r: PackingSlipResult): PackingSlipRow {
   return {
     id: r.id,
     packingSlipNo: r.order_number,
-    customer: r.customer_name ?? "—",
+    customer: (r.order_type?.toLowerCase() === "incoming" ? r.supplier_name : r.customer_name) ?? "—",
     type: r.order_type ?? "—",
     status: r.status,
     stockState,
     trackerStatus,
     trackerDept,
     lastUpdated,
+    externalOrderNumber: r.external_order_number ?? null,
     notes: r.description ?? undefined,
     is_paid: r.is_paid ?? false,
     is_invoiced: r.is_invoiced ?? false,
@@ -153,8 +179,8 @@ function toPackingSlipRow(r: PackingSlipResult): PackingSlipRow {
 // ─────────────────────────────────────────────
 
 export function buildSteps(row: PackingSlipRow): Step[] {
+  const stepsTemplate = getStepsTemplate(row.type ?? "");
   const isInstallation = row.type?.toLowerCase() === "installation";
-  const stepsTemplate = isInstallation ? INSTALLATION_STEPS : DEPT_STEPS;
 
   // Build a map from stage_index → stage record
   const stageMap = new Map<number, OrderTrackerStagePayload>(
@@ -216,6 +242,13 @@ function TrackerStatusBadge({ status, deptLabel: dept }: { status: string; deptL
       </span>
     );
   }
+  if (status === "Backordered") {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-bold bg-orange-100 text-orange-700 uppercase tracking-wide">
+        ⚠ BACKORDERED
+      </span>
+    );
+  }
   if (status === "In Progress" && dept) {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-bold bg-yellow-100 text-yellow-700 uppercase tracking-wide">
@@ -244,9 +277,17 @@ function TypePill({ type }: { type: string }) {
   else if (t.includes("delivery")) cls += "bg-teal-100 text-teal-700";
   else if (t.includes("shipment")) cls += "bg-cyan-100 text-cyan-700";
   else if (t.includes("will_call") || t.includes("will call")) cls += "bg-purple-100 text-purple-700";
+  else if (t === "incoming") cls += "bg-orange-100 text-orange-700";
   else cls += "bg-slate-100 text-slate-600";
-  // Use canonical display label if available, otherwise capitalize the raw type
-  const displayLabel = ORDER_TYPE_LABELS[t as keyof typeof ORDER_TYPE_LABELS] ?? type;
+
+  // Display "Purchase Order" for incoming orders; use canonical label otherwise
+  let displayLabel: string;
+  if (t === "incoming") {
+    displayLabel = "Purchase Order";
+  } else {
+    displayLabel = ORDER_TYPE_LABELS[t as keyof typeof ORDER_TYPE_LABELS] ?? type;
+  }
+
   return (
     <span className={cls}>
       <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -361,26 +402,60 @@ function PaidInvoicedToggle({
   orderId,
   isPaid,
   isInvoiced,
+  field,
   onUpdate,
 }: {
   orderId: number;
   isPaid: boolean;
   isInvoiced: boolean;
+  field?: "is_paid" | "is_invoiced";
   onUpdate: (field: "is_paid" | "is_invoiced", value: boolean) => void;
 }) {
   const [savingPaid, setSavingPaid] = useState(false);
   const [savingInvoiced, setSavingInvoiced] = useState(false);
 
-  const toggle = async (field: "is_paid" | "is_invoiced", current: boolean) => {
-    const setter = field === "is_paid" ? setSavingPaid : setSavingInvoiced;
+  const toggle = async (f: "is_paid" | "is_invoiced", current: boolean) => {
+    const setter = f === "is_paid" ? setSavingPaid : setSavingInvoiced;
     setter(true);
     try {
-      await patchOrderPaidInvoiced(orderId, { [field]: !current });
-      onUpdate(field, !current);
+      await patchOrderPaidInvoiced(orderId, { [f]: !current });
+      onUpdate(f, !current);
     } finally {
       setter(false);
     }
   };
+
+  if (field === "is_paid") {
+    return (
+      <button
+        disabled={savingPaid}
+        onClick={(e) => { e.stopPropagation(); toggle("is_paid", isPaid); }}
+        className={`px-3 py-1 rounded-full text-xs font-semibold transition-all border ${
+          isPaid
+            ? "bg-green-500 text-white border-green-500 shadow-sm"
+            : "bg-white text-gray-500 border-gray-300 hover:bg-green-50 hover:text-green-600 hover:border-green-400"
+        }`}
+      >
+        {savingPaid ? "…" : isPaid ? "✓ PAID" : "PAID"}
+      </button>
+    );
+  }
+
+  if (field === "is_invoiced") {
+    return (
+      <button
+        disabled={savingInvoiced}
+        onClick={(e) => { e.stopPropagation(); toggle("is_invoiced", isInvoiced); }}
+        className={`px-3 py-1 rounded-full text-xs font-semibold transition-all border ${
+          isInvoiced
+            ? "bg-green-500 text-white border-green-500 shadow-sm"
+            : "bg-white text-gray-500 border-gray-300 hover:bg-green-50 hover:text-green-600 hover:border-green-400"
+        }`}
+      >
+        {savingInvoiced ? "…" : isInvoiced ? "✓ INVOICED" : "INVOICED"}
+      </button>
+    );
+  }
 
   return (
     <div className="flex gap-2 flex-wrap">
@@ -411,85 +486,10 @@ function PaidInvoicedToggle({
 }
 
 // ─────────────────────────────────────────────
-// FilterBar
+// Filter types
 // ─────────────────────────────────────────────
 
-type FilterTab = "All" | "Not Started" | "In Progress" | "Completed";
-
-interface FilterBarProps {
-  statusCounts: { All: number; "Not Started": number; "In Progress": number; Completed: number };
-  activeTab: FilterTab;
-  onTabChange: (tab: FilterTab) => void;
-  search: string;
-  onSearchChange: (v: string) => void;
-  onCreateClick: () => void;
-}
-
-function FilterBar({
-  statusCounts,
-  activeTab,
-  onTabChange,
-  search,
-  onSearchChange,
-  onCreateClick,
-}: FilterBarProps) {
-  const tabs: FilterTab[] = ["All", "Not Started", "In Progress", "Completed"];
-
-  return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-      <div className="flex flex-wrap gap-3 items-center justify-between">
-        {/* Filter chips */}
-        <div className="flex flex-wrap gap-2">
-          {tabs.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => onTabChange(tab)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition border ${
-                activeTab === tab
-                  ? "bg-blue-100 text-blue-700 border-blue-300 shadow-sm"
-                  : "text-gray-600 border-gray-200 hover:bg-gray-100"
-              }`}
-            >
-              {tab}{" "}
-              <span
-                className={`ml-1 text-xs rounded-full px-1.5 py-0.5 ${
-                  activeTab === tab
-                    ? "bg-blue-200 text-blue-800"
-                    : "bg-gray-100 text-gray-500"
-                }`}
-              >
-                {statusCounts[tab as keyof typeof statusCounts]}
-              </span>
-            </button>
-          ))}
-        </div>
-
-        {/* Search + button */}
-        <div className="flex flex-wrap gap-2 items-center">
-          <div className="relative">
-            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
-              🔍
-            </span>
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Search slip, customer…"
-              className="input input-sm border border-gray-200 rounded-lg pl-8 text-sm w-52"
-            />
-          </div>
-
-          <button
-            onClick={onCreateClick}
-            className="btn btn-primary btn-sm w-full sm:w-auto"
-          >
-            + Create Shipment
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
+type FilterTab = "All" | "Not Started" | "In Progress" | "Completed" | "Backordered";
 
 // ─────────────────────────────────────────────
 // Expanded Detail Panel
@@ -498,14 +498,15 @@ function FilterBar({
 function ExpandedPanel({
   row,
   onStagesUpdate,
-  onPaidInvoicedUpdate,
+  onBackorderedUpdate,
 }: {
   row: PackingSlipRow;
   onStagesUpdate: (orderId: number, updatedStage: OrderTrackerStagePayload) => void;
-  onPaidInvoicedUpdate: (orderId: number, field: "is_paid" | "is_invoiced", value: boolean) => void;
+  onBackorderedUpdate: (orderId: number, isBackordered: boolean) => void;
 }) {
   const [savingIndex, setSavingIndex] = useState<number | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [savingBackordered, setSavingBackordered] = useState(false);
   const steps = buildSteps(row);
 
   const handleToggleStep = async (index: number) => {
@@ -514,8 +515,8 @@ function ExpandedPanel({
     try {
       // Ensure tracker exists
       if (!row.tracker) {
-        const isInstallation = row.type?.toLowerCase() === "installation";
-        const firstDept = (isInstallation ? INSTALLATION_STEPS[0] : DEPT_STEPS[0]).dept;
+        const template = getStepsTemplate(row.type ?? "");
+        const firstDept = template[0].dept;
         await initOrderTracker(row.id, {
           current_department: firstDept,
           step_index: 0,
@@ -533,55 +534,81 @@ function ExpandedPanel({
     }
   };
 
+  const handleToggleBackordered = async () => {
+    setSavingBackordered(true);
+    setSaveError(null);
+    try {
+      const newValue = !row.tracker?.is_backordered;
+      if (!row.tracker) {
+        const template = getStepsTemplate(row.type ?? "");
+        await initOrderTracker(row.id, {
+          current_department: template[0].dept,
+          step_index: 0,
+        });
+      }
+      await updateOrderTracker(row.id, { is_backordered: newValue });
+      onBackorderedUpdate(row.id, newValue);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Failed to update backordered status.");
+    } finally {
+      setSavingBackordered(false);
+    }
+  };
+
   return (
     <tr>
-      <td colSpan={8} className="p-0 border-b border-slate-200/60">
+      <td colSpan={10} className="p-0 border-b border-slate-200/60">
         <div className="bg-slate-50/60 mx-3 my-2 rounded-xl border border-slate-200/60 p-4 sm:p-5">
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
-            <div>
-              <span className="text-base font-bold text-slate-900">{row.packingSlipNo}</span>
-              <span className="mx-2 text-slate-400">·</span>
+            <div className="flex flex-wrap items-center gap-3">
+              <Link
+                to={`/orders/${row.id}`}
+                onClick={(e) => e.stopPropagation()}
+                className="text-base font-bold text-blue-700 hover:underline"
+              >
+                {row.packingSlipNo}
+              </Link>
+              <span className="text-slate-400">·</span>
               <span className="text-base font-semibold text-slate-600">{row.customer}</span>
-            </div>
-          </div>
-
-          {/* Two-column layout */}
-          <div className="flex flex-col lg:flex-row gap-6">
-
-            {/* ── Left Section: Financials & Notes ── */}
-            <div className="lg:w-48 shrink-0 flex flex-col gap-4">
-              <div>
-                <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-2">
-                  Financials
-                </p>
-                <PaidInvoicedToggle
-                  orderId={row.id}
-                  isPaid={row.is_paid}
-                  isInvoiced={row.is_invoiced}
-                  onUpdate={(field, value) => onPaidInvoicedUpdate(row.id, field, value)}
-                />
-              </div>
-
-              {row.notes && (
-                <div>
-                  <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">
-                    Notes
-                  </p>
-                  <p className="text-sm text-slate-600 break-words leading-relaxed">
-                    {row.notes}
-                  </p>
-                </div>
+              {row.externalOrderNumber && (
+                <>
+                  <span className="text-slate-400">·</span>
+                  <span className="text-xs text-slate-400 font-medium uppercase tracking-wide">Ext #</span>
+                  <Link
+                    to={`/orders/${row.id}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-sm font-semibold text-blue-700 hover:underline"
+                  >
+                    {row.externalOrderNumber}
+                  </Link>
+                </>
               )}
             </div>
+            <button
+              disabled={savingBackordered}
+              onClick={(e) => { e.stopPropagation(); handleToggleBackordered(); }}
+              className={`px-3 py-1 rounded-full text-xs font-semibold transition-all border ${
+                row.tracker?.is_backordered
+                  ? "bg-orange-500 text-white border-orange-500 shadow-sm"
+                  : "bg-white text-gray-500 border-gray-300 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-400"
+              }`}
+            >
+              {savingBackordered ? "…" : row.tracker?.is_backordered ? "⚠ BACKORDERED" : "Set Backordered"}
+            </button>
+          </div>
 
-            {/* Divider */}
-            <div className="hidden lg:block w-px bg-slate-200 shrink-0" />
+          {/* Three-column layout */}
+          <div className="flex flex-col lg:flex-row gap-6">
 
-            {/* ── Right Section: Installation Path ── */}
+            {/* ── Left Section: Progress Tracker ── */}
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">
-                {row.type?.toLowerCase() === "installation" ? "6-Step Installation Path" : "Progress"}
+                {row.type?.toLowerCase() === "installation"
+                  ? "6-Step Installation Path"
+                  : row.type?.toLowerCase() === "incoming"
+                  ? "3-Step Purchase Order Path"
+                  : "4-Step Progress"}
               </p>
 
               <ProgressStepper
@@ -594,6 +621,21 @@ function ExpandedPanel({
                 <p className="mt-2 text-xs text-red-600">{saveError}</p>
               )}
             </div>
+
+            {/* ── Right Section: Description/Notes ── */}
+            {row.notes && (
+              <>
+                <div className="hidden lg:block w-px bg-slate-200 shrink-0" />
+                <div className="lg:w-56 shrink-0">
+                  <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">
+                    Notes
+                  </p>
+                  <p className="text-sm text-slate-600 break-words leading-relaxed">
+                    {row.notes}
+                  </p>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </td>
@@ -685,17 +727,18 @@ function KpiCards({
   statusCounts,
 }: {
   total: number;
-  statusCounts: { "Not Started": number; "In Progress": number; Completed: number };
+  statusCounts: { "Not Started": number; "In Progress": number; Completed: number; Backordered: number };
 }) {
   const cards = [
     { label: "Total Orders", value: total, color: "text-gray-800" },
     { label: "Not Started", value: statusCounts["Not Started"], color: "text-slate-600" },
     { label: "In Progress", value: statusCounts["In Progress"], color: "text-yellow-600" },
     { label: "Completed", value: statusCounts["Completed"], color: "text-green-600" },
+    { label: "Backordered", value: statusCounts["Backordered"], color: "text-orange-600" },
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
       {cards.map((c) => (
         <div
           key={c.label}
@@ -715,7 +758,7 @@ function KpiCards({
 
 const PAGE_SIZE = 10;
 
-const DEFAULT_STATUS_COUNTS = { "Not Started": 0, "In Progress": 0, Completed: 0 };
+const DEFAULT_STATUS_COUNTS = { "Not Started": 0, "In Progress": 0, Completed: 0, Backordered: 0 };
 
 export default function PackingSlipTrackerPage() {
   const [activeTab, setActiveTab] = useState<FilterTab>("All");
@@ -730,13 +773,18 @@ export default function PackingSlipTrackerPage() {
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
+  /* ── Additional filter state ── */
+  const [filterOrderType, setFilterOrderType] = useState("");
+  const [filterDepartment, setFilterDepartment] = useState("");
+  const [filterStockState, setFilterStockState] = useState("");
+
   // Debounce search to reduce API calls
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 400);
     return () => clearTimeout(t);
   }, [search]);
 
-  const loadData = useCallback(async (p: number, s: string, tab: FilterTab) => {
+  const loadData = useCallback(async (p: number, s: string, tab: FilterTab, orderType: string) => {
     setLoading(true);
     setFetchError(null);
     try {
@@ -745,6 +793,7 @@ export default function PackingSlipTrackerPage() {
         limit: PAGE_SIZE,
         search: s,
         tracker_status: tab === "All" ? undefined : tab,
+        order_type: orderType || undefined,
       });
       setRows(resp.results.map(toPackingSlipRow));
       setTotal(resp.total);
@@ -757,8 +806,8 @@ export default function PackingSlipTrackerPage() {
   }, []);
 
   useEffect(() => {
-    loadData(page, debouncedSearch, activeTab);
-  }, [page, debouncedSearch, activeTab, loadData]);
+    loadData(page, debouncedSearch, activeTab, filterOrderType);
+  }, [page, debouncedSearch, activeTab, filterOrderType, loadData]);
 
   // Reset page when search or tab changes
   const handleSearch = (v: string) => {
@@ -783,13 +832,16 @@ export default function PackingSlipTrackerPage() {
           ? row.stages.map((s) => s.stage_index === updatedStage.stage_index ? updatedStage : s)
           : [...row.stages, updatedStage];
 
-        const isInstallation = row.type?.toLowerCase() === "installation";
-        const totalSteps = isInstallation ? INSTALLATION_STEPS.length : DEPT_STEPS.length;
+        const stepsTemplate = getStepsTemplate(row.type ?? "");
+        const totalSteps = stepsTemplate.length;
         const completedCount = newStages.filter((s) => s.is_completed).length;
+
+        // Clear backordered when a stage is toggled (mirrors backend behaviour)
+        const newTracker = row.tracker ? { ...row.tracker, is_backordered: false } : row.tracker;
 
         let trackerStatus: string;
         let trackerDept: string;
-        if (completedCount === 0 && !row.tracker) {
+        if (completedCount === 0 && !newTracker) {
           trackerStatus = "Not Started";
           trackerDept = "";
         } else if (completedCount >= totalSteps) {
@@ -797,8 +849,12 @@ export default function PackingSlipTrackerPage() {
           trackerDept = "";
         } else {
           trackerStatus = "In Progress";
-          trackerDept = row.tracker?.current_department
-            ? `IN ${deptLabel(row.tracker.current_department).toUpperCase()}`
+          // Find the earliest step that has not been completed
+          const stageMap = new Map(newStages.map((s) => [s.stage_index, s]));
+          const firstIncompleteIdx = stepsTemplate.findIndex((_, i) => !stageMap.get(i)?.is_completed);
+          const firstIncompleteDept = firstIncompleteIdx >= 0 ? stepsTemplate[firstIncompleteIdx].dept : null;
+          trackerDept = firstIncompleteDept
+            ? `IN ${deptLabel(firstIncompleteDept).toUpperCase()}`
             : "IN PROGRESS";
         }
 
@@ -809,11 +865,47 @@ export default function PackingSlipTrackerPage() {
 
         return {
           ...row,
+          tracker: newTracker,
           stages: newStages,
           trackerStatus,
           trackerDept,
           lastUpdated,
         };
+      })
+    );
+  }, []);
+
+  // Optimistic update for backordered toggle
+  const handleBackorderedUpdate = useCallback((orderId: number, isBackordered: boolean) => {
+    setRows((prev) =>
+      prev.map((row) => {
+        if (row.id !== orderId) return row;
+        const newTracker = row.tracker ? { ...row.tracker, is_backordered: isBackordered } : row.tracker;
+        const stepsTemplate = getStepsTemplate(row.type ?? "");
+        const totalSteps = stepsTemplate.length;
+        const completedCount = row.stages.filter((s) => s.is_completed).length;
+
+        let trackerStatus: string;
+        let trackerDept: string;
+        if (isBackordered) {
+          trackerStatus = "Backordered";
+          trackerDept = "";
+        } else if (completedCount === 0 && !newTracker) {
+          trackerStatus = "Not Started";
+          trackerDept = "";
+        } else if (completedCount >= totalSteps) {
+          trackerStatus = "Completed";
+          trackerDept = "";
+        } else {
+          trackerStatus = "In Progress";
+          const stageMap = new Map(row.stages.map((s) => [s.stage_index, s]));
+          const firstIncompleteIdx = stepsTemplate.findIndex((_, i) => !stageMap.get(i)?.is_completed);
+          const firstIncompleteDept = firstIncompleteIdx >= 0 ? stepsTemplate[firstIncompleteIdx].dept : null;
+          trackerDept = firstIncompleteDept
+            ? `IN ${deptLabel(firstIncompleteDept).toUpperCase()}`
+            : "IN PROGRESS";
+        }
+        return { ...row, tracker: newTracker, trackerStatus, trackerDept };
       })
     );
   }, []);
@@ -836,7 +928,36 @@ export default function PackingSlipTrackerPage() {
 
   const allCount = (statusCounts["Not Started"] ?? 0) +
     (statusCounts["In Progress"] ?? 0) +
-    (statusCounts["Completed"] ?? 0);
+    (statusCounts["Completed"] ?? 0) +
+    (statusCounts["Backordered"] ?? 0);
+
+  /* ── Client-side filtering for department and stock state (not sent to server) ── */
+  const filteredRows = rows.filter((row) => {
+    if (filterDepartment && row.tracker?.current_department !== filterDepartment) return false;
+    if (filterStockState && row.stockState !== filterStockState) return false;
+    return true;
+  });
+
+  const hasActiveFilters =
+    filterOrderType !== "" || filterDepartment !== "" || filterStockState !== "" || search !== "" || activeTab !== "All";
+
+  const handleClearFilters = () => {
+    setFilterOrderType("");
+    setFilterDepartment("");
+    setFilterStockState("");
+    setSearch("");
+    setActiveTab("All");
+    setPage(1);
+  };
+
+  const STATUS_TABS: FilterTab[] = ["All", "Not Started", "In Progress", "Completed", "Backordered"];
+  const statusTabCounts: Record<FilterTab, number> = {
+    All: allCount,
+    "Not Started": statusCounts["Not Started"] ?? 0,
+    "In Progress": statusCounts["In Progress"] ?? 0,
+    Completed: statusCounts["Completed"] ?? 0,
+    Backordered: statusCounts["Backordered"] ?? 0,
+  };
 
   return (
     <MainLayout>
@@ -852,15 +973,130 @@ export default function PackingSlipTrackerPage() {
           </div>
         </div>
 
-        {/* ── Filter Bar ──────────────────────────── */}
-        <FilterBar
-          statusCounts={{ All: allCount, ...statusCounts }}
-          activeTab={activeTab}
-          onTabChange={handleTabChange}
-          search={search}
-          onSearchChange={handleSearch}
-          onCreateClick={() => alert("Create Shipment — coming soon")}
-        />
+        {/* ── Global Filter Bar (Inventory.tsx style) ─── */}
+        <div className="flex flex-wrap items-center gap-3 bg-white border border-gray-200 rounded-xl px-4 py-3 shadow-sm">
+
+          {/* Search */}
+          <div className="flex flex-col gap-0.5 min-w-[160px]">
+            <label className="text-xs text-gray-400 font-medium uppercase tracking-wide">Search</label>
+            <div className="relative">
+              <div className="pointer-events-none absolute inset-y-0 left-2 flex items-center">
+                <svg className="h-3.5 w-3.5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => handleSearch(e.target.value)}
+                placeholder="Slip #, customer…"
+                className="border border-gray-200 rounded-lg pl-7 pr-2 py-1.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 w-full"
+              />
+            </div>
+          </div>
+
+          {/* Order Type */}
+          <div className="flex flex-col gap-0.5 min-w-[140px]">
+            <label className="text-xs text-gray-400 font-medium uppercase tracking-wide">Order Type</label>
+            <select
+              className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+              value={filterOrderType}
+              onChange={(e) => { setFilterOrderType(e.target.value); setPage(1); }}
+            >
+              <option value="">All Types</option>
+              <option value="installation">Installation</option>
+              <option value="delivery">Delivery</option>
+              <option value="shipment">Shipment</option>
+              <option value="will_call">Will Call</option>
+              <option value="incoming">Purchase Order</option>
+            </select>
+          </div>
+
+          {/* Tracker State */}
+          <div className="flex flex-col gap-0.5 min-w-[140px]">
+            <label className="text-xs text-gray-400 font-medium uppercase tracking-wide">Tracker State</label>
+            <select
+              className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+              value={activeTab}
+              onChange={(e) => { handleTabChange(e.target.value as FilterTab); }}
+            >
+              <option value="All">All States</option>
+              <option value="Not Started">Not Started</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+              <option value="Backordered">Backordered</option>
+            </select>
+          </div>
+
+          {/* Department */}
+          <div className="flex flex-col gap-0.5 min-w-[140px]">
+            <label className="text-xs text-gray-400 font-medium uppercase tracking-wide">Department</label>
+            <select
+              className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+              value={filterDepartment}
+              onChange={(e) => { setFilterDepartment(e.target.value); setPage(1); }}
+            >
+              <option value="">All Departments</option>
+              <option value="SALES">Sales</option>
+              <option value="LOGISTICS">Logistics</option>
+              <option value="DELIVERY_DEPT">Delivery</option>
+              <option value="SERVICE">Service</option>
+              <option value="ACCOUNTING">Accounting</option>
+            </select>
+          </div>
+
+          {/* Stock State */}
+          <div className="flex flex-col gap-0.5 min-w-[140px]">
+            <label className="text-xs text-gray-400 font-medium uppercase tracking-wide">Stock State</label>
+            <select
+              className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+              value={filterStockState}
+              onChange={(e) => { setFilterStockState(e.target.value); setPage(1); }}
+            >
+              <option value="">All States</option>
+              <option value="Reserved">Reserved</option>
+              <option value="Delivered">Delivered</option>
+            </select>
+          </div>
+
+          {/* Clear All */}
+          <div className="flex items-center ml-auto">
+            {hasActiveFilters && (
+              <button
+                onClick={handleClearFilters}
+                className="text-xs text-blue-600 hover:text-blue-800 font-medium transition"
+              >
+                Clear All
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* ── Quick-Filter Status Pills ──────────────── */}
+        <div className="flex flex-wrap gap-2">
+          {STATUS_TABS.map((tab) => (
+            <button
+              key={tab}
+              onClick={() => handleTabChange(tab)}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition border ${
+                activeTab === tab
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "bg-white text-gray-600 border-gray-200 hover:bg-gray-100"
+              }`}
+            >
+              {tab}{" "}
+              <span
+                className={`ml-1 rounded-full px-1.5 py-0.5 text-xs ${
+                  activeTab === tab
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-100 text-gray-500"
+                }`}
+              >
+                {statusTabCounts[tab]}
+              </span>
+            </button>
+          ))}
+        </div>
 
         {/* ── KPI Cards ───────────────────────────── */}
         <KpiCards total={allCount} statusCounts={statusCounts} />
@@ -879,12 +1115,14 @@ export default function PackingSlipTrackerPage() {
             <table className="w-full table-fixed border-separate border-spacing-0 text-sm">
               <colgroup>
                 <col className="w-36" />
-                <col className="w-44" />
+                <col className="w-32" />
+                <col className="w-64" />
                 <col className="w-32" />
                 <col className="w-32" />
                 <col className="w-40" />
-                <col className="w-36" />
-                <col className="w-14" />
+                <col className="w-28" />
+                <col className="w-28" />
+                <col className="w-28" />
                 <col className="w-12" />
               </colgroup>
               <thead>
@@ -893,7 +1131,10 @@ export default function PackingSlipTrackerPage() {
                     Packing Slip #
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600 bg-slate-50 border-b border-slate-200/70 border-r border-slate-200/60">
-                    Customer
+                    External Order #
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600 bg-slate-50 border-b border-slate-200/70 border-r border-slate-200/60">
+                    Company
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600 bg-slate-50 border-b border-slate-200/70 border-r border-slate-200/60">
                     Type
@@ -907,13 +1148,13 @@ export default function PackingSlipTrackerPage() {
                   <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600 bg-slate-50 border-b border-slate-200/70 border-r border-slate-200/60">
                     <span className="inline-flex items-center gap-1">
                       Last Updated
-                      <svg className="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                      </svg>
                     </span>
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600 bg-slate-50 border-b border-slate-200/70 border-r border-slate-200/60">
-                    Notes
+                  <th className="px-4 py-3 text-center text-sm font-semibold text-slate-600 bg-slate-50 border-b border-slate-200/70 border-r border-slate-200/60">
+                    Paid
+                  </th>
+                  <th className="px-4 py-3 text-center text-sm font-semibold text-slate-600 bg-slate-50 border-b border-slate-200/70 border-r border-slate-200/60">
+                    Invoiced
                   </th>
                   <th className="px-4 py-3 bg-slate-50 border-b border-slate-200/70 rounded-tr-xl w-12" />
                 </tr>
@@ -922,22 +1163,22 @@ export default function PackingSlipTrackerPage() {
               <tbody>
                 {loading && (
                   <tr>
-                    <td colSpan={8} className="py-12 text-center text-slate-400">
+                    <td colSpan={10} className="py-12 text-center text-slate-400">
                       Loading…
                     </td>
                   </tr>
                 )}
 
-                {!loading && rows.length === 0 && (
+                {!loading && filteredRows.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="py-12 text-center text-slate-400">
+                    <td colSpan={10} className="py-12 text-center text-slate-400">
                       No records found.
                     </td>
                   </tr>
                 )}
 
                 {!loading &&
-                  rows.map((row, rowIndex) => (
+                  filteredRows.map((row, rowIndex) => (
                     <React.Fragment key={row.id}>
                       <tr
                         role="button"
@@ -958,7 +1199,27 @@ export default function PackingSlipTrackerPage() {
                         }}
                       >
                         <td className="px-4 py-3 border-b border-slate-200/60 border-r border-slate-200/50">
-                          <span className="font-semibold text-slate-900">{row.packingSlipNo}</span>
+                          <Link
+                            to={`/orders/${row.id}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="font-semibold text-blue-700 hover:underline"
+                          >
+                            {row.packingSlipNo}
+                          </Link>
+                        </td>
+                        {/* External Order # */}
+                        <td className="px-4 py-3 border-b border-slate-200/60 border-r border-slate-200/50">
+                          {row.externalOrderNumber ? (
+                            <Link
+                              to={`/orders/${row.id}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="font-medium text-blue-700 hover:underline text-sm"
+                            >
+                              {row.externalOrderNumber}
+                            </Link>
+                          ) : (
+                            <span className="text-slate-400">—</span>
+                          )}
                         </td>
                         <td className="px-4 py-3 border-b border-slate-200/60 border-r border-slate-200/50 font-medium text-slate-800">
                           <span className="truncate block" title={row.customer}>
@@ -982,23 +1243,23 @@ export default function PackingSlipTrackerPage() {
                         <td className="px-4 py-3 border-b border-slate-200/60 border-r border-slate-200/50 text-slate-700 font-medium">
                           {row.lastUpdated}
                         </td>
-                        <td className="px-4 py-3 border-b border-slate-200/60 border-r border-slate-200/50 text-center">
-                          {row.notes ? (
-                            <div
-                              className="w-8 h-8 rounded-lg bg-slate-200 flex items-center justify-center text-slate-600 mx-auto"
-                              title={row.notes}
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                              </svg>
-                            </div>
-                          ) : (
-                            <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-300 mx-auto">
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                              </svg>
-                            </div>
-                          )}
+                        <td className="px-2 py-3 border-b border-slate-200/60 border-r border-slate-200/50 text-center">
+                          <PaidInvoicedToggle
+                            orderId={row.id}
+                            isPaid={row.is_paid}
+                            isInvoiced={row.is_invoiced}
+                            field="is_paid"
+                            onUpdate={(field, value) => handlePaidInvoicedUpdate(row.id, field, value)}
+                          />
+                        </td>
+                        <td className="px-2 py-3 border-b border-slate-200/60 border-r border-slate-200/50 text-center">
+                          <PaidInvoicedToggle
+                            orderId={row.id}
+                            isPaid={row.is_paid}
+                            isInvoiced={row.is_invoiced}
+                            field="is_invoiced"
+                            onUpdate={(field, value) => handlePaidInvoicedUpdate(row.id, field, value)}
+                          />
                         </td>
                         <td className="px-4 py-3 border-b border-slate-200/60 text-center">
                           <button
@@ -1024,7 +1285,7 @@ export default function PackingSlipTrackerPage() {
                         <ExpandedPanel
                           row={row}
                           onStagesUpdate={handleStagesUpdate}
-                          onPaidInvoicedUpdate={handlePaidInvoicedUpdate}
+                          onBackorderedUpdate={handleBackorderedUpdate}
                         />
                       )}
                     </React.Fragment>
