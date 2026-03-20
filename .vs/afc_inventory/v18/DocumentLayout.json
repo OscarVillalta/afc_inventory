@@ -3,6 +3,10 @@
   "WorkspaceRootPath": "C:\\Users\\AFCadmin2\\Desktop\\afc_inventory\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{65B5664A-C88A-92C2-16CC-1A1D07936BBE}|qb_bridge\\AFCQbAgent\\AFCQbAgent.csproj|c:\\users\\afcadmin2\\desktop\\afc_inventory\\qb_bridge\\afcqbagent\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{65B5664A-C88A-92C2-16CC-1A1D07936BBE}|qb_bridge\\AFCQbAgent\\AFCQbAgent.csproj|solutionrelative:qb_bridge\\afcqbagent\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{65B5664A-C88A-92C2-16CC-1A1D07936BBE}|qb_bridge\\AFCQbAgent\\AFCQbAgent.csproj|c:\\users\\afcadmin2\\desktop\\afc_inventory\\qb_bridge\\afcqbagent\\afcqbagent.csproj||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|",
       "RelativeMoniker": "D:0:0:{65B5664A-C88A-92C2-16CC-1A1D07936BBE}|qb_bridge\\AFCQbAgent\\AFCQbAgent.csproj|solutionrelative:qb_bridge\\afcqbagent\\afcqbagent.csproj||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|"
     },
@@ -18,15 +22,28 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 1,
+          "SelectedChildIndex": 0,
           "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "C:\\Users\\AFCadmin2\\Desktop\\afc_inventory\\qb_bridge\\AFCQbAgent\\appsettings.json",
+              "RelativeDocumentMoniker": "qb_bridge\\AFCQbAgent\\appsettings.json",
+              "ToolTip": "C:\\Users\\AFCadmin2\\Desktop\\afc_inventory\\qb_bridge\\AFCQbAgent\\appsettings.json",
+              "RelativeToolTip": "qb_bridge\\AFCQbAgent\\appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAaAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-03-13T21:22:57.033Z",
+              "EditorCaption": ""
+            },
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
               "Title": "AFCQbAgent",
               "DocumentMoniker": "C:\\Users\\AFCadmin2\\Desktop\\afc_inventory\\qb_bridge\\AFCQbAgent\\AFCQbAgent.csproj",
               "RelativeDocumentMoniker": "qb_bridge\\AFCQbAgent\\AFCQbAgent.csproj",
@@ -38,7 +55,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 2,
               "Title": "Program.cs",
               "DocumentMoniker": "C:\\Users\\AFCadmin2\\Desktop\\afc_inventory\\qb_bridge\\AFCQbAgent\\Program.cs",
               "RelativeDocumentMoniker": "qb_bridge\\AFCQbAgent\\Program.cs",
@@ -46,8 +63,7 @@
               "RelativeToolTip": "qb_bridge\\AFCQbAgent\\Program.cs",
               "ViewState": "AgIAAHsAAAAAAAAAAAAAAIkAAAAPAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-01-27T16:04:03.001Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-01-27T16:04:03.001Z"
             }
           ]
         }
