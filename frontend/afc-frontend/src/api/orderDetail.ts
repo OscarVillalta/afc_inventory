@@ -139,3 +139,16 @@ export function updateOrderItem(itemId: number, payload: {
     body: JSON.stringify(payload),
   });
 }
+
+export function createOrder(payload: {
+  type: "incoming" | "installation" | "will_call" | "delivery" | "shipment";
+  customer_id?: number;
+  supplier_id?: number;
+  eta?: string | null;
+  description?: string | null;
+}) {
+  return apiRequest("/orders", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
