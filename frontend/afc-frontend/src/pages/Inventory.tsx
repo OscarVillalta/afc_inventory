@@ -5,6 +5,7 @@ import MediaTable from "../components/inventory/MediaTable";
 import AddProductModal from "../components/inventory/AddProductModal";
 import ProduceProductModal from "../components/inventory/ProduceProductModal";
 import InventoryKpiRow from "../components/inventory/InventoryKpiRow";
+import InventoryValueCard from "../components/inventory/InventoryValueCard";
 import MainLayout from "../layouts/MainLayout";
 import { fetchSuppliers } from "../api/suppliers";
 import { fetchAirFilterCategories } from "../api/airfilters";
@@ -130,6 +131,7 @@ export default function Inventory() {
 
         {/* ── KPI Row ── */}
         <InventoryKpiRow refreshToken={refreshToken} />
+        <InventoryValueCard refreshToken={refreshToken} suppliers={suppliers} />
 
         {/* ── Filter Bar ── */}
         <div className="flex flex-wrap items-center gap-3 bg-white border border-gray-200 rounded-xl px-4 py-3 shadow-sm">
