@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { isAdminUser } from "../api/auth";
 import AirFiltersTable from "../components/inventory/AirFiltersTable";
 import StockItemsTable from "../components/inventory/StockItemsTable";
 import MediaTable from "../components/inventory/MediaTable";
@@ -32,6 +33,7 @@ export default function Inventory() {
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [showProduceProduct, setShowProduceProduct] = useState(false);
   const [refreshToken, setRefreshToken] = useState(0);
+  const [showInventoryValue] = useState(() => isAdminUser());
 
   /* ── Page-level filter state ── */
   const [globalSearch, setGlobalSearch] = useState("");
@@ -131,7 +133,9 @@ export default function Inventory() {
 
         {/* ── KPI Row ── */}
         <InventoryKpiRow refreshToken={refreshToken} />
-        <InventoryValueCard refreshToken={refreshToken} suppliers={suppliers} />
+        {showInventoryValue && (
+          <InventoryValueCard refreshToken={refreshToken} suppliers={suppliers} />
+        )}
 
         {/* ── Filter Bar ── */}
         <div className="flex flex-wrap items-center gap-3 bg-white border border-gray-200 rounded-xl px-4 py-3 shadow-sm">

@@ -1,4 +1,5 @@
 import { Component, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
+import { ApiError } from "../../api/apiClient";
 import {
   fetchInventoryValue,
   formatInventoryMoney,
@@ -42,6 +43,10 @@ class InventoryValueBoundary extends Component<{ children: ReactNode }, { failed
   }
 }
 
+function isAccessDenied(err: unknown): boolean {
+  return err instanceof ApiError && (err.status === 401 || err.status === 403);
+}
+
 function unpricedMessage(count: number | null): string | null {
   if (count == null || !Number.isFinite(count) || count <= 0) return null;
   const n = Math.trunc(count);
@@ -63,6 +68,7 @@ function InventoryValueCardBody({ refreshToken = 0, suppliers = [] }: Props) {
   const productFieldId = useId();
   const pickerRef = useRef<HTMLDivElement>(null);
 
+  const [hidden, setHidden] = useState(false);
   const [view, setView] = useState<ValueView>("total");
   const [supplierId, setSupplierId] = useState<number | "">("");
   const [productId, setProductId] = useState<number | null>(null);
@@ -131,8 +137,13 @@ function InventoryValueCardBody({ refreshToken = 0, suppliers = [] }: Props) {
       .then((data) => {
         if (!cancelled) setHeaderResult({ key: headerKey, data, error: false });
       })
-      .catch(() => {
-        if (!cancelled) setHeaderResult({ key: headerKey, data: null, error: true });
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        if (isAccessDenied(err)) {
+          setHidden(true);
+          return;
+        }
+        setHeaderResult({ key: headerKey, data: null, error: true });
       });
     return () => {
       cancelled = true;
@@ -164,8 +175,13 @@ function InventoryValueCardBody({ refreshToken = 0, suppliers = [] }: Props) {
           });
         }
       })
-      .catch(() => {
-        if (!cancelled) setProviderResult({ key: providerKey, groups: [], truncated: false, error: true });
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        if (isAccessDenied(err)) {
+          setHidden(true);
+          return;
+        }
+        setProviderResult({ key: providerKey, groups: [], truncated: false, error: true });
       });
     return () => {
       cancelled = true;
@@ -199,8 +215,13 @@ function InventoryValueCardBody({ refreshToken = 0, suppliers = [] }: Props) {
           });
         }
       })
-      .catch(() => {
-        if (!cancelled) setProductResult({ key: productKey, groups: [], truncated: false, error: true });
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        if (isAccessDenied(err)) {
+          setHidden(true);
+          return;
+        }
+        setProductResult({ key: productKey, groups: [], truncated: false, error: true });
       });
     return () => {
       cancelled = true;
@@ -241,6 +262,8 @@ function InventoryValueCardBody({ refreshToken = 0, suppliers = [] }: Props) {
 
   const unpriced = unpricedMessage(header?.unpriced_skus ?? null);
   const showProductMenu = menuOpen && view !== "product" && !header?.restricted;
+
+  if (hidden || header?.restricted) return null;
 
   return (
     <div className="relative z-10 bg-white rounded-lg shadow-sm border border-gray-100 overflow-visible border-t-4 border-emerald-500">

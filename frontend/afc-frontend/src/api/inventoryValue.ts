@@ -1,4 +1,5 @@
-import { apiRequest } from "./apiClient";
+import { readAccessToken } from "./auth";
+import { ApiError, apiRequest } from "./apiClient";
 
 export interface InventoryValueGroup {
   supplier_id: number | null;
@@ -103,5 +104,15 @@ export function fetchInventoryValue(query: InventoryValueQuery = {}): Promise<In
   const q = (query.q ?? "").trim().slice(0, 80);
   if (q) params.set("q", q);
   const qs = params.toString();
-  return apiRequest(`/inventory/value${qs ? `?${qs}` : ""}`).then((body) => normalizeInventoryValue(body));
+  const token = readAccessToken();
+  return apiRequest(`/inventory/value${qs ? `?${qs}` : ""}`, {
+    method: "GET",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  }).then((body) => {
+    const value = normalizeInventoryValue(body);
+    if (value.restricted) {
+      throw new ApiError(403, "Forbidden");
+    }
+    return value;
+  });
 }
